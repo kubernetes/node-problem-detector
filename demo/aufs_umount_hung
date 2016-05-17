@@ -1,0 +1,19 @@
+INFO: task umount.aufs:21568 blocked for more than 120 seconds.
+      Tainted: G         C    3.16.0-4-amd64 #1
+"echo 0 > /proc/sys/kernel/hung_task_timeout_secs" disables this message.
+umount.aufs     D ffff8802111a9848     0 21568  21567 0x00000000
+ ffff8802111a93f0 0000000000000086 0000000000012f00 ffff8800baa0ffd8
+ 0000000000012f00 ffff8802111a93f0 ffff8802111a93f0 ffff8800baa0fdd8
+ ffff8802149ef038 ffff8802149ef020 ffffffff00000000 ffff8802149ef028
+Call Trace:
+ [<ffffffff81512d45>] ? rwsem_down_write_failed+0x1d5/0x320
+ [<ffffffff812b7d13>] ? call_rwsem_down_write_failed+0x13/0x20
+ [<ffffffff815126b9>] ? down_write+0x29/0x40
+ [<ffffffffa03556b1>] ? si_write_lock+0x31/0x110 [aufs]
+ [<ffffffff811b83ca>] ? do_filp_open+0x3a/0x90
+ [<ffffffffa0374e50>] ? au_plink_maint_enter+0x20/0xd0 [aufs]
+ [<ffffffffa037473d>] ? au_procfs_plm_write+0x13d/0x200 [aufs]
+ [<ffffffff81207069>] ? proc_reg_write+0x39/0x70
+ [<ffffffff811a8562>] ? vfs_write+0xb2/0x1f0
+ [<ffffffff811a90a2>] ? SyS_write+0x42/0xa0
+ [<ffffffff81513d0d>] ? system_call_fast_compare_end+0x10/0x15

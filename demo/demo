@@ -1,0 +1,81 @@
+#!/bin/bash
+
+ZONE=us-central1-b
+KERNLOG=/var/log/kern.log
+
+usage () {
+  echo "Usage : `basename $0` COMMAND [arg...]
+  Commands:
+  create: create node problem detector daemon.
+  nodes: describe all nodes or specific node.
+  pods: describe all pods or specific pod.
+  inject: inject error kernel log into specific node.
+  reboot: generate a fake reboot log on specific node.
+  delete: delete node problem detector daemon."
+  exit
+}
+
+runCmd() {
+  echo $1
+  eval $1
+}
+
+rebootAll() {
+  TEMP=`mktemp`
+  kubectl get nodes | awk 'NR>1{print $1}' > $TEMP
+  while read -r node; do
+    reboot $node
+  done < $TEMP
+  rm $TEMP
+}
+
+reboot() {
+  LATEST=`gcloud compute ssh -n root@$1 --zone=$ZONE "tail -1 $KERNLOG"`
+  PREFIX=`echo $LATEST | cut -d "[" -f 1 -`"[0.000000]"
+  runCmd "gcloud compute ssh -n root@$1 --zone=$ZONE \"echo '$PREFIX reboot' >> $KERNLOG\""
+}
+
+case $1 in
+  create )
+    runCmd "kubectl create configmap node-problem-detector-config --from-file=../config/"
+    runCmd "kubectl create -f ../node-problem-detector.yaml --validate=false"
+    ;;
+  nodes )
+    runCmd "kubectl describe nodes $2"
+    ;;
+  pods )
+    runCmd "kubectl describe pods $2"
+    ;;
+  inject )
+    if [ -z $3 ]; then
+      usage
+      exit 1
+    fi
+    NODE=$3
+    LATEST=`gcloud compute ssh root@$NODE --zone=$ZONE "tail -1 $KERNLOG"`
+    PREFIX=`echo $LATEST | cut -d "]" -f 1 -`"]"
+    PREFIX=`printf "%q" "$PREFIX"`
+    COMMAND=
+    while read error
+    do
+      ERROR=`printf "%q" "$error"`
+      COMMAND=$COMMAND"echo $PREFIX $ERROR >> $KERNLOG; "
+    done < $2
+    runCmd "gcloud compute ssh root@$NODE --zone=$ZONE '$COMMAND'"
+    ;;
+  reboot )
+    if [ -z $2 ]; then
+      usage
+      exit 1
+    fi
+    reboot $2
+    ;; 
+  delete )
+    runCmd "kubectl delete -f ../node-problem-detector.yaml"
+    runCmd "kubectl delete configmap node-problem-detector-config"
+    ;;
+  * )
+    usage
+    exit 1
+    ;;
+esac
