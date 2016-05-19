@@ -1,0 +1,31 @@
+{
+	"logPath": "/log/kern.log",
+	"bufferSize": 50,
+	"rules": [
+		{
+			"type": "temporary",
+			"reason": "OOMKilling",
+			"pattern": "Kill process \\d+ (.+) score \\d+ or sacrifice child\\nKilled process \\d+ (.+) total-vm:\\d+kB, anon-rss:\\d+kB, file-rss:\\d+kB"
+		},
+		{
+			"type": "temporary",
+			"reason": "TaskHung",
+			"pattern": "task \\S+:\\w+ blocked for more than \\w+ seconds\\."
+		},
+		{
+			"type": "permanent",
+			"reason": "AUFSUmountHung",
+			"pattern": "task umount\\.aufs:\\w+ blocked for more than \\w+ seconds\\."
+		},
+		{
+			"type": "permanent",
+			"reason": "DockerHung",
+			"pattern": "task docker:\\w+ blocked for more than \\w+ seconds\\."
+		},
+		{
+			"type": "permanent",
+			"reason": "KernelBug",
+			"pattern": "unregister_netdevice: waiting for \\w+ to become free. Usage count = \\d+"
+		}
+	]
+}

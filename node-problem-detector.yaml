@@ -1,0 +1,40 @@
+apiVersion: extensions/v1beta1
+kind: DaemonSet
+metadata:
+  name: node-problem-detector
+spec:
+  template:
+    metadata:
+      labels:
+        app: node-problem-detector
+    spec:
+      hostNetwork: true
+      containers:
+      - name: node-problem-detector
+        command:
+        - /node-problem-detector
+        - --kernel-monitor=/config/kernel-monitor.json
+        image: gcr.io/google.com/noogler-kubernetes/node-problem-detector:0.1
+        imagePullPolicy: Always
+        env:
+        # Config the host ip and port of apiserver.
+        - name: "KUBERNETES_SERVICE_HOST"
+          value: "e2e-test-lantaol-master"
+        - name: "KUBERNETES_SERVICE_PORT"
+          value: "443"
+        securityContext:
+          privileged: true
+        volumeMounts:
+        - name: log
+          mountPath: /log
+          readOnly: true
+        - name: config
+          mountPath: /config
+          readOnly: true
+      volumes:
+      - name: log
+        hostPath:
+          path: /var/log/
+      - name: config
+        configMap:
+          name: node-problem-detector-config
