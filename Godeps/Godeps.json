@@ -1,7 +1,7 @@
 {
 	"ImportPath": "k8s.io/node-problem-detector",
 	"GoVersion": "go1.6",
-	"GodepVersion": "v63",
+	"GodepVersion": "v70",
 	"Packages": [
 		"./..."
 	],
@@ -181,8 +181,8 @@
 		},
 		{
 			"ImportPath": "gopkg.in/fsnotify.v1",
-			"Comment": "v1.3.0",
-			"Rev": "30411dbcefb7a1da7e84f75530ad3abe4011b4f8"
+			"Comment": "v1.2.1",
+			"Rev": "7be54206639f256967dd82fa767397ba5f8f48f5"
 		},
 		{
 			"ImportPath": "gopkg.in/inf.v0",
