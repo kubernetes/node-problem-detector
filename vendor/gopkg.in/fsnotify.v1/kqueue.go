@@ -13,9 +13,8 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
+	"syscall"
 	"time"
-
-	"golang.org/x/sys/unix"
 )
 
 // Watcher watches a set of files, delivering events to a channel.
@@ -73,17 +72,12 @@ func (w *Watcher) Close() error {
 	w.isClosed = true
 	w.mu.Unlock()
 
-	// copy paths to remove while locked
 	w.mu.Lock()
-	var pathsToRemove = make([]string, 0, len(w.watches))
-	for name := range w.watches {
-		pathsToRemove = append(pathsToRemove, name)
-	}
+	ws := w.watches
 	w.mu.Unlock()
-	// unlock before calling Remove, which also locks
 
 	var err error
-	for _, name := range pathsToRemove {
+	for name := range ws {
 		if e := w.Remove(name); e != nil && err == nil {
 			err = e
 		}
@@ -100,8 +94,7 @@ func (w *Watcher) Add(name string) error {
 	w.mu.Lock()
 	w.externalWatches[name] = true
 	w.mu.Unlock()
-	_, err := w.addWatch(name, noteAllEvents)
-	return err
+	return w.addWatch(name, noteAllEvents)
 }
 
 // Remove stops watching the the named file or directory (non-recursively).
@@ -114,12 +107,12 @@ func (w *Watcher) Remove(name string) error {
 		return fmt.Errorf("can't remove non-existent kevent watch for: %s", name)
 	}
 
-	const registerRemove = unix.EV_DELETE
+	const registerRemove = syscall.EV_DELETE
 	if err := register(w.kq, []int{watchfd}, registerRemove, 0); err != nil {
 		return err
 	}
 
-	unix.Close(watchfd)
+	syscall.Close(watchfd)
 
 	w.mu.Lock()
 	isDir := w.paths[watchfd].isDir
@@ -153,15 +146,14 @@ func (w *Watcher) Remove(name string) error {
 }
 
 // Watch all events (except NOTE_EXTEND, NOTE_LINK, NOTE_REVOKE)
-const noteAllEvents = unix.NOTE_DELETE | unix.NOTE_WRITE | unix.NOTE_ATTRIB | unix.NOTE_RENAME
+const noteAllEvents = syscall.NOTE_DELETE | syscall.NOTE_WRITE | syscall.NOTE_ATTRIB | syscall.NOTE_RENAME
 
 // keventWaitTime to block on each read from kevent
 var keventWaitTime = durationToTimespec(100 * time.Millisecond)
 
 // addWatch adds name to the watched file set.
 // The flags are interpreted as described in kevent(2).
-// Returns the real path to the file which was added, if any, which may be different from the one passed in the case of symlinks.
-func (w *Watcher) addWatch(name string, flags uint32) (string, error) {
+func (w *Watcher) addWatch(name string, flags uint32) error {
 	var isDir bool
 	// Make ./name and name equivalent
 	name = filepath.Clean(name)
@@ -169,7 +161,7 @@ func (w *Watcher) addWatch(name string, flags uint32) (string, error) {
 	w.mu.Lock()
 	if w.isClosed {
 		w.mu.Unlock()
-		return "", errors.New("kevent instance already closed")
+		return errors.New("kevent instance already closed")
 	}
 	watchfd, alreadyWatching := w.watches[name]
 	// We already have a watch, but we can still override flags.
@@ -181,17 +173,17 @@ func (w *Watcher) addWatch(name string, flags uint32) (string, error) {
 	if !alreadyWatching {
 		fi, err := os.Lstat(name)
 		if err != nil {
-			return "", err
+			return err
 		}
 
 		// Don't watch sockets.
 		if fi.Mode()&os.ModeSocket == os.ModeSocket {
-			return "", nil
+			return nil
 		}
 
 		// Don't watch named pipes.
 		if fi.Mode()&os.ModeNamedPipe == os.ModeNamedPipe {
-			return "", nil
+			return nil
 		}
 
 		// Follow Symlinks
@@ -203,35 +195,27 @@ func (w *Watcher) addWatch(name string, flags uint32) (string, error) {
 		if fi.Mode()&os.ModeSymlink == os.ModeSymlink {
 			name, err = filepath.EvalSymlinks(name)
 			if err != nil {
-				return "", nil
-			}
-
-			w.mu.Lock()
-			_, alreadyWatching = w.watches[name]
-			w.mu.Unlock()
-
-			if alreadyWatching {
-				return name, nil
+				return nil
 			}
 
 			fi, err = os.Lstat(name)
 			if err != nil {
-				return "", nil
+				return nil
 			}
 		}
 
-		watchfd, err = unix.Open(name, openMode, 0700)
+		watchfd, err = syscall.Open(name, openMode, 0700)
 		if watchfd == -1 {
-			return "", err
+			return err
 		}
 
 		isDir = fi.IsDir()
 	}
 
-	const registerAdd = unix.EV_ADD | unix.EV_CLEAR | unix.EV_ENABLE
+	const registerAdd = syscall.EV_ADD | syscall.EV_CLEAR | syscall.EV_ENABLE
 	if err := register(w.kq, []int{watchfd}, registerAdd, flags); err != nil {
-		unix.Close(watchfd)
-		return "", err
+		syscall.Close(watchfd)
+		return err
 	}
 
 	if !alreadyWatching {
@@ -245,32 +229,31 @@ func (w *Watcher) addWatch(name string, flags uint32) (string, error) {
 		// Watch the directory if it has not been watched before,
 		// or if it was watched before, but perhaps only a NOTE_DELETE (watchDirectoryFiles)
 		w.mu.Lock()
-
-		watchDir := (flags&unix.NOTE_WRITE) == unix.NOTE_WRITE &&
-			(!alreadyWatching || (w.dirFlags[name]&unix.NOTE_WRITE) != unix.NOTE_WRITE)
+		watchDir := (flags&syscall.NOTE_WRITE) == syscall.NOTE_WRITE &&
+			(!alreadyWatching || (w.dirFlags[name]&syscall.NOTE_WRITE) != syscall.NOTE_WRITE)
 		// Store flags so this watch can be updated later
 		w.dirFlags[name] = flags
 		w.mu.Unlock()
 
 		if watchDir {
 			if err := w.watchDirectoryFiles(name); err != nil {
-				return "", err
+				return err
 			}
 		}
 	}
-	return name, nil
+	return nil
 }
 
 // readEvents reads from kqueue and converts the received kevents into
 // Event values that it sends down the Events channel.
 func (w *Watcher) readEvents() {
-	eventBuffer := make([]unix.Kevent_t, 10)
+	eventBuffer := make([]syscall.Kevent_t, 10)
 
 	for {
 		// See if there is a message on the "done" channel
 		select {
 		case <-w.done:
-			err := unix.Close(w.kq)
+			err := syscall.Close(w.kq)
 			if err != nil {
 				w.Errors <- err
 			}
@@ -283,7 +266,7 @@ func (w *Watcher) readEvents() {
 		// Get new events
 		kevents, err := read(w.kq, eventBuffer, &keventWaitTime)
 		// EINTR is okay, the syscall was interrupted before timeout expired.
-		if err != nil && err != unix.EINTR {
+		if err != nil && err != syscall.EINTR {
 			w.Errors <- err
 			continue
 		}
@@ -326,24 +309,19 @@ func (w *Watcher) readEvents() {
 			if event.Op&Remove == Remove {
 				// Look for a file that may have overwritten this.
 				// For example, mv f1 f2 will delete f2, then create f2.
-				if path.isDir {
-					fileDir := filepath.Clean(event.Name)
-					w.mu.Lock()
-					_, found := w.watches[fileDir]
-					w.mu.Unlock()
-					if found {
-						// make sure the directory exists before we watch for changes. When we
-						// do a recursive watch and perform rm -fr, the parent directory might
-						// have gone missing, ignore the missing directory and let the
-						// upcoming delete event remove the watch from the parent directory.
-						if _, err := os.Lstat(fileDir); err == nil {
-							w.sendDirectoryChangeEvents(fileDir)
-						}
-					}
-				} else {
-					filePath := filepath.Clean(event.Name)
-					if fileInfo, err := os.Lstat(filePath); err == nil {
-						w.sendFileCreatedEventIfNew(filePath, fileInfo)
+				fileDir, _ := filepath.Split(event.Name)
+				fileDir = filepath.Clean(fileDir)
+				w.mu.Lock()
+				_, found := w.watches[fileDir]
+				w.mu.Unlock()
+				if found {
+					// make sure the directory exists before we watch for changes. When we
+					// do a recursive watch and perform rm -fr, the parent directory might
+					// have gone missing, ignore the missing directory and let the
+					// upcoming delete event remove the watch from the parent directory.
+					if _, err := os.Lstat(fileDir); os.IsExist(err) {
+						w.sendDirectoryChangeEvents(fileDir)
+						// FIXME: should this be for events on files or just isDir?
 					}
 				}
 			}
@@ -357,16 +335,16 @@ func (w *Watcher) readEvents() {
 // newEvent returns an platform-independent Event based on kqueue Fflags.
 func newEvent(name string, mask uint32) Event {
 	e := Event{Name: name}
-	if mask&unix.NOTE_DELETE == unix.NOTE_DELETE {
+	if mask&syscall.NOTE_DELETE == syscall.NOTE_DELETE {
 		e.Op |= Remove
 	}
-	if mask&unix.NOTE_WRITE == unix.NOTE_WRITE {
+	if mask&syscall.NOTE_WRITE == syscall.NOTE_WRITE {
 		e.Op |= Write
 	}
-	if mask&unix.NOTE_RENAME == unix.NOTE_RENAME {
+	if mask&syscall.NOTE_RENAME == syscall.NOTE_RENAME {
 		e.Op |= Rename
 	}
-	if mask&unix.NOTE_ATTRIB == unix.NOTE_ATTRIB {
+	if mask&syscall.NOTE_ATTRIB == syscall.NOTE_ATTRIB {
 		e.Op |= Chmod
 	}
 	return e
@@ -386,8 +364,7 @@ func (w *Watcher) watchDirectoryFiles(dirPath string) error {
 
 	for _, fileInfo := range files {
 		filePath := filepath.Join(dirPath, fileInfo.Name())
-		filePath, err = w.internalWatch(filePath, fileInfo)
-		if err != nil {
+		if err := w.internalWatch(filePath, fileInfo); err != nil {
 			return err
 		}
 
@@ -413,38 +390,26 @@ func (w *Watcher) sendDirectoryChangeEvents(dirPath string) {
 	// Search for new files
 	for _, fileInfo := range files {
 		filePath := filepath.Join(dirPath, fileInfo.Name())
-		err := w.sendFileCreatedEventIfNew(filePath, fileInfo)
+		w.mu.Lock()
+		_, doesExist := w.fileExists[filePath]
+		w.mu.Unlock()
+		if !doesExist {
+			// Send create event
+			w.Events <- newCreateEvent(filePath)
+		}
 
-		if err != nil {
+		// like watchDirectoryFiles (but without doing another ReadDir)
+		if err := w.internalWatch(filePath, fileInfo); err != nil {
 			return
 		}
+
+		w.mu.Lock()
+		w.fileExists[filePath] = true
+		w.mu.Unlock()
 	}
 }
 
-// sendFileCreatedEvent sends a create event if the file isn't already being tracked.
-func (w *Watcher) sendFileCreatedEventIfNew(filePath string, fileInfo os.FileInfo) (err error) {
-	w.mu.Lock()
-	_, doesExist := w.fileExists[filePath]
-	w.mu.Unlock()
-	if !doesExist {
-		// Send create event
-		w.Events <- newCreateEvent(filePath)
-	}
-
-	// like watchDirectoryFiles (but without doing another ReadDir)
-	filePath, err = w.internalWatch(filePath, fileInfo)
-	if err != nil {
-		return err
-	}
-
-	w.mu.Lock()
-	w.fileExists[filePath] = true
-	w.mu.Unlock()
-
-	return nil
-}
-
-func (w *Watcher) internalWatch(name string, fileInfo os.FileInfo) (string, error) {
+func (w *Watcher) internalWatch(name string, fileInfo os.FileInfo) error {
 	if fileInfo.IsDir() {
 		// mimic Linux providing delete events for subdirectories
 		// but preserve the flags used if currently watching subdirectory
@@ -452,7 +417,7 @@ func (w *Watcher) internalWatch(name string, fileInfo os.FileInfo) (string, erro
 		flags := w.dirFlags[name]
 		w.mu.Unlock()
 
-		flags |= unix.NOTE_DELETE | unix.NOTE_RENAME
+		flags |= syscall.NOTE_DELETE
 		return w.addWatch(name, flags)
 	}
 
@@ -462,7 +427,7 @@ func (w *Watcher) internalWatch(name string, fileInfo os.FileInfo) (string, erro
 
 // kqueue creates a new kernel event queue and returns a descriptor.
 func kqueue() (kq int, err error) {
-	kq, err = unix.Kqueue()
+	kq, err = syscall.Kqueue()
 	if kq == -1 {
 		return kq, err
 	}
@@ -471,16 +436,16 @@ func kqueue() (kq int, err error) {
 
 // register events with the queue
 func register(kq int, fds []int, flags int, fflags uint32) error {
-	changes := make([]unix.Kevent_t, len(fds))
+	changes := make([]syscall.Kevent_t, len(fds))
 
 	for i, fd := range fds {
 		// SetKevent converts int to the platform-specific types:
-		unix.SetKevent(&changes[i], fd, unix.EVFILT_VNODE, flags)
+		syscall.SetKevent(&changes[i], fd, syscall.EVFILT_VNODE, flags)
 		changes[i].Fflags = fflags
 	}
 
 	// register the events
-	success, err := unix.Kevent(kq, changes, nil, nil)
+	success, err := syscall.Kevent(kq, changes, nil, nil)
 	if success == -1 {
 		return err
 	}
@@ -489,8 +454,8 @@ func register(kq int, fds []int, flags int, fflags uint32) error {
 
 // read retrieves pending events, or waits until an event occurs.
 // A timeout of nil blocks indefinitely, while 0 polls the queue.
-func read(kq int, events []unix.Kevent_t, timeout *unix.Timespec) ([]unix.Kevent_t, error) {
-	n, err := unix.Kevent(kq, nil, events, timeout)
+func read(kq int, events []syscall.Kevent_t, timeout *syscall.Timespec) ([]syscall.Kevent_t, error) {
+	n, err := syscall.Kevent(kq, nil, events, timeout)
 	if err != nil {
 		return nil, err
 	}
@@ -498,6 +463,6 @@ func read(kq int, events []unix.Kevent_t, timeout *unix.Timespec) ([]unix.Kevent
 }
 
 // durationToTimespec prepares a timeout value
-func durationToTimespec(d time.Duration) unix.Timespec {
-	return unix.NsecToTimespec(d.Nanoseconds())
+func durationToTimespec(d time.Duration) syscall.Timespec {
+	return syscall.NsecToTimespec(d.Nanoseconds())
 }

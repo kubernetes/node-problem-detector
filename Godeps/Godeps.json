@@ -1,7 +1,7 @@
 {
 	"ImportPath": "k8s.io/node-problem-detector",
 	"GoVersion": "go1.6",
-	"GodepVersion": "v63",
+	"GodepVersion": "v71",
 	"Packages": [
 		"./..."
 	],
@@ -86,27 +86,27 @@
 		},
 		{
 			"ImportPath": "github.com/hpcloud/tail",
-			"Comment": "v1.0.0-35-ga30252c",
+			"Comment": "v1.0.0",
 			"Rev": "a30252cb686a21eb2d0b98132633053ec2f7f1e5"
 		},
 		{
 			"ImportPath": "github.com/hpcloud/tail/ratelimiter",
-			"Comment": "v1.0.0-35-ga30252c",
+			"Comment": "v1.0.0",
 			"Rev": "a30252cb686a21eb2d0b98132633053ec2f7f1e5"
 		},
 		{
 			"ImportPath": "github.com/hpcloud/tail/util",
-			"Comment": "v1.0.0-35-ga30252c",
+			"Comment": "v1.0.0",
 			"Rev": "a30252cb686a21eb2d0b98132633053ec2f7f1e5"
 		},
 		{
 			"ImportPath": "github.com/hpcloud/tail/watch",
-			"Comment": "v1.0.0-35-ga30252c",
+			"Comment": "v1.0.0",
 			"Rev": "a30252cb686a21eb2d0b98132633053ec2f7f1e5"
 		},
 		{
 			"ImportPath": "github.com/hpcloud/tail/winfile",
-			"Comment": "v1.0.0-35-ga30252c",
+			"Comment": "v1.0.0",
 			"Rev": "a30252cb686a21eb2d0b98132633053ec2f7f1e5"
 		},
 		{
@@ -176,13 +176,9 @@
 			"Rev": "c2528b2dd8352441850638a8bb678c2ad056fd3e"
 		},
 		{
-			"ImportPath": "golang.org/x/sys/unix",
-			"Rev": "833a04a10549a95dc34458c195cbad61bbb6cb4d"
-		},
-		{
 			"ImportPath": "gopkg.in/fsnotify.v1",
-			"Comment": "v1.3.0",
-			"Rev": "30411dbcefb7a1da7e84f75530ad3abe4011b4f8"
+			"Comment": "v1.2.1",
+			"Rev": "7be54206639f256967dd82fa767397ba5f8f48f5"
 		},
 		{
 			"ImportPath": "gopkg.in/inf.v0",

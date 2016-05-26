@@ -6,7 +6,7 @@
 
 package fsnotify
 
-import "golang.org/x/sys/unix"
+import "syscall"
 
 // note: this constant is not defined on BSD
-const openMode = unix.O_EVTONLY
+const openMode = syscall.O_EVTONLY
