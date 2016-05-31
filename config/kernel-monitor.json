@@ -1,6 +1,6 @@
 {
 	"logPath": "/log/kern.log",
-	"bufferSize": 50,
+	"bufferSize": 10,
 	"rules": [
 		{
 			"type": "temporary",
