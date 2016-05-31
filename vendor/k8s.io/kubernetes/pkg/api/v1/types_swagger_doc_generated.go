@@ -186,7 +186,7 @@ var map_Container = map[string]string{
 	"ports":                  "List of ports to expose from the container. Exposing a port here gives the system additional information about the network connections a container uses, but is primarily informational. Not specifying a port here DOES NOT prevent that port from being exposed. Any port which is listening on the default \"0.0.0.0\" address inside a container will be accessible from the network. Cannot be updated.",
 	"env":                    "List of environment variables to set in the container. Cannot be updated.",
 	"resources":              "Compute Resources required by this container. Cannot be updated. More info: http://releases.k8s.io/HEAD/docs/user-guide/persistent-volumes.md#resources",
-	"volumeMounts":           "Pod volumes to mount into the container's filesyste. Cannot be updated.",
+	"volumeMounts":           "Pod volumes to mount into the container's filesystem. Cannot be updated.",
 	"livenessProbe":          "Periodic probe of container liveness. Container will be restarted if the probe fails. Cannot be updated. More info: http://releases.k8s.io/HEAD/docs/user-guide/pod-states.md#container-probes",
 	"readinessProbe":         "Periodic probe of container service readiness. Container will be removed from service endpoints if the probe fails. Cannot be updated. More info: http://releases.k8s.io/HEAD/docs/user-guide/pod-states.md#container-probes",
 	"lifecycle":              "Actions that the management system should take in response to container lifecycle events. Cannot be updated.",
@@ -307,9 +307,10 @@ func (DeleteOptions) SwaggerDoc() map[string]string {
 }
 
 var map_DownwardAPIVolumeFile = map[string]string{
-	"":         "DownwardAPIVolumeFile represents information to create the file containing the pod field",
-	"path":     "Required: Path is  the relative path name of the file to be created. Must not be absolute or contain the '..' path. Must be utf-8 encoded. The first item of the relative path must not start with '..'",
-	"fieldRef": "Required: Selects a field of the pod: only annotations, labels, name and namespace are supported.",
+	"":                 "DownwardAPIVolumeFile represents information to create the file containing the pod field",
+	"path":             "Required: Path is  the relative path name of the file to be created. Must not be absolute or contain the '..' path. Must be utf-8 encoded. The first item of the relative path must not start with '..'",
+	"fieldRef":         "Required: Selects a field of the pod: only annotations, labels, name and namespace are supported.",
+	"resourceFieldRef": "Selects a resource of the container: only resources limits and requests (limits.cpu, limits.memory, requests.cpu and requests.memory) are currently supported.",
 }
 
 func (DownwardAPIVolumeFile) SwaggerDoc() map[string]string {
@@ -399,10 +400,11 @@ func (EnvVar) SwaggerDoc() map[string]string {
 }
 
 var map_EnvVarSource = map[string]string{
-	"":                "EnvVarSource represents a source for the value of an EnvVar.",
-	"fieldRef":        "Selects a field of the pod; only name and namespace are supported.",
-	"configMapKeyRef": "Selects a key of a ConfigMap.",
-	"secretKeyRef":    "Selects a key of a secret in the pod's namespace",
+	"":                 "EnvVarSource represents a source for the value of an EnvVar.",
+	"fieldRef":         "Selects a field of the pod; only name and namespace are supported.",
+	"resourceFieldRef": "Selects a resource of the container: only resources limits and requests (limits.cpu, limits.memory, requests.cpu and requests.memory) are currently supported.",
+	"configMapKeyRef":  "Selects a key of a ConfigMap.",
+	"secretKeyRef":     "Selects a key of a secret in the pod's namespace",
 }
 
 func (EnvVarSource) SwaggerDoc() map[string]string {
@@ -1050,6 +1052,7 @@ var map_PersistentVolumeSource = map[string]string{
 	"flocker":              "Flocker represents a Flocker volume attached to a kubelet's host machine and exposed to the pod for its usage. This depends on the Flocker control service being running",
 	"flexVolume":           "FlexVolume represents a generic volume resource that is provisioned/attached using a exec based plugin. This is an alpha feature and may change in future.",
 	"azureFile":            "AzureFile represents an Azure File Service mount on the host and bind mount to the pod.",
+	"vsphereVolume":        "VsphereVolume represents a vSphere volume attached and mounted on kubelets host machine",
 }
 
 func (PersistentVolumeSource) SwaggerDoc() map[string]string {
@@ -1393,6 +1396,17 @@ func (ReplicationControllerStatus) SwaggerDoc() map[string]string {
 	return map_ReplicationControllerStatus
 }
 
+var map_ResourceFieldSelector = map[string]string{
+	"":              "ResourceFieldSelector represents container resources (cpu, memory) and their output format",
+	"containerName": "Container name: required for volumes, optional for env vars",
+	"resource":      "Required: resource to select",
+	"divisor":       "Specifies the output format of the exposed resources, defaults to \"1\"",
+}
+
+func (ResourceFieldSelector) SwaggerDoc() map[string]string {
+	return map_ResourceFieldSelector
+}
+
 var map_ResourceQuota = map[string]string{
 	"":         "ResourceQuota sets aggregate quota restrictions enforced per namespace",
 	"metadata": "Standard object's metadata. More info: http://releases.k8s.io/HEAD/docs/devel/api-conventions.md#metadata",
@@ -1489,6 +1503,7 @@ func (SecretList) SwaggerDoc() map[string]string {
 var map_SecretVolumeSource = map[string]string{
 	"":           "Adapts a Secret into a volume.\n\nThe contents of the target Secret's Data field will be presented in a volume as files using the keys in the Data field as the file names. Secret volumes support ownership management and SELinux relabeling.",
 	"secretName": "Name of the secret in the pod's namespace to use. More info: http://releases.k8s.io/HEAD/docs/user-guide/volumes.md#secrets",
+	"items":      "If unspecified, each key-value pair in the Data field of the referenced Secret will be projected into the volume as a file whose name is the key and content is the value. If specified, the listed keys will be projected into the specified paths, and unlisted keys will not be present. If a key is specified which is not present in the Secret, the volume setup will error. Paths must be relative and may not contain the '..' path or start with '..'.",
 }
 
 func (SecretVolumeSource) SwaggerDoc() map[string]string {
@@ -1583,15 +1598,16 @@ func (ServiceProxyOptions) SwaggerDoc() map[string]string {
 }
 
 var map_ServiceSpec = map[string]string{
-	"":                    "ServiceSpec describes the attributes that a user creates on a service.",
-	"ports":               "The list of ports that are exposed by this service. More info: http://releases.k8s.io/HEAD/docs/user-guide/services.md#virtual-ips-and-service-proxies",
-	"selector":            "This service will route traffic to pods having labels matching this selector. Label keys and values that must match in order to receive traffic for this service. If empty, all pods are selected, if not specified, endpoints must be manually specified. More info: http://releases.k8s.io/HEAD/docs/user-guide/services.md#overview",
-	"clusterIP":           "ClusterIP is usually assigned by the master and is the IP address of the service. If specified, it will be allocated to the service if it is unused or else creation of the service will fail. Valid values are None, empty string (\"\"), or a valid IP address. 'None' can be specified for a headless service when proxying is not required. Cannot be updated. More info: http://releases.k8s.io/HEAD/docs/user-guide/services.md#virtual-ips-and-service-proxies",
-	"type":                "Type of exposed service. Must be ClusterIP, NodePort, or LoadBalancer. Defaults to ClusterIP. More info: http://releases.k8s.io/HEAD/docs/user-guide/services.md#external-services",
-	"externalIPs":         "externalIPs is a list of IP addresses for which nodes in the cluster will also accept traffic for this service.  These IPs are not managed by Kubernetes.  The user is responsible for ensuring that traffic arrives at a node with this IP.  A common example is external load-balancers that are not part of the Kubernetes system.  A previous form of this functionality exists as the deprecatedPublicIPs field.  When using this field, callers should also clear the deprecatedPublicIPs field.",
-	"deprecatedPublicIPs": "deprecatedPublicIPs is deprecated and replaced by the externalIPs field with almost the exact same semantics.  This field is retained in the v1 API for compatibility until at least 8/20/2016.  It will be removed from any new API revisions.  If both deprecatedPublicIPs *and* externalIPs are set, deprecatedPublicIPs is used.",
-	"sessionAffinity":     "Supports \"ClientIP\" and \"None\". Used to maintain session affinity. Enable client IP based session affinity. Must be ClientIP or None. Defaults to None. More info: http://releases.k8s.io/HEAD/docs/user-guide/services.md#virtual-ips-and-service-proxies",
-	"loadBalancerIP":      "Only applies to Service Type: LoadBalancer LoadBalancer will get created with the IP specified in this field. This feature depends on whether the underlying cloud-provider supports specifying the loadBalancerIP when a load balancer is created. This field will be ignored if the cloud-provider does not support the feature.",
+	"":                         "ServiceSpec describes the attributes that a user creates on a service.",
+	"ports":                    "The list of ports that are exposed by this service. More info: http://releases.k8s.io/HEAD/docs/user-guide/services.md#virtual-ips-and-service-proxies",
+	"selector":                 "This service will route traffic to pods having labels matching this selector. Label keys and values that must match in order to receive traffic for this service. If empty, all pods are selected, if not specified, endpoints must be manually specified. More info: http://releases.k8s.io/HEAD/docs/user-guide/services.md#overview",
+	"clusterIP":                "ClusterIP is usually assigned by the master and is the IP address of the service. If specified, it will be allocated to the service if it is unused or else creation of the service will fail. Valid values are None, empty string (\"\"), or a valid IP address. 'None' can be specified for a headless service when proxying is not required. Cannot be updated. More info: http://releases.k8s.io/HEAD/docs/user-guide/services.md#virtual-ips-and-service-proxies",
+	"type":                     "Type of exposed service. Must be ClusterIP, NodePort, or LoadBalancer. Defaults to ClusterIP. More info: http://releases.k8s.io/HEAD/docs/user-guide/services.md#external-services",
+	"externalIPs":              "externalIPs is a list of IP addresses for which nodes in the cluster will also accept traffic for this service.  These IPs are not managed by Kubernetes.  The user is responsible for ensuring that traffic arrives at a node with this IP.  A common example is external load-balancers that are not part of the Kubernetes system.  A previous form of this functionality exists as the deprecatedPublicIPs field.  When using this field, callers should also clear the deprecatedPublicIPs field.",
+	"deprecatedPublicIPs":      "deprecatedPublicIPs is deprecated and replaced by the externalIPs field with almost the exact same semantics.  This field is retained in the v1 API for compatibility until at least 8/20/2016.  It will be removed from any new API revisions.  If both deprecatedPublicIPs *and* externalIPs are set, deprecatedPublicIPs is used.",
+	"sessionAffinity":          "Supports \"ClientIP\" and \"None\". Used to maintain session affinity. Enable client IP based session affinity. Must be ClientIP or None. Defaults to None. More info: http://releases.k8s.io/HEAD/docs/user-guide/services.md#virtual-ips-and-service-proxies",
+	"loadBalancerIP":           "Only applies to Service Type: LoadBalancer LoadBalancer will get created with the IP specified in this field. This feature depends on whether the underlying cloud-provider supports specifying the loadBalancerIP when a load balancer is created. This field will be ignored if the cloud-provider does not support the feature.",
+	"loadBalancerSourceRanges": "If specified and supported by the platform, this will restrict traffic through the cloud-provider load-balancer will be restricted to the specified client IPs. This field will be ignored if the cloud-provider does not support the feature.\" More info: http://releases.k8s.io/HEAD/docs/user-guide/services-firewalls.md",
 }
 
 func (ServiceSpec) SwaggerDoc() map[string]string {
@@ -1614,6 +1630,29 @@ var map_TCPSocketAction = map[string]string{
 
 func (TCPSocketAction) SwaggerDoc() map[string]string {
 	return map_TCPSocketAction
+}
+
+var map_Taint = map[string]string{
+	"":       "The node this Taint is attached to has the effect \"effect\" on any pod that that does not tolerate the Taint.",
+	"key":    "Required. The taint key to be applied to a node.",
+	"value":  "Required. The taint value corresponding to the taint key.",
+	"effect": "Required. The effect of the taint on pods that do not tolerate the taint. Valid effects are NoSchedule and PreferNoSchedule.",
+}
+
+func (Taint) SwaggerDoc() map[string]string {
+	return map_Taint
+}
+
+var map_Toleration = map[string]string{
+	"":         "The pod this Toleration is attached to tolerates any taint that matches the triple <key,value,effect> using the matching operator <operator>.",
+	"key":      "Required. Key is the taint key that the toleration applies to.",
+	"operator": "operator represents a key's relationship to the value. Valid operators are Exists and Equal. Defaults to Equal. Exists is equivalent to wildcard for value, so that a pod can tolerate all taints of a particular category.",
+	"value":    "Value is the taint value the toleration matches to. If the operator is Exists, the value should be empty, otherwise just a regular string.",
+	"effect":   "Effect indicates the taint effect to match. Empty means match all taint effects. When specified, allowed values are NoSchedule and PreferNoSchedule.",
+}
+
+func (Toleration) SwaggerDoc() map[string]string {
+	return map_Toleration
 }
 
 var map_Volume = map[string]string{
@@ -1649,19 +1688,30 @@ var map_VolumeSource = map[string]string{
 	"iscsi":                 "ISCSI represents an ISCSI Disk resource that is attached to a kubelet's host machine and then exposed to the pod. More info: http://releases.k8s.io/HEAD/examples/iscsi/README.md",
 	"glusterfs":             "Glusterfs represents a Glusterfs mount on the host that shares a pod's lifetime. More info: http://releases.k8s.io/HEAD/examples/glusterfs/README.md",
 	"persistentVolumeClaim": "PersistentVolumeClaimVolumeSource represents a reference to a PersistentVolumeClaim in the same namespace. More info: http://releases.k8s.io/HEAD/docs/user-guide/persistent-volumes.md#persistentvolumeclaims",
-	"rbd":         "RBD represents a Rados Block Device mount on the host that shares a pod's lifetime. More info: http://releases.k8s.io/HEAD/examples/rbd/README.md",
-	"flexVolume":  "FlexVolume represents a generic volume resource that is provisioned/attached using a exec based plugin. This is an alpha feature and may change in future.",
-	"cinder":      "Cinder represents a cinder volume attached and mounted on kubelets host machine More info: http://releases.k8s.io/HEAD/examples/mysql-cinder-pd/README.md",
-	"cephfs":      "CephFS represents a Ceph FS mount on the host that shares a pod's lifetime",
-	"flocker":     "Flocker represents a Flocker volume attached to a kubelet's host machine. This depends on the Flocker control service being running",
-	"downwardAPI": "DownwardAPI represents downward API about the pod that should populate this volume",
-	"fc":          "FC represents a Fibre Channel resource that is attached to a kubelet's host machine and then exposed to the pod.",
-	"azureFile":   "AzureFile represents an Azure File Service mount on the host and bind mount to the pod.",
-	"configMap":   "ConfigMap represents a configMap that should populate this volume",
+	"rbd":           "RBD represents a Rados Block Device mount on the host that shares a pod's lifetime. More info: http://releases.k8s.io/HEAD/examples/rbd/README.md",
+	"flexVolume":    "FlexVolume represents a generic volume resource that is provisioned/attached using a exec based plugin. This is an alpha feature and may change in future.",
+	"cinder":        "Cinder represents a cinder volume attached and mounted on kubelets host machine More info: http://releases.k8s.io/HEAD/examples/mysql-cinder-pd/README.md",
+	"cephfs":        "CephFS represents a Ceph FS mount on the host that shares a pod's lifetime",
+	"flocker":       "Flocker represents a Flocker volume attached to a kubelet's host machine. This depends on the Flocker control service being running",
+	"downwardAPI":   "DownwardAPI represents downward API about the pod that should populate this volume",
+	"fc":            "FC represents a Fibre Channel resource that is attached to a kubelet's host machine and then exposed to the pod.",
+	"azureFile":     "AzureFile represents an Azure File Service mount on the host and bind mount to the pod.",
+	"configMap":     "ConfigMap represents a configMap that should populate this volume",
+	"vsphereVolume": "VsphereVolume represents a vSphere volume attached and mounted on kubelets host machine",
 }
 
 func (VolumeSource) SwaggerDoc() map[string]string {
 	return map_VolumeSource
+}
+
+var map_VsphereVirtualDiskVolumeSource = map[string]string{
+	"":           "Represents a vSphere volume resource.",
+	"volumePath": "Path that identifies vSphere volume vmdk",
+	"fsType":     "Filesystem type to mount. Must be a filesystem type supported by the host operating system. Ex. \"ext4\", \"xfs\", \"ntfs\". Implicitly inferred to be \"ext4\" if unspecified.",
+}
+
+func (VsphereVirtualDiskVolumeSource) SwaggerDoc() map[string]string {
+	return map_VsphereVirtualDiskVolumeSource
 }
 
 var map_WeightedPodAffinityTerm = map[string]string{

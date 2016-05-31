@@ -17,6 +17,11 @@ limitations under the License.
 package runtime
 
 import (
+	"fmt"
+
+	"github.com/golang/glog"
+
+	"k8s.io/kubernetes/pkg/api/meta/metatypes"
 	"k8s.io/kubernetes/pkg/api/unversioned"
 	"k8s.io/kubernetes/pkg/types"
 )
@@ -148,6 +153,19 @@ func getNestedString(obj map[string]interface{}, fields ...string) string {
 	return ""
 }
 
+func getNestedSlice(obj map[string]interface{}, fields ...string) []string {
+	if m, ok := getNestedField(obj, fields...).([]interface{}); ok {
+		strSlice := make([]string, 0, len(m))
+		for _, v := range m {
+			if str, ok := v.(string); ok {
+				strSlice = append(strSlice, str)
+			}
+		}
+		return strSlice
+	}
+	return nil
+}
+
 func getNestedMap(obj map[string]interface{}, fields ...string) map[string]string {
 	if m, ok := getNestedField(obj, fields...).(map[string]interface{}); ok {
 		strMap := make(map[string]string, len(m))
@@ -174,6 +192,14 @@ func setNestedField(obj map[string]interface{}, value interface{}, fields ...str
 	m[fields[len(fields)-1]] = value
 }
 
+func setNestedSlice(obj map[string]interface{}, value []string, fields ...string) {
+	m := make([]interface{}, 0, len(value))
+	for _, v := range value {
+		m = append(m, v)
+	}
+	setNestedField(obj, m, fields...)
+}
+
 func setNestedMap(obj map[string]interface{}, value map[string]string, fields ...string) {
 	m := make(map[string]interface{}, len(value))
 	for k, v := range value {
@@ -189,11 +215,83 @@ func (u *Unstructured) setNestedField(value interface{}, fields ...string) {
 	setNestedField(u.Object, value, fields...)
 }
 
+func (u *Unstructured) setNestedSlice(value []string, fields ...string) {
+	if u.Object == nil {
+		u.Object = make(map[string]interface{})
+	}
+	setNestedSlice(u.Object, value, fields...)
+}
+
 func (u *Unstructured) setNestedMap(value map[string]string, fields ...string) {
 	if u.Object == nil {
 		u.Object = make(map[string]interface{})
 	}
 	setNestedMap(u.Object, value, fields...)
+}
+
+func extractOwnerReference(src interface{}) metatypes.OwnerReference {
+	v := src.(map[string]interface{})
+	return metatypes.OwnerReference{
+		Kind:       getNestedString(v, "kind"),
+		Name:       getNestedString(v, "name"),
+		APIVersion: getNestedString(v, "apiVersion"),
+		UID:        (types.UID)(getNestedString(v, "uid")),
+	}
+}
+
+func setOwnerReference(src metatypes.OwnerReference) map[string]interface{} {
+	ret := make(map[string]interface{})
+	setNestedField(ret, src.Kind, "kind")
+	setNestedField(ret, src.Name, "name")
+	setNestedField(ret, src.APIVersion, "apiVersion")
+	setNestedField(ret, string(src.UID), "uid")
+	return ret
+}
+
+func getOwnerReferences(object map[string]interface{}) ([]map[string]interface{}, error) {
+	field := getNestedField(object, "metadata", "ownerReferences")
+	if field == nil {
+		return nil, fmt.Errorf("cannot find field metadata.ownerReferences in %v", object)
+	}
+	ownerReferences, ok := field.([]map[string]interface{})
+	if ok {
+		return ownerReferences, nil
+	}
+	// TODO: This is hacky...
+	interfaces, ok := field.([]interface{})
+	if !ok {
+		return nil, fmt.Errorf("expect metadata.ownerReferences to be a slice in %#v", object)
+	}
+	ownerReferences = make([]map[string]interface{}, 0, len(interfaces))
+	for i := 0; i < len(interfaces); i++ {
+		r, ok := interfaces[i].(map[string]interface{})
+		if !ok {
+			return nil, fmt.Errorf("expect element metadata.ownerReferences to be a map[string]interface{} in %#v", object)
+		}
+		ownerReferences = append(ownerReferences, r)
+	}
+	return ownerReferences, nil
+}
+
+func (u *Unstructured) GetOwnerReferences() []metatypes.OwnerReference {
+	original, err := getOwnerReferences(u.Object)
+	if err != nil {
+		glog.V(6).Info(err)
+		return nil
+	}
+	ret := make([]metatypes.OwnerReference, 0, len(original))
+	for i := 0; i < len(original); i++ {
+		ret = append(ret, extractOwnerReference(original[i]))
+	}
+	return ret
+}
+
+func (u *Unstructured) SetOwnerReferences(references []metatypes.OwnerReference) {
+	var newReferences = make([]map[string]interface{}, 0, len(references))
+	for i := 0; i < len(references); i++ {
+		newReferences = append(newReferences, setOwnerReference(references[i]))
+	}
+	u.setNestedField(newReferences, "metadata", "ownerReferences")
 }
 
 func (u *Unstructured) GetAPIVersion() string {
@@ -313,6 +411,14 @@ func (u *Unstructured) GroupVersionKind() unversioned.GroupVersionKind {
 	}
 	gvk := gv.WithKind(u.GetKind())
 	return gvk
+}
+
+func (u *Unstructured) GetFinalizers() []string {
+	return getNestedSlice(u.Object, "metadata", "finalizers")
+}
+
+func (u *Unstructured) SetFinalizers(finalizers []string) {
+	u.setNestedSlice(finalizers, "metadata", "finalizers")
 }
 
 // UnstructuredList allows lists that do not have Golang structs
