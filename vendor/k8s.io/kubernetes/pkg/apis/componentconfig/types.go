@@ -151,6 +151,8 @@ type KubeletConfiguration struct {
 	// rootDirectory is the directory path to place kubelet files (volume
 	// mounts,etc).
 	RootDirectory string `json:"rootDirectory"`
+	// seccompProfileRoot is the directory path for seccomp profiles.
+	SeccompProfileRoot string `json:"seccompProfileRoot"`
 	// allowPrivileged enables containers to request privileged mode.
 	// Defaults to false.
 	AllowPrivileged bool `json:"allowPrivileged"`
@@ -273,6 +275,11 @@ type KubeletConfiguration struct {
 	// It uses this file as a lock to synchronize with other kubelet processes
 	// that may be running.
 	LockFilePath string `json:"lockFilePath"`
+	// ExitOnLockContention is a flag that signifies to the kubelet that it is running
+	// in "bootstrap" mode. This requires that 'LockFilePath' has been set.
+	// This will cause the kubelet to listen to inotify events on the lock file,
+	// releasing it and exiting when another process tries to open that file.
+	ExitOnLockContention bool `json:"exitOnLockContention"`
 	// configureCBR0 enables the kublet to configure cbr0 based on
 	// Node.Spec.PodCIDR.
 	ConfigureCBR0 bool `json:"configureCbr0"`
@@ -353,6 +360,8 @@ type KubeletConfiguration struct {
 	EvictionPressureTransitionPeriod unversioned.Duration `json:"evictionPressureTransitionPeriod,omitempty"`
 	// Maximum allowed grace period (in seconds) to use when terminating pods in response to a soft eviction threshold being met.
 	EvictionMaxPodGracePeriod int32 `json:"evictionMaxPodGracePeriod,omitempty"`
+	// Maximum number of pods per core. Cannot exceed MaxPods
+	PodsPerCore int32 `json:"podsPerCore"`
 }
 
 type KubeSchedulerConfiguration struct {
@@ -522,9 +531,16 @@ type KubeControllerManagerConfiguration struct {
 	ClusterName string `json:"clusterName"`
 	// clusterCIDR is CIDR Range for Pods in cluster.
 	ClusterCIDR string `json:"clusterCIDR"`
-	// allocateNodeCIDRs enables CIDRs for Pods to be allocated and set on the
-	// cloud provider.
+	// serviceCIDR is CIDR Range for Services in cluster.
+	ServiceCIDR string `json:"serviceCIDR"`
+	// NodeCIDRMaskSize is the mask size for node cidr in cluster.
+	NodeCIDRMaskSize int32 `json:"nodeCIDRMaskSize"`
+	// allocateNodeCIDRs enables CIDRs for Pods to be allocated and, if
+	// ConfigureCloudRoutes is true, to be set on the cloud provider.
 	AllocateNodeCIDRs bool `json:"allocateNodeCIDRs"`
+	// configureCloudRoutes enables CIDRs allocated with allocateNodeCIDRs
+	// to be configured on the cloud provider.
+	ConfigureCloudRoutes bool `json:"configureCloudRoutes"`
 	// rootCAFile is the root certificate authority will be included in service
 	// account's token secret. This must be a valid PEM-encoded CA bundle.
 	RootCAFile string `json:"rootCAFile"`
@@ -555,6 +571,9 @@ type VolumeConfiguration struct {
 	EnableHostPathProvisioning bool `json:"enableHostPathProvisioning"`
 	// persistentVolumeRecyclerConfiguration holds configuration for persistent volume plugins.
 	PersistentVolumeRecyclerConfiguration PersistentVolumeRecyclerConfiguration `json:"persitentVolumeRecyclerConfiguration"`
+	// volumePluginDir is the full path of the directory in which the flex
+	// volume plugin should search for additional third party volume plugins
+	FlexVolumePluginDir string `json:"flexVolumePluginDir"`
 }
 
 type PersistentVolumeRecyclerConfiguration struct {

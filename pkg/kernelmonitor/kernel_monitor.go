@@ -195,6 +195,8 @@ func defaultCondition() types.Condition {
 		Type:       KernelDeadlockCondition,
 		Status:     false,
 		Transition: time.Now(),
+		Reason:     "KernelHasNoDeadlock",
+		Message:    "kernel has no deadlock",
 	}
 }
 

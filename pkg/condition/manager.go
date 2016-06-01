@@ -125,7 +125,7 @@ func (c *conditionManager) sync() {
 	for i := range c.conditions {
 		conditions = append(conditions, problemutil.ConvertToAPICondition(c.conditions[i]))
 	}
-	if err := c.client.SetConditions(conditions, updateTimeout); err != nil {
+	if err := c.client.SetConditions(conditions); err != nil {
 		// The conditions will be updated again in future sync
 		glog.Errorf("failed to update node conditions: %v", err)
 		return
