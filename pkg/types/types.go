@@ -69,10 +69,10 @@ type Event struct {
 type Status struct {
 	// Source is the name of the problem daemon.
 	Source string `json:"source"`
-	// Event is the temporary node problem event. If the status is only a condition update,
-	// this field could be nil.
-	Event *Event `json:"event"`
-	// Condition is the permanent node condition. The problem daemon should always report the
-	// newest node condition in this field.
-	Condition Condition `json:"condition"`
+	// Events are temporary node problem events. If the status is only a condition update,
+	// this field could be nil. Notice that the events should be sorted from oldest to newest.
+	Events []Event `json:"events"`
+	// Conditions are the permanent node conditions. The problem daemon should always report the
+	// newest node conditions in this field.
+	Conditions []Condition `json:"conditions"`
 }

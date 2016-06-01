@@ -25,9 +25,26 @@ import (
 	"k8s.io/node-problem-detector/pkg/types"
 )
 
+const (
+	testSource     = "TestSource"
+	testConditionA = "TestConditionA"
+	testConditionB = "TestConditionB"
+)
+
 func TestGenerateStatus(t *testing.T) {
 	uptime := time.Unix(1000, 0)
-	initCondition := defaultCondition()
+	initConditions := []types.Condition{
+		{
+			Type:       testConditionA,
+			Status:     true,
+			Transition: time.Now(),
+		},
+		{
+			Type:       testConditionB,
+			Status:     false,
+			Transition: time.Now(),
+		},
+	}
 	logs := []*kerntypes.KernelLog{
 		{
 			Timestamp: 100000,
@@ -45,17 +62,21 @@ func TestGenerateStatus(t *testing.T) {
 		// Do not need Pattern because we don't do pattern match in this test
 		{
 			rule: kerntypes.Rule{
-				Type:   kerntypes.Perm,
-				Reason: "test reason",
+				Type:      kerntypes.Perm,
+				Condition: testConditionA,
+				Reason:    "test reason",
 			},
 			expected: types.Status{
-				Source: KernelMonitorSource,
-				Condition: types.Condition{
-					Type:       KernelDeadlockCondition,
-					Status:     true,
-					Transition: time.Unix(1000, 100000*1000),
-					Reason:     "test reason",
-					Message:    "test message 1\ntest message 2",
+				Source: testSource,
+				Conditions: []types.Condition{
+					{
+						Type:       testConditionA,
+						Status:     true,
+						Transition: time.Unix(1000, 100000*1000),
+						Reason:     "test reason",
+						Message:    "test message 1\ntest message 2",
+					},
+					initConditions[1],
 				},
 			},
 		},
@@ -65,20 +86,23 @@ func TestGenerateStatus(t *testing.T) {
 				Reason: "test reason",
 			},
 			expected: types.Status{
-				Source: KernelMonitorSource,
-				Event: &types.Event{
+				Source: testSource,
+				Events: []types.Event{{
 					Severity:  types.Warn,
 					Timestamp: time.Unix(1000, 100000*1000),
 					Reason:    "test reason",
 					Message:   "test message 1\ntest message 2",
-				},
-				Condition: initCondition,
+				}},
+				Conditions: initConditions,
 			},
 		},
 	} {
 		k := &kernelMonitor{
-			condition: initCondition,
-			uptime:    uptime,
+			config: MonitorConfig{
+				Source: testSource,
+			},
+			conditions: initConditions,
+			uptime:     uptime,
 		}
 		got := k.generateStatus(logs, test.rule)
 		if !reflect.DeepEqual(&test.expected, got) {

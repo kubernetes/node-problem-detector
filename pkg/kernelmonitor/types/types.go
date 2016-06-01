@@ -37,6 +37,10 @@ const (
 type Rule struct {
 	// Type is the type of matched kernel problem.
 	Type Type `json:"type"`
+	// Condition is the type of the condition the kernel problem triggered. Notice that
+	// the Condition field should be set only when the problem is permanent, or else the
+	// field will be ignored.
+	Condition string `json:"condition"`
 	// Reason is the short reason of the kernel problem.
 	Reason string `json:"reason"`
 	// Pattern is the regular expression to match the kernel problem in kernel log.

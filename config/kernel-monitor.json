@@ -1,6 +1,14 @@
 {
 	"logPath": "/log/kern.log",
 	"bufferSize": 10,
+	"source": "kernel-monitor",
+	"conditions": [
+		{
+			"type": "KernelDeadlock",
+			"reason": "KernelHasNoDeadlock",
+			"message": "kernel has no deadlock"
+		}
+	],
 	"rules": [
 		{
 			"type": "temporary",
@@ -14,17 +22,20 @@
 		},
 		{
 			"type": "permanent",
+			"condition": "KernelDeadlock",
 			"reason": "AUFSUmountHung",
 			"pattern": "task umount\\.aufs:\\w+ blocked for more than \\w+ seconds\\."
 		},
 		{
 			"type": "permanent",
+			"condition": "KernelDeadlock",
 			"reason": "DockerHung",
 			"pattern": "task docker:\\w+ blocked for more than \\w+ seconds\\."
 		},
 		{
 			"type": "permanent",
-			"reason": "KernelBug",
+			"condition": "KernelDeadlock",
+			"reason": "UnregisterNetDeviceIssue",
 			"pattern": "unregister_netdevice: waiting for \\w+ to become free. Usage count = \\d+"
 		}
 	]
