@@ -60,11 +60,7 @@ func (p *problemDetector) Run() error {
 	glog.Info("Problem detector started")
 	for {
 		select {
-		case status, ok := <-ch:
-			if !ok {
-				glog.Errorf("Monitor stopped unexpectedly")
-				break
-			}
+		case status := <-ch:
 			for _, event := range status.Events {
 				p.client.Eventf(util.ConvertToAPIEventType(event.Severity), status.Source, event.Reason, event.Message)
 			}

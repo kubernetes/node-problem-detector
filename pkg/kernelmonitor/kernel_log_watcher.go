@@ -71,6 +71,22 @@ func (k *kernelLogWatcher) Watch() (<-chan *types.KernelLog, error) {
 	if k.cfg.KernelLogPath != "" {
 		path = k.cfg.KernelLogPath
 	}
+	// NOTE(random-liu): This is a hack. KernelMonitor doesn't support some OS distros e.g. GCI. Ideally,
+	// KernelMonitor should only run on nodes with supported OS distro. However, NodeProblemDetector is
+	// running as DaemonSet, it has to be deployed on each node (There is no node affinity support for
+	// DaemonSet now #22205). If some nodes have unsupported OS distro e.g. the OS distro of master node
+	// in gke/gce is GCI, KernelMonitor will keep throwing out error, and NodeProblemDetector will be
+	// restarted again and again.
+	// To avoid this, we decide to add this temporarily hack. When KernelMonitor can't find the kernel
+	// log file, it will print a log and then return nil channel and no error. Since nil channel will
+	// always be blocked, the NodeProblemDetector will block forever.
+	// TODO(random-liu):
+	// 1. Add journald supports to support GCI.
+	// 2. Schedule KernelMonitor only on supported node (with node label and selector)
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		glog.Infof("kernel log %q is not found, kernel monitor doesn't support the os distro", path)
+		return nil, nil
+	}
 	start, err := k.getStartPoint(path)
 	if err != nil {
 		return nil, err
