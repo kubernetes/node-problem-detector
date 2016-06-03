@@ -65,10 +65,12 @@ func (p *problemDetector) Run() error {
 				glog.Errorf("Monitor stopped unexpectedly")
 				break
 			}
-			if status.Event != nil {
-				p.client.Eventf(util.ConvertToAPIEventType(status.Event.Severity), status.Source, status.Event.Reason, status.Event.Message)
+			for _, event := range status.Events {
+				p.client.Eventf(util.ConvertToAPIEventType(event.Severity), status.Source, event.Reason, event.Message)
 			}
-			p.conditionManager.UpdateCondition(status.Condition)
+			for _, condition := range status.Conditions {
+				p.conditionManager.UpdateCondition(condition)
+			}
 		}
 	}
 }

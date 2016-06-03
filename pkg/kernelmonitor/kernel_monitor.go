@@ -30,20 +30,16 @@ import (
 	"github.com/golang/glog"
 )
 
-// May want to add more conditions if we need finer grained node conditions.
-// TODO(random-liu): Make the kernel condition to be a predefined list, and make it configurable
-// in rule.
-const (
-	KernelDeadlockCondition = "KernelDeadlock"
-	KernelMonitorSource     = "kernel-monitor"
-)
-
 // MonitorConfig is the configuration of kernel monitor.
 type MonitorConfig struct {
 	// WatcherConfig is the configuration of kernel log watcher.
 	WatcherConfig
 	// BufferSize is the size (in lines) of the log buffer.
 	BufferSize int `json:"bufferSize"`
+	// Source is the source name of the kernel monitor
+	Source string `json:"source"`
+	// DefaultConditions are the default states of all the conditions kernel monitor should handle.
+	DefaultConditions []types.Condition `json:"conditions"`
 	// Rules are the rules kernel monitor will follow to parse the log file.
 	Rules []kerntypes.Rule `json:"rules"`
 }
@@ -58,21 +54,20 @@ type KernelMonitor interface {
 }
 
 type kernelMonitor struct {
-	watcher   KernelLogWatcher
-	buffer    LogBuffer
-	config    MonitorConfig
-	condition types.Condition
-	uptime    time.Time
-	logCh     <-chan *kerntypes.KernelLog
-	output    chan *types.Status
-	tomb      *util.Tomb
+	watcher    KernelLogWatcher
+	buffer     LogBuffer
+	config     MonitorConfig
+	conditions []types.Condition
+	uptime     time.Time
+	logCh      <-chan *kerntypes.KernelLog
+	output     chan *types.Status
+	tomb       *util.Tomb
 }
 
 // NewKernelMonitorOrDie create a new KernelMonitor, panic if error occurs.
 func NewKernelMonitorOrDie(configPath string) KernelMonitor {
 	k := &kernelMonitor{
-		condition: defaultCondition(),
-		tomb:      util.NewTomb(),
+		tomb: util.NewTomb(),
 	}
 	f, err := ioutil.ReadFile(configPath)
 	if err != nil {
@@ -82,6 +77,8 @@ func NewKernelMonitorOrDie(configPath string) KernelMonitor {
 	if err != nil {
 		panic(err)
 	}
+	// Initialize the default node conditions
+	k.conditions = initialConditions(k.config.DefaultConditions)
 	err = validateRules(k.config.Rules)
 	if err != nil {
 		panic(err)
@@ -120,7 +117,7 @@ func (k *kernelMonitor) Stop() {
 // monitorLoop is the main loop of kernel monitor.
 func (k *kernelMonitor) monitorLoop() {
 	defer k.tomb.Done()
-	k.output <- defaultStatus() // Update the default status
+	k.output <- k.initialStatus() // Update the initial status
 	for {
 		select {
 		case log := <-k.logCh:
@@ -153,27 +150,34 @@ func (k *kernelMonitor) generateStatus(logs []*kerntypes.KernelLog, rule kerntyp
 		messages = append(messages, log.Message)
 	}
 	message := concatLogs(messages)
-	var event *types.Event
+	var events []types.Event
 	if rule.Type == kerntypes.Temp {
 		// For temporary error only generate event
-		event = &types.Event{
+		events = append(events, types.Event{
 			Severity:  types.Warn,
 			Timestamp: timestamp,
 			Reason:    rule.Reason,
 			Message:   message,
-		}
+		})
 	} else {
 		// For permanent error changes the condition
-		k.condition.Type = KernelDeadlockCondition
-		k.condition.Status = true
-		k.condition.Transition = timestamp
-		k.condition.Reason = rule.Reason
-		k.condition.Message = message
+		for i := range k.conditions {
+			condition := &k.conditions[i]
+			if condition.Type == rule.Condition {
+				condition.Type = rule.Condition
+				condition.Status = true
+				condition.Transition = timestamp
+				condition.Reason = rule.Reason
+				condition.Message = message
+				break
+			}
+		}
 	}
 	return &types.Status{
-		Source:    KernelMonitorSource,
-		Event:     event,
-		Condition: k.condition,
+		Source: k.config.Source,
+		// TODO(random-liu): Aggregate events and conditions and then do periodically report.
+		Events:     events,
+		Conditions: k.conditions,
 	}
 }
 
@@ -182,22 +186,23 @@ func (k *kernelMonitor) generateTimestamp(timestamp int64) time.Time {
 	return k.uptime.Add(time.Duration(timestamp * int64(time.Microsecond)))
 }
 
-// defaultStatus returns the default status with default condition.
-func defaultStatus() *types.Status {
+// initialStatus returns the initial status with initial condition.
+func (k *kernelMonitor) initialStatus() *types.Status {
 	return &types.Status{
-		Source:    KernelMonitorSource,
-		Condition: defaultCondition(),
+		Source:     k.config.Source,
+		Conditions: k.conditions,
 	}
 }
 
-func defaultCondition() types.Condition {
-	return types.Condition{
-		Type:       KernelDeadlockCondition,
-		Status:     false,
-		Transition: time.Now(),
-		Reason:     "KernelHasNoDeadlock",
-		Message:    "kernel has no deadlock",
+func initialConditions(defaults []types.Condition) []types.Condition {
+	conditions := make([]types.Condition, len(defaults))
+	copy(conditions, defaults)
+	for i := range conditions {
+		// TODO(random-liu): Validate default conditions
+		conditions[i].Status = false
+		conditions[i].Transition = time.Now()
 	}
+	return conditions
 }
 
 // validateRules verifies whether the regular expressions in the rules are valid.
