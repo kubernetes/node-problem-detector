@@ -15,3 +15,5 @@
 FROM alpine:3.1
 MAINTAINER Random Liu <lantaol@google.com>
 ADD node-problem-detector /node-problem-detector
+ADD config /config
+ENTRYPOINT ["/node-problem-detector", "--kernel-monitor=/config/kernel-monitor.json"]
