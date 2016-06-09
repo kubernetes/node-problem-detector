@@ -17,7 +17,7 @@ spec:
         image: gcr.io/google_containers/node-problem-detector:v0.1
         imagePullPolicy: Always
         env:
-        # Config the host ip and port of apiserver.
+        # Config `host` and `port` of apiserver.
         - name: "KUBERNETES_SERVICE_HOST"
           value: "e2e-test-lantaol-master"
         - name: "KUBERNETES_SERVICE_PORT"
@@ -33,6 +33,7 @@ spec:
           readOnly: true
       volumes:
       - name: log
+        # Config `log` to your system log directory
         hostPath:
           path: /var/log/
       - name: config
