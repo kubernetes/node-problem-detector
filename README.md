@@ -71,12 +71,6 @@ spec:
       - name: node-problem-detector
         image: gcr.io/google_containers/node-problem-detector:v0.1
         imagePullPolicy: Always
-        env:
-        # Config `host` and `port` of apiserver.
-        - name: "KUBERNETES_SERVICE_HOST"
-          value: "master-node-host-name"
-        - name: "KUBERNETES_SERVICE_PORT"
-          value: "443"
         securityContext:
           privileged: true
         volumeMounts:
@@ -89,10 +83,7 @@ spec:
         hostPath:
           path: /var/log/
 ```
-* Edit node-problem-detector.yaml to fit your environment: 
-  * Set environent variables `KUBERNETES_SERVICE_HOST` and `KUBERNETES_SERVICE_PORT`
-    to apiserver host ip and port.
-  * Set `log` volueme to your system log diretory. (Used by KernelMonitor)
+* Edit node-problem-detector.yaml to fit your environment: Set `log` volueme to your system log diretory. (Used by KernelMonitor)
 * Create the DaemonSet with `kubectl create -f node-problem-detector.yaml`
 * If needed, you can use [ConfigMap](http://kubernetes.io/docs/user-guide/configmap/)
 to overwrite the `config/`.
