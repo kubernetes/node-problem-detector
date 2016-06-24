@@ -1,5 +1,7 @@
 {
 	"logPath": "/log/kern.log",
+	"lookback": "10m",
+	"startPattern": "Initializing cgroup subsys cpuset",
 	"bufferSize": 10,
 	"source": "kernel-monitor",
 	"conditions": [
@@ -19,6 +21,16 @@
 			"type": "temporary",
 			"reason": "TaskHung",
 			"pattern": "task \\S+:\\w+ blocked for more than \\w+ seconds\\."
+		},
+		{
+			"type": "temporary",
+			"reason": "KernelPanic",
+			"pattern": "BUG: unable to handle kernel NULL pointer dereference at .*"
+		},
+		{
+			"type": "temporary",
+			"reason": "KernelPanic",
+			"pattern": "divide error: 0000 \\[#\\d+\\] SMP"
 		},
 		{
 			"type": "permanent",

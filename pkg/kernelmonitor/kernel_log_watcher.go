@@ -18,7 +18,9 @@ package kernelmonitor
 
 import (
 	"bufio"
+	"fmt"
 	"os"
+	"time"
 
 	"k8s.io/node-problem-detector/pkg/kernelmonitor/translator"
 	"k8s.io/node-problem-detector/pkg/kernelmonitor/types"
@@ -26,6 +28,7 @@ import (
 
 	"github.com/golang/glog"
 	"github.com/hpcloud/tail"
+	utilclock "github.com/pivotal-golang/clock"
 )
 
 const (
@@ -34,7 +37,12 @@ const (
 
 // WatcherConfig is the configuration of kernel log watcher.
 type WatcherConfig struct {
+	// KernelLogPath is the path to the kernel log
 	KernelLogPath string `json:"logPath, omitempty"`
+	// StartPattern is the pattern of the start line
+	StartPattern string `json:"startPattern, omitempty"`
+	// Lookback is the time kernel watcher looks up
+	Lookback string `json:"lookback, omitempty"`
 }
 
 // KernelLogWatcher watches and translates the kernel log. Once there is new log line,
@@ -53,6 +61,7 @@ type kernelLogWatcher struct {
 	tl    *tail.Tail
 	logCh chan *types.KernelLog
 	tomb  *util.Tomb
+	clock utilclock.Clock
 }
 
 // NewKernelLogWatcher creates a new kernel log watcher.
@@ -63,6 +72,7 @@ func NewKernelLogWatcher(cfg WatcherConfig) KernelLogWatcher {
 		tomb:  util.NewTomb(),
 		// A capacity 1000 buffer should be enough
 		logCh: make(chan *types.KernelLog, 1000),
+		clock: utilclock.NewClock(),
 	}
 }
 
@@ -144,39 +154,46 @@ func (k *kernelLogWatcher) watchLoop() {
 	}
 }
 
-// getStartPoint parses the newest kernel log file and try to find the latest reboot point.
-// Currently we rely on the kernel log timestamp to find the reboot point. The basic idea
-// is straight forward: In the whole lifecycle of a node, the kernel log timestamp should
-// always increase, only when it is reboot, the timestamp will decrease. We just parse the
-// log and find the latest timestamp decreasing, then it should be the latest reboot point.
-// TODO(random-liu): A drawback is that if the node is started long time ago, we'll only get
-// logs in the newest kernel log file. We may want to improve this in the future.
+// getStartPoint finds the start point to parse the log. The start point is either
+// the line at (now - lookback) or the first line of kernel log.
+// Notice that, kernel log watcher doesn't look back to the rolled out logs.
 func (k *kernelLogWatcher) getStartPoint(path string) (int64, error) {
 	f, err := os.Open(path)
 	if err != nil {
-		return -1, err
+		return 0, fmt.Errorf("failed to open file %q: %v", path, err)
 	}
 	defer f.Close()
+	lookback, err := parseDuration(k.cfg.Lookback)
+	if err != nil {
+		return 0, fmt.Errorf("failed to parse duration %q: %v", k.cfg.Lookback, err)
+	}
 	start := int64(0)
-	total := 0
-	lastTimestamp := int64(0)
 	reader := bufio.NewReader(f)
 	done := false
 	for !done {
 		line, err := reader.ReadString('\n')
 		if err != nil {
+			if len(line) == 0 {
+				// No need to continue parsing if nothing is read
+				break
+			}
 			done = true
 		}
-		total += len(line)
 		log, err := k.trans.Translate(line)
 		if err != nil {
 			glog.Infof("unable to parse line: %q, %v", line, err)
-			continue
+		} else if k.clock.Since(log.Timestamp) <= lookback {
+			break
 		}
-		if log.Timestamp < lastTimestamp {
-			start = int64(total - len(line))
-		}
-		lastTimestamp = log.Timestamp
+		start += int64(len(line))
 	}
 	return start, nil
+}
+
+func parseDuration(s string) (time.Duration, error) {
+	// If the duration is not configured, just return 0 by default
+	if s == "" {
+		return 0, nil
+	}
+	return time.ParseDuration(s)
 }

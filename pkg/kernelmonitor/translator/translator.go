@@ -18,8 +18,8 @@ package translator
 
 import (
 	"fmt"
-	"strconv"
 	"strings"
+	"time"
 
 	"k8s.io/node-problem-detector/pkg/kernelmonitor/types"
 )
@@ -41,11 +41,7 @@ func NewDefaultTranslator() Translator {
 }
 
 func (t *defaultTranslator) Translate(line string) (*types.KernelLog, error) {
-	timestr, message, err := parseLine(line)
-	if err != nil {
-		return nil, err
-	}
-	timestamp, err := parseTimestamp(timestr)
+	timestamp, message, err := t.parseLine(line)
 	if err != nil {
 		return nil, err
 	}
@@ -55,32 +51,35 @@ func (t *defaultTranslator) Translate(line string) (*types.KernelLog, error) {
 	}, nil
 }
 
-func parseLine(line string) (string, string, error) {
+var (
+	timestampLen  = 15
+	messagePrefix = "]"
+)
+
+func (t *defaultTranslator) parseLine(line string) (time.Time, string, error) {
+	// Trim the spaces to make sure timestamp could be found
+	line = strings.TrimSpace(line)
+	if len(line) < timestampLen {
+		return time.Time{}, "", fmt.Errorf("the line is too short: %q", line)
+	}
 	// Example line: Jan  1 00:00:00 hostname kernel: [0.000000] component: log message
-	timestampPrefix := "kernel: ["
-	timestampSuffix := "]"
-	idx := strings.Index(line, timestampPrefix)
-	if idx == -1 {
-		return "", "", fmt.Errorf("can't find timestamp prefix %q in line %q", timestampPrefix, line)
+	now := time.Now()
+	// There is no time zone information in kernel log timestamp, apply the current time
+	// zone.
+	timestamp, err := time.ParseInLocation(time.Stamp, line[:timestampLen], time.Local)
+	if err != nil {
+		return time.Time{}, "", fmt.Errorf("error parsing timestamp in line %q: %v", line, err)
 	}
-	line = line[idx+len(timestampPrefix):]
+	// There is no year information in kernel log timestamp, apply the current year.
+	// This could go wrong during looking back phase after kernel monitor is started,
+	// and the old logs are generated in old year.
+	timestamp = timestamp.AddDate(now.Year(), 0, 0)
 
-	idx = strings.Index(line, timestampSuffix)
-	if idx == -1 {
-		return "", "", fmt.Errorf("can't find timestamp suffix %q in line %q", timestampSuffix, line)
+	loc := strings.Index(line, messagePrefix)
+	if loc == -1 {
+		return timestamp, "", fmt.Errorf("can't find message prefix %q in line %q", messagePrefix, line)
 	}
-
-	timestamp := strings.Trim(line[:idx], " ")
-	message := strings.Trim(line[idx+1:], " ")
+	message := strings.Trim(line[loc+1:], " ")
 
 	return timestamp, message, nil
-}
-
-func parseTimestamp(timestamp string) (int64, error) {
-	f, err := strconv.ParseFloat(timestamp, 64)
-	if err != nil {
-		return 0, err
-	}
-	// seconds to microseconds
-	return int64(f * 1000000), nil
 }

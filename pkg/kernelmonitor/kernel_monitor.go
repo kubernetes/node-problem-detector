@@ -58,7 +58,6 @@ type kernelMonitor struct {
 	buffer     LogBuffer
 	config     MonitorConfig
 	conditions []types.Condition
-	uptime     time.Time
 	logCh      <-chan *kerntypes.KernelLog
 	output     chan *types.Status
 	tomb       *util.Tomb
@@ -77,8 +76,6 @@ func NewKernelMonitorOrDie(configPath string) KernelMonitor {
 	if err != nil {
 		panic(err)
 	}
-	// Initialize the default node conditions
-	k.conditions = initialConditions(k.config.DefaultConditions)
 	err = validateRules(k.config.Rules)
 	if err != nil {
 		panic(err)
@@ -89,8 +86,6 @@ func NewKernelMonitorOrDie(configPath string) KernelMonitor {
 	if err != nil {
 		panic(err)
 	}
-	k.uptime = time.Now().Add(time.Duration(-info.Uptime * int64(time.Second)))
-	glog.Infof("Got system boot time: %v", k.uptime)
 	k.watcher = NewKernelLogWatcher(k.config.WatcherConfig)
 	k.buffer = NewLogBuffer(k.config.BufferSize)
 	// A 1000 size channel should be big enough.
@@ -117,22 +112,11 @@ func (k *kernelMonitor) Stop() {
 // monitorLoop is the main loop of kernel monitor.
 func (k *kernelMonitor) monitorLoop() {
 	defer k.tomb.Done()
-	k.output <- k.initialStatus() // Update the initial status
+	k.initializeStatus()
 	for {
 		select {
 		case log := <-k.logCh:
-			// Once there is new log, kernel monitor will push it into the log buffer and try
-			// to match each rule. If any rule is matched, kernel monitor will report a status.
-			k.buffer.Push(log)
-			for _, rule := range k.config.Rules {
-				matched := k.buffer.Match(rule.Pattern)
-				if len(matched) == 0 {
-					continue
-				}
-				status := k.generateStatus(matched, rule)
-				glog.Infof("New status generated: %+v", status)
-				k.output <- status
-			}
+			k.parseLog(log)
 		case <-k.tomb.Stopping():
 			k.watcher.Stop()
 			glog.Infof("Kernel monitor stopped")
@@ -141,15 +125,33 @@ func (k *kernelMonitor) monitorLoop() {
 	}
 }
 
+// parseLog parses one log line.
+func (k *kernelMonitor) parseLog(log *kerntypes.KernelLog) {
+	// Once there is new log, kernel monitor will push it into the log buffer and try
+	// to match each rule. If any rule is matched, kernel monitor will report a status.
+	k.buffer.Push(log)
+	if matched := k.buffer.Match(k.config.StartPattern); len(matched) != 0 {
+		// Reset the condition if a start log shows up.
+		glog.Infof("Found start log %q, re-initialize the status", generateMessage(matched))
+		k.initializeStatus()
+		return
+	}
+	for _, rule := range k.config.Rules {
+		matched := k.buffer.Match(rule.Pattern)
+		if len(matched) == 0 {
+			continue
+		}
+		status := k.generateStatus(matched, rule)
+		glog.Infof("New status generated: %+v", status)
+		k.output <- status
+	}
+}
+
 // generateStatus generates status from the logs.
 func (k *kernelMonitor) generateStatus(logs []*kerntypes.KernelLog, rule kerntypes.Rule) *types.Status {
 	// We use the timestamp of the first log line as the timestamp of the status.
-	timestamp := k.generateTimestamp(logs[0].Timestamp)
-	messages := []string{}
-	for _, log := range logs {
-		messages = append(messages, log.Message)
-	}
-	message := concatLogs(messages)
+	timestamp := logs[0].Timestamp
+	message := generateMessage(logs)
 	var events []types.Event
 	if rule.Type == kerntypes.Temp {
 		// For temporary error only generate event
@@ -181,14 +183,13 @@ func (k *kernelMonitor) generateStatus(logs []*kerntypes.KernelLog, rule kerntyp
 	}
 }
 
-// generateTimestamp converts the kernel log time to real time.
-func (k *kernelMonitor) generateTimestamp(timestamp int64) time.Time {
-	return k.uptime.Add(time.Duration(timestamp * int64(time.Microsecond)))
-}
-
-// initialStatus returns the initial status with initial condition.
-func (k *kernelMonitor) initialStatus() *types.Status {
-	return &types.Status{
+// initializeStatus initializes the internal condition and also reports it to the node problem detector.
+func (k *kernelMonitor) initializeStatus() {
+	// Initialize the default node conditions
+	k.conditions = initialConditions(k.config.DefaultConditions)
+	glog.Infof("Initalize condition generated: %+v", k.conditions)
+	// Update the initial status
+	k.output <- &types.Status{
 		Source:     k.config.Source,
 		Conditions: k.conditions,
 	}
@@ -214,4 +215,12 @@ func validateRules(rules []kerntypes.Rule) error {
 		}
 	}
 	return nil
+}
+
+func generateMessage(logs []*kerntypes.KernelLog) string {
+	messages := []string{}
+	for _, log := range logs {
+		messages = append(messages, log.Message)
+	}
+	return concatLogs(messages)
 }

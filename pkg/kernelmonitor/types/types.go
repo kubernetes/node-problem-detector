@@ -16,10 +16,14 @@ limitations under the License.
 
 package types
 
+import (
+	"time"
+)
+
 // KernelLog is the log item returned by translator. It's very easy to extend this
 // to support other log monitoring, such as docker log monitoring.
 type KernelLog struct {
-	Timestamp int64 // microseconds since kernel boot
+	Timestamp time.Time
 	Message   string
 }
 

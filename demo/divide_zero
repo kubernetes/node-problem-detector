@@ -1,0 +1,36 @@
+divide error: 0000 [#1] SMP 
+Modules linked in: dm_thin_pool dm_persistent_data dm_bio_prison dm_bufio libcrc32c xt_statistic xt_nat xt_mark ipt_REJECT xt_tcpudp xt_comment loop veth binfmt_misc sch_htb ipt_MASQUERADE iptable_nat nf_conntrack_ipv4 nf_defrag_ipv4 nf_nat_ipv4 xt_addrtype iptable_filter ip_tables x_tables nf_nat nf_conntrack bridge stp llc aufs(C) nfsd auth_rpcgss oid_registry nfs_acl nfs lockd fscache sunrpc crc32_pclmul ppdev aesni_intel aes_x86_64 lrw gf128mul glue_helper ablk_helper cryptd evdev psmouse serio_raw parport_pc ttm parport drm_kms_helper drm i2c_piix4 i2c_core processor button thermal_sys autofs4 ext4 crc16 mbcache jbd2 btrfs xor raid6_pq dm_mod ata_generic crct10dif_pclmul crct10dif_common xen_netfront xen_blkfront crc32c_intel ata_piix libata scsi_mod floppy
+CPU: 1 PID: 1853 Comm: docker Tainted: G         C    3.16.0-4-amd64 #1 Debian 3.16.7-ckt20-1+deb8u4
+Hardware name: Xen HVM domU, BIOS 4.2.amazon 05/12/2016
+task: ffff8801e3657470 ti: ffff8801e47a8000 task.ti: ffff8801e47a8000
+RIP: 0010:[<ffffffffa0577200>]  [<ffffffffa0577200>] pool_io_hints+0xf0/0x1a0 [dm_thin_pool]
+RSP: 0018:ffff8801e47abbc8  EFLAGS: 00010246
+RAX: 0000000000010000 RBX: ffff8801e4736840 RCX: ffff8801c2662000
+RDX: 0000000000000000 RSI: 0000000000000000 RDI: ffff8801e48c4080
+RBP: ffff8801e47abc10 R08: 0000000000000000 R09: 0000000000000000
+R10: 0000000000000000 R11: 0000000000000246 R12: ffffffffa057f5c8
+R13: 0000000000000001 R14: ffff8801e47abc90 R15: 0000000000000131
+FS:  00007ff465daf700(0000) GS:ffff8801efc20000(0000) knlGS:0000000000000000
+CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+CR2: 000000c207f1c3fb CR3: 00000001e2a5a000 CR4: 00000000001406e0
+Stack:
+ ffffffff810a7c71 0000000043e06d70 ffffc9000115f040 0000000000000000
+ 0000000043e06d70 ffffc9000115f040 0000000000000000 ffff8800e9da3800
+ ffffffffa00ba615 000fffffffffffff 00000000ffffffff 00000000000000ff
+Call Trace:
+ [<ffffffff810a7c71>] ? complete+0x31/0x40
+ [<ffffffffa00ba615>] ? dm_calculate_queue_limits+0x95/0x130 [dm_mod]
+ [<ffffffffa00b7ec3>] ? dm_swap_table+0x73/0x320 [dm_mod]
+ [<ffffffffa00b0101>] ? crc_t10dif_generic+0x101/0x1000 [crct10dif_common]
+ [<ffffffffa00bd0d0>] ? table_load+0x330/0x330 [dm_mod]
+ [<ffffffffa00bd165>] ? dev_suspend+0x95/0x220 [dm_mod]
+ [<ffffffffa00bda55>] ? ctl_ioctl+0x205/0x430 [dm_mod]
+ [<ffffffffa00bdc8f>] ? dm_ctl_ioctl+0xf/0x20 [dm_mod]
+ [<ffffffff811ba99f>] ? do_vfs_ioctl+0x2cf/0x4b0
+ [<ffffffff810d485e>] ? SyS_futex+0x6e/0x150
+ [<ffffffff811bac01>] ? SyS_ioctl+0x81/0xa0
+ [<ffffffff81513ecd>] ? system_call_fast_compare_end+0x10/0x15
+Code: 0f 84 a5 00 00 00 3b 96 10 06 00 00 49 c7 c4 c8 f5 57 a0 77 26 8b b6 18 06 00 00 89 d0 c1 e0 09 48 39 f0 0f 82 92 00 00 00 31 d2 <48> f7 f6 85 d2 74 2d 49 c7 c4 70 f5 57 a0 66 90 48 89 e6 e8 28 
+RIP  [<ffffffffa0577200>] pool_io_hints+0xf0/0x1a0 [dm_thin_pool]
+ RSP <ffff8801e47abbc8>
+---[ end trace fcce781faebae9ce ]---

@@ -31,8 +31,8 @@ rebootAll() {
 
 reboot() {
   LATEST=`gcloud compute ssh -n root@$1 --zone=$ZONE "tail -1 $KERNLOG"`
-  PREFIX=`echo $LATEST | cut -d "[" -f 1 -`"[0.000000]"
-  runCmd "gcloud compute ssh -n root@$1 --zone=$ZONE \"echo '$PREFIX reboot' >> $KERNLOG\""
+  PREFIX=`echo $LATEST | cut -d "]" -f 1 -`"]"
+  runCmd "gcloud compute ssh -n root@$1 --zone=$ZONE \"echo '$PREFIX Initializing cgroup subsys cpuset' >> $KERNLOG\""
 }
 
 case $1 in
