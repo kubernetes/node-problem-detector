@@ -18,7 +18,9 @@ package problemclient
 
 import (
 	"encoding/json"
+	"flag"
 	"fmt"
+	"net"
 	"os"
 
 	"k8s.io/kubernetes/pkg/api"
@@ -28,6 +30,12 @@ import (
 	client "k8s.io/kubernetes/pkg/client/unversioned"
 	"k8s.io/kubernetes/pkg/types"
 	"k8s.io/kubernetes/pkg/util"
+	nodeutil "k8s.io/kubernetes/pkg/util/node"
+)
+
+var (
+	hostnameOverride   = flag.String("hostname-override", "", "If non-empty, will use this string as identification instead of the actual hostname. Default: \"\". ")
+	insecureConnection = flag.Bool("insecure-connection", false, "If true, node problem detector will skip TLS verification while connecting with apiserver. Default: false.")
 )
 
 // Client is the interface of problem client
@@ -51,17 +59,22 @@ type nodeProblemClient struct {
 // NewClientOrDie creates a new problem client, panics if error occurs.
 func NewClientOrDie() Client {
 	c := &nodeProblemClient{clock: util.RealClock{}}
-	cfg, err := restclient.InClusterConfig()
-	if err != nil {
-		panic(err)
+	var cfg *restclient.Config
+	if !*insecureConnection {
+		var err error
+		cfg, err = restclient.InClusterConfig()
+		if err != nil {
+			panic(err)
+		}
+	} else {
+		cfg = &restclient.Config{
+			Host:     getClusterHostOrDie(),
+			Insecure: true,
+		}
 	}
 	// TODO(random-liu): Set QPS Limit
 	c.client = client.NewOrDie(cfg)
-	// TODO(random-liu): Get node name from cloud provider
-	c.nodeName, err = os.Hostname()
-	if err != nil {
-		panic(err)
-	}
+	c.nodeName = nodeutil.GetHostname(*hostnameOverride)
 	c.nodeRef = getNodeRef(c.nodeName)
 	c.recorders = make(map[string]record.EventRecorder)
 	return c
@@ -130,4 +143,14 @@ func getNodeRef(nodeName string) *api.ObjectReference {
 		UID:       types.UID(nodeName),
 		Namespace: "",
 	}
+}
+
+// getClusterHostOrDie gets the host name from the environment variables KUBERNETES_SERVICE_HOST
+// and KUBERNETES_SERVICE_PORT. If any of them is not set, the function will panic.
+func getClusterHostOrDie() string {
+	host, port := os.Getenv("KUBERNETES_SERVICE_HOST"), os.Getenv("KUBERNETES_SERVICE_PORT")
+	if len(host) == 0 || len(port) == 0 {
+		panic(fmt.Errorf("unable to load in-cluster configuration, KUBERNETES_SERVICE_HOST and KUBERNETES_SERVICE_PORT must be defined"))
+	}
+	return "https://" + net.JoinHostPort(host, port)
 }

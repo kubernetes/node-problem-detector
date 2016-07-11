@@ -24,7 +24,7 @@ import (
 )
 
 var (
-	kernelMonitorConfigPath = flag.String("kernel-monitor", "/config/kernel_monitor", "The path to the kernel monitor config file")
+	kernelMonitorConfigPath = flag.String("kernel-monitor", "/config/kernel_monitor.json", "The path to the kernel monitor config file")
 )
 
 func main() {
