@@ -689,6 +689,11 @@
 			"Rev": "e7a13ac2adcfeb6352f895f1e673dddaa3fa496d"
 		},
 		{
+			"ImportPath": "k8s.io/kubernetes/pkg/util/node",
+			"Comment": "v1.3.0-alpha.4-688-ge7a13ac",
+			"Rev": "e7a13ac2adcfeb6352f895f1e673dddaa3fa496d"
+		},
+		{
 			"ImportPath": "k8s.io/kubernetes/pkg/util/parsers",
 			"Comment": "v1.3.0-alpha.4-688-ge7a13ac",
 			"Rev": "e7a13ac2adcfeb6352f895f1e673dddaa3fa496d"

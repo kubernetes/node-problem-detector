@@ -88,6 +88,15 @@ spec:
 * If needed, you can use [ConfigMap](http://kubernetes.io/docs/user-guide/configmap/)
 to overwrite the `config/`.
 
+# Flags
+node-problem-detector has several flags:
+* `--kernel-monitor`: The path to the kernel monitor config file.
+ Default: `/config/kernel_monitor.json`
+* `--hostname-override`: If non-empty, node problem detector will use
+  the specified hostname as node identification. Default: ""
+* `--insecure-connection`: If true, node problem detector will skip TLS
+verification while connecting with apiserver. Default: false.
+
 # Links
 * [Design Doc](https://docs.google.com/document/d/1cs1kqLziG-Ww145yN6vvlKguPbQQ0psrSBnEqpy0pzE/edit?usp=sharing)
 * [Slides](https://docs.google.com/presentation/d/1bkJibjwWXy8YnB5fna6p-Ltiy-N5p01zUsA22wCNkXA/edit?usp=sharing)
