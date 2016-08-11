@@ -66,13 +66,21 @@ metadata:
 spec:
   template:
     spec:
-      hostNetwork: true
       containers:
       - name: node-problem-detector
-        image: gcr.io/google_containers/node-problem-detector:v0.1
+        image: gcr.io/google_containers/node-problem-detector:v0.2
         imagePullPolicy: Always
         securityContext:
           privileged: true
+        env:
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
         volumeMounts:
         - name: log
           mountPath: /log

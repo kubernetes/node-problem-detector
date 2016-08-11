@@ -57,11 +57,15 @@ func NewClientOrDie() Client {
 	}
 	// TODO(random-liu): Set QPS Limit
 	c.client = client.NewOrDie(cfg)
-	// TODO(random-liu): Get node name from cloud provider
-	c.nodeName, err = os.Hostname()
+	// Get node name from the current pod.
+	pod, err := c.client.Pods(os.Getenv("POD_NAMESPACE")).Get(os.Getenv("POD_NAME"))
 	if err != nil {
 		panic(err)
 	}
+	if pod.Spec.NodeName == "" {
+		panic("empty node name")
+	}
+	c.nodeName = pod.Spec.NodeName
 	c.nodeRef = getNodeRef(c.nodeName)
 	c.recorders = make(map[string]record.EventRecorder)
 	return c
