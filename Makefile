@@ -1,6 +1,6 @@
 all: push
 
-# See pod.yaml for the version currently running-- bump this ahead before rebuilding!
+# See node-problem-detector.yaml for the version currently running-- bump this ahead before rebuilding!
 TAG = v0.2
 
 PROJ = google_containers
