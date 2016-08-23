@@ -57,15 +57,23 @@ func NewClientOrDie() Client {
 	}
 	// TODO(random-liu): Set QPS Limit
 	c.client = client.NewOrDie(cfg)
-	// Get node name from the current pod.
-	pod, err := c.client.Pods(os.Getenv("POD_NAMESPACE")).Get(os.Getenv("POD_NAME"))
-	if err != nil {
-		panic(err)
+	// Get node name from environment variable NODE_NAME
+	// By default, assume that the NODE_NAME env should have been set with
+	// downward api. We prefer it because sometimes the hostname returned
+	// by os.Hostname is not right because:
+	// 1. User may override the hostname.
+	// 2. For some cloud providers, os.Hostname is different from the real hostname.
+	c.nodeName = os.Getenv("NODE_NAME")
+	if c.nodeName == "" {
+		// For backward compatibility. If the env is not set, get the hostname
+		// from os.Hostname(). This may not work for all configurations and
+		// environments.
+		var err error
+		c.nodeName, err = os.Hostname()
+		if err != nil {
+			panic("empty node name")
+		}
 	}
-	if pod.Spec.NodeName == "" {
-		panic("empty node name")
-	}
-	c.nodeName = pod.Spec.NodeName
 	c.nodeRef = getNodeRef(c.nodeName)
 	c.recorders = make(map[string]record.EventRecorder)
 	return c
