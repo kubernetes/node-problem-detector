@@ -1,0 +1,36 @@
+BUG: unable to handle kernel NULL pointer dereference at 0000000000000078
+IP: [<ffffffff810a2c38>] pick_next_task_fair+0x6b8/0x820
+PGD 0 
+Oops: 0000 [#1] SMP 
+Modules linked in: binfmt_misc ipt_REJECT xt_nat xt_tcpudp xt_multiport veth xt_conntrack ipt_MASQUERADE iptable_nat nf_conntrack_ipv4 nf_defrag_ipv4 nf_nat_ipv4 xt_addrtype iptable_filter ip_tables x_tables nf_nat nf_conntrack bridge stp llc aufs(C) cpufreq_conservative cpufreq_powersave cpufreq_stats cpufreq_userspace xfs libcrc32c x86_pkg_temp_thermal intel_powerclamp intel_rapl coretemp kvm_intel kvm crc32_pclmul iTCO_wdt iTCO_vendor_support aesni_intel aes_x86_64 lrw gf128mul ttm glue_helper evdev ablk_helper cryptd drm_kms_helper drm serio_raw shpchp i2c_i801 lpc_ich mfd_core wmi ipmi_msghandler processor tpm_infineon thermal_sys tpm_tis tpm acpi_pad button autofs4 ext4 crc16 mbcache jbd2 btrfs xor raid6_pq dm_mod raid1 md_mod sg sd_mod crc_t10dif crct10dif_generic crct10dif_pclmul crct10dif_common crc32c_intel ehci_pci ahci igb libahci xhci_hcd ehci_hcd i2c_algo_bit i2c_core libata dca ptp usbcore scsi_mod pps_core usb_common
+CPU: 11 PID: 63 Comm: ksoftirqd/11 Tainted: G         C    3.16.0-4-amd64 #1 Debian 3.16.7-ckt20-1+deb8u3
+Hardware name: ASUSTeK COMPUTER INC. Z10PA-U8 Series/Z10PA-U8 Series, BIOS 0601 06/26/2015
+task: ffff881fe1d0cb60 ti: ffff881fe1d18000 task.ti: ffff881fe1d18000
+RIP: 0010:[<ffffffff810a2c38>]  [<ffffffff810a2c38>] pick_next_task_fair+0x6b8/0x820
+RSP: 0018:ffff881fe1d1bde0  EFLAGS: 00010046
+RAX: 0000000000000000 RBX: ffff881fa84a3580 RCX: 0000000000000000
+RDX: 0000000000000001 RSI: ffff881fb5837628 RDI: ffff881d1fab2308
+RBP: ffff881fb5837600 R08: 0000000000000000 R09: 000000000000b9dc
+R10: 0000000000000004 R11: 0000000000000005 R12: 0000000000000000
+R13: 0000000000000000 R14: 0000000000000000 R15: ffff88207fd72f00
+FS:  0000000000000000(0000) GS:ffff88207fd60000(0000) knlGS:0000000000000000
+CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+CR2: 0000000000000078 CR3: 0000000001813000 CR4: 00000000001407e0
+Stack:
+ ffff881d1fab2290 000000018109ef94 ffff881fe1d0cb60 0000000000012f00
+ ffff88207fd72f78 ffffffff8101b975 ffff881fe1d0cfb8 ffff881fe1d0cb60
+ ffff88207fd72f00 000000000000000b 0000000000000000 0000000000000000
+Call Trace:
+ [<ffffffff8101b975>] ? sched_clock+0x5/0x10
+ [<ffffffff8150fed6>] ? __schedule+0x106/0x700
+ [<ffffffff8108ea86>] ? smpboot_thread_fn+0xc6/0x190
+ [<ffffffff8108e9c0>] ? SyS_setgroups+0x170/0x170
+ [<ffffffff8108805d>] ? kthread+0xbd/0xe0
+ [<ffffffff81087fa0>] ? kthread_create_on_node+0x180/0x180
+ [<ffffffff81513c58>] ? ret_from_fork+0x58/0x90
+ [<ffffffff81087fa0>] ? kthread_create_on_node+0x180/0x180
+Code: 49 8b 7c 24 78 48 39 fd 74 2f 44 8b 73 68 45 8b 6c 24 68 45 39 ee 0f 8e c7 00 00 00 48 89 ef 48 89 de e8 fc 91 ff ff 48 8b 5b 70 <49> 8b 7c 24 78 48 8b 6b 78 48 39 fd 75 d1 48 85 ed 74 cc 4c 89 
+RIP  [<ffffffff810a2c38>] pick_next_task_fair+0x6b8/0x820
+ RSP <ffff881fe1d1bde0>
+CR2: 0000000000000078
+---[ end trace 61f6991dc9ee5be0 ]---

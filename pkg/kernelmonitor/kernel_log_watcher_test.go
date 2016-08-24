@@ -24,49 +24,72 @@ import (
 	"time"
 
 	"k8s.io/node-problem-detector/pkg/kernelmonitor/types"
+
+	"github.com/pivotal-golang/clock/fakeclock"
 )
 
 func TestGetStartPoint(t *testing.T) {
+	// now is a fake time
+	now := time.Date(time.Now().Year(), time.January, 2, 3, 4, 5, 0, time.Local)
+	fakeClock := fakeclock.NewFakeClock(now)
 	testCases := []struct {
-		log  string
-		logs []types.KernelLog
-		err  bool
+		log      string
+		logs     []types.KernelLog
+		lookback string
 	}{
 		{
 			// The start point is at the head of the log file.
-			log: `kernel: [1.000000] 1
-			kernel: [2.000000] 2
-			kernel: [3.000000] 3
+			log: `Jan  2 03:04:05 kernel: [0.000000] 1
+			Jan  2 03:04:06 kernel: [1.000000] 2
+			Jan  2 03:04:07 kernel: [2.000000] 3
 			`,
 			logs: []types.KernelLog{
 				{
-					Timestamp: 1000000,
+					Timestamp: now,
 					Message:   "1",
 				},
 				{
-					Timestamp: 2000000,
+					Timestamp: now.Add(time.Second),
 					Message:   "2",
 				},
 				{
-					Timestamp: 3000000,
+					Timestamp: now.Add(2 * time.Second),
 					Message:   "3",
 				},
 			},
 		},
 		{
 			// The start point is in the middle of the log file.
-			log: `kernel: [3.000000] 3
-			kernel: [1.000000] 1
-			kernel: [2.000000] 2
+			log: `Jan  2 03:04:04 kernel: [0.000000] 1
+			Jan  2 03:04:05 kernel: [1.000000] 2
+			Jan  2 03:04:06 kernel: [2.000000] 3
 			`,
 			logs: []types.KernelLog{
 				{
-					Timestamp: 1000000,
-					Message:   "1",
+					Timestamp: now,
+					Message:   "2",
 				},
 				{
-					Timestamp: 2000000,
+					Timestamp: now.Add(time.Second),
+					Message:   "3",
+				},
+			},
+		},
+		{
+			// The start point is at the end of the log file, but we look back.
+			log: `Jan  2 03:04:03 kernel: [0.000000] 1
+			Jan  2 03:04:04 kernel: [1.000000] 2
+			Jan  2 03:04:05 kernel: [2.000000] 3
+			`,
+			lookback: "1s",
+			logs: []types.KernelLog{
+				{
+					Timestamp: now.Add(-time.Second),
 					Message:   "2",
+				},
+				{
+					Timestamp: now,
+					Message:   "3",
 				},
 			},
 		},
@@ -84,7 +107,9 @@ func TestGetStartPoint(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		w := NewKernelLogWatcher(WatcherConfig{KernelLogPath: f.Name()})
+		w := NewKernelLogWatcher(WatcherConfig{KernelLogPath: f.Name(), Lookback: test.lookback})
+		// Set the fake clock.
+		w.(*kernelLogWatcher).clock = fakeClock
 		logCh, err := w.Watch()
 		if err != nil {
 			t.Fatal(err)

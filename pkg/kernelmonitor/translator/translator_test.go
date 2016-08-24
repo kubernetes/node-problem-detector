@@ -18,33 +18,32 @@ package translator
 
 import (
 	"testing"
+	"time"
 )
 
 func TestDefaultTranslator(t *testing.T) {
 	tr := NewDefaultTranslator()
-
+	year := time.Now().Year()
 	testCases := []struct {
 		input     string
 		err       bool
-		timestamp int64
+		timestamp time.Time
 		message   string
 	}{
 		{
-			input:     "Jan  1 00:00:00 hostname kernel: [9.999999] component: log message",
-			timestamp: 9999999,
+			input:     "May  1 12:23:45 hostname kernel: [0.000000] component: log message",
+			timestamp: time.Date(year, time.May, 1, 12, 23, 45, 0, time.Local),
 			message:   "component: log message",
 		},
 		{
-			input:     "Jan  1 00:00:00 hostname kernel: [9.999999]",
-			timestamp: 9999999,
+			// no log message
+			input:     "May 21 12:23:45 hostname kernel: [9.999999]",
+			timestamp: time.Date(year, time.May, 21, 12, 23, 45, 0, time.Local),
 			message:   "",
 		},
 		{
-			input: "Jan  1 00:00:00 hostname kernel: [9.999999 component: log message",
-			err:   true,
-		},
-		{
-			input: "Jan  1 00:00:00 hostname user: [9.999999] component: log message",
+			// the right square bracket is missing
+			input: "May 21 12:23:45 hostname kernel: [9.999999 component: log message",
 			err:   true,
 		},
 	}
@@ -58,7 +57,7 @@ func TestDefaultTranslator(t *testing.T) {
 			continue
 		}
 		if test.timestamp != log.Timestamp || test.message != log.Message {
-			t.Errorf("case %d: expect timestamp: %d, message: %q; got %+v", c+1, test.timestamp, test.message, log)
+			t.Errorf("case %d: expect %v, %q; got %v, %q", c+1, test.timestamp, test.message, log.Timestamp, log.Message)
 		}
 	}
 }

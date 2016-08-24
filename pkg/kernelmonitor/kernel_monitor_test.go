@@ -32,7 +32,6 @@ const (
 )
 
 func TestGenerateStatus(t *testing.T) {
-	uptime := time.Unix(1000, 0)
 	initConditions := []types.Condition{
 		{
 			Type:       testConditionA,
@@ -47,11 +46,11 @@ func TestGenerateStatus(t *testing.T) {
 	}
 	logs := []*kerntypes.KernelLog{
 		{
-			Timestamp: 100000,
+			Timestamp: time.Unix(1000, 1000),
 			Message:   "test message 1",
 		},
 		{
-			Timestamp: 200000,
+			Timestamp: time.Unix(2000, 2000),
 			Message:   "test message 2",
 		},
 	}
@@ -72,7 +71,7 @@ func TestGenerateStatus(t *testing.T) {
 					{
 						Type:       testConditionA,
 						Status:     true,
-						Transition: time.Unix(1000, 100000*1000),
+						Transition: time.Unix(1000, 1000),
 						Reason:     "test reason",
 						Message:    "test message 1\ntest message 2",
 					},
@@ -89,7 +88,7 @@ func TestGenerateStatus(t *testing.T) {
 				Source: testSource,
 				Events: []types.Event{{
 					Severity:  types.Warn,
-					Timestamp: time.Unix(1000, 100000*1000),
+					Timestamp: time.Unix(1000, 1000),
 					Reason:    "test reason",
 					Message:   "test message 1\ntest message 2",
 				}},
@@ -102,7 +101,6 @@ func TestGenerateStatus(t *testing.T) {
 				Source: testSource,
 			},
 			conditions: initConditions,
-			uptime:     uptime,
 		}
 		got := k.generateStatus(logs, test.rule)
 		if !reflect.DeepEqual(&test.expected, got) {
