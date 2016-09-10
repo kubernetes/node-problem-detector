@@ -1,7 +1,7 @@
 {
 	"ImportPath": "k8s.io/node-problem-detector",
 	"GoVersion": "go1.6",
-	"GodepVersion": "v71",
+	"GodepVersion": "v74",
 	"Packages": [
 		"./..."
 	],
@@ -127,27 +127,27 @@
 		},
 		{
 			"ImportPath": "github.com/hpcloud/tail",
-			"Comment": "v1.0.0-35-ga30252c",
+			"Comment": "v1.0.0",
 			"Rev": "a30252cb686a21eb2d0b98132633053ec2f7f1e5"
 		},
 		{
 			"ImportPath": "github.com/hpcloud/tail/ratelimiter",
-			"Comment": "v1.0.0-35-ga30252c",
+			"Comment": "v1.0.0",
 			"Rev": "a30252cb686a21eb2d0b98132633053ec2f7f1e5"
 		},
 		{
 			"ImportPath": "github.com/hpcloud/tail/util",
-			"Comment": "v1.0.0-35-ga30252c",
+			"Comment": "v1.0.0",
 			"Rev": "a30252cb686a21eb2d0b98132633053ec2f7f1e5"
 		},
 		{
 			"ImportPath": "github.com/hpcloud/tail/watch",
-			"Comment": "v1.0.0-35-ga30252c",
+			"Comment": "v1.0.0",
 			"Rev": "a30252cb686a21eb2d0b98132633053ec2f7f1e5"
 		},
 		{
 			"ImportPath": "github.com/hpcloud/tail/winfile",
-			"Comment": "v1.0.0-35-ga30252c",
+			"Comment": "v1.0.0",
 			"Rev": "a30252cb686a21eb2d0b98132633053ec2f7f1e5"
 		},
 		{
@@ -185,6 +185,14 @@
 		{
 			"ImportPath": "github.com/pborman/uuid",
 			"Rev": "ca53cad383cad2479bbba7f7a1a05797ec1386e4"
+		},
+		{
+			"ImportPath": "github.com/pivotal-golang/clock",
+			"Rev": "3fd3c1944c59d9742e1cd333672181cd1a6f9fa0"
+		},
+		{
+			"ImportPath": "github.com/pivotal-golang/clock/fakeclock",
+			"Rev": "3fd3c1944c59d9742e1cd333672181cd1a6f9fa0"
 		},
 		{
 			"ImportPath": "github.com/pmezard/go-difflib/difflib",
@@ -268,6 +276,7 @@
 		},
 		{
 			"ImportPath": "gopkg.in/inf.v0",
+			"Comment": "v0.9.0",
 			"Rev": "3887ee99ecf07df5b447e9b00d9c0b2adaa9f3e4"
 		},
 		{
