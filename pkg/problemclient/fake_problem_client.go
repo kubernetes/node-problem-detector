@@ -20,7 +20,6 @@ import (
 	"fmt"
 	"reflect"
 	"sync"
-	"time"
 
 	"k8s.io/kubernetes/pkg/api"
 )
@@ -61,19 +60,14 @@ func (f *FakeProblemClient) AssertConditions(expected []api.NodeCondition) error
 }
 
 // SetConditions is a fake mimic of SetConditions, it only update the internal condition cache.
-func (f *FakeProblemClient) SetConditions(conditions []api.NodeCondition, timeout time.Duration) error {
+func (f *FakeProblemClient) SetConditions(conditions []api.NodeCondition) error {
 	f.Lock()
 	defer f.Unlock()
 	if err, ok := f.errors["SetConditions"]; ok {
 		return err
 	}
 	for _, condition := range conditions {
-		t := condition.Type
-		if condition.Status == api.ConditionFalse {
-			delete(f.conditions, t)
-		} else {
-			f.conditions[t] = condition
-		}
+		f.conditions[condition.Type] = condition
 	}
 	return nil
 }

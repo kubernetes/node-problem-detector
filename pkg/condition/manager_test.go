@@ -17,9 +17,10 @@ limitations under the License.
 package condition
 
 import (
-	"reflect"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
 
 	"k8s.io/node-problem-detector/pkg/problemclient"
 	"k8s.io/node-problem-detector/pkg/types"
@@ -36,9 +37,9 @@ func newTestManager() (*conditionManager, *problemclient.FakeProblemClient, *uti
 	return manager.(*conditionManager), fakeClient, fakeClock
 }
 
-func newTestCondition() types.Condition {
+func newTestCondition(condition string) types.Condition {
 	return types.Condition{
-		Type:       "TestCondition",
+		Type:       condition,
 		Status:     true,
 		Transition: time.Now(),
 		Reason:     "TestReason",
@@ -47,35 +48,46 @@ func newTestCondition() types.Condition {
 }
 
 func TestCheckUpdates(t *testing.T) {
-	condition := newTestCondition()
 	m, _, _ := newTestManager()
-	m.UpdateCondition(condition)
-	if !m.checkUpdates() {
-		t.Error("expected checkUpdates to be true, got false")
-	}
-	if !reflect.DeepEqual(condition, m.conditions[condition.Type]) {
-		t.Errorf("expected %+v, got %+v", condition, m.conditions[condition.Type])
-	}
-	if m.checkUpdates() {
-		t.Error("expected checkUpdates to be false, got true")
+	var c types.Condition
+	for desc, test := range map[string]struct {
+		condition string
+		update    bool
+	}{
+		"Init condition needs update": {
+			condition: "TestCondition",
+			update:    true,
+		},
+		"Same condition doesn't need update": {
+			// not set condition, the test will reuse the condition in last case.
+			update: false,
+		},
+		"Same condition with different timestamp need update": {
+			condition: "TestCondition",
+			update:    true,
+		},
+		"New condition needs update": {
+			condition: "TestConditionNew",
+			update:    true,
+		},
+	} {
+		if test.condition != "" {
+			c = newTestCondition(test.condition)
+		}
+		m.UpdateCondition(c)
+		assert.Equal(t, test.update, m.checkUpdates(), desc)
+		assert.Equal(t, c, m.conditions[c.Type], desc)
 	}
 }
 
 func TestSync(t *testing.T) {
 	m, fakeClient, fakeClock := newTestManager()
-	condition := newTestCondition()
+	condition := newTestCondition("TestCondition")
 	m.conditions = map[string]types.Condition{condition.Type: condition}
 	m.sync()
 	expected := []api.NodeCondition{problemutil.ConvertToAPICondition(condition)}
-	err := fakeClient.AssertConditions(expected)
-	if err != nil {
-		t.Error(err)
-	}
-	if m.checkResync() {
-		t.Error("expected checkResync to be false, got true")
-	}
+	assert.Nil(t, fakeClient.AssertConditions(expected), "Condition should be updated via client")
+	assert.False(t, m.checkResync(), "Should not resync before timeout exceeds")
 	fakeClock.Step(resyncPeriod)
-	if !m.checkResync() {
-		t.Error("expected checkResync to be true, got false")
-	}
+	assert.True(t, m.checkResync(), "Should resync after timeout exceeds")
 }
