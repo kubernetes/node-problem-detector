@@ -17,8 +17,6 @@ limitations under the License.
 package kernelmonitor
 
 import (
-	"bufio"
-	"fmt"
 	"os"
 	"time"
 
@@ -97,19 +95,11 @@ func (k *kernelLogWatcher) Watch() (<-chan *types.KernelLog, error) {
 		glog.Infof("kernel log %q is not found, kernel monitor doesn't support the os distro", path)
 		return nil, nil
 	}
-	start, err := k.getStartPoint(path)
-	if err != nil {
-		return nil, err
-	}
-	// TODO(random-liu): If the file gets recreated during this interval, the logic
-	// will go wrong here.
 	// TODO(random-liu): Rate limit tail file.
 	// TODO(random-liu): Figure out what happens if log lines are removed.
+	// Notice that, kernel log watcher doesn't look back to the rolled out logs.
+	var err error
 	k.tl, err = tail.TailFile(path, tail.Config{
-		Location: &tail.SeekInfo{
-			Offset: start,
-			Whence: os.SEEK_SET,
-		},
 		Poll:   true,
 		ReOpen: true,
 		Follow: true,
@@ -132,6 +122,10 @@ func (k *kernelLogWatcher) watchLoop() {
 		close(k.logCh)
 		k.tomb.Done()
 	}()
+	lookback, err := parseDuration(k.cfg.Lookback)
+	if err != nil {
+		glog.Fatalf("failed to parse duration %q: %v", k.cfg.Lookback, err)
+	}
 	for {
 		select {
 		case line := <-k.tl.Lines:
@@ -145,6 +139,10 @@ func (k *kernelLogWatcher) watchLoop() {
 				glog.Infof("Unable to parse line: %q, %v", line, err)
 				continue
 			}
+			// If the log is older than look back duration, discard it.
+			if k.clock.Since(log.Timestamp) > lookback {
+				continue
+			}
 			k.logCh <- log
 		case <-k.tomb.Stopping():
 			k.tl.Stop()
@@ -152,42 +150,6 @@ func (k *kernelLogWatcher) watchLoop() {
 			return
 		}
 	}
-}
-
-// getStartPoint finds the start point to parse the log. The start point is either
-// the line at (now - lookback) or the first line of kernel log.
-// Notice that, kernel log watcher doesn't look back to the rolled out logs.
-func (k *kernelLogWatcher) getStartPoint(path string) (int64, error) {
-	f, err := os.Open(path)
-	if err != nil {
-		return 0, fmt.Errorf("failed to open file %q: %v", path, err)
-	}
-	defer f.Close()
-	lookback, err := parseDuration(k.cfg.Lookback)
-	if err != nil {
-		return 0, fmt.Errorf("failed to parse duration %q: %v", k.cfg.Lookback, err)
-	}
-	start := int64(0)
-	reader := bufio.NewReader(f)
-	done := false
-	for !done {
-		line, err := reader.ReadString('\n')
-		if err != nil {
-			if len(line) == 0 {
-				// No need to continue parsing if nothing is read
-				break
-			}
-			done = true
-		}
-		log, err := k.trans.Translate(line)
-		if err != nil {
-			glog.Infof("unable to parse line: %q, %v", line, err)
-		} else if k.clock.Since(log.Timestamp) <= lookback {
-			break
-		}
-		start += int64(len(line))
-	}
-	return start, nil
 }
 
 func parseDuration(s string) (time.Duration, error) {

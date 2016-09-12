@@ -28,7 +28,7 @@ import (
 	"github.com/pivotal-golang/clock/fakeclock"
 )
 
-func TestGetStartPoint(t *testing.T) {
+func TestWatch(t *testing.T) {
 	// now is a fake time
 	now := time.Date(time.Now().Year(), time.January, 2, 3, 4, 5, 0, time.Local)
 	fakeClock := fakeclock.NewFakeClock(now)
