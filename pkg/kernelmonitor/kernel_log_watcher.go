@@ -19,6 +19,7 @@ package kernelmonitor
 import (
 	"bufio"
 	"bytes"
+	"fmt"
 	"io"
 	"os"
 	"strings"
@@ -125,7 +126,6 @@ func (k *kernelLogWatcher) watchLoop() {
 	}
 	var buffer bytes.Buffer
 	for {
-
 		select {
 		case <-k.tomb.Stopping():
 			glog.Infof("Stop watching kernel log")
@@ -138,13 +138,18 @@ func (k *kernelLogWatcher) watchLoop() {
 			glog.Errorf("exiting kernel log watch with error: %v", err)
 			return
 		}
+		if err == io.EOF {
+			buffer.WriteString(line)
+			time.Sleep(100 * time.Millisecond)
+			continue
+		}
 		if line == "" {
 			time.Sleep(100 * time.Millisecond)
 			continue
 		}
 		if err == nil {
 			buffer.WriteString(line)
-			// trime `\n`
+			// trim `\n`
 			line = strings.TrimRight(buffer.String(), "\n")
 			buffer.Reset()
 			log, err := k.trans.Translate(line)
@@ -157,8 +162,6 @@ func (k *kernelLogWatcher) watchLoop() {
 				continue
 			}
 			k.logCh <- log
-		} else { // err == io.EOF
-			buffer.WriteString(line)
 		}
 	}
 }
@@ -187,10 +190,10 @@ func tryJournal() (io.Reader, error) {
 		},
 	})
 	if err != nil {
-		return nil, fmt.Errorf("Error opening journal: %v", err)
+		return nil, fmt.Errorf("error opening journal: %v", err)
 	}
 	if r == nil {
-		return nil, fmt.Errorf("Got a nil reader")
+		return nil, fmt.Errorf("got a nil reader")
 	}
 	glog.Info("Kernel log watcher use journal")
 	return r, nil
