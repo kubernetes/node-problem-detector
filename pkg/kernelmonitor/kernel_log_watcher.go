@@ -168,15 +168,10 @@ func (k *kernelLogWatcher) watchLoop() {
 
 // getLogReader gets a kernel log reader.
 func getLogReader(path string) (io.Reader, error) {
-	reader, err := tryJournal()
-	if err == nil {
-		return reader, nil
+	if len(path) != 0 {
+		return tryLogFile(path)
 	}
-	reader, err = tryLogFile(path)
-	if err == nil {
-		return reader, nil
-	}
-	return nil, err
+	return tryJournal()
 }
 
 func tryJournal() (io.Reader, error) {
@@ -205,6 +200,7 @@ func tryLogFile(path string) (io.Reader, error) {
 		return nil, err
 	}
 	glog.Infof("Kernel log watcher use log file: %s", path)
+	time.Sleep(1000 * time.Millisecond)
 	return tail, nil
 }
 

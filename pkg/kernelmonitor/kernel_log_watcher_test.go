@@ -100,13 +100,15 @@ func TestWatch(t *testing.T) {
 			t.Fatal(err)
 		}
 		defer func() {
-			f.Close()
 			os.Remove(f.Name())
 		}()
 		_, err = f.Write([]byte(test.log))
 		if err != nil {
 			t.Fatal(err)
 		}
+
+		f.Close()
+	
 		w := NewKernelLogWatcher(WatcherConfig{KernelLogPath: f.Name(), Lookback: test.lookback})
 		// Set the fake clock.
 		w.(*kernelLogWatcher).clock = fakeClock
