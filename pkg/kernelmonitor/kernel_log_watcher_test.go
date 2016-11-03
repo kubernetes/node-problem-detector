@@ -18,7 +18,7 @@ package kernelmonitor
 
 import (
 	"io/ioutil"
-	"os"
+	//"os"
 	"reflect"
 	"testing"
 	"time"
@@ -101,12 +101,13 @@ func TestWatch(t *testing.T) {
 		}
 		defer func() {
 			f.Close()
-			os.Remove(f.Name())
+			//os.Remove(f.Name())
 		}()
 		_, err = f.Write([]byte(test.log))
 		if err != nil {
 			t.Fatal(err)
 		}
+
 		w := NewKernelLogWatcher(WatcherConfig{KernelLogPath: f.Name(), Lookback: test.lookback})
 		// Set the fake clock.
 		w.(*kernelLogWatcher).clock = fakeClock

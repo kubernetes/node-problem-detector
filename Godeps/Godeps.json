@@ -2,9 +2,6 @@
 	"ImportPath": "k8s.io/node-problem-detector",
 	"GoVersion": "go1.6",
 	"GodepVersion": "v74",
-	"Packages": [
-		"./..."
-	],
 	"Deps": [
 		{
 			"ImportPath": "bitbucket.org/ww/goautoneg",
@@ -41,20 +38,39 @@
 			"Rev": "5cf2aa52da8c574d3aa4458f471ad6ae2240fe6b"
 		},
 		{
+			"ImportPath": "github.com/coreos/go-systemd/journal",
+			"Comment": "v12-5-ga63dfec",
+			"Rev": "a63dfec412dc3675ec36888f359f8a1e5c3f740d"
+		},
+		{
+			"ImportPath": "github.com/coreos/go-systemd/sdjournal",
+			"Comment": "v12-5-ga63dfec",
+			"Rev": "a63dfec412dc3675ec36888f359f8a1e5c3f740d"
+		},
+		{
 			"ImportPath": "github.com/coreos/pkg/capnslog",
-			"Rev": "fa94270d4bac0d8ae5dc6b71894e251aada93f74"
+			"Comment": "v3",
+			"Rev": "3ac0863d7acf3bc44daf49afef8919af12f704ef"
+		},
+		{
+			"ImportPath": "github.com/coreos/pkg/dlopen",
+			"Comment": "v3",
+			"Rev": "3ac0863d7acf3bc44daf49afef8919af12f704ef"
 		},
 		{
 			"ImportPath": "github.com/coreos/pkg/health",
-			"Rev": "fa94270d4bac0d8ae5dc6b71894e251aada93f74"
+			"Comment": "v3",
+			"Rev": "3ac0863d7acf3bc44daf49afef8919af12f704ef"
 		},
 		{
 			"ImportPath": "github.com/coreos/pkg/httputil",
-			"Rev": "fa94270d4bac0d8ae5dc6b71894e251aada93f74"
+			"Comment": "v3",
+			"Rev": "3ac0863d7acf3bc44daf49afef8919af12f704ef"
 		},
 		{
 			"ImportPath": "github.com/coreos/pkg/timeutil",
-			"Rev": "fa94270d4bac0d8ae5dc6b71894e251aada93f74"
+			"Comment": "v3",
+			"Rev": "3ac0863d7acf3bc44daf49afef8919af12f704ef"
 		},
 		{
 			"ImportPath": "github.com/davecgh/go-spew/spew",
@@ -122,33 +138,13 @@
 			"Rev": "7ddf6eb5d1f84363fbc181a498313a880b12ba07"
 		},
 		{
+			"ImportPath": "github.com/google/cadvisor/utils/tail",
+			"Comment": "v0.23.2",
+			"Rev": "7ddf6eb5d1f84363fbc181a498313a880b12ba07"
+		},
+		{
 			"ImportPath": "github.com/google/gofuzz",
 			"Rev": "bbcb9da2d746f8bdbd6a936686a0a6067ada0ec5"
-		},
-		{
-			"ImportPath": "github.com/hpcloud/tail",
-			"Comment": "v1.0.0",
-			"Rev": "a30252cb686a21eb2d0b98132633053ec2f7f1e5"
-		},
-		{
-			"ImportPath": "github.com/hpcloud/tail/ratelimiter",
-			"Comment": "v1.0.0",
-			"Rev": "a30252cb686a21eb2d0b98132633053ec2f7f1e5"
-		},
-		{
-			"ImportPath": "github.com/hpcloud/tail/util",
-			"Comment": "v1.0.0",
-			"Rev": "a30252cb686a21eb2d0b98132633053ec2f7f1e5"
-		},
-		{
-			"ImportPath": "github.com/hpcloud/tail/watch",
-			"Comment": "v1.0.0",
-			"Rev": "a30252cb686a21eb2d0b98132633053ec2f7f1e5"
-		},
-		{
-			"ImportPath": "github.com/hpcloud/tail/winfile",
-			"Comment": "v1.0.0",
-			"Rev": "a30252cb686a21eb2d0b98132633053ec2f7f1e5"
 		},
 		{
 			"ImportPath": "github.com/jonboulle/clockwork",
@@ -191,14 +187,6 @@
 			"Rev": "3fd3c1944c59d9742e1cd333672181cd1a6f9fa0"
 		},
 		{
-			"ImportPath": "github.com/pivotal-golang/clock/fakeclock",
-			"Rev": "3fd3c1944c59d9742e1cd333672181cd1a6f9fa0"
-		},
-		{
-			"ImportPath": "github.com/pmezard/go-difflib/difflib",
-			"Rev": "d8ed2627bdf02c080bf22230dbb337003b7aba2d"
-		},
-		{
 			"ImportPath": "github.com/prometheus/client_golang/prometheus",
 			"Comment": "0.7.0-39-g3b78d7a",
 			"Rev": "3b78d7a77f51ccbc364d4bc170920153022cfd08"
@@ -225,13 +213,12 @@
 			"Rev": "08b1a584251b5b62f458943640fc8ebd4d50aaa5"
 		},
 		{
-			"ImportPath": "github.com/stretchr/testify/assert",
-			"Comment": "v1.0-88-ge3a8ff8",
-			"Rev": "e3a8ff8ce36581f87a15341206f205b1da467059"
-		},
-		{
 			"ImportPath": "github.com/ugorji/go/codec",
 			"Rev": "f4485b318aadd133842532f841dc205a8e339d74"
+		},
+		{
+			"ImportPath": "golang.org/x/exp/inotify",
+			"Rev": "5295bc952743deac9199eded5c17b4fd3c2b82f3"
 		},
 		{
 			"ImportPath": "golang.org/x/net/context",
@@ -270,18 +257,9 @@
 			"Rev": "eb47ba841d53d93506cfbfbc03927daf9cc48f88"
 		},
 		{
-			"ImportPath": "gopkg.in/fsnotify.v1",
-			"Comment": "v1.2.1",
-			"Rev": "7be54206639f256967dd82fa767397ba5f8f48f5"
-		},
-		{
 			"ImportPath": "gopkg.in/inf.v0",
 			"Comment": "v0.9.0",
 			"Rev": "3887ee99ecf07df5b447e9b00d9c0b2adaa9f3e4"
-		},
-		{
-			"ImportPath": "gopkg.in/tomb.v1",
-			"Rev": "dd632973f1e7218eb1089048e0798ec9ae7dceb8"
 		},
 		{
 			"ImportPath": "gopkg.in/yaml.v2",

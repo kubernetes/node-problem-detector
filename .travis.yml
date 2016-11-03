@@ -1,6 +1,13 @@
+os:
+ - linux
+sudo: required
+dist: trusty
 language: go
 go:
  - 1.6
+before_install:
+ - sudo apt-get -qq update
+ - sudo apt-get install -y libsystemd-journal-dev
 install:
  - mkdir -p $HOME/gopath/src/k8s.io
  - mv $TRAVIS_BUILD_DIR $HOME/gopath/src/k8s.io/node-problem-detector
