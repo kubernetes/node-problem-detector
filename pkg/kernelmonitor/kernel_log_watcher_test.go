@@ -18,11 +18,12 @@ package kernelmonitor
 
 import (
 	"io/ioutil"
-	//"os"
+	"os"
 	"reflect"
 	"testing"
 	"time"
 
+	plugtypes "k8s.io/node-problem-detector/pkg/kernelmonitor/plugins/types"
 	"k8s.io/node-problem-detector/pkg/kernelmonitor/types"
 
 	"github.com/pivotal-golang/clock/fakeclock"
@@ -101,14 +102,20 @@ func TestWatch(t *testing.T) {
 		}
 		defer func() {
 			f.Close()
-			//os.Remove(f.Name())
+			os.Remove(f.Name())
 		}()
 		_, err = f.Write([]byte(test.log))
 		if err != nil {
 			t.Fatal(err)
 		}
 
-		w := NewKernelLogWatcher(WatcherConfig{KernelLogPath: f.Name(), Lookback: test.lookback})
+		w := NewKernelLogWatcher(WatcherConfig{
+			Config: plugtypes.Config{
+				Plugin:   "syslog",
+				LogPath:  f.Name(),
+				Lookback: test.lookback,
+			},
+		})
 		// Set the fake clock.
 		w.(*kernelLogWatcher).clock = fakeClock
 		logCh, err := w.Watch()
@@ -117,9 +124,13 @@ func TestWatch(t *testing.T) {
 		}
 		defer w.Stop()
 		for _, expected := range test.logs {
-			got := <-logCh
-			if !reflect.DeepEqual(&expected, got) {
-				t.Errorf("case %d: expect %+v, got %+v", c+1, expected, *got)
+			select {
+			case got := <-logCh:
+				if !reflect.DeepEqual(&expected, got) {
+					t.Errorf("case %d: expect %+v, got %+v", c+1, expected, *got)
+				}
+			case <-time.After(30 * time.Second):
+				t.Errorf("case %d: timeout waiting for log")
 			}
 		}
 		// The log channel should have already been drained

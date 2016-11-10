@@ -1,3 +1,5 @@
+// +build journald
+
 /*
 Copyright 2016 The Kubernetes Authors All rights reserved.
 
@@ -14,26 +16,15 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package main
+package plugins
 
 import (
-	"flag"
-
-	"github.com/golang/glog"
-
-	"k8s.io/node-problem-detector/pkg/kernelmonitor"
-	"k8s.io/node-problem-detector/pkg/problemdetector"
+	"k8s.io/node-problem-detector/pkg/kernelmonitor/plugins/journald"
 )
 
-var (
-	kernelMonitorConfigPath = flag.String("kernel-monitor", "/config/kernel_monitor.json", "The path to the kernel monitor config file")
-)
+const journaldPluginName = "journald"
 
-func main() {
-	flag.Parse()
-	k := kernelmonitor.NewKernelMonitorOrDie(*kernelMonitorConfigPath)
-	p := problemdetector.NewProblemDetector(k)
-	if err := p.Run(); err != nil {
-		glog.Errorf("Problem detector failed with error: %v", err)
-	}
+func init() {
+	// Register the syslog plugin.
+	regsiterPlugin(journaldPluginName, journald.NewJournaldPlugin)
 }
