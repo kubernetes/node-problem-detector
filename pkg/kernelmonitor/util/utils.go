@@ -14,26 +14,16 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package main
+package util
 
 import (
-	"flag"
-
-	"github.com/golang/glog"
-
-	"k8s.io/node-problem-detector/pkg/kernelmonitor"
-	"k8s.io/node-problem-detector/pkg/problemdetector"
+	"time"
 )
 
-var (
-	kernelMonitorConfigPath = flag.String("kernel-monitor", "/config/kernel_monitor.json", "The path to the kernel monitor config file")
-)
-
-func main() {
-	flag.Parse()
-	k := kernelmonitor.NewKernelMonitorOrDie(*kernelMonitorConfigPath)
-	p := problemdetector.NewProblemDetector(k)
-	if err := p.Run(); err != nil {
-		glog.Fatalf("Problem detector failed with error: %v", err)
+func ParseDuration(s string) (time.Duration, error) {
+	// If the duration is not configured, just return 0 by default
+	if s == "" {
+		return 0, nil
 	}
+	return time.ParseDuration(s)
 }
