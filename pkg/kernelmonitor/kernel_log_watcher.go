@@ -35,10 +35,6 @@ import (
 	utilclock "github.com/pivotal-golang/clock"
 )
 
-const (
-	defaultKernelLogPath = "/var/log/kern.log"
-)
-
 // WatcherConfig is the configuration of kernel log watcher.
 type WatcherConfig struct {
 	// KernelLogPath is the path to the kernel log
@@ -81,10 +77,7 @@ func NewKernelLogWatcher(cfg WatcherConfig) KernelLogWatcher {
 }
 
 func (k *kernelLogWatcher) Watch() (<-chan *types.KernelLog, error) {
-	path := defaultKernelLogPath
-	if k.cfg.KernelLogPath != "" {
-		path = k.cfg.KernelLogPath
-	}
+	path := k.cfg.KernelLogPath
 	// NOTE(random-liu): This is a hack. KernelMonitor doesn't support some OS distros e.g. GCI. Ideally,
 	// KernelMonitor should only run on nodes with supported OS distro. However, NodeProblemDetector is
 	// running as DaemonSet, it has to be deployed on each node (There is no node affinity support for
@@ -94,9 +87,11 @@ func (k *kernelLogWatcher) Watch() (<-chan *types.KernelLog, error) {
 	// To avoid this, we decide to add this temporarily hack. When KernelMonitor can't find the kernel
 	// log file, it will print a log and then return nil channel and no error. Since nil channel will
 	// always be blocked, the NodeProblemDetector will block forever.
-	if _, err := os.Stat(path); os.IsNotExist(err) {
-		glog.Infof("kernel log %q is not found, kernel monitor doesn't support the os distro", path)
-		return nil, nil
+	if path != "" {
+		if _, err := os.Stat(path); os.IsNotExist(err) {
+			glog.Infof("kernel log %q is not found, kernel monitor doesn't support the os distro", path)
+			return nil, nil
+		}
 	}
 	// TODO(random-liu): Rate limit tail file.
 	// Notice that, kernel log watcher doesn't look back to the rolled out logs.
