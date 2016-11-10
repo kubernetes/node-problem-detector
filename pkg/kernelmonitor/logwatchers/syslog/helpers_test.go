@@ -14,32 +14,38 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package translator
+package syslog
 
 import (
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
+
+	kerntypes "k8s.io/node-problem-detector/pkg/kernelmonitor/types"
 )
 
-func TestDefaultTranslator(t *testing.T) {
-	tr := NewDefaultTranslator()
+func TestTranslate(t *testing.T) {
 	year := time.Now().Year()
 	testCases := []struct {
-		input     string
-		err       bool
-		timestamp time.Time
-		message   string
+		input string
+		err   bool
+		log   *kerntypes.KernelLog
 	}{
 		{
-			input:     "May  1 12:23:45 hostname kernel: [0.000000] component: log message",
-			timestamp: time.Date(year, time.May, 1, 12, 23, 45, 0, time.Local),
-			message:   "component: log message",
+			input: "May  1 12:23:45 hostname kernel: [0.000000] component: log message",
+			log: &kerntypes.KernelLog{
+				Timestamp: time.Date(year, time.May, 1, 12, 23, 45, 0, time.Local),
+				Message:   "component: log message",
+			},
 		},
 		{
 			// no log message
-			input:     "May 21 12:23:45 hostname kernel: [9.999999]",
-			timestamp: time.Date(year, time.May, 21, 12, 23, 45, 0, time.Local),
-			message:   "",
+			input: "May 21 12:23:45 hostname kernel: [9.999999]",
+			log: &kerntypes.KernelLog{
+				Timestamp: time.Date(year, time.May, 21, 12, 23, 45, 0, time.Local),
+				Message:   "",
+			},
 		},
 		{
 			// the right square bracket is missing
@@ -49,15 +55,12 @@ func TestDefaultTranslator(t *testing.T) {
 	}
 
 	for c, test := range testCases {
-		log, err := tr.Translate(test.input)
-		if test.err {
-			if err == nil {
-				t.Errorf("case %d: expect error should occur, got %+v, %v", c+1, log, err)
-			}
+		t.Logf("TestCase #%d: %#v", c+1, test)
+		log, err := translate(test.input)
+		if (err != nil) != test.err {
+			t.Errorf("case %d: error assertion failed, got log: %+v, error: %v", c+1, log, err)
 			continue
 		}
-		if test.timestamp != log.Timestamp || test.message != log.Message {
-			t.Errorf("case %d: expect %v, %q; got %v, %q", c+1, test.timestamp, test.message, log.Timestamp, log.Message)
-		}
+		assert.Equal(t, test.log, log)
 	}
 }
