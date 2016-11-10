@@ -18,15 +18,15 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"net/url"
 	"os"
+
+	"github.com/golang/glog"
 
 	"k8s.io/node-problem-detector/pkg/kernelmonitor"
 	"k8s.io/node-problem-detector/pkg/problemdetector"
 	"k8s.io/node-problem-detector/pkg/version"
-
-	"github.com/golang/glog"
-	"fmt"
 )
 
 // TODO: Move flags to options directory.
@@ -86,5 +86,7 @@ func main() {
 
 	k := kernelmonitor.NewKernelMonitorOrDie(*kernelMonitorConfigPath)
 	p := problemdetector.NewProblemDetector(k, *apiServerOverride, nodeName)
-	p.Run()
+	if err := p.Run(); err != nil {
+		glog.Fatalf("Problem detector failed with error: %v", err)
+	}
 }
