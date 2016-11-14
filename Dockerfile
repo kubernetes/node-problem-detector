@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM alpine:3.1
+FROM alpine:3.4
 MAINTAINER Random Liu <lantaol@google.com>
-ADD node-problem-detector /node-problem-detector
+ADD ./bin/node-problem-detector /node-problem-detector
 ADD config /config
 ENTRYPOINT ["/node-problem-detector", "--kernel-monitor=/config/kernel-monitor.json"]
