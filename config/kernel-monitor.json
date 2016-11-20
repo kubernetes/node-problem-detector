@@ -1,6 +1,6 @@
 {
 	"plugin": "journald",
-	"logPath": "/log/journal",
+	"logPath": "/var/log/journal",
 	"lookback": "10m",
 	"startPattern": "Initializing cgroup subsys cpuset",
 	"bufferSize": 10,
