@@ -25,7 +25,7 @@ spec:
               fieldPath: spec.nodeName
         volumeMounts:
         - name: log
-          mountPath: /log
+          mountPath: /var/log
           readOnly: true
         # Make sure node problem detector is in the same timezone
         # with the host.
