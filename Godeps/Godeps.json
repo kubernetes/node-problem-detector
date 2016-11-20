@@ -1,7 +1,10 @@
 {
 	"ImportPath": "k8s.io/node-problem-detector",
-	"GoVersion": "go1.6",
+	"GoVersion": "go1.7",
 	"GodepVersion": "v74",
+	"Packages": [
+		"./..."
+	],
 	"Deps": [
 		{
 			"ImportPath": "bitbucket.org/ww/goautoneg",
@@ -134,13 +137,13 @@
 		},
 		{
 			"ImportPath": "github.com/google/cadvisor/info/v1",
-			"Comment": "v0.23.2",
-			"Rev": "7ddf6eb5d1f84363fbc181a498313a880b12ba07"
+			"Comment": "v0.24.0-alpha1-60-gb5b0547",
+			"Rev": "b5b0547e330937317d464f50dfe9e6f34460b125"
 		},
 		{
 			"ImportPath": "github.com/google/cadvisor/utils/tail",
-			"Comment": "v0.23.2",
-			"Rev": "7ddf6eb5d1f84363fbc181a498313a880b12ba07"
+			"Comment": "v0.24.0-alpha1-60-gb5b0547",
+			"Rev": "b5b0547e330937317d464f50dfe9e6f34460b125"
 		},
 		{
 			"ImportPath": "github.com/google/gofuzz",
@@ -187,6 +190,15 @@
 			"Rev": "3fd3c1944c59d9742e1cd333672181cd1a6f9fa0"
 		},
 		{
+			"ImportPath": "github.com/pivotal-golang/clock/fakeclock",
+			"Rev": "3fd3c1944c59d9742e1cd333672181cd1a6f9fa0"
+		},
+		{
+			"ImportPath": "github.com/pmezard/go-difflib/difflib",
+			"Comment": "v1.0.0",
+			"Rev": "792786c7400a136282c1664665ae0a8db921c6c2"
+		},
+		{
 			"ImportPath": "github.com/prometheus/client_golang/prometheus",
 			"Comment": "0.7.0-39-g3b78d7a",
 			"Rev": "3b78d7a77f51ccbc364d4bc170920153022cfd08"
@@ -211,6 +223,10 @@
 		{
 			"ImportPath": "github.com/spf13/pflag",
 			"Rev": "08b1a584251b5b62f458943640fc8ebd4d50aaa5"
+		},
+		{
+			"ImportPath": "github.com/stretchr/testify/assert",
+			"Rev": "8ce79b9f0b77745113f82c17d0756771456ccbd3"
 		},
 		{
 			"ImportPath": "github.com/ugorji/go/codec",
