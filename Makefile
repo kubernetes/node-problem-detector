@@ -4,7 +4,7 @@ all: container
 
 # See node-problem-detector.yaml for the version currently running-- bump this ahead before rebuilding!
 # TAG is the tag of the container image.
-TAG?=v0.2
+TAG?=v0.3
 
 # PROJ is the image project.
 PROJ?=google_containers

@@ -9,12 +9,8 @@ The rule list is extensible.
 
 ## Limitations
 
-* Kernel Monitor only supports file based kernel log now. It doesn't support log tools
-like journald. There is an [open issue](https://github.com/kubernetes/node-problem-detector/issues/14)
-to add journald support.
-
-* Kernel Monitor has assumption on kernel log format, now it only works on Ubuntu and
-Debian. However, it is easy to extend it to [support other log format](#support-other-log-format).
+* Kernel Monitor only supports syslog (rsyslog) and journald now, but it is easy
+  to extend it with [new log plugin](#new-log-plugin)
 
 ## Add New NodeConditions
 
@@ -43,14 +39,23 @@ with new rule definition:
 }
 ```
 
-## Change Log Path
+## Log Plugins
 
-Kernel log in different OS distros may locate in different path. The `log`
+Kernel monitor supports different log management tools with different log
+plugins: 
+* [syslog](https://github.com/kubernetes/node-problem-detector/blob/master/pkg/kernelmonitor/plugins/syslog)
+* [journald](https://github.com/kubernetes/node-problem-detector/blob/master/pkg/kernelmonitor/plugins/journald)
+
+### Change Log Path
+
+Kernel log on different OS distros may locate in different path. The `logPath`
 field in `config/kernel-monitor.json` is the log path inside the container.
-You can always configure it to match your OS distro.
+You can always configure `logPath` and volume mount to match your OS distro.
+* syslog: `logPath` is the kernel log path, usually `/var/log/kern.log`.
+* journald: `logPath` is the journal log directory, usually `/var/log/journal`.
 
-## Support Other Log Format
+### New Log Plugin
 
-Kernel monitor uses [`Translator`](https://github.com/kubernetes/node-problem-detector/blob/master/pkg/kernelmonitor/translator/translator.go)
-plugin to translate kernel log the internal data structure. It is easy to
-implement a new translator for a new log format.
+Kernel monitor uses [Log
+Plugin](https://github.com/kubernetes/node-problem-detector/blob/master/pkg/kernelmonitor/plugins/types.go) to support different log management tools.
+It is easy to implement a new log plugin.

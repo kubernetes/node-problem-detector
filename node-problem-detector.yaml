@@ -13,7 +13,7 @@ spec:
         command:
         - /node-problem-detector
         - --kernel-monitor=/config/kernel-monitor.json
-        image: gcr.io/google_containers/node-problem-detector:v0.2
+        image: gcr.io/google_containers/node-problem-detector:v0.3
         imagePullPolicy: Always
         securityContext:
           privileged: true
