@@ -1,4 +1,4 @@
-.PHONY: all container push clean node-problem-detector dockerfile
+.PHONY: all container push clean node-problem-detector Dockerfile
 
 all: container
 
@@ -41,10 +41,10 @@ node-problem-detector: ./bin/node-problem-detector
 ./bin/node-problem-detector: $(PKG_SOURCES) node_problem_detector.go
 	CGO_ENABLED=$(CGO_ENABLED) GOOS=linux go build -o ./bin/node-problem-detector -a -ldflags '-w' $(BUILD_TAGS)
 
-dockerfile: Dockerfile.in
+Dockerfile: Dockerfile.in
 	sed -e 's|@BASEIMAGE@|$(BASEIMAGE)|g' $< >$@
 
-container: node-problem-detector dockerfile
+container: node-problem-detector Dockerfile
 	docker build -t gcr.io/$(PROJ)/node-problem-detector:$(TAG) .
 
 push: container

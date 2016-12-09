@@ -15,6 +15,9 @@
 FROM @BASEIMAGE@
 MAINTAINER Random Liu <lantaol@google.com>
 
+# Avoid symlink of /etc/localtime.
+RUN rm -f /etc/localtime && cp /usr/share/zoneinfo/UTC /etc/localtime
+
 ADD ./bin/node-problem-detector /node-problem-detector
 ADD config /config
 ENTRYPOINT ["/node-problem-detector", "--kernel-monitor=/config/kernel-monitor.json"]
