@@ -19,11 +19,11 @@ limitations under the License.
 package journald
 
 import (
-	"reflect"
 	"testing"
 	"time"
 
 	"github.com/coreos/go-systemd/sdjournal"
+	"github.com/stretchr/testify/assert"
 
 	kerntypes "k8s.io/node-problem-detector/pkg/kernelmonitor/types"
 )
@@ -58,9 +58,7 @@ func TestTranslate(t *testing.T) {
 	}
 
 	for c, test := range testCases {
-		log := translate(test.entry)
-		if !reflect.DeepEqual(test.log, log) {
-			t.Errorf("case %d: expect %+v; got %+v", c+1, test.log, log)
-		}
+		t.Logf("TestCase #%d: %#v", c+1, test)
+		assert.Equal(t, test.log, translate(test.entry))
 	}
 }

@@ -31,22 +31,6 @@ import (
 	"github.com/golang/glog"
 )
 
-// MonitorConfig is the configuration of kernel monitor.
-type MonitorConfig struct {
-	// WatcherConfig is the configuration of kernel log watcher.
-	watchertypes.WatcherConfig
-	// BufferSize is the size (in lines) of the log buffer.
-	BufferSize int `json:"bufferSize"`
-	// Source is the source name of the kernel monitor
-	Source string `json:"source"`
-	// DefaultConditions are the default states of all the conditions kernel monitor should handle.
-	DefaultConditions []types.Condition `json:"conditions"`
-	// Rules are the rules kernel monitor will follow to parse the log file.
-	Rules []kerntypes.Rule `json:"rules"`
-	// StartPattern is the pattern of the start line
-	StartPattern string `json:"startPattern, omitempty"`
-}
-
 // KernelMonitor monitors the kernel log and reports node problem condition and event according to
 // the rules.
 type KernelMonitor interface {
@@ -79,6 +63,8 @@ func NewKernelMonitorOrDie(configPath string) KernelMonitor {
 	if err != nil {
 		glog.Fatalf("Failed to unmarshal configuration file %q: %v", configPath, err)
 	}
+	// Apply default configurations
+	applyDefaultConfiguration(&k.config)
 	err = validateRules(k.config.Rules)
 	if err != nil {
 		glog.Fatalf("Failed to validate matching rules %#v: %v", k.config.Rules, err)

@@ -125,7 +125,7 @@ func getJournal(cfg types.WatcherConfig) (*sdjournal.Journal, error) {
 		path = cfg.LogPath
 	}
 	// Get lookback duration.
-	since, err := util.ParseDuration(cfg.Lookback)
+	since, err := time.ParseDuration(cfg.Lookback)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse lookback duration %q: %v", cfg.Lookback, err)
 	}

@@ -17,9 +17,10 @@ limitations under the License.
 package syslog
 
 import (
-	"reflect"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
 
 	kerntypes "k8s.io/node-problem-detector/pkg/kernelmonitor/types"
 )
@@ -54,13 +55,12 @@ func TestTranslate(t *testing.T) {
 	}
 
 	for c, test := range testCases {
+		t.Logf("TestCase #%d: %#v", c+1, test)
 		log, err := translate(test.input)
 		if (err != nil) != test.err {
 			t.Errorf("case %d: error assertion failed, got log: %+v, error: %v", c+1, log, err)
 			continue
 		}
-		if !reflect.DeepEqual(test.log, log) {
-			t.Errorf("case %d: expect %+v; got %+v", c+1, test.log, log)
-		}
+		assert.Equal(t, test.log, log)
 	}
 }

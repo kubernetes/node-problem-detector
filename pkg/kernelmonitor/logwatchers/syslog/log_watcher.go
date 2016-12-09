@@ -83,7 +83,7 @@ func (s *syslogWatcher) watchLoop() {
 		close(s.logCh)
 		s.tomb.Done()
 	}()
-	lookback, err := util.ParseDuration(s.cfg.Lookback)
+	lookback, err := time.ParseDuration(s.cfg.Lookback)
 	if err != nil {
 		glog.Fatalf("Failed to parse duration %q: %v", s.cfg.Lookback, err)
 	}
