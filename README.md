@@ -1,9 +1,20 @@
 # node-problem-detector
 node-problem-detector aims to make various node problems visible to the upstream
-layers in cluster management stack. It is a [DaemonSet](http://kubernetes.io/docs/admin/daemons/)
-detecting node problems and reporting them to apiserver. Now it is running as
+layers in cluster management stack.
+
+`node-problem-detector` can either run as a [DaemonSet](http://kubernetes.io/docs/admin/daemons/) or run standalone on bare metals.
+
+`node-problem-detector` detects node problems and reporting them to apiserver.
+
+Now it is running as
 a [Kubernetes Addon](https://github.com/kubernetes/kubernetes/tree/master/cluster/addons)
 enabled by default in the GCE cluster.
+
+# Command Line Arguments
+* `apiserver`  
+`apiserver` command line argument can customize how to generate a Kubernetes ApiServer client according to `inClusterConfig` URI parameter.
+The format for `apiserver` argument is
+`http://APISERVER_IP:APISERVER_PORT?inClusterConfig=false&apiVersion=v1&userServiceAccount=false&auth=&insecure=`. It is the same as [`Heapster`](https://github.com/kubernetes/heapster.git)'s [`source` argument](https://github.com/kubernetes/heapster/blob/master/docs/source-configuration.md#kubernetes). Actually, `node-problem-detector` reuses Heapster `k8s.io/heapster/common/kubernetes` package to generate an apiserver client.
 
 # Background
 There are tons of node problems could possibly affect the pods running on the
@@ -68,6 +79,9 @@ spec:
     spec:
       containers:
       - name: node-problem-detector
+        command:
+          - "/node-problem-detector"
+          - "-apiserver=http://APISERVER_IP:APISERVER_PORT?inClusterConfig=true&apiVersion=v1"
         image: gcr.io/google_containers/node-problem-detector:v0.2
         imagePullPolicy: Always
         securityContext:
@@ -91,6 +105,9 @@ spec:
 * Create the DaemonSet with `kubectl create -f node-problem-detector.yaml`
 * If needed, you can use [ConfigMap](http://kubernetes.io/docs/user-guide/configmap/)
 to overwrite the `config/`.
+
+## Start Standalone
+`node-problem-detector -apiserver=http://APISERVER_IP:APISERVER_PORT?inClusterConfig=false&apiVersion=v1`
 
 # Links
 * [Design Doc](https://docs.google.com/document/d/1cs1kqLziG-Ww145yN6vvlKguPbQQ0psrSBnEqpy0pzE/edit?usp=sharing)

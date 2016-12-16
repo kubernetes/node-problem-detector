@@ -1,5 +1,5 @@
 /*
-Copyright 2014 The Kubernetes Authors All rights reserved.
+Copyright 2014 The Kubernetes Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ limitations under the License.
 package runtime
 
 import (
+	"bytes"
 	"fmt"
 
 	"github.com/golang/glog"
@@ -40,6 +41,7 @@ import (
 // TypeMeta is provided here for convenience. You may use it directly from this package or define
 // your own with the same fields.
 //
+// +k8s:deepcopy-gen=true
 // +protobuf=true
 type TypeMeta struct {
 	APIVersion string `json:"apiVersion,omitempty" yaml:"apiVersion,omitempty" protobuf:"bytes,1,opt,name=apiVersion"`
@@ -92,6 +94,7 @@ const (
 // in the Object. (TODO: In the case where the object is of an unknown type, a
 // runtime.Unknown object will be created and stored.)
 //
+// +k8s:deepcopy-gen=true
 // +protobuf=true
 type RawExtension struct {
 	// Raw is the underlying serialization of this object.
@@ -109,6 +112,7 @@ type RawExtension struct {
 // TODO: Make this object have easy access to field based accessors and settors for
 // metadata and field mutatation.
 //
+// +k8s:deepcopy-gen=true
 // +protobuf=true
 type Unknown struct {
 	TypeMeta `json:",inline" protobuf:"bytes,1,opt,name=typeMeta"`
@@ -133,6 +137,21 @@ type Unstructured struct {
 	// Object is a JSON compatible map with string, float, int, []interface{}, or map[string]interface{}
 	// children.
 	Object map[string]interface{}
+}
+
+// MarshalJSON ensures that the unstructured object produces proper
+// JSON when passed to Go's standard JSON library.
+func (u *Unstructured) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	err := UnstructuredJSONScheme.Encode(u, &buf)
+	return buf.Bytes(), err
+}
+
+// UnmarshalJSON ensures that the unstructured object properly decodes
+// JSON when passed to Go's standard JSON library.
+func (u *Unstructured) UnmarshalJSON(b []byte) error {
+	_, _, err := UnstructuredJSONScheme.Decode(b, nil, u)
+	return err
 }
 
 func getNestedField(obj map[string]interface{}, fields ...string) interface{} {
@@ -231,20 +250,36 @@ func (u *Unstructured) setNestedMap(value map[string]string, fields ...string) {
 
 func extractOwnerReference(src interface{}) metatypes.OwnerReference {
 	v := src.(map[string]interface{})
+	controllerPtr, ok := (getNestedField(v, "controller")).(*bool)
+	if !ok {
+		controllerPtr = nil
+	} else {
+		if controllerPtr != nil {
+			controller := *controllerPtr
+			controllerPtr = &controller
+		}
+	}
 	return metatypes.OwnerReference{
 		Kind:       getNestedString(v, "kind"),
 		Name:       getNestedString(v, "name"),
 		APIVersion: getNestedString(v, "apiVersion"),
 		UID:        (types.UID)(getNestedString(v, "uid")),
+		Controller: controllerPtr,
 	}
 }
 
 func setOwnerReference(src metatypes.OwnerReference) map[string]interface{} {
 	ret := make(map[string]interface{})
+	controllerPtr := src.Controller
+	if controllerPtr != nil {
+		controller := *controllerPtr
+		controllerPtr = &controller
+	}
 	setNestedField(ret, src.Kind, "kind")
 	setNestedField(ret, src.Name, "name")
 	setNestedField(ret, src.APIVersion, "apiVersion")
 	setNestedField(ret, string(src.UID), "uid")
+	setNestedField(ret, controllerPtr, "controller")
 	return ret
 }
 
@@ -421,6 +456,14 @@ func (u *Unstructured) SetFinalizers(finalizers []string) {
 	u.setNestedSlice(finalizers, "metadata", "finalizers")
 }
 
+func (u *Unstructured) GetClusterName() string {
+	return getNestedString(u.Object, "metadata", "clusterName")
+}
+
+func (u *Unstructured) SetClusterName(clusterName string) {
+	u.setNestedField(clusterName, "metadata", "clusterName")
+}
+
 // UnstructuredList allows lists that do not have Golang structs
 // registered to be manipulated generically. This can be used to deal
 // with the API lists from a plug-in.
@@ -429,6 +472,21 @@ type UnstructuredList struct {
 
 	// Items is a list of unstructured objects.
 	Items []*Unstructured `json:"items"`
+}
+
+// MarshalJSON ensures that the unstructured list object produces proper
+// JSON when passed to Go's standard JSON library.
+func (u *UnstructuredList) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	err := UnstructuredJSONScheme.Encode(u, &buf)
+	return buf.Bytes(), err
+}
+
+// UnmarshalJSON ensures that the unstructured list object properly
+// decodes JSON when passed to Go's standard JSON library.
+func (u *UnstructuredList) UnmarshalJSON(b []byte) error {
+	_, _, err := UnstructuredJSONScheme.Decode(b, nil, u)
+	return err
 }
 
 func (u *UnstructuredList) setNestedField(value interface{}, fields ...string) {

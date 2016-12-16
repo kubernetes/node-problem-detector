@@ -47,7 +47,6 @@ func (ft *fakeTimer) Reset(d time.Duration) bool {
 func (ft *fakeTimer) Stop() bool {
 	ft.mutex.Lock()
 	active := !ft.completionTime.IsZero()
-	ft.completionTime = time.Time{}
 	ft.mutex.Unlock()
 
 	ft.clock.removeTimeWatcher(ft)

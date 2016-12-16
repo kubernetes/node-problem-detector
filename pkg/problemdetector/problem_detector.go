@@ -41,8 +41,8 @@ type problemDetector struct {
 
 // NewProblemDetector creates the problem detector. Currently we just directly passed in the problem daemons, but
 // in the future we may want to let the problem daemons register themselves.
-func NewProblemDetector(monitor kernelmonitor.KernelMonitor) ProblemDetector {
-	client := problemclient.NewClientOrDie()
+func NewProblemDetector(monitor kernelmonitor.KernelMonitor, apiServer string) ProblemDetector {
+	client := problemclient.NewClientOrDie(apiServer)
 	return &problemDetector{
 		client:           client,
 		conditionManager: condition.NewConditionManager(client, kubeutil.RealClock{}),

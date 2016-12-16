@@ -24,10 +24,11 @@ import (
 	"k8s.io/kubernetes/pkg/api"
 	"k8s.io/kubernetes/pkg/api/unversioned"
 	"k8s.io/kubernetes/pkg/client/record"
-	"k8s.io/kubernetes/pkg/client/restclient"
 	client "k8s.io/kubernetes/pkg/client/unversioned"
 	"k8s.io/kubernetes/pkg/types"
 	"k8s.io/kubernetes/pkg/util"
+	"k8s.io/heapster/common/kubernetes"
+	"net/url"
 )
 
 // Client is the interface of problem client
@@ -49,12 +50,17 @@ type nodeProblemClient struct {
 }
 
 // NewClientOrDie creates a new problem client, panics if error occurs.
-func NewClientOrDie() Client {
+func NewClientOrDie(apiServer string) Client {
 	c := &nodeProblemClient{clock: util.RealClock{}}
-	cfg, err := restclient.InClusterConfig()
+
+	// error is ignored because we have checked it after command line is parsed.:)
+	uri, _ := url.Parse(apiServer)
+
+	cfg, err := kubernetes.GetKubeClientConfig(uri)
 	if err != nil {
 		panic(err)
 	}
+
 	// TODO(random-liu): Set QPS Limit
 	c.client = client.NewOrDie(cfg)
 	// Get node name from environment variable NODE_NAME

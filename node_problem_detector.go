@@ -21,15 +21,28 @@ import (
 
 	"k8s.io/node-problem-detector/pkg/kernelmonitor"
 	"k8s.io/node-problem-detector/pkg/problemdetector"
+	"github.com/golang/glog"
+	"net/url"
 )
 
 var (
 	kernelMonitorConfigPath = flag.String("kernel-monitor", "/config/kernel_monitor.json", "The path to the kernel monitor config file")
+	apiServer = flag.String("apiserver", "", "URI used to connect to Kubernetes ApiServer")
 )
+
+func validateCmdParams() {
+	if len(*apiServer) == 0 {
+		glog.Fatal("apiserver argument is empty")
+	} else if _, err := url.Parse(*apiServer); err != nil {
+		glog.Fatalf("apiserver argument %q is not a valid HTTP URI. %s", *apiServer, err)
+	}
+}
 
 func main() {
 	flag.Parse()
+	validateCmdParams()
+
 	k := kernelmonitor.NewKernelMonitorOrDie(*kernelMonitorConfigPath)
-	p := problemdetector.NewProblemDetector(k)
+	p := problemdetector.NewProblemDetector(k, *apiServer)
 	p.Run()
 }
