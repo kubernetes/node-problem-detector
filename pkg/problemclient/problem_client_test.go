@@ -25,7 +25,7 @@ import (
 	"k8s.io/kubernetes/pkg/api"
 	"k8s.io/kubernetes/pkg/api/unversioned"
 	"k8s.io/kubernetes/pkg/client/record"
-	"k8s.io/kubernetes/pkg/util"
+	"k8s.io/kubernetes/pkg/util/clock"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -40,7 +40,7 @@ func newFakeProblemClient() *nodeProblemClient {
 		nodeName: testNode,
 		// There is no proper fake for *client.Client for now
 		// TODO(random-liu): Add test for SetConditions when we have good fake for *client.Client
-		clock:     &util.FakeClock{},
+		clock:     &clock.FakeClock{},
 		recorders: make(map[string]record.EventRecorder),
 		nodeRef:   getNodeRef(testNode),
 	}

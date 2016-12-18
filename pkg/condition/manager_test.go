@@ -27,12 +27,12 @@ import (
 	problemutil "k8s.io/node-problem-detector/pkg/util"
 
 	"k8s.io/kubernetes/pkg/api"
-	"k8s.io/kubernetes/pkg/util"
+	"k8s.io/kubernetes/pkg/util/clock"
 )
 
-func newTestManager() (*conditionManager, *problemclient.FakeProblemClient, *util.FakeClock) {
+func newTestManager() (*conditionManager, *problemclient.FakeProblemClient, *clock.FakeClock) {
 	fakeClient := problemclient.NewFakeProblemClient()
-	fakeClock := util.NewFakeClock(time.Now())
+	fakeClock := clock.NewFakeClock(time.Now())
 	manager := NewConditionManager(fakeClient, fakeClock)
 	return manager.(*conditionManager), fakeClient, fakeClock
 }

@@ -26,7 +26,7 @@ import (
 	problemutil "k8s.io/node-problem-detector/pkg/util"
 
 	"k8s.io/kubernetes/pkg/api"
-	"k8s.io/kubernetes/pkg/util"
+	"k8s.io/kubernetes/pkg/util/clock"
 
 	"github.com/golang/glog"
 )
@@ -58,7 +58,7 @@ type ConditionManager interface {
 
 type conditionManager struct {
 	sync.Mutex
-	clock      util.Clock
+	clock      clock.Clock
 	latest     time.Time
 	client     problemclient.Client
 	updates    map[string]types.Condition
@@ -66,7 +66,7 @@ type conditionManager struct {
 }
 
 // NewConditionManager creates a condition manager.
-func NewConditionManager(client problemclient.Client, clock util.Clock) ConditionManager {
+func NewConditionManager(client problemclient.Client, clock clock.Clock) ConditionManager {
 	return &conditionManager{
 		client:     client,
 		clock:      clock,

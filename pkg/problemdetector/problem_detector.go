@@ -19,7 +19,7 @@ package problemdetector
 import (
 	"github.com/golang/glog"
 
-	kubeutil "k8s.io/kubernetes/pkg/util"
+	"k8s.io/kubernetes/pkg/util/clock"
 
 	"k8s.io/node-problem-detector/pkg/condition"
 	"k8s.io/node-problem-detector/pkg/kernelmonitor"
@@ -45,7 +45,7 @@ func NewProblemDetector(monitor kernelmonitor.KernelMonitor) ProblemDetector {
 	client := problemclient.NewClientOrDie()
 	return &problemDetector{
 		client:           client,
-		conditionManager: condition.NewConditionManager(client, kubeutil.RealClock{}),
+		conditionManager: condition.NewConditionManager(client, clock.RealClock{}),
 		monitor:          monitor,
 	}
 }

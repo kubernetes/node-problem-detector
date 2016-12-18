@@ -25,7 +25,7 @@ import (
 
 	"k8s.io/node-problem-detector/pkg/kernelmonitor/types"
 
-	"github.com/pivotal-golang/clock/fakeclock"
+	"code.cloudfoundry.org/clock/fakeclock"
 )
 
 func TestWatch(t *testing.T) {
