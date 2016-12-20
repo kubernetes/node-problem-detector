@@ -21,13 +21,14 @@ import (
 	"fmt"
 	"os"
 
+	"k8s.io/kubernetes/pkg/util/clock"
+
 	"k8s.io/kubernetes/pkg/api"
 	"k8s.io/kubernetes/pkg/api/unversioned"
 	"k8s.io/kubernetes/pkg/client/record"
 	"k8s.io/kubernetes/pkg/client/restclient"
 	client "k8s.io/kubernetes/pkg/client/unversioned"
 	"k8s.io/kubernetes/pkg/types"
-	"k8s.io/kubernetes/pkg/util"
 )
 
 // Client is the interface of problem client
@@ -43,14 +44,14 @@ type Client interface {
 type nodeProblemClient struct {
 	nodeName  string
 	client    *client.Client
-	clock     util.Clock
+	clock     clock.Clock
 	recorders map[string]record.EventRecorder
 	nodeRef   *api.ObjectReference
 }
 
 // NewClientOrDie creates a new problem client, panics if error occurs.
 func NewClientOrDie() Client {
-	c := &nodeProblemClient{clock: util.RealClock{}}
+	c := &nodeProblemClient{clock: clock.RealClock{}}
 	cfg, err := restclient.InClusterConfig()
 	if err != nil {
 		panic(err)

@@ -29,10 +29,10 @@ import (
 	"k8s.io/node-problem-detector/pkg/kernelmonitor/types"
 	"k8s.io/node-problem-detector/pkg/kernelmonitor/util"
 
+	utilclock "code.cloudfoundry.org/clock"
 	"github.com/coreos/go-systemd/sdjournal"
 	"github.com/golang/glog"
 	"github.com/google/cadvisor/utils/tail"
-	utilclock "github.com/pivotal-golang/clock"
 )
 
 const (
