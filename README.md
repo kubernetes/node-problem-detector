@@ -1,8 +1,12 @@
 # node-problem-detector
 node-problem-detector aims to make various node problems visible to the upstream
-layers in cluster management stack. It is a [DaemonSet](http://kubernetes.io/docs/admin/daemons/)
-detecting node problems and reporting them to apiserver. Now it is running as
-a [Kubernetes Addon](https://github.com/kubernetes/kubernetes/tree/master/cluster/addons)
+layers in cluster management stack.
+It is a daemon runs on each node, detects node
+problems and reports them to apiserver.
+node-problem-detector can either run as a
+[DaemonSet](http://kubernetes.io/docs/admin/daemons/) or run standalone on bare metals.
+Now it is running as a
+[Kubernetes Addon](https://github.com/kubernetes/kubernetes/tree/master/cluster/addons)
 enabled by default in the GCE cluster.
 
 # Background
@@ -48,6 +52,14 @@ List of supported problem daemons:
 | [KernelMonitor](https://github.com/kubernetes/node-problem-detector/tree/master/pkg/kernelmonitor) | KernelDeadlock | A problem daemon monitors kernel log and reports problem according to predefined rules. |
 
 # Usage
+## Override Apiserver Client Configuration
+* `-apiserver-override`  
+`apiserver-override` command line argument can customize how to generate a Kubernetes ApiServer
+client according to `inClusterConfig` URI parameter. It is the same as
+[`Heapster`](https://github.com/kubernetes/heapster.git)'s
+[`source` argument](https://github.com/kubernetes/heapster/blob/master/docs/source-configuration.md#kubernetes).
+The format is `http://APISERVER_IP:APISERVER_PORT?inClusterConfig=false&userServiceAccount=false&auth=&insecure=`.
+
 ## Build Image
 Run `make` in the top directory. It will:
 * Build the binary.
@@ -91,6 +103,10 @@ spec:
 * Create the DaemonSet with `kubectl create -f node-problem-detector.yaml`
 * If needed, you can use [ConfigMap](http://kubernetes.io/docs/user-guide/configmap/)
 to overwrite the `config/`.
+
+## Start Standalone
+`inClusterConfig` should be set to `false`. To run node-problem-detector standalone with an insecure apiserver connection: 
+`node-problem-detector -apiserver-override=http://APISERVER_IP:APISERVER_PORT?inClusterConfig=false`
 
 # Links
 * [Design Doc](https://docs.google.com/document/d/1cs1kqLziG-Ww145yN6vvlKguPbQQ0psrSBnEqpy0pzE/edit?usp=sharing)
