@@ -9,10 +9,8 @@ PROJ = google_containers
 
 PKG_SOURCES := $(shell find pkg -name '*.go')
 
-node-problem-detector: ./bin/node-problem-detector
-
-./bin/node-problem-detector: $(PKG_SOURCES) node_problem_detector.go
-	CGO_ENABLED=0 GOOS=linux godep go build -a -installsuffix cgo -ldflags '-w' -o node-problem-detector
+node-problem-detector: $(PKG_SOURCES) node_problem_detector.go
+	GOOS=linux go build -ldflags '-w -extldflags "-static"' -o node-problem-detector
 
 test:
 	go test -timeout=1m -v -race ./pkg/...
@@ -24,4 +22,4 @@ push: container
 	gcloud docker push gcr.io/$(PROJ)/node-problem-detector:$(TAG)
 
 clean:
-	rm -f ./bin/node-problem-detector
+	rm -f node-problem-detector
