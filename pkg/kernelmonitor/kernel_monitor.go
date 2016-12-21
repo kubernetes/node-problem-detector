@@ -20,7 +20,6 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"regexp"
-	"syscall"
 	"time"
 
 	kerntypes "k8s.io/node-problem-detector/pkg/kernelmonitor/types"
@@ -81,11 +80,6 @@ func NewKernelMonitorOrDie(configPath string) KernelMonitor {
 		panic(err)
 	}
 	glog.Infof("Finish parsing log file: %+v", k.config)
-	var info syscall.Sysinfo_t
-	err = syscall.Sysinfo(&info)
-	if err != nil {
-		panic(err)
-	}
 	k.watcher = NewKernelLogWatcher(k.config.WatcherConfig)
 	k.buffer = NewLogBuffer(k.config.BufferSize)
 	// A 1000 size channel should be big enough.
