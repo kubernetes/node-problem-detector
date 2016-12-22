@@ -1,4 +1,4 @@
-.PHONY: all container push clean node-problem-detector
+.PHONY: all container push clean node-problem-detector vet fmt
 
 all: push
 
@@ -9,7 +9,13 @@ PROJ = google_containers
 
 PKG_SOURCES := $(shell find pkg -name '*.go')
 
-node-problem-detector: $(PKG_SOURCES) node_problem_detector.go
+vet:
+	go list ./... | grep -v "./vendor/*" | xargs go vet
+
+fmt:
+	find . -type f -name "*.go" | grep -v "./vendor/*" | xargs gofmt -s -w -l
+
+node-problem-detector: $(PKG_SOURCES) node_problem_detector.go fmt vet
 	GOOS=linux go build -ldflags '-w -extldflags "-static"' -o node-problem-detector
 
 test:
