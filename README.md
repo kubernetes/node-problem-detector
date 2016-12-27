@@ -57,7 +57,7 @@ Run `make` in the top directory. It will:
 to another registry
 
 ## Start DaemonSet
-* Create a file node-problem-daemon.yaml with the following yaml.
+* Create a file node-problem-detector.yaml with the following yaml.
 ```yaml
 apiVersion: extensions/v1beta1
 kind: DaemonSet
