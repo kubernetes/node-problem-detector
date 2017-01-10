@@ -141,6 +141,11 @@
 			"Rev": "bbcb9da2d746f8bdbd6a936686a0a6067ada0ec5"
 		},
 		{
+			"ImportPath": "github.com/imdario/mergo",
+			"Comment": "0.2.2-6-g50d4dbd",
+			"Rev": "50d4dbd4eb0e84778abe37cefef140271d96fade"
+		},
+		{
 			"ImportPath": "github.com/jonboulle/clockwork",
 			"Rev": "3f831b65b61282ba6bece21b91beea2edc4c887a"
 		},
@@ -557,6 +562,11 @@
 			"Rev": "3a5b96cfd3d3ff1d53d979b4297c4f3b869aab09"
 		},
 		{
+			"ImportPath": "k8s.io/heapster/common/kubernetes",
+			"Comment": "v1.2.0",
+			"Rev": "eea8c9657d0176b52226706765714c6ff6e432cc"
+		},
+		{
 			"ImportPath": "k8s.io/kubernetes/pkg/api",
 			"Comment": "v1.4.0-beta.3",
 			"Rev": "a0a9a282b431f437b048932eaf01631408b5bae0"
@@ -847,7 +857,27 @@
 			"Rev": "a0a9a282b431f437b048932eaf01631408b5bae0"
 		},
 		{
+			"ImportPath": "k8s.io/kubernetes/pkg/client/unversioned/auth",
+			"Comment": "v1.4.0-beta.3",
+			"Rev": "a0a9a282b431f437b048932eaf01631408b5bae0"
+		},
+		{
+			"ImportPath": "k8s.io/kubernetes/pkg/client/unversioned/clientcmd",
+			"Comment": "v1.4.0-beta.3",
+			"Rev": "a0a9a282b431f437b048932eaf01631408b5bae0"
+		},
+		{
 			"ImportPath": "k8s.io/kubernetes/pkg/client/unversioned/clientcmd/api",
+			"Comment": "v1.4.0-beta.3",
+			"Rev": "a0a9a282b431f437b048932eaf01631408b5bae0"
+		},
+		{
+			"ImportPath": "k8s.io/kubernetes/pkg/client/unversioned/clientcmd/api/latest",
+			"Comment": "v1.4.0-beta.3",
+			"Rev": "a0a9a282b431f437b048932eaf01631408b5bae0"
+		},
+		{
+			"ImportPath": "k8s.io/kubernetes/pkg/client/unversioned/clientcmd/api/v1",
 			"Comment": "v1.4.0-beta.3",
 			"Rev": "a0a9a282b431f437b048932eaf01631408b5bae0"
 		},
@@ -973,6 +1003,11 @@
 		},
 		{
 			"ImportPath": "k8s.io/kubernetes/pkg/util/hash",
+			"Comment": "v1.4.0-beta.3",
+			"Rev": "a0a9a282b431f437b048932eaf01631408b5bae0"
+		},
+		{
+			"ImportPath": "k8s.io/kubernetes/pkg/util/homedir",
 			"Comment": "v1.4.0-beta.3",
 			"Rev": "a0a9a282b431f437b048932eaf01631408b5bae0"
 		},
