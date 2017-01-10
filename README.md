@@ -53,13 +53,15 @@ List of supported problem daemons:
 
 # Usage
 ## Flags
-* `-apiserver-override`: An URI parameter used to customize how node-problem-detector
-connects the apiserver. The format is the same with the
+* `--apiserver-override`: A URI parameter used to customize how node-problem-detector
+connects the apiserver. The format is same as the
 [`source`](https://github.com/kubernetes/heapster/blob/master/docs/source-configuration.md#kubernetes)
-flag of [Heapster](https://github.com/kubernetes/heapster):
+flag of [Heapster](https://github.com/kubernetes/heapster).
+For example, to run without auth, use the following config:
 ```
-http://APISERVER_IP:APISERVER_PORT?inClusterConfig=false&userServiceAccount=false&auth=&insecure=
+http://APISERVER_IP:APISERVER_PORT?inClusterConfig=false
 ```
+Refer [heapster docs](https://github.com/kubernetes/heapster/blob/1e40b0f4b5eeb3f02e11ee22c2b6fda36b6e6ea1/docs/source-configuration.md#kubernetes) for a complete list of available options.
 
 ## Build Image
 Run `make` in the top directory. It will:
