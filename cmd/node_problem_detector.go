@@ -19,16 +19,20 @@ package main
 import (
 	"flag"
 	"net/url"
+	"os"
 
 	"k8s.io/node-problem-detector/pkg/kernelmonitor"
 	"k8s.io/node-problem-detector/pkg/problemdetector"
+	"k8s.io/node-problem-detector/pkg/version"
 
 	"github.com/golang/glog"
 )
 
+// TODO: Move flags to options directory.
 var (
 	kernelMonitorConfigPath = flag.String("kernel-monitor", "/config/kernel-monitor.json", "The path to the kernel monitor config file")
-	apiServerOverride       = flag.String("apiserver-override", "", "custom URI used to connect to Kubernetes ApiServer")
+	apiServerOverride       = flag.String("apiserver-override", "", "Custom URI used to connect to Kubernetes ApiServer")
+	printVersion            = flag.Bool("version", false, "Print version information and quit")
 )
 
 func validateCmdParams() {
@@ -40,6 +44,11 @@ func validateCmdParams() {
 func main() {
 	flag.Parse()
 	validateCmdParams()
+
+	if *printVersion {
+		version.PrintVersion()
+		os.Exit(0)
+	}
 
 	k := kernelmonitor.NewKernelMonitorOrDie(*kernelMonitorConfigPath)
 	p := problemdetector.NewProblemDetector(k, *apiServerOverride)

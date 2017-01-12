@@ -1,13 +1,16 @@
-.PHONY: all container push clean node-problem-detector vet fmt
+.PHONY: all container push clean node-problem-detector vet fmt version
 
 all: push
 
-# See node-problem-detector.yaml for the version currently running-- bump this ahead before rebuilding!
-TAG = v0.2
+VERSION := $(shell git describe --tags --dirty)
+
+TAG ?= $(VERSION)
 
 PROJ = google_containers
 
-PKG_SOURCES := $(shell find pkg -name '*.go')
+PKG := k8s.io/node-problem-detector
+
+PKG_SOURCES := $(shell find pkg cmd -name '*.go')
 
 vet:
 	go list ./... | grep -v "./vendor/*" | xargs go vet
@@ -15,8 +18,13 @@ vet:
 fmt:
 	find . -type f -name "*.go" | grep -v "./vendor/*" | xargs gofmt -s -w -l
 
-node-problem-detector: $(PKG_SOURCES) node_problem_detector.go fmt vet
-	GOOS=linux go build -ldflags '-w -extldflags "-static"' -o node-problem-detector
+version:
+	@echo $(VERSION)
+
+node-problem-detector: $(PKG_SOURCES) fmt vet
+	GOOS=linux go build -o node-problem-detector \
+	     -ldflags '-w -extldflags "-static" -X $(PKG)/pkg/version.version=$(VERSION)' \
+	     cmd/node_problem_detector.go
 
 test:
 	go test -timeout=1m -v -race ./pkg/...
