@@ -15,7 +15,7 @@ package version
 
 import "fmt"
 
-// version defines the version
+// version defines node-problem-detector version string.
 var version string = "UNKNOWN"
 
 func PrintVersion() {
