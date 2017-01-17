@@ -62,6 +62,7 @@ For example, to run without auth, use the following config:
 http://APISERVER_IP:APISERVER_PORT?inClusterConfig=false
 ```
 Refer [heapster docs](https://github.com/kubernetes/heapster/blob/1e40b0f4b5eeb3f02e11ee22c2b6fda36b6e6ea1/docs/source-configuration.md#kubernetes) for a complete list of available options.
+* `-hostname-override`: A customized node name used for node-problem-detector to update conditions and emit events. node-problem-detector gets node name first from `hostname-override`, then `NODE_NAME` environment variable and finally fall back to `os.Hostname`.
 
 ## Build Image
 Run `make` in the top directory. It will:
