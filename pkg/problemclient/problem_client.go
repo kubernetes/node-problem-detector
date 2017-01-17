@@ -72,6 +72,18 @@ func NewClientOrDie(apiServerOverride string) Client {
 	// 2. For some cloud providers, os.Hostname is different from the real hostname.
 	c.nodeName = os.Getenv("NODE_NAME")
 	if c.nodeName == "" {
+		// k8s v1.3.7 and earlier doesn't provide the node name in the dowwnward API.
+		// However, we can get it from the k8s API.
+		var err error
+		pod, err := c.client.Pods(os.Getenv("POD_NAMESPACE")).Get(os.Getenv("POD_NAME"))
+		if err == nil {
+			node, err := c.client.Nodes().Get(pod.Spec.NodeName)
+			if err == nil {
+				c.nodeName = node.ObjectMeta.Name
+			}
+		}
+	}
+	if c.nodeName == "" {
 		// For backward compatibility. If the env is not set, get the hostname
 		// from os.Hostname(). This may not work for all configurations and
 		// environments.
