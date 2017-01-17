@@ -53,7 +53,7 @@ List of supported problem daemons:
 
 # Usage
 ## Flags
-* `--apiserver-override`: A URI parameter used to customize how node-problem-detector
+* `-apiserver-override`: A URI parameter used to customize how node-problem-detector
 connects the apiserver. The format is same as the
 [`source`](https://github.com/kubernetes/heapster/blob/master/docs/source-configuration.md#kubernetes)
 flag of [Heapster](https://github.com/kubernetes/heapster).
