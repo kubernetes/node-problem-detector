@@ -33,12 +33,43 @@ var (
 	kernelMonitorConfigPath = flag.String("kernel-monitor", "/config/kernel-monitor.json", "The path to the kernel monitor config file")
 	apiServerOverride       = flag.String("apiserver-override", "", "Custom URI used to connect to Kubernetes ApiServer")
 	printVersion            = flag.Bool("version", false, "Print version information and quit")
+	hostnameOverride        = flag.String("hostname-override", "", "Custom node name used to override hostname")
 )
 
 func validateCmdParams() {
 	if _, err := url.Parse(*apiServerOverride); err != nil {
 		glog.Fatalf("apiserver-override %q is not a valid HTTP URI: %v", *apiServerOverride, err)
 	}
+}
+
+func mustGetNodeName() string {
+	var nodeName string
+
+	// Check hostname override first for customized node name.
+	if *hostnameOverride != "" {
+		nodeName = *hostnameOverride
+		return nodeName
+	}
+
+	// Get node name from environment variable NODE_NAME
+	// By default, assume that the NODE_NAME env should have been set with
+	// downward api or user defined exported environment variable. We prefer it because sometimes
+	// the hostname returned by os.Hostname is not right because:
+	// 1. User may override the hostname.
+	// 2. For some cloud providers, os.Hostname is different from the real hostname.
+	nodeName = os.Getenv("NODE_NAME")
+	if nodeName == "" {
+		// For backward compatibility. If the env is not set, get the hostname
+		// from os.Hostname(). This may not work for all configurations and
+		// environments.
+		var err error
+		nodeName, err = os.Hostname()
+		if err != nil {
+			panic("empty node name")
+		}
+	}
+
+	return nodeName
 }
 
 func main() {
@@ -50,7 +81,9 @@ func main() {
 		os.Exit(0)
 	}
 
+	nodeName := mustGetNodeName()
+
 	k := kernelmonitor.NewKernelMonitorOrDie(*kernelMonitorConfigPath)
-	p := problemdetector.NewProblemDetector(k, *apiServerOverride)
+	p := problemdetector.NewProblemDetector(k, *apiServerOverride, nodeName)
 	p.Run()
 }

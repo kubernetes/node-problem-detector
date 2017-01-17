@@ -52,6 +52,11 @@ List of supported problem daemons:
 | [KernelMonitor](https://github.com/kubernetes/node-problem-detector/tree/master/pkg/kernelmonitor) | KernelDeadlock | A problem daemon monitors kernel log and reports problem according to predefined rules. |
 
 # Usage
+## Info
+* node-problem-detector gets node name from `NODE_NAME` environment variable first before using `os.Hostname`.
+  * DaemonSet: node name is got from `NODE_NAME` which is set via downward api(requires Kubernetes 1.4.0 and above).
+  * Standalone: node name is got from `os.Hostname`. If you want to customize the node name, one way is to wrap node-problem-detector in a shell script, customize desired value to `NODE_NAME` environment variable and export it before running node-problem-detector.
+
 ## Flags
 * `--apiserver-override`: A URI parameter used to customize how node-problem-detector
 connects the apiserver. The format is same as the
@@ -62,7 +67,7 @@ For example, to run without auth, use the following config:
 http://APISERVER_IP:APISERVER_PORT?inClusterConfig=false
 ```
 Refer [heapster docs](https://github.com/kubernetes/heapster/blob/1e40b0f4b5eeb3f02e11ee22c2b6fda36b6e6ea1/docs/source-configuration.md#kubernetes) for a complete list of available options.
-
+* `--hostname-override`: A customized node name used for node-problem-detector. node-problem-detector gets node name first from `hostname-override`, then `NODE_NAME` environment variable and finally fall back to `os.Hostname` when node name can not be inferred from neither `hostname-override` nor `NODE_NAME` environment variable. 
 ## Build Image
 Run `make` in the top directory. It will:
 * Build the binary.

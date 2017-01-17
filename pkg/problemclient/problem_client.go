@@ -51,7 +51,7 @@ type nodeProblemClient struct {
 }
 
 // NewClientOrDie creates a new problem client, panics if error occurs.
-func NewClientOrDie(apiServerOverride string) Client {
+func NewClientOrDie(apiServerOverride, nodeName string) Client {
 	c := &nodeProblemClient{clock: clock.RealClock{}}
 
 	// we have checked it is a valid URI after command line argument is parsed.:)
@@ -64,23 +64,7 @@ func NewClientOrDie(apiServerOverride string) Client {
 
 	// TODO(random-liu): Set QPS Limit
 	c.client = client.NewOrDie(cfg)
-	// Get node name from environment variable NODE_NAME
-	// By default, assume that the NODE_NAME env should have been set with
-	// downward api. We prefer it because sometimes the hostname returned
-	// by os.Hostname is not right because:
-	// 1. User may override the hostname.
-	// 2. For some cloud providers, os.Hostname is different from the real hostname.
-	c.nodeName = os.Getenv("NODE_NAME")
-	if c.nodeName == "" {
-		// For backward compatibility. If the env is not set, get the hostname
-		// from os.Hostname(). This may not work for all configurations and
-		// environments.
-		var err error
-		c.nodeName, err = os.Hostname()
-		if err != nil {
-			panic("empty node name")
-		}
-	}
+	c.nodeName = nodeName
 	c.nodeRef = getNodeRef(c.nodeName)
 	c.recorders = make(map[string]record.EventRecorder)
 	return c
