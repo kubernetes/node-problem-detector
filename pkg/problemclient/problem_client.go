@@ -142,7 +142,7 @@ func getEventRecorder(c *client.Client, nodeName, source string) record.EventRec
 }
 
 func getNodeRef(nodeName string) *api.ObjectReference {
-	// TODO(random-liu): Get node to initalize the node reference
+	// TODO(random-liu): Get node to initialize the node reference
 	return &api.ObjectReference{
 		Kind:      "Node",
 		Name:      nodeName,
