@@ -17,6 +17,7 @@ limitations under the License.
 package condition
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
@@ -47,7 +48,7 @@ func newTestCondition(condition string) types.Condition {
 	}
 }
 
-func TestCheckUpdates(t *testing.T) {
+func TestNeedUpdates(t *testing.T) {
 	m, _, _ := newTestManager()
 	var c types.Condition
 	for desc, test := range map[string]struct {
@@ -75,19 +76,41 @@ func TestCheckUpdates(t *testing.T) {
 			c = newTestCondition(test.condition)
 		}
 		m.UpdateCondition(c)
-		assert.Equal(t, test.update, m.checkUpdates(), desc)
+		assert.Equal(t, test.update, m.needUpdates(), desc)
 		assert.Equal(t, c, m.conditions[c.Type], desc)
 	}
 }
 
-func TestSync(t *testing.T) {
+func TestResync(t *testing.T) {
 	m, fakeClient, fakeClock := newTestManager()
 	condition := newTestCondition("TestCondition")
 	m.conditions = map[string]types.Condition{condition.Type: condition}
 	m.sync()
 	expected := []api.NodeCondition{problemutil.ConvertToAPICondition(condition)}
 	assert.Nil(t, fakeClient.AssertConditions(expected), "Condition should be updated via client")
-	assert.False(t, m.checkResync(), "Should not resync before timeout exceeds")
+
+	assert.False(t, m.needResync(), "Should not resync before resync period")
 	fakeClock.Step(resyncPeriod)
-	assert.True(t, m.checkResync(), "Should resync after timeout exceeds")
+	assert.False(t, m.needResync(), "Should not resync after resync period but resync is not needed")
+
+	fakeClient.InjectError("SetConditions", fmt.Errorf("injected error"))
+	m.sync()
+
+	assert.False(t, m.needResync(), "Should not resync before resync period")
+	fakeClock.Step(resyncPeriod)
+	assert.True(t, m.needResync(), "Should resync after resync period and resync is needed")
+}
+
+func TestHeartbeat(t *testing.T) {
+	m, fakeClient, fakeClock := newTestManager()
+	condition := newTestCondition("TestCondition")
+	m.conditions = map[string]types.Condition{condition.Type: condition}
+	m.sync()
+	expected := []api.NodeCondition{problemutil.ConvertToAPICondition(condition)}
+	assert.Nil(t, fakeClient.AssertConditions(expected), "Condition should be updated via client")
+
+	assert.False(t, m.needHeartbeat(), "Should not heartbeat before heartbeat period")
+
+	fakeClock.Step(heartbeatPeriod)
+	assert.True(t, m.needHeartbeat(), "Should heartbeat after heartbeat period")
 }

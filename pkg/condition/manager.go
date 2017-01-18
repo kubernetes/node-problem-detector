@@ -34,10 +34,10 @@ import (
 const (
 	// updatePeriod is the period which condition manager checks update.
 	updatePeriod = 1 * time.Second
-	// updateTimeout is the timeout of condition update operation.
-	updateTimeout = 10 * time.Second
-	// resyncPeriod is the period which condition manager does resync no matter whether these is any update.
-	resyncPeriod = 30 * time.Second
+	// resyncPeriod is the period which condition manager does resync, only update when needed.
+	resyncPeriod = 10 * time.Second
+	// heartbeatPeriod is the period which condition manager does forcibly sync with apiserver.
+	heartbeatPeriod = 1 * time.Minute
 )
 
 // ConditionManager synchronizes node conditions with the apiserver with problem client.
@@ -52,17 +52,21 @@ const (
 type ConditionManager interface {
 	// Start starts the condition manager.
 	Start()
-	// UpdateCondition update specific condition.
+	// UpdateCondition update a specific condition.
 	UpdateCondition(types.Condition)
 }
 
 type conditionManager struct {
-	sync.Mutex
-	clock      clock.Clock
-	latest     time.Time
-	client     problemclient.Client
-	updates    map[string]types.Condition
-	conditions map[string]types.Condition
+	clock     clock.Clock
+	latestTry time.Time
+	resync    bool
+	client    problemclient.Client
+	// updatesLock is the lock protecting updates. Only the field `updates`
+	// will be accessed by random caller and the sync routine, so only it
+	// needs to be protected.
+	updatesLock sync.Mutex
+	updates     map[string]types.Condition
+	conditions  map[string]types.Condition
 }
 
 // NewConditionManager creates a condition manager.
@@ -80,8 +84,8 @@ func (c *conditionManager) Start() {
 }
 
 func (c *conditionManager) UpdateCondition(condition types.Condition) {
-	c.Lock()
-	defer c.Unlock()
+	c.updatesLock.Lock()
+	defer c.updatesLock.Unlock()
 	// New node condition will override the old condition, because we only need the newest
 	// condition for each condition type.
 	c.updates[condition.Type] = condition
@@ -92,17 +96,17 @@ func (c *conditionManager) syncLoop() {
 	for {
 		select {
 		case <-updateCh:
-			if c.checkUpdates() || c.checkResync() {
+			if c.needUpdates() || c.needResync() || c.needHeartbeat() {
 				c.sync()
 			}
 		}
 	}
 }
 
-// checkUpdates checks whether there are recent updates.
-func (c *conditionManager) checkUpdates() bool {
-	c.Lock()
-	defer c.Unlock()
+// needUpdates checks whether there are recent updates.
+func (c *conditionManager) needUpdates() bool {
+	c.updatesLock.Lock()
+	defer c.updatesLock.Unlock()
 	needUpdate := false
 	for t, update := range c.updates {
 		if !reflect.DeepEqual(c.conditions[t], update) {
@@ -114,13 +118,21 @@ func (c *conditionManager) checkUpdates() bool {
 	return needUpdate
 }
 
-// checkResync checks whether a resync is needed.
-func (c *conditionManager) checkResync() bool {
-	return c.clock.Now().Sub(c.latest) >= resyncPeriod
+// needResync checks whether a resync is needed.
+func (c *conditionManager) needResync() bool {
+	// Only update when resync is needed.
+	return c.clock.Now().Sub(c.latestTry) >= resyncPeriod && c.resync
+}
+
+// needHeartbeat checks whether a forcibly heartbeat is needed.
+func (c *conditionManager) needHeartbeat() bool {
+	return c.clock.Now().Sub(c.latestTry) >= heartbeatPeriod
 }
 
 // sync synchronizes node conditions with the apiserver.
 func (c *conditionManager) sync() {
+	c.latestTry = c.clock.Now()
+	c.resync = false
 	conditions := []api.NodeCondition{}
 	for i := range c.conditions {
 		conditions = append(conditions, problemutil.ConvertToAPICondition(c.conditions[i]))
@@ -128,7 +140,7 @@ func (c *conditionManager) sync() {
 	if err := c.client.SetConditions(conditions); err != nil {
 		// The conditions will be updated again in future sync
 		glog.Errorf("failed to update node conditions: %v", err)
+		c.resync = true
 		return
 	}
-	c.latest = c.clock.Now()
 }
