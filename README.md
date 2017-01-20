@@ -53,6 +53,9 @@ List of supported problem daemons:
 
 # Usage
 ## Flags
+* `-version`: Print current version of node-problem-detector.
+* `-kernel-monitor`: The configuration used by the kernel monitor, e.g.
+  [config/kernel-monitor.json](https://github.com/kubernetes/node-problem-detector/blob/master/config/kernel-monitor.json).
 * `-apiserver-override`: A URI parameter used to customize how node-problem-detector
 connects the apiserver. The format is same as the
 [`source`](https://github.com/kubernetes/heapster/blob/master/docs/source-configuration.md#kubernetes)
