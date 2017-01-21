@@ -36,6 +36,7 @@ func TestWatch(t *testing.T) {
 	testCases := []struct {
 		log      string
 		logs     []kerntypes.KernelLog
+		uptime   time.Time
 		lookback string
 	}{
 		{
@@ -96,6 +97,26 @@ func TestWatch(t *testing.T) {
 				},
 			},
 		},
+		{
+			// The start point is at the end of the log file, we look back, but
+			// system rebooted at in the middle of the log file.
+			log: `Jan  2 03:04:03 kernel: [0.000000] 1
+			Jan  2 03:04:04 kernel: [1.000000] 2
+			Jan  2 03:04:05 kernel: [2.000000] 3
+			`,
+			uptime:   time.Date(time.Now().Year(), time.January, 2, 3, 4, 4, 0, time.Local),
+			lookback: "2s",
+			logs: []kerntypes.KernelLog{
+				{
+					Timestamp: now.Add(-time.Second),
+					Message:   "2",
+				},
+				{
+					Timestamp: now,
+					Message:   "3",
+				},
+			},
+		},
 	}
 	for c, test := range testCases {
 		t.Logf("TestCase #%d: %#v", c+1, test)
@@ -108,11 +129,13 @@ func TestWatch(t *testing.T) {
 		_, err = f.Write([]byte(test.log))
 		assert.NoError(t, err)
 
-		w := NewSyslogWatcher(types.WatcherConfig{
+		w := NewSyslogWatcherOrDie(types.WatcherConfig{
 			Plugin:   "syslog",
 			LogPath:  f.Name(),
 			Lookback: test.lookback,
 		})
+		// Set the uptime.
+		w.(*syslogWatcher).uptime = test.uptime
 		// Set the fake clock.
 		w.(*syslogWatcher).clock = fakeClock
 		logCh, err := w.Watch()

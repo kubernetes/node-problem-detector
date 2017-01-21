@@ -70,10 +70,7 @@ func NewKernelMonitorOrDie(configPath string) KernelMonitor {
 		glog.Fatalf("Failed to validate matching rules %#v: %v", k.config.Rules, err)
 	}
 	glog.Infof("Finish parsing log file: %+v", k.config)
-	k.watcher, err = logwatchers.GetLogWatcher(k.config.WatcherConfig)
-	if err != nil {
-		glog.Fatalf("Failed to create log watcher with watcher config %#v: %v", k.config.WatcherConfig, err)
-	}
+	k.watcher = logwatchers.GetLogWatcherOrDie(k.config.WatcherConfig)
 	k.buffer = NewLogBuffer(k.config.BufferSize)
 	// A 1000 size channel should be big enough.
 	k.output = make(chan *types.Status, 1000)
@@ -117,12 +114,6 @@ func (k *kernelMonitor) parseLog(log *kerntypes.KernelLog) {
 	// Once there is new log, kernel monitor will push it into the log buffer and try
 	// to match each rule. If any rule is matched, kernel monitor will report a status.
 	k.buffer.Push(log)
-	if matched := k.buffer.Match(k.config.StartPattern); len(matched) != 0 {
-		// Reset the condition if a start log shows up.
-		glog.Infof("Found start log %q, re-initialize the status", generateMessage(matched))
-		k.initializeStatus()
-		return
-	}
 	for _, rule := range k.config.Rules {
 		matched := k.buffer.Match(rule.Pattern)
 		if len(matched) == 0 {

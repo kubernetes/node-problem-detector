@@ -34,8 +34,6 @@ type MonitorConfig struct {
 	DefaultConditions []types.Condition `json:"conditions"`
 	// Rules are the rules kernel monitor will follow to parse the log file.
 	Rules []kerntypes.Rule `json:"rules"`
-	// StartPattern is the pattern of the start line
-	StartPattern string `json:"startPattern, omitempty"`
 }
 
 // applyDefaultConfiguration applies default configurations.

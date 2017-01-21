@@ -20,6 +20,7 @@ import (
 	"bufio"
 	"bytes"
 	"io"
+	"syscall"
 	"time"
 
 	utilclock "code.cloudfoundry.org/clock"
@@ -35,15 +36,22 @@ type syslogWatcher struct {
 	reader *bufio.Reader
 	closer io.Closer
 	logCh  chan *kerntypes.KernelLog
+	uptime time.Time
 	tomb   *util.Tomb
 	clock  utilclock.Clock
 }
 
-// NewSyslogWatcher creates a new kernel log watcher.
-func NewSyslogWatcher(cfg types.WatcherConfig) types.LogWatcher {
+// NewSyslogWatcherOrDie creates a new kernel log watcher. The function panics
+// when encounters an error.
+func NewSyslogWatcherOrDie(cfg types.WatcherConfig) types.LogWatcher {
+	var info syscall.Sysinfo_t
+	if err := syscall.Sysinfo(&info); err != nil {
+		glog.Fatalf("Failed to get system info: %v", err)
+	}
 	return &syslogWatcher{
-		cfg:  cfg,
-		tomb: util.NewTomb(),
+		cfg:    cfg,
+		uptime: time.Now().Add(time.Duration(-info.Uptime * int64(time.Second))),
+		tomb:   util.NewTomb(),
 		// A capacity 1000 buffer should be enough
 		logCh: make(chan *kerntypes.KernelLog, 1000),
 		clock: utilclock.NewClock(),
@@ -51,7 +59,7 @@ func NewSyslogWatcher(cfg types.WatcherConfig) types.LogWatcher {
 }
 
 // Make sure NewSyslogWathcer is types.WatcherCreateFunc.
-var _ types.WatcherCreateFunc = NewSyslogWatcher
+var _ types.WatcherCreateFunc = NewSyslogWatcherOrDie
 
 // Watch starts the syslog watcher.
 func (s *syslogWatcher) Watch() (<-chan *kerntypes.KernelLog, error) {
@@ -113,8 +121,8 @@ func (s *syslogWatcher) watchLoop() {
 			glog.Warningf("Unable to parse line: %q, %v", line, err)
 			continue
 		}
-		// If the log is older than look back duration, discard it.
-		if s.clock.Since(log.Timestamp) > lookback {
+		// If the log is older than look back duration or system boot time, discard it.
+		if s.clock.Since(log.Timestamp) > lookback || log.Timestamp.Before(s.uptime) {
 			continue
 		}
 		s.logCh <- log
