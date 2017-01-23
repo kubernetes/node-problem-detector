@@ -181,7 +181,7 @@ func (k *kernelMonitor) generateStatus(logs []*kerntypes.KernelLog, rule kerntyp
 func (k *kernelMonitor) initializeStatus() {
 	// Initialize the default node conditions
 	k.conditions = initialConditions(k.config.DefaultConditions)
-	glog.Infof("Initalize condition generated: %+v", k.conditions)
+	glog.Infof("Initialize condition generated: %+v", k.conditions)
 	// Update the initial status
 	k.output <- &types.Status{
 		Source:     k.config.Source,
