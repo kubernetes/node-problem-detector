@@ -100,11 +100,19 @@ spec:
         - name: log
           mountPath: /log
           readOnly: true
+        - name: localtime
+          mountPath: /etc/localtime
+          readOnly: true
       volumes:
       - name: log
         # Config `log` to your system log directory
         hostPath:
           path: /var/log/
+      - name: localtime
+        # Make sure the time in pod is the same with the host
+        hostPath:
+          path: /etc/localtime
+
 ```
 * Edit node-problem-detector.yaml to fit your environment: Set `log` volume to your system log diretory. (Used by KernelMonitor)
 * Create the DaemonSet with `kubectl create -f node-problem-detector.yaml`
