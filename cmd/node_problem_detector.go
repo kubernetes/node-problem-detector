@@ -18,9 +18,12 @@ package main
 
 import (
 	"flag"
-	"fmt"
+	"net"
+	"net/http"
+	_ "net/http/pprof"
 	"net/url"
 	"os"
+	"strconv"
 
 	"github.com/golang/glog"
 
@@ -35,6 +38,8 @@ var (
 	apiServerOverride       = flag.String("apiserver-override", "", "Custom URI used to connect to Kubernetes ApiServer")
 	printVersion            = flag.Bool("version", false, "Print version information and quit")
 	hostnameOverride        = flag.String("hostname-override", "", "Custom node name used to override hostname")
+	serverPort              = flag.Int("port", 10256, "The port to bind the node problem detector server. Use 0 to disable.")
+	serverAddress           = flag.String("address", "127.0.0.1", "The address to bind the node problem detector server.")
 )
 
 func validateCmdParams() {
@@ -67,10 +72,25 @@ func getNodeNameOrDie() string {
 	// environments.
 	nodeName, err := os.Hostname()
 	if err != nil {
-		panic(fmt.Sprintf("Failed to get host name: %v", err))
+		glog.Fatalf("Failed to get host name: %v", err)
 	}
 
 	return nodeName
+}
+
+func startHTTPServer(p problemdetector.ProblemDetector) {
+	// Add healthz http request handler. Always return ok now, add more health check
+	// logic in the future.
+	http.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("ok"))
+	})
+	// Add the http handlers in problem detector.
+	p.RegisterHTTPHandlers()
+	err := http.ListenAndServe(net.JoinHostPort(*serverAddress, strconv.Itoa(*serverPort)), nil)
+	if err != nil {
+		glog.Fatalf("Failed to start server: %v", err)
+	}
 }
 
 func main() {
@@ -86,6 +106,12 @@ func main() {
 
 	k := kernelmonitor.NewKernelMonitorOrDie(*kernelMonitorConfigPath)
 	p := problemdetector.NewProblemDetector(k, *apiServerOverride, nodeName)
+
+	// Start http server.
+	if *serverPort > 0 {
+		startHTTPServer(p)
+	}
+
 	if err := p.Run(); err != nil {
 		glog.Fatalf("Problem detector failed with error: %v", err)
 	}
