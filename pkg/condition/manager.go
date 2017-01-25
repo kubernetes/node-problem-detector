@@ -54,19 +54,28 @@ type ConditionManager interface {
 	Start()
 	// UpdateCondition updates a specific condition.
 	UpdateCondition(types.Condition)
+	// GetConditions returns all current conditions.
+	GetConditions() []types.Condition
 }
 
 type conditionManager struct {
+	// The lock protecting the object. Only 2 fields will be accessed by more
+	// than one goroutines at the same time:
+	// * `updates`: updates will be written by random caller and the sync routine,
+	// so it needs to be protected by write lock in both `UpdateCondition` and
+	// `needUpdates`.
+	// * `conditions`: conditions will only be written in the sync routine, but
+	// it will be read by random caller and the sync routine. So it needs to be
+	// protected by write lock in `needUpdates` and read lock in `GetConditions`.
+	// No lock is needed in `sync`, because it is in the same goroutine with the
+	// write operation.
+	sync.RWMutex
 	clock        clock.Clock
 	latestTry    time.Time
 	resyncNeeded bool
 	client       problemclient.Client
-	// updatesLock is the lock protecting updates. Only the field `updates`
-	// will be accessed by random caller and the sync routine, so only it
-	// needs to be protected.
-	updatesLock sync.Mutex
-	updates     map[string]types.Condition
-	conditions  map[string]types.Condition
+	updates      map[string]types.Condition
+	conditions   map[string]types.Condition
 }
 
 // NewConditionManager creates a condition manager.
@@ -84,11 +93,21 @@ func (c *conditionManager) Start() {
 }
 
 func (c *conditionManager) UpdateCondition(condition types.Condition) {
-	c.updatesLock.Lock()
-	defer c.updatesLock.Unlock()
+	c.Lock()
+	defer c.Unlock()
 	// New node condition will override the old condition, because we only need the newest
 	// condition for each condition type.
 	c.updates[condition.Type] = condition
+}
+
+func (c *conditionManager) GetConditions() []types.Condition {
+	c.RLock()
+	defer c.RUnlock()
+	var conditions []types.Condition
+	for _, condition := range c.conditions {
+		conditions = append(conditions, condition)
+	}
+	return conditions
 }
 
 func (c *conditionManager) syncLoop() {
@@ -105,8 +124,8 @@ func (c *conditionManager) syncLoop() {
 
 // needUpdates checks whether there are recent updates.
 func (c *conditionManager) needUpdates() bool {
-	c.updatesLock.Lock()
-	defer c.updatesLock.Unlock()
+	c.Lock()
+	defer c.Unlock()
 	needUpdate := false
 	for t, update := range c.updates {
 		if !reflect.DeepEqual(c.conditions[t], update) {
