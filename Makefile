@@ -80,7 +80,7 @@ version:
 
 ./bin/node-problem-detector: $(PKG_SOURCES)
 	CGO_ENABLED=$(CGO_ENABLED) GOOS=linux go build -o bin/node-problem-detector \
-	     -ldflags '-w -X $(PKG)/pkg/version.version=$(VERSION)' \
+	     -ldflags '-X $(PKG)/pkg/version.version=$(VERSION)' \
 	     $(BUILD_TAGS) cmd/node_problem_detector.go
 
 Dockerfile: Dockerfile.in
