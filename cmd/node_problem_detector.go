@@ -18,15 +18,21 @@ package main
 
 import (
 	"flag"
+	"fmt"
+	"net"
+	"net/http"
+	_ "net/http/pprof"
 	"net/url"
 	"os"
+	"strconv"
+	"time"
 
 	"k8s.io/node-problem-detector/pkg/kernelmonitor"
 	"k8s.io/node-problem-detector/pkg/problemdetector"
 	"k8s.io/node-problem-detector/pkg/version"
 
 	"github.com/golang/glog"
-	"fmt"
+	"k8s.io/kubernetes/pkg/util/wait"
 )
 
 // TODO: Move flags to options directory.
@@ -35,6 +41,8 @@ var (
 	apiServerOverride       = flag.String("apiserver-override", "", "Custom URI used to connect to Kubernetes ApiServer")
 	printVersion            = flag.Bool("version", false, "Print version information and quit")
 	hostnameOverride        = flag.String("hostname-override", "", "Custom node name used to override hostname")
+	serverPort              = flag.Int("server-port", 10254, "The port to bind the node problem detector server. Use 0 to disable.")
+	serverAddress           = flag.String("server-address", "127.0.0.1", "The address to bind the node problem detector server.")
 )
 
 func validateCmdParams() {
@@ -73,6 +81,23 @@ func getNodeNameOrDie() string {
 	return nodeName
 }
 
+func startHTTPServer(p problemdetector.ProblemDetector) {
+	// Add healthz http request handler. Always return ok now, add more health check
+	// logic in the future.
+	http.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("ok"))
+	})
+	// Add the http handlers in problem detector.
+	p.RegisterHTTPHandlers()
+	go wait.Forever(func() {
+		err := http.ListenAndServe(net.JoinHostPort(*serverAddress, strconv.Itoa(*serverPort)), nil)
+		if err != nil {
+			glog.Errorf("Failed to start server: %v", err)
+		}
+	}, 5*time.Second)
+}
+
 func main() {
 	flag.Parse()
 	validateCmdParams()
@@ -86,5 +111,11 @@ func main() {
 
 	k := kernelmonitor.NewKernelMonitorOrDie(*kernelMonitorConfigPath)
 	p := problemdetector.NewProblemDetector(k, *apiServerOverride, nodeName)
+
+	// Start http server.
+	if *serverPort > 0 {
+		startHTTPServer(p)
+	}
+
 	p.Run()
 }

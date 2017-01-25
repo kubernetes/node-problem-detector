@@ -31,7 +31,7 @@ version:
 
 ./bin/node-problem-detector: $(PKG_SOURCES)
 	GOOS=linux go build -o bin/node-problem-detector \
-	     -ldflags '-w -extldflags "-static" -X $(PKG)/pkg/version.version=$(VERSION)' \
+	     -ldflags '-extldflags "-static" -X $(PKG)/pkg/version.version=$(VERSION)' \
 	     cmd/node_problem_detector.go
 
 test: vet fmt

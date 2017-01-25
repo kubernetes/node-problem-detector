@@ -17,6 +17,8 @@ limitations under the License.
 package problemdetector
 
 import (
+	"net/http"
+
 	"github.com/golang/glog"
 
 	"k8s.io/kubernetes/pkg/util/clock"
@@ -30,6 +32,7 @@ import (
 // ProblemDetector collects statuses from all problem daemons and update the node condition and send node event.
 type ProblemDetector interface {
 	Run() error
+	RegisterHTTPHandlers()
 }
 
 type problemDetector struct {
@@ -69,4 +72,12 @@ func (p *problemDetector) Run() error {
 			}
 		}
 	}
+}
+
+// RegisterHTTPHandlers registers http handlers of node problem detector.
+func (p *problemDetector) RegisterHTTPHandlers() {
+	// Add the handler to serve condition http request.
+	http.HandleFunc("/conditions", func(w http.ResponseWriter, r *http.Request) {
+		util.ReturnHTTPJson(w, p.conditionManager.GetConditions())
+	})
 }

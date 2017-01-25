@@ -81,6 +81,18 @@ func TestNeedUpdates(t *testing.T) {
 	}
 }
 
+func TestGetConditions(t *testing.T) {
+	m, _, _ := newTestManager()
+	assert.Empty(t, m.GetConditions())
+	testCondition1 := newTestCondition("TestCondition1")
+	testCondition2 := newTestCondition("TestCondition2")
+	m.UpdateCondition(testCondition1)
+	m.UpdateCondition(testCondition2)
+	assert.True(t, m.needUpdates())
+	assert.Contains(t, m.GetConditions(), testCondition1)
+	assert.Contains(t, m.GetConditions(), testCondition2)
+}
+
 func TestResync(t *testing.T) {
 	m, fakeClient, fakeClock := newTestManager()
 	condition := newTestCondition("TestCondition")
