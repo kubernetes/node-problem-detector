@@ -36,12 +36,13 @@ func TestGenerateStatus(t *testing.T) {
 		{
 			Type:       testConditionA,
 			Status:     true,
-			Transition: time.Now(),
+			Transition: time.Unix(500, 500),
+			Reason:     "initial reason",
 		},
 		{
 			Type:       testConditionB,
 			Status:     false,
-			Transition: time.Now(),
+			Transition: time.Unix(500, 500),
 		},
 	}
 	logs := []*kerntypes.KernelLog{
@@ -79,6 +80,26 @@ func TestGenerateStatus(t *testing.T) {
 				},
 			},
 		},
+		// Should not update transition time when status and reason are not changed.
+		{
+			rule: kerntypes.Rule{
+				Type:      kerntypes.Perm,
+				Condition: testConditionA,
+				Reason:    "initial reason",
+			},
+			expected: types.Status{
+				Source: testSource,
+				Conditions: []types.Condition{
+					{
+						Type:       testConditionA,
+						Status:     true,
+						Transition: time.Unix(500, 500),
+						Reason:     "initial reason",
+					},
+					initConditions[1],
+				},
+			},
+		},
 		{
 			rule: kerntypes.Rule{
 				Type:   kerntypes.Temp,
@@ -100,7 +121,9 @@ func TestGenerateStatus(t *testing.T) {
 			config: MonitorConfig{
 				Source: testSource,
 			},
-			conditions: initConditions,
+			// Copy the init conditions to make sure it's not changed
+			// during the test.
+			conditions: append([]types.Condition{}, initConditions...),
 		}
 		got := k.generateStatus(logs, test.rule)
 		if !reflect.DeepEqual(&test.expected, got) {
