@@ -13,50 +13,41 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-
-package translator
+package syslog
 
 import (
 	"fmt"
+	"io"
+	"os"
 	"strings"
 	"time"
 
-	"k8s.io/node-problem-detector/pkg/kernelmonitor/types"
+	kerntypes "k8s.io/node-problem-detector/pkg/kernelmonitor/types"
+
+	"github.com/google/cadvisor/utils/tail"
 )
 
-// Translator translates a log line into types.KernelLog, so that kernel monitor
-// could parse it whatever the original format is.
-type Translator interface {
-	// Translate translates one log line into types.KernelLog.
-	Translate(string) (*types.KernelLog, error)
-}
-
-// defaultTranslator works well for ubuntu and debian, but may not work well with
-// other os distros. However it is easy to add a new translator for new os distro.
-type defaultTranslator struct{}
-
-// NewDefaultTranslator creates a default translator.
-func NewDefaultTranslator() Translator {
-	return &defaultTranslator{}
-}
-
-func (t *defaultTranslator) Translate(line string) (*types.KernelLog, error) {
-	timestamp, message, err := t.parseLine(line)
+// translate translates the log line into internal type.
+func translate(line string) (*kerntypes.KernelLog, error) {
+	timestamp, message, err := parseLine(line)
 	if err != nil {
 		return nil, err
 	}
-	return &types.KernelLog{
+	return &kerntypes.KernelLog{
 		Timestamp: timestamp,
 		Message:   message,
 	}, nil
 }
 
-var (
-	timestampLen  = 15
+const (
+	// timestampLen is the length of timestamp in syslog logging format.
+	timestampLen = 15
+	// messagePrefix is the character before real message.
 	messagePrefix = "]"
 )
 
-func (t *defaultTranslator) parseLine(line string) (time.Time, string, error) {
+// parseLine parses one log line into timestamp and message.
+func parseLine(line string) (time.Time, string, error) {
 	// Trim the spaces to make sure timestamp could be found
 	line = strings.TrimSpace(line)
 	if len(line) < timestampLen {
@@ -82,4 +73,30 @@ func (t *defaultTranslator) parseLine(line string) (time.Time, string, error) {
 	message := strings.Trim(line[loc+1:], " ")
 
 	return timestamp, message, nil
+}
+
+// defaultKernelLogPath the default path of syslog kernel log.
+const defaultKernelLogPath = "/var/log/kern.log"
+
+// getLogReader returns log reader for syslog log. Note that getLogReader doesn't look back
+// to the rolled out logs.
+func getLogReader(path string) (io.ReadCloser, error) {
+	if path == "" {
+		path = defaultKernelLogPath
+	}
+	// To handle log rotation, tail will not report error immediately if
+	// the file doesn't exist. So we check file existence frist.
+	// This could go wrong during mid-rotation. It should recover after
+	// several restart when the log file is created again. The chance
+	// is slim but we should still fix this in the future.
+	// TODO(random-liu): Handle log missing during rotation.
+	_, err := os.Stat(path)
+	if err != nil {
+		return nil, fmt.Errorf("failed to stat the file %q: %v", path, err)
+	}
+	tail, err := tail.NewTail(path)
+	if err != nil {
+		return nil, fmt.Errorf("failed to tail the file %q: %v", path, err)
+	}
+	return tail, nil
 }

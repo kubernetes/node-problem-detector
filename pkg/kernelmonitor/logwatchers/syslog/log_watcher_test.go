@@ -14,18 +14,19 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package kernelmonitor
+package syslog
 
 import (
 	"io/ioutil"
-	//"os"
-	"reflect"
+	"os"
 	"testing"
 	"time"
 
-	"k8s.io/node-problem-detector/pkg/kernelmonitor/types"
+	"k8s.io/node-problem-detector/pkg/kernelmonitor/logwatchers/types"
+	kerntypes "k8s.io/node-problem-detector/pkg/kernelmonitor/types"
 
 	"code.cloudfoundry.org/clock/fakeclock"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestWatch(t *testing.T) {
@@ -34,7 +35,7 @@ func TestWatch(t *testing.T) {
 	fakeClock := fakeclock.NewFakeClock(now)
 	testCases := []struct {
 		log      string
-		logs     []types.KernelLog
+		logs     []kerntypes.KernelLog
 		lookback string
 	}{
 		{
@@ -43,7 +44,8 @@ func TestWatch(t *testing.T) {
 			Jan  2 03:04:06 kernel: [1.000000] 2
 			Jan  2 03:04:07 kernel: [2.000000] 3
 			`,
-			logs: []types.KernelLog{
+			lookback: "0",
+			logs: []kerntypes.KernelLog{
 				{
 					Timestamp: now,
 					Message:   "1",
@@ -64,7 +66,8 @@ func TestWatch(t *testing.T) {
 			Jan  2 03:04:05 kernel: [1.000000] 2
 			Jan  2 03:04:06 kernel: [2.000000] 3
 			`,
-			logs: []types.KernelLog{
+			lookback: "0",
+			logs: []kerntypes.KernelLog{
 				{
 					Timestamp: now,
 					Message:   "2",
@@ -82,7 +85,7 @@ func TestWatch(t *testing.T) {
 			Jan  2 03:04:05 kernel: [2.000000] 3
 			`,
 			lookback: "1s",
-			logs: []types.KernelLog{
+			logs: []kerntypes.KernelLog{
 				{
 					Timestamp: now.Add(-time.Second),
 					Message:   "2",
@@ -95,31 +98,32 @@ func TestWatch(t *testing.T) {
 		},
 	}
 	for c, test := range testCases {
+		t.Logf("TestCase #%d: %#v", c+1, test)
 		f, err := ioutil.TempFile("", "kernel_log_watcher_test")
-		if err != nil {
-			t.Fatal(err)
-		}
+		assert.NoError(t, err)
 		defer func() {
 			f.Close()
-			//os.Remove(f.Name())
+			os.Remove(f.Name())
 		}()
 		_, err = f.Write([]byte(test.log))
-		if err != nil {
-			t.Fatal(err)
-		}
+		assert.NoError(t, err)
 
-		w := NewKernelLogWatcher(WatcherConfig{KernelLogPath: f.Name(), Lookback: test.lookback})
+		w := NewSyslogWatcher(types.WatcherConfig{
+			Plugin:   "syslog",
+			LogPath:  f.Name(),
+			Lookback: test.lookback,
+		})
 		// Set the fake clock.
-		w.(*kernelLogWatcher).clock = fakeClock
+		w.(*syslogWatcher).clock = fakeClock
 		logCh, err := w.Watch()
-		if err != nil {
-			t.Fatal(err)
-		}
+		assert.NoError(t, err)
 		defer w.Stop()
 		for _, expected := range test.logs {
-			got := <-logCh
-			if !reflect.DeepEqual(&expected, got) {
-				t.Errorf("case %d: expect %+v, got %+v", c+1, expected, *got)
+			select {
+			case got := <-logCh:
+				assert.Equal(t, &expected, got)
+			case <-time.After(30 * time.Second):
+				t.Errorf("timeout waiting for log")
 			}
 		}
 		// The log channel should have already been drained

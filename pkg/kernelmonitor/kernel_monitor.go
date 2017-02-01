@@ -22,26 +22,14 @@ import (
 	"regexp"
 	"time"
 
+	"k8s.io/node-problem-detector/pkg/kernelmonitor/logwatchers"
+	watchertypes "k8s.io/node-problem-detector/pkg/kernelmonitor/logwatchers/types"
 	kerntypes "k8s.io/node-problem-detector/pkg/kernelmonitor/types"
 	"k8s.io/node-problem-detector/pkg/kernelmonitor/util"
 	"k8s.io/node-problem-detector/pkg/types"
 
 	"github.com/golang/glog"
 )
-
-// MonitorConfig is the configuration of kernel monitor.
-type MonitorConfig struct {
-	// WatcherConfig is the configuration of kernel log watcher.
-	WatcherConfig
-	// BufferSize is the size (in lines) of the log buffer.
-	BufferSize int `json:"bufferSize"`
-	// Source is the source name of the kernel monitor
-	Source string `json:"source"`
-	// DefaultConditions are the default states of all the conditions kernel monitor should handle.
-	DefaultConditions []types.Condition `json:"conditions"`
-	// Rules are the rules kernel monitor will follow to parse the log file.
-	Rules []kerntypes.Rule `json:"rules"`
-}
 
 // KernelMonitor monitors the kernel log and reports node problem condition and event according to
 // the rules.
@@ -53,7 +41,7 @@ type KernelMonitor interface {
 }
 
 type kernelMonitor struct {
-	watcher    KernelLogWatcher
+	watcher    watchertypes.LogWatcher
 	buffer     LogBuffer
 	config     MonitorConfig
 	conditions []types.Condition
@@ -69,18 +57,23 @@ func NewKernelMonitorOrDie(configPath string) KernelMonitor {
 	}
 	f, err := ioutil.ReadFile(configPath)
 	if err != nil {
-		panic(err)
+		glog.Fatalf("Failed to read configuration file %q: %v", configPath, err)
 	}
 	err = json.Unmarshal(f, &k.config)
 	if err != nil {
-		panic(err)
+		glog.Fatalf("Failed to unmarshal configuration file %q: %v", configPath, err)
 	}
+	// Apply default configurations
+	applyDefaultConfiguration(&k.config)
 	err = validateRules(k.config.Rules)
 	if err != nil {
-		panic(err)
+		glog.Fatalf("Failed to validate matching rules %#v: %v", k.config.Rules, err)
 	}
 	glog.Infof("Finish parsing log file: %+v", k.config)
-	k.watcher = NewKernelLogWatcher(k.config.WatcherConfig)
+	k.watcher, err = logwatchers.GetLogWatcher(k.config.WatcherConfig)
+	if err != nil {
+		glog.Fatalf("Failed to create log watcher with watcher config %#v: %v", k.config.WatcherConfig, err)
+	}
 	k.buffer = NewLogBuffer(k.config.BufferSize)
 	// A 1000 size channel should be big enough.
 	k.output = make(chan *types.Status, 1000)

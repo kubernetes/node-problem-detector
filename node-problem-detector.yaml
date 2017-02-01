@@ -12,6 +12,7 @@ spec:
       - name: node-problem-detector
         command:
         - /node-problem-detector
+        - --logtostderr
         - --kernel-monitor=/config/kernel-monitor.json
         image: gcr.io/google_containers/node-problem-detector:v0.2
         imagePullPolicy: Always
@@ -24,7 +25,12 @@ spec:
               fieldPath: spec.nodeName
         volumeMounts:
         - name: log
-          mountPath: /log
+          mountPath: /var/log
+          readOnly: true
+        # Make sure node problem detector is in the same timezone
+        # with the host.
+        - name: localtime
+          mountPath: /etc/localtime
           readOnly: true
         - name: config
           mountPath: /config
@@ -34,6 +40,9 @@ spec:
         # Config `log` to your system log directory
         hostPath:
           path: /var/log/
+      - name: localtime
+        hostPath:
+          path: /etc/localtime
       - name: config
         configMap:
           name: node-problem-detector-config
