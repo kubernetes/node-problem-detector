@@ -114,8 +114,13 @@ func (j *journaldWatcher) watchLoop() {
 	}
 }
 
-// defaultJournalLogPath is the default path of journal log.
-const defaultJournalLogPath = "/var/log/journal"
+const (
+	// defaultJournalLogPath is the default path of journal log.
+	defaultJournalLogPath = "/var/log/journal"
+
+	// configSourceKey is the key of source configuration in the plugin configuration.
+	configSourceKey = "source"
+)
 
 // getJournal returns a journal client.
 func getJournal(cfg types.WatcherConfig) (*sdjournal.Journal, error) {
@@ -140,14 +145,18 @@ func getJournal(cfg types.WatcherConfig) (*sdjournal.Journal, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to lookback %q: %v", since, err)
 	}
-	// TODO(random-liu): Make this configurable to support parsing other logs.
-	kernelMatch := sdjournal.Match{
-		Field: sdjournal.SD_JOURNAL_FIELD_TRANSPORT,
-		Value: "kernel",
+	// Empty source is not allowed and treated as an error.
+	source := cfg.PluginConfig[configSourceKey]
+	if source == "" {
+		return nil, fmt.Errorf("failed to filter journal log, empty source is not allowed")
 	}
-	err = journal.AddMatch(kernelMatch.String())
+	match := sdjournal.Match{
+		Field: sdjournal.SD_JOURNAL_FIELD_SYSLOG_IDENTIFIER,
+		Value: source,
+	}
+	err = journal.AddMatch(match.String())
 	if err != nil {
-		return nil, fmt.Errorf("failed to add log filter %#v: %v", kernelMatch, err)
+		return nil, fmt.Errorf("failed to add log filter %#v: %v", match, err)
 	}
 	return journal, nil
 }

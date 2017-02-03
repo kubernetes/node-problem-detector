@@ -1,9 +1,11 @@
 {
-	"plugin": "journald",
+	"plugin": "syslog",
 	"pluginConfig": {
-		"source": "kernel"
+		"timestamp": "^.{15}",
+		"message": "kernel: \\[.*\\] (.*)",
+		"timestampFormat": "Jan _2 15:04:05"
 	},
-	"logPath": "/var/log/journal",
+	"logPath": "/var/log/kern.log",
 	"lookback": "5m",
 	"bufferSize": 10,
 	"source": "kernel-monitor",

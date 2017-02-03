@@ -17,86 +17,88 @@ package syslog
 
 import (
 	"fmt"
-	"io"
-	"os"
-	"strings"
+	"regexp"
 	"time"
 
 	kerntypes "k8s.io/node-problem-detector/pkg/kernelmonitor/types"
 
-	"github.com/google/cadvisor/utils/tail"
+	"github.com/golang/glog"
 )
 
-// translate translates the log line into internal type.
-func translate(line string) (*kerntypes.KernelLog, error) {
-	timestamp, message, err := parseLine(line)
-	if err != nil {
-		return nil, err
+// translator translates log line into internal log type based on user defined
+// regular expression.
+type translator struct {
+	timestampRegexp *regexp.Regexp
+	messageRegexp   *regexp.Regexp
+	timestampFormat string
+}
+
+const (
+	// NOTE that we support submatch for both timestamp and message regular expressions. When
+	// there are multiple matches returned by submatch, only **the last** is used.
+	// timestampKey is the key of timestamp regular expression in the plugin configuration.
+	timestampKey = "timestamp"
+	// messageKey is the key of message regular expression in the plugin configuration.
+	messageKey = "message"
+	// timestampFormatKey is the key of timestamp format string in the plugin configuration.
+	timestampFormatKey = "timestampFormat"
+)
+
+func newTranslatorOrDie(pluginConfig map[string]string) *translator {
+	if err := validatePluginConfig(pluginConfig); err != nil {
+		glog.Errorf("Failed to validate plugin configuration %+v: %v", pluginConfig, err)
 	}
+	return &translator{
+		timestampRegexp: regexp.MustCompile(pluginConfig[timestampKey]),
+		messageRegexp:   regexp.MustCompile(pluginConfig[messageKey]),
+		timestampFormat: pluginConfig[timestampFormatKey],
+	}
+}
+
+// translate translates the log line into internal type.
+func (t *translator) translate(line string) (*kerntypes.KernelLog, error) {
+	// Parse timestamp.
+	matches := t.timestampRegexp.FindStringSubmatch(line)
+	if len(matches) == 0 {
+		return nil, fmt.Errorf("no timestamp found in line %q with regular expression %v", line, t.timestampRegexp)
+	}
+	timestamp, err := time.ParseInLocation(t.timestampFormat, matches[len(matches)-1], time.Local)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse timestamp %q: %v", matches[len(matches)-1], err)
+	}
+	// Formalize the timestmap.
+	timestamp = formalizeTimestamp(timestamp)
+	// Parse message.
+	matches = t.messageRegexp.FindStringSubmatch(line)
+	if len(matches) == 0 {
+		return nil, fmt.Errorf("no message found in line %q with regular expression %v", line, t.messageRegexp)
+	}
+	message := matches[len(matches)-1]
 	return &kerntypes.KernelLog{
 		Timestamp: timestamp,
 		Message:   message,
 	}, nil
 }
 
-const (
-	// timestampLen is the length of timestamp in syslog logging format.
-	timestampLen = 15
-	// messagePrefix is the character before real message.
-	messagePrefix = "]"
-)
-
-// parseLine parses one log line into timestamp and message.
-func parseLine(line string) (time.Time, string, error) {
-	// Trim the spaces to make sure timestamp could be found
-	line = strings.TrimSpace(line)
-	if len(line) < timestampLen {
-		return time.Time{}, "", fmt.Errorf("the line is too short: %q", line)
+// validatePluginConfig validates whether the plugin configuration.
+func validatePluginConfig(cfg map[string]string) error {
+	if cfg[timestampKey] == "" {
+		return fmt.Errorf("unexpected empty timestamp regular expression")
 	}
-	// Example line: Jan  1 00:00:00 hostname kernel: [0.000000] component: log message
-	now := time.Now()
-	// There is no time zone information in kernel log timestamp, apply the current time
-	// zone.
-	timestamp, err := time.ParseInLocation(time.Stamp, line[:timestampLen], time.Local)
-	if err != nil {
-		return time.Time{}, "", fmt.Errorf("error parsing timestamp in line %q: %v", line, err)
+	if cfg[messageKey] == "" {
+		return fmt.Errorf("unexpected empty message regular expression")
 	}
-	// There is no year information in kernel log timestamp, apply the current year.
-	// This could go wrong during looking back phase after kernel monitor is started,
-	// and the old logs are generated in old year.
-	timestamp = timestamp.AddDate(now.Year(), 0, 0)
-
-	loc := strings.Index(line, messagePrefix)
-	if loc == -1 {
-		return timestamp, "", fmt.Errorf("can't find message prefix %q in line %q", messagePrefix, line)
+	if cfg[timestampFormatKey] == "" {
+		return fmt.Errorf("unexpected empty timestamp format string")
 	}
-	message := strings.Trim(line[loc+1:], " ")
-
-	return timestamp, message, nil
+	return nil
 }
 
-// defaultKernelLogPath the default path of syslog kernel log.
-const defaultKernelLogPath = "/var/log/kern.log"
-
-// getLogReader returns log reader for syslog log. Note that getLogReader doesn't look back
-// to the rolled out logs.
-func getLogReader(path string) (io.ReadCloser, error) {
-	if path == "" {
-		path = defaultKernelLogPath
+// formalizeTimestamp formalizes the timestamp. We need this because some log doesn't contain full
+// timestamp, e.g. syslog.
+func formalizeTimestamp(t time.Time) time.Time {
+	if t.Year() == 0 {
+		t = t.AddDate(time.Now().Year(), 0, 0)
 	}
-	// To handle log rotation, tail will not report error immediately if
-	// the file doesn't exist. So we check file existence frist.
-	// This could go wrong during mid-rotation. It should recover after
-	// several restart when the log file is created again. The chance
-	// is slim but we should still fix this in the future.
-	// TODO(random-liu): Handle log missing during rotation.
-	_, err := os.Stat(path)
-	if err != nil {
-		return nil, fmt.Errorf("failed to stat the file %q: %v", path, err)
-	}
-	tail, err := tail.NewTail(path)
-	if err != nil {
-		return nil, fmt.Errorf("failed to tail the file %q: %v", path, err)
-	}
-	return tail, nil
+	return t
 }

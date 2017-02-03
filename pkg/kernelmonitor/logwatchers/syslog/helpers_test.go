@@ -21,6 +21,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	kerntypes "k8s.io/node-problem-detector/pkg/kernelmonitor/types"
 )
@@ -28,12 +29,18 @@ import (
 func TestTranslate(t *testing.T) {
 	year := time.Now().Year()
 	testCases := []struct {
-		input string
-		err   bool
-		log   *kerntypes.KernelLog
+		config map[string]string
+		input  string
+		err    bool
+		log    *kerntypes.KernelLog
 	}{
 		{
-			input: "May  1 12:23:45 hostname kernel: [0.000000] component: log message",
+			// missing year and timezone
+			// "timestamp":       "^.{15}",
+			// "message":         "kernel \\[.*\\] (.*)",
+			// "timestampFormat": "Jan _2 15:04:05",
+			config: getTestPluginConfig(),
+			input:  "May  1 12:23:45 hostname kernel: [0.000000] component: log message",
 			log: &kerntypes.KernelLog{
 				Timestamp: time.Date(year, time.May, 1, 12, 23, 45, 0, time.Local),
 				Message:   "component: log message",
@@ -41,7 +48,8 @@ func TestTranslate(t *testing.T) {
 		},
 		{
 			// no log message
-			input: "May 21 12:23:45 hostname kernel: [9.999999]",
+			config: getTestPluginConfig(),
+			input:  "May 21 12:23:45 hostname kernel: [9.999999] ",
 			log: &kerntypes.KernelLog{
 				Timestamp: time.Date(year, time.May, 21, 12, 23, 45, 0, time.Local),
 				Message:   "",
@@ -49,18 +57,36 @@ func TestTranslate(t *testing.T) {
 		},
 		{
 			// the right square bracket is missing
-			input: "May 21 12:23:45 hostname kernel: [9.999999 component: log message",
-			err:   true,
+			config: getTestPluginConfig(),
+			input:  "May 21 12:23:45 hostname kernel: [9.999999 component: log message",
+			err:    true,
+		},
+		{
+			// contains full timestamp
+			config: map[string]string{
+				"timestamp":       "^time=\"(\\S*)\"",
+				"message":         "msg=\"([^\n]*)\"",
+				"timestampFormat": "2006-01-02T15:04:05.999999999-07:00",
+			},
+			input: `time="2017-02-01T17:58:34.999999999-08:00" level=error msg="test log line1\n test log line2"`,
+			log: &kerntypes.KernelLog{
+				Timestamp: time.Date(2017, 2, 1, 17, 58, 34, 999999999, time.FixedZone("PST", -8*3600)),
+				Message:   `test log line1\n test log line2`,
+			},
 		},
 	}
 
 	for c, test := range testCases {
 		t.Logf("TestCase #%d: %#v", c+1, test)
-		log, err := translate(test.input)
-		if (err != nil) != test.err {
-			t.Errorf("case %d: error assertion failed, got log: %+v, error: %v", c+1, log, err)
-			continue
+		trans := newTranslatorOrDie(test.config)
+		log, err := trans.translate(test.input)
+		if !test.err {
+			require.NoError(t, err)
+			// Use RFC3339Nano to make it easier for comparison.
+			assert.Equal(t, test.log.Timestamp.Format(time.RFC3339Nano), log.Timestamp.Format(time.RFC3339Nano))
+			assert.Equal(t, test.log.Message, log.Message)
+		} else {
+			require.Error(t, err)
 		}
-		assert.Equal(t, test.log, log)
 	}
 }

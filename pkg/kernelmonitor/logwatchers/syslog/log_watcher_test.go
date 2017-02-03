@@ -29,6 +29,16 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// getTestPluginConfig returns a plugin config for test. Use configuration for
+// kernel log in test.
+func getTestPluginConfig() map[string]string {
+	return map[string]string{
+		"timestamp":       "^.{15}",
+		"message":         "kernel: \\[.*\\] (.*)",
+		"timestampFormat": "Jan _2 15:04:05",
+	}
+}
+
 func TestWatch(t *testing.T) {
 	// now is a fake time
 	now := time.Date(time.Now().Year(), time.January, 2, 3, 4, 5, 0, time.Local)
@@ -42,8 +52,8 @@ func TestWatch(t *testing.T) {
 		{
 			// The start point is at the head of the log file.
 			log: `Jan  2 03:04:05 kernel: [0.000000] 1
-			Jan  2 03:04:06 kernel: [1.000000] 2
-			Jan  2 03:04:07 kernel: [2.000000] 3
+Jan  2 03:04:06 kernel: [1.000000] 2
+Jan  2 03:04:07 kernel: [2.000000] 3
 			`,
 			lookback: "0",
 			logs: []kerntypes.KernelLog{
@@ -64,8 +74,8 @@ func TestWatch(t *testing.T) {
 		{
 			// The start point is in the middle of the log file.
 			log: `Jan  2 03:04:04 kernel: [0.000000] 1
-			Jan  2 03:04:05 kernel: [1.000000] 2
-			Jan  2 03:04:06 kernel: [2.000000] 3
+Jan  2 03:04:05 kernel: [1.000000] 2
+Jan  2 03:04:06 kernel: [2.000000] 3
 			`,
 			lookback: "0",
 			logs: []kerntypes.KernelLog{
@@ -82,8 +92,8 @@ func TestWatch(t *testing.T) {
 		{
 			// The start point is at the end of the log file, but we look back.
 			log: `Jan  2 03:04:03 kernel: [0.000000] 1
-			Jan  2 03:04:04 kernel: [1.000000] 2
-			Jan  2 03:04:05 kernel: [2.000000] 3
+Jan  2 03:04:04 kernel: [1.000000] 2
+Jan  2 03:04:05 kernel: [2.000000] 3
 			`,
 			lookback: "1s",
 			logs: []kerntypes.KernelLog{
@@ -101,8 +111,8 @@ func TestWatch(t *testing.T) {
 			// The start point is at the end of the log file, we look back, but
 			// system rebooted at in the middle of the log file.
 			log: `Jan  2 03:04:03 kernel: [0.000000] 1
-			Jan  2 03:04:04 kernel: [1.000000] 2
-			Jan  2 03:04:05 kernel: [2.000000] 3
+Jan  2 03:04:04 kernel: [1.000000] 2
+Jan  2 03:04:05 kernel: [2.000000] 3
 			`,
 			uptime:   time.Date(time.Now().Year(), time.January, 2, 3, 4, 4, 0, time.Local),
 			lookback: "2s",
@@ -130,9 +140,10 @@ func TestWatch(t *testing.T) {
 		assert.NoError(t, err)
 
 		w := NewSyslogWatcherOrDie(types.WatcherConfig{
-			Plugin:   "syslog",
-			LogPath:  f.Name(),
-			Lookback: test.lookback,
+			Plugin:       "syslog",
+			PluginConfig: getTestPluginConfig(),
+			LogPath:      f.Name(),
+			Lookback:     test.lookback,
 		})
 		// Set the uptime.
 		w.(*syslogWatcher).uptime = test.uptime

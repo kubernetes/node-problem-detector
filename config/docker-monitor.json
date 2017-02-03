@@ -1,0 +1,12 @@
+{
+	"plugin": "journald",
+	"pluginConfig": {
+		"source": "docker"
+	},
+	"logPath": "/var/log/journal",
+	"lookback": "5m",
+	"bufferSize": 10,
+	"source": "docker-monitor",
+	"conditions": [],
+	"rules": []
+}
