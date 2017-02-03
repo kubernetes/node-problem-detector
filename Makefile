@@ -14,7 +14,7 @@
 
 # Build the node-problem-detector image.
 
-.PHONY: all build-container build-tar build push-container push-tar push clean vet fmt version Dockerfile
+.PHONY: all build-container build-tar build push-container push-tar push clean vet fmt version Dockerfile node_problem_detector
 
 all: build
 
@@ -78,7 +78,7 @@ fmt:
 version:
 	@echo $(VERSION)
 
-./bin/node-problem-detector: $(PKG_SOURCES)
+node-problem-detector: $(PKG_SOURCES)
 	CGO_ENABLED=$(CGO_ENABLED) GOOS=linux go build -o bin/node-problem-detector \
 	     -ldflags '-w -X $(PKG)/pkg/version.version=$(VERSION)' \
 	     $(BUILD_TAGS) cmd/node_problem_detector.go
@@ -89,10 +89,10 @@ Dockerfile: Dockerfile.in
 test: vet fmt
 	go test -timeout=1m -v -race ./pkg/... $(BUILD_TAGS)
 
-build-container: ./bin/node-problem-detector Dockerfile
+build-container: node-problem-detector Dockerfile
 	docker build -t $(IMAGE) .
 
-build-tar: ./bin/node-problem-detector
+build-tar: node-problem-detector
 	tar -zcvf $(TARBALL) bin/ config/
 	sha1sum $(TARBALL)
 	md5sum $(TARBALL)
