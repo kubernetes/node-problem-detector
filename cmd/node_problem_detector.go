@@ -26,6 +26,7 @@ import (
 	"strconv"
 
 	"github.com/golang/glog"
+	"github.com/spf13/pflag"
 
 	"k8s.io/node-problem-detector/pkg/kernelmonitor"
 	"k8s.io/node-problem-detector/pkg/problemdetector"
@@ -34,12 +35,12 @@ import (
 
 // TODO: Move flags to options directory.
 var (
-	kernelMonitorConfigPath = flag.String("kernel-monitor", "/config/kernel-monitor.json", "The path to the kernel monitor config file")
-	apiServerOverride       = flag.String("apiserver-override", "", "Custom URI used to connect to Kubernetes ApiServer")
-	printVersion            = flag.Bool("version", false, "Print version information and quit")
-	hostnameOverride        = flag.String("hostname-override", "", "Custom node name used to override hostname")
-	serverPort              = flag.Int("port", 10256, "The port to bind the node problem detector server. Use 0 to disable.")
-	serverAddress           = flag.String("address", "127.0.0.1", "The address to bind the node problem detector server.")
+	kernelMonitorConfigPath = pflag.String("kernel-monitor", "/config/kernel-monitor.json", "The path to the kernel monitor config file")
+	apiServerOverride       = pflag.String("apiserver-override", "", "Custom URI used to connect to Kubernetes ApiServer")
+	printVersion            = pflag.Bool("version", false, "Print version information and quit")
+	hostnameOverride        = pflag.String("hostname-override", "", "Custom node name used to override hostname")
+	serverPort              = pflag.Int("port", 10256, "The port to bind the node problem detector server. Use 0 to disable.")
+	serverAddress           = pflag.String("address", "127.0.0.1", "The address to bind the node problem detector server.")
 )
 
 func validateCmdParams() {
@@ -94,7 +95,9 @@ func startHTTPServer(p problemdetector.ProblemDetector) {
 }
 
 func main() {
-	flag.Parse()
+	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
+	pflag.Parse()
+
 	validateCmdParams()
 
 	if *printVersion {
