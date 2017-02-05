@@ -53,10 +53,10 @@ List of supported problem daemons:
 
 # Usage
 ## Flags
-* `-version`: Print current version of node-problem-detector.
-* `-kernel-monitor`: The configuration used by the kernel monitor, e.g.
+* `--version`: Print current version of node-problem-detector.
+* `--kernel-monitor`: The configuration used by the kernel monitor, e.g.
   [config/kernel-monitor.json](https://github.com/kubernetes/node-problem-detector/blob/master/config/kernel-monitor.json).
-* `-apiserver-override`: A URI parameter used to customize how node-problem-detector
+* `--apiserver-override`: A URI parameter used to customize how node-problem-detector
 connects the apiserver. The format is same as the
 [`source`](https://github.com/kubernetes/heapster/blob/master/docs/source-configuration.md#kubernetes)
 flag of [Heapster](https://github.com/kubernetes/heapster).
@@ -65,7 +65,7 @@ For example, to run without auth, use the following config:
 http://APISERVER_IP:APISERVER_PORT?inClusterConfig=false
 ```
 Refer [heapster docs](https://github.com/kubernetes/heapster/blob/1e40b0f4b5eeb3f02e11ee22c2b6fda36b6e6ea1/docs/source-configuration.md#kubernetes) for a complete list of available options.
-* `-hostname-override`: A customized node name used for node-problem-detector to update conditions and emit events. node-problem-detector gets node name first from `hostname-override`, then `NODE_NAME` environment variable and finally fall back to `os.Hostname`.
+* `--hostname-override`: A customized node name used for node-problem-detector to update conditions and emit events. node-problem-detector gets node name first from `hostname-override`, then `NODE_NAME` environment variable and finally fall back to `os.Hostname`.
 
 ## Build Image
 Run `make` in the top directory. It will:
