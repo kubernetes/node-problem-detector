@@ -43,8 +43,8 @@ with new rule definition:
 
 Kernel monitor supports different log management tools with different log
 watchers:
-* [syslog](https://github.com/kubernetes/node-problem-detector/blob/master/pkg/kernelmonitor/logwatchers/syslog)
-* [journald](https://github.com/kubernetes/node-problem-detector/blob/master/pkg/kernelmonitor/logwatchers/journald)
+* [syslog](https://github.com/kubernetes/node-problem-detector/blob/master/pkg/logmonitor/logwatchers/syslog)
+* [journald](https://github.com/kubernetes/node-problem-detector/blob/master/pkg/logmonitor/logwatchers/journald)
 
 ### Change Log Path
 
@@ -57,5 +57,5 @@ You can always configure `logPath` and volume mount to match your OS distro.
 ### New Log Watcher
 
 Kernel monitor uses [Log
-Watcher](https://github.com/kubernetes/node-problem-detector/blob/master/pkg/kernelmonitor/logwatchers/types/log_watcher.go) to support different log management tools.
+Watcher](https://github.com/kubernetes/node-problem-detector/blob/master/pkg/logmonitor/logwatchers/types/log_watcher.go) to support different log management tools.
 It is easy to implement a new log watcher.

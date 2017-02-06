@@ -49,7 +49,7 @@ List of supported problem daemons:
 
 | Problem Daemon |  NodeCondition  | Description |
 |----------------|:---------------:|:------------|
-| [KernelMonitor](https://github.com/kubernetes/node-problem-detector/tree/master/pkg/kernelmonitor) | KernelDeadlock | A problem daemon monitors kernel log and reports problem according to predefined rules. |
+| [KernelMonitor](https://github.com/kubernetes/node-problem-detector/tree/master/pkg/logmonitor) | KernelDeadlock | A problem daemon monitors kernel log and reports problem according to predefined rules. |
 
 # Usage
 ## Flags

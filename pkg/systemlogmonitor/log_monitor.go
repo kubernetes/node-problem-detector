@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package kernelmonitor
+package systemlogmonitor
 
 import (
 	"encoding/json"
@@ -22,116 +22,116 @@ import (
 	"regexp"
 	"time"
 
-	"k8s.io/node-problem-detector/pkg/kernelmonitor/logwatchers"
-	watchertypes "k8s.io/node-problem-detector/pkg/kernelmonitor/logwatchers/types"
-	kerntypes "k8s.io/node-problem-detector/pkg/kernelmonitor/types"
-	"k8s.io/node-problem-detector/pkg/kernelmonitor/util"
+	"k8s.io/node-problem-detector/pkg/systemlogmonitor/logwatchers"
+	watchertypes "k8s.io/node-problem-detector/pkg/systemlogmonitor/logwatchers/types"
+	logtypes "k8s.io/node-problem-detector/pkg/systemlogmonitor/types"
+	"k8s.io/node-problem-detector/pkg/systemlogmonitor/util"
 	"k8s.io/node-problem-detector/pkg/types"
 
 	"github.com/golang/glog"
 )
 
-// KernelMonitor monitors the kernel log and reports node problem condition and event according to
+// LogMonitor monitors the log and reports node problem condition and event according to
 // the rules.
-type KernelMonitor interface {
-	// Start starts the kernel monitor.
+type LogMonitor interface {
+	// Start starts the log monitor.
 	Start() (<-chan *types.Status, error)
-	// Stop stops the kernel monitor.
+	// Stop stops the log monitor.
 	Stop()
 }
 
-type kernelMonitor struct {
+type logMonitor struct {
 	watcher    watchertypes.LogWatcher
 	buffer     LogBuffer
 	config     MonitorConfig
 	conditions []types.Condition
-	logCh      <-chan *kerntypes.KernelLog
+	logCh      <-chan *logtypes.Log
 	output     chan *types.Status
 	tomb       *util.Tomb
 }
 
-// NewKernelMonitorOrDie create a new KernelMonitor, panic if error occurs.
-func NewKernelMonitorOrDie(configPath string) KernelMonitor {
-	k := &kernelMonitor{
+// NewLogMonitorOrDie create a new LogMonitor, panic if error occurs.
+func NewLogMonitorOrDie(configPath string) LogMonitor {
+	l := &logMonitor{
 		tomb: util.NewTomb(),
 	}
 	f, err := ioutil.ReadFile(configPath)
 	if err != nil {
 		glog.Fatalf("Failed to read configuration file %q: %v", configPath, err)
 	}
-	err = json.Unmarshal(f, &k.config)
+	err = json.Unmarshal(f, &l.config)
 	if err != nil {
 		glog.Fatalf("Failed to unmarshal configuration file %q: %v", configPath, err)
 	}
 	// Apply default configurations
-	applyDefaultConfiguration(&k.config)
-	err = validateRules(k.config.Rules)
+	applyDefaultConfiguration(&l.config)
+	err = validateRules(l.config.Rules)
 	if err != nil {
-		glog.Fatalf("Failed to validate matching rules %#v: %v", k.config.Rules, err)
+		glog.Fatalf("Failed to validate matching rules %#v: %v", l.config.Rules, err)
 	}
-	glog.Infof("Finish parsing log file: %+v", k.config)
-	k.watcher = logwatchers.GetLogWatcherOrDie(k.config.WatcherConfig)
-	k.buffer = NewLogBuffer(k.config.BufferSize)
+	glog.Infof("Finish parsing log monitor config file: %+v", l.config)
+	l.watcher = logwatchers.GetLogWatcherOrDie(l.config.WatcherConfig)
+	l.buffer = NewLogBuffer(l.config.BufferSize)
 	// A 1000 size channel should be big enough.
-	k.output = make(chan *types.Status, 1000)
-	return k
+	l.output = make(chan *types.Status, 1000)
+	return l
 }
 
-func (k *kernelMonitor) Start() (<-chan *types.Status, error) {
-	glog.Info("Start kernel monitor")
+func (l *logMonitor) Start() (<-chan *types.Status, error) {
+	glog.Info("Start log monitor")
 	var err error
-	k.logCh, err = k.watcher.Watch()
+	l.logCh, err = l.watcher.Watch()
 	if err != nil {
 		return nil, err
 	}
-	go k.monitorLoop()
-	return k.output, nil
+	go l.monitorLoop()
+	return l.output, nil
 }
 
-func (k *kernelMonitor) Stop() {
-	glog.Info("Stop kernel monitor")
-	k.tomb.Stop()
+func (l *logMonitor) Stop() {
+	glog.Info("Stop log monitor")
+	l.tomb.Stop()
 }
 
-// monitorLoop is the main loop of kernel monitor.
-func (k *kernelMonitor) monitorLoop() {
-	defer k.tomb.Done()
-	k.initializeStatus()
+// monitorLoop is the main loop of log monitor.
+func (l *logMonitor) monitorLoop() {
+	defer l.tomb.Done()
+	l.initializeStatus()
 	for {
 		select {
-		case log := <-k.logCh:
-			k.parseLog(log)
-		case <-k.tomb.Stopping():
-			k.watcher.Stop()
-			glog.Infof("Kernel monitor stopped")
+		case log := <-l.logCh:
+			l.parseLog(log)
+		case <-l.tomb.Stopping():
+			l.watcher.Stop()
+			glog.Infof("Log monitor stopped")
 			return
 		}
 	}
 }
 
 // parseLog parses one log line.
-func (k *kernelMonitor) parseLog(log *kerntypes.KernelLog) {
-	// Once there is new log, kernel monitor will push it into the log buffer and try
-	// to match each rule. If any rule is matched, kernel monitor will report a status.
-	k.buffer.Push(log)
-	for _, rule := range k.config.Rules {
-		matched := k.buffer.Match(rule.Pattern)
+func (l *logMonitor) parseLog(log *logtypes.Log) {
+	// Once there is new log, log monitor will push it into the log buffer and try
+	// to match each rule. If any rule is matched, log monitor will report a status.
+	l.buffer.Push(log)
+	for _, rule := range l.config.Rules {
+		matched := l.buffer.Match(rule.Pattern)
 		if len(matched) == 0 {
 			continue
 		}
-		status := k.generateStatus(matched, rule)
+		status := l.generateStatus(matched, rule)
 		glog.Infof("New status generated: %+v", status)
-		k.output <- status
+		l.output <- status
 	}
 }
 
 // generateStatus generates status from the logs.
-func (k *kernelMonitor) generateStatus(logs []*kerntypes.KernelLog, rule kerntypes.Rule) *types.Status {
+func (l *logMonitor) generateStatus(logs []*logtypes.Log, rule logtypes.Rule) *types.Status {
 	// We use the timestamp of the first log line as the timestamp of the status.
 	timestamp := logs[0].Timestamp
 	message := generateMessage(logs)
 	var events []types.Event
-	if rule.Type == kerntypes.Temp {
+	if rule.Type == logtypes.Temp {
 		// For temporary error only generate event
 		events = append(events, types.Event{
 			Severity:  types.Warn,
@@ -141,8 +141,8 @@ func (k *kernelMonitor) generateStatus(logs []*kerntypes.KernelLog, rule kerntyp
 		})
 	} else {
 		// For permanent error changes the condition
-		for i := range k.conditions {
-			condition := &k.conditions[i]
+		for i := range l.conditions {
+			condition := &l.conditions[i]
 			if condition.Type == rule.Condition {
 				condition.Type = rule.Condition
 				// Update transition timestamp and message when the condition
@@ -159,22 +159,22 @@ func (k *kernelMonitor) generateStatus(logs []*kerntypes.KernelLog, rule kerntyp
 		}
 	}
 	return &types.Status{
-		Source: k.config.Source,
+		Source: l.config.Source,
 		// TODO(random-liu): Aggregate events and conditions and then do periodically report.
 		Events:     events,
-		Conditions: k.conditions,
+		Conditions: l.conditions,
 	}
 }
 
 // initializeStatus initializes the internal condition and also reports it to the node problem detector.
-func (k *kernelMonitor) initializeStatus() {
+func (l *logMonitor) initializeStatus() {
 	// Initialize the default node conditions
-	k.conditions = initialConditions(k.config.DefaultConditions)
-	glog.Infof("Initialize condition generated: %+v", k.conditions)
+	l.conditions = initialConditions(l.config.DefaultConditions)
+	glog.Infof("Initialize condition generated: %+v", l.conditions)
 	// Update the initial status
-	k.output <- &types.Status{
-		Source:     k.config.Source,
-		Conditions: k.conditions,
+	l.output <- &types.Status{
+		Source:     l.config.Source,
+		Conditions: l.conditions,
 	}
 }
 
@@ -190,7 +190,7 @@ func initialConditions(defaults []types.Condition) []types.Condition {
 }
 
 // validateRules verifies whether the regular expressions in the rules are valid.
-func validateRules(rules []kerntypes.Rule) error {
+func validateRules(rules []logtypes.Rule) error {
 	for _, rule := range rules {
 		_, err := regexp.Compile(rule.Pattern)
 		if err != nil {
@@ -200,7 +200,7 @@ func validateRules(rules []kerntypes.Rule) error {
 	return nil
 }
 
-func generateMessage(logs []*kerntypes.KernelLog) string {
+func generateMessage(logs []*logtypes.Log) string {
 	messages := []string{}
 	for _, log := range logs {
 		messages = append(messages, log.Message)

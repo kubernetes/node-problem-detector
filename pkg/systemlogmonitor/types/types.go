@@ -20,34 +20,34 @@ import (
 	"time"
 )
 
-// KernelLog is the log item returned by translator. It's very easy to extend this
+// Log is the log item returned by translator. It's very easy to extend this
 // to support other log monitoring, such as docker log monitoring.
-type KernelLog struct {
+type Log struct {
 	Timestamp time.Time
 	Message   string
 }
 
-// Type is the type of the kernel problem.
+// Type is the type of the problem.
 type Type string
 
 const (
-	// Temp means the kernel problem is temporary, only need to report an event.
+	// Temp means the problem is temporary, only need to report an event.
 	Temp Type = "temporary"
-	// Perm means the kernel problem is permanent, need to change the node condition.
+	// Perm means the problem is permanent, need to change the node condition.
 	Perm Type = "permanent"
 )
 
-// Rule describes how kernel monitor should analyze the kernel log.
+// Rule describes how log monitor should analyze the log.
 type Rule struct {
-	// Type is the type of matched kernel problem.
+	// Type is the type of matched problem.
 	Type Type `json:"type"`
-	// Condition is the type of the condition the kernel problem triggered. Notice that
-	// the Condition field should be set only when the problem is permanent, or else the
-	// field will be ignored.
+	// Condition is the type of the condition the problem triggered. Notice that
+	// the Condition field should be set only when the problem is permanent, or
+	// else the field will be ignored.
 	Condition string `json:"condition"`
-	// Reason is the short reason of the kernel problem.
+	// Reason is the short reason of the problem.
 	Reason string `json:"reason"`
-	// Pattern is the regular expression to match the kernel problem in kernel log.
+	// Pattern is the regular expression to match the problem in log.
 	// Notice that the pattern must match to the end of the line.
 	Pattern string `json:"pattern"`
 }

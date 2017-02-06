@@ -25,13 +25,13 @@ import (
 	"github.com/coreos/go-systemd/sdjournal"
 	"github.com/stretchr/testify/assert"
 
-	kerntypes "k8s.io/node-problem-detector/pkg/kernelmonitor/types"
+	logtypes "k8s.io/node-problem-detector/pkg/systemlogmonitor/types"
 )
 
 func TestTranslate(t *testing.T) {
 	testCases := []struct {
 		entry *sdjournal.JournalEntry
-		log   *kerntypes.KernelLog
+		log   *logtypes.Log
 	}{
 		{
 			// has log message
@@ -39,7 +39,7 @@ func TestTranslate(t *testing.T) {
 				Fields:            map[string]string{"MESSAGE": "log message"},
 				RealtimeTimestamp: 123456789,
 			},
-			log: &kerntypes.KernelLog{
+			log: &logtypes.Log{
 				Timestamp: time.Unix(0, 123456789*1000),
 				Message:   "log message",
 			},
@@ -50,7 +50,7 @@ func TestTranslate(t *testing.T) {
 				Fields:            map[string]string{},
 				RealtimeTimestamp: 987654321,
 			},
-			log: &kerntypes.KernelLog{
+			log: &logtypes.Log{
 				Timestamp: time.Unix(0, 987654321*1000),
 				Message:   "",
 			},

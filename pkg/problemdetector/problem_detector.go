@@ -24,8 +24,8 @@ import (
 	"k8s.io/kubernetes/pkg/util/clock"
 
 	"k8s.io/node-problem-detector/pkg/condition"
-	"k8s.io/node-problem-detector/pkg/kernelmonitor"
 	"k8s.io/node-problem-detector/pkg/problemclient"
+	"k8s.io/node-problem-detector/pkg/systemlogmonitor"
 	"k8s.io/node-problem-detector/pkg/util"
 )
 
@@ -39,12 +39,12 @@ type problemDetector struct {
 	client           problemclient.Client
 	conditionManager condition.ConditionManager
 	// TODO(random-liu): Use slices of problem daemons if multiple monitors are needed in the future
-	monitor kernelmonitor.KernelMonitor
+	monitor systemlogmonitor.LogMonitor
 }
 
 // NewProblemDetector creates the problem detector. Currently we just directly passed in the problem daemons, but
 // in the future we may want to let the problem daemons register themselves.
-func NewProblemDetector(monitor kernelmonitor.KernelMonitor, client problemclient.Client) ProblemDetector {
+func NewProblemDetector(monitor systemlogmonitor.LogMonitor, client problemclient.Client) ProblemDetector {
 	return &problemDetector{
 		client:           client,
 		conditionManager: condition.NewConditionManager(client, clock.RealClock{}),

@@ -13,14 +13,14 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package syslog
+package filelog
 
 import (
 	"fmt"
 	"regexp"
 	"time"
 
-	kerntypes "k8s.io/node-problem-detector/pkg/kernelmonitor/types"
+	logtypes "k8s.io/node-problem-detector/pkg/systemlogmonitor/types"
 
 	"github.com/golang/glog"
 )
@@ -56,7 +56,7 @@ func newTranslatorOrDie(pluginConfig map[string]string) *translator {
 }
 
 // translate translates the log line into internal type.
-func (t *translator) translate(line string) (*kerntypes.KernelLog, error) {
+func (t *translator) translate(line string) (*logtypes.Log, error) {
 	// Parse timestamp.
 	matches := t.timestampRegexp.FindStringSubmatch(line)
 	if len(matches) == 0 {
@@ -74,7 +74,7 @@ func (t *translator) translate(line string) (*kerntypes.KernelLog, error) {
 		return nil, fmt.Errorf("no message found in line %q with regular expression %v", line, t.messageRegexp)
 	}
 	message := matches[len(matches)-1]
-	return &kerntypes.KernelLog{
+	return &logtypes.Log{
 		Timestamp: timestamp,
 		Message:   message,
 	}, nil
@@ -95,7 +95,7 @@ func validatePluginConfig(cfg map[string]string) error {
 }
 
 // formalizeTimestamp formalizes the timestamp. We need this because some log doesn't contain full
-// timestamp, e.g. syslog.
+// timestamp, e.g. filelog.
 func formalizeTimestamp(t time.Time) time.Time {
 	if t.Year() == 0 {
 		t = t.AddDate(time.Now().Year(), 0, 0)
