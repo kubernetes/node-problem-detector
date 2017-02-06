@@ -17,7 +17,6 @@ limitations under the License.
 package main
 
 import (
-	"flag"
 	"net"
 	"net/http"
 	_ "net/http/pprof"
@@ -26,34 +25,27 @@ import (
 	"strconv"
 
 	"github.com/golang/glog"
+	"github.com/spf13/pflag"
 
 	"k8s.io/node-problem-detector/pkg/kernelmonitor"
+	"k8s.io/node-problem-detector/pkg/options"
+	"k8s.io/node-problem-detector/pkg/problemclient"
 	"k8s.io/node-problem-detector/pkg/problemdetector"
 	"k8s.io/node-problem-detector/pkg/version"
 )
 
-// TODO: Move flags to options directory.
-var (
-	kernelMonitorConfigPath = flag.String("kernel-monitor", "/config/kernel-monitor.json", "The path to the kernel monitor config file")
-	apiServerOverride       = flag.String("apiserver-override", "", "Custom URI used to connect to Kubernetes ApiServer")
-	printVersion            = flag.Bool("version", false, "Print version information and quit")
-	hostnameOverride        = flag.String("hostname-override", "", "Custom node name used to override hostname")
-	serverPort              = flag.Int("port", 10256, "The port to bind the node problem detector server. Use 0 to disable.")
-	serverAddress           = flag.String("address", "127.0.0.1", "The address to bind the node problem detector server.")
-)
-
-func validateCmdParams() {
-	if _, err := url.Parse(*apiServerOverride); err != nil {
-		glog.Fatalf("apiserver-override %q is not a valid HTTP URI: %v", *apiServerOverride, err)
+func validateCmdParams(npdo *options.NodeProblemDetectorOptions) {
+	if _, err := url.Parse(npdo.ApiServerOverride); err != nil {
+		glog.Fatalf("apiserver-override %q is not a valid HTTP URI: %v", npdo.ApiServerOverride, err)
 	}
 }
 
-func getNodeNameOrDie() string {
+func setNodeNameOrDie(npdo *options.NodeProblemDetectorOptions) {
 	var nodeName string
 
 	// Check hostname override first for customized node name.
-	if *hostnameOverride != "" {
-		return *hostnameOverride
+	if npdo.HostnameOverride != "" {
+		return
 	}
 
 	// Get node name from environment variable NODE_NAME
@@ -64,7 +56,8 @@ func getNodeNameOrDie() string {
 	// 2. For some cloud providers, os.Hostname is different from the real hostname.
 	nodeName = os.Getenv("NODE_NAME")
 	if nodeName != "" {
-		return nodeName
+		npdo.HostnameOverride = nodeName
+		return
 	}
 
 	// For backward compatibility. If the env is not set, get the hostname
@@ -75,10 +68,10 @@ func getNodeNameOrDie() string {
 		glog.Fatalf("Failed to get host name: %v", err)
 	}
 
-	return nodeName
+	npdo.HostnameOverride = nodeName
 }
 
-func startHTTPServer(p problemdetector.ProblemDetector) {
+func startHTTPServer(p problemdetector.ProblemDetector, npdo *options.NodeProblemDetectorOptions) {
 	// Add healthz http request handler. Always return ok now, add more health check
 	// logic in the future.
 	http.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
@@ -87,29 +80,36 @@ func startHTTPServer(p problemdetector.ProblemDetector) {
 	})
 	// Add the http handlers in problem detector.
 	p.RegisterHTTPHandlers()
-	err := http.ListenAndServe(net.JoinHostPort(*serverAddress, strconv.Itoa(*serverPort)), nil)
+
+	addr := net.JoinHostPort(npdo.ServerAddress, strconv.Itoa(npdo.ServerPort))
+	err := http.ListenAndServe(addr, nil)
 	if err != nil {
 		glog.Fatalf("Failed to start server: %v", err)
 	}
 }
 
 func main() {
-	flag.Parse()
-	validateCmdParams()
+	npdo := options.NewNodeProblemDetectorOptions()
+	npdo.AddFlags(pflag.CommandLine)
 
-	if *printVersion {
+	pflag.Parse()
+
+	validateCmdParams(npdo)
+
+	if npdo.PrintVersion {
 		version.PrintVersion()
 		os.Exit(0)
 	}
 
-	nodeName := getNodeNameOrDie()
+	setNodeNameOrDie(npdo)
 
-	k := kernelmonitor.NewKernelMonitorOrDie(*kernelMonitorConfigPath)
-	p := problemdetector.NewProblemDetector(k, *apiServerOverride, nodeName)
+	k := kernelmonitor.NewKernelMonitorOrDie(npdo.KernelMonitorConfigPath)
+	c := problemclient.NewClientOrDie(npdo)
+	p := problemdetector.NewProblemDetector(k, c)
 
 	// Start http server.
-	if *serverPort > 0 {
-		startHTTPServer(p)
+	if npdo.ServerPort > 0 {
+		startHTTPServer(p, npdo)
 	}
 
 	if err := p.Run(); err != nil {
