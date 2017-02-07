@@ -154,10 +154,15 @@ func (k *kernelMonitor) generateStatus(logs []*kerntypes.KernelLog, rule kerntyp
 			condition := &k.conditions[i]
 			if condition.Type == rule.Condition {
 				condition.Type = rule.Condition
+				// Update transition timestamp and message when the condition
+				// changes. Condition is considered to be changed only when
+				// status or reason changes.
+				if !condition.Status || condition.Reason != rule.Reason {
+					condition.Transition = timestamp
+					condition.Message = message
+				}
 				condition.Status = true
-				condition.Transition = timestamp
 				condition.Reason = rule.Reason
-				condition.Message = message
 				break
 			}
 		}
