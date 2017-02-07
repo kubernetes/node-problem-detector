@@ -44,8 +44,7 @@ type problemDetector struct {
 
 // NewProblemDetector creates the problem detector. Currently we just directly passed in the problem daemons, but
 // in the future we may want to let the problem daemons register themselves.
-func NewProblemDetector(monitor kernelmonitor.KernelMonitor, apiServerOverride, nodeName string) ProblemDetector {
-	client := problemclient.NewClientOrDie(apiServerOverride, nodeName)
+func NewProblemDetector(monitor kernelmonitor.KernelMonitor, client problemclient.Client) ProblemDetector {
 	return &problemDetector{
 		client:           client,
 		conditionManager: condition.NewConditionManager(client, clock.RealClock{}),

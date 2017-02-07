@@ -29,6 +29,7 @@ import (
 	"k8s.io/kubernetes/pkg/util/clock"
 
 	"k8s.io/heapster/common/kubernetes"
+	"k8s.io/node-problem-detector/pkg/options"
 )
 
 // Client is the interface of problem client
@@ -50,11 +51,11 @@ type nodeProblemClient struct {
 }
 
 // NewClientOrDie creates a new problem client, panics if error occurs.
-func NewClientOrDie(apiServerOverride, nodeName string) Client {
+func NewClientOrDie(npdo *options.NodeProblemDetectorOptions) Client {
 	c := &nodeProblemClient{clock: clock.RealClock{}}
 
 	// we have checked it is a valid URI after command line argument is parsed.:)
-	uri, _ := url.Parse(apiServerOverride)
+	uri, _ := url.Parse(npdo.ApiServerOverride)
 
 	cfg, err := kubernetes.GetKubeClientConfig(uri)
 	if err != nil {
@@ -63,7 +64,7 @@ func NewClientOrDie(apiServerOverride, nodeName string) Client {
 
 	// TODO(random-liu): Set QPS Limit
 	c.client = client.NewOrDie(cfg)
-	c.nodeName = nodeName
+	c.nodeName = npdo.NodeName
 	c.nodeRef = getNodeRef(c.nodeName)
 	c.recorders = make(map[string]record.EventRecorder)
 	return c
