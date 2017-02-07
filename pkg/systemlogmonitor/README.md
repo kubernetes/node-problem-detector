@@ -1,21 +1,22 @@
-# Kernel Monitor
+# System Log Monitor
 
-*Kernel Monitor* is a problem daemon in node problem detector. It monitors kernel log
-and detects known kernel issues following predefined rules.
+*System Log Monitor* is a problem daemon in node problem detector. It monitors
+specified system daemon log and detects problems following predefined rules.
 
-The Kernel Monitor matches kernel issues according to a set of predefined rule list in
-[`config/kernel-monitor.json`](https://github.com/kubernetes/node-problem-detector/blob/master/config/kernel-monitor.json).
+The System Log Monitor matches problems according to a set of predefined rule list in
+the configuration files. (
+[`config/kernel-monitor.json`](https://github.com/kubernetes/node-problem-detector/blob/master/config/kernel-monitor.json) as an example).
 The rule list is extensible.
 
 ## Limitations
 
-* Kernel Monitor only supports syslog (rsyslog) and journald now, but it is easy
+* System Log Monitor only supports file based log and journald now, but it is easy
   to extend it with [new log watcher](#new-log-watcher)
 
 ## Add New NodeConditions
 
 To support new node conditions, you can extend the `conditions` field in
-`config/kernel-monitor.json` with new condition definition:
+the configuration file with new condition definition:
 
 ```json
 {
@@ -27,7 +28,7 @@ To support new node conditions, you can extend the `conditions` field in
 
 ## Detect New Problems
 
-To detect new problems, you can extend the `rules` field in `config/kernel-monitor.json`
+To detect new problems, you can extend the `rules` field in the configuration file
 with new rule definition:
 
 ```json
@@ -35,27 +36,48 @@ with new rule definition:
   "type": "temporary/permanent",
   "condition": "NodeConditionOfPermanentIssue",
   "reason": "CamelCaseShortReason",
-  "message": "regexp matching the issue in the kernel log"
+  "message": "regexp matching the issue in the log"
 }
 ```
 
 ## Log Watchers
 
-Kernel monitor supports different log management tools with different log
+System log monitor supports different log management tools with different log
 watchers:
-* [syslog](https://github.com/kubernetes/node-problem-detector/blob/master/pkg/logmonitor/logwatchers/syslog)
-* [journald](https://github.com/kubernetes/node-problem-detector/blob/master/pkg/logmonitor/logwatchers/journald)
+* [filelog](https://github.com/kubernetes/node-problem-detector/blob/master/pkg/systemlogmonitor/logwatchers/filelog): Log watcher for
+arbitrary file based log.
+* [journald](https://github.com/kubernetes/node-problem-detector/blob/master/pkg/systemlogmonitor/logwatchers/journald): Log watcher for
+journald.
+Set `plugin` in the configuration file to specify log watcher.
+
+### Plugin Configuration
+
+Log watcher specific configurations are configured in `pluginConfig`.
+* **journald**
+  * source: The [`SYSLOG_IDENTIFIER`](https://www.freedesktop.org/software/systemd/man/systemd.journal-fields.html)
+  of the log to watch.
+* **filelog**:
+  * timestamp: The regular expression used to match timestamp in the log line.
+    Submatch is supported, but only the last result will be used as the actual
+    timestamp.
+  * message: The regular expression used to match message in the log line.
+    Submatch is supported, but only the last result will be used as the actual
+    message.
+  * timestampFormat: The format of the timestamp. The format string is the time
+    `2006-01-02T15:04:05Z07:00` in the expected format. (See
+    [golang timestamp format](https://golang.org/pkg/time/#pkg-constants))
 
 ### Change Log Path
 
-Kernel log on different OS distros may locate in different path. The `logPath`
-field in `config/kernel-monitor.json` is the log path inside the container.
-You can always configure `logPath` and volume mount to match your OS distro.
-* syslog: `logPath` is the kernel log path, usually `/var/log/kern.log`.
+Log on different OS distros may locate in different path. The `logPath`
+field in the configurtion file is the log path. You can always configure
+`logPath` to match your OS distro.
+* filelog: `logPath` is the path of log file, e.g. `/var/log/kern.log` for kernel
+  log.
 * journald: `logPath` is the journal log directory, usually `/var/log/journal`.
 
 ### New Log Watcher
 
-Kernel monitor uses [Log
-Watcher](https://github.com/kubernetes/node-problem-detector/blob/master/pkg/logmonitor/logwatchers/types/log_watcher.go) to support different log management tools.
+System log monitor uses [Log
+Watcher](https://github.com/kubernetes/node-problem-detector/blob/master/pkg/systemlogmonitor/logwatchers/types/log_watcher.go) to support different log management tools.
 It is easy to implement a new log watcher.
