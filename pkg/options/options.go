@@ -1,0 +1,106 @@
+/*
+Copyright 2017 The Kubernetes Authors All rights reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+package options
+
+import (
+	"flag"
+	"fmt"
+	"os"
+
+	"net/url"
+
+	"github.com/spf13/pflag"
+)
+
+// NodeProblemDetectorOptions contains node problem detector command line options.
+type NodeProblemDetectorOptions struct {
+	// KernelMonitorConfigPath specifies the path to kernel monitor configuration file.
+	KernelMonitorConfigPath string
+	// ApiServerOverride is the custom URI used to connect to Kubernetes ApiServer.
+	ApiServerOverride string
+	// PrintVersion is the flag determining whether version information is printed.
+	PrintVersion bool
+	// HostnameOverride specifies custom node name used to override hostname.
+	HostnameOverride string
+	// NodeName is the node name used to communicate with Kubernetes ApiServer.
+	NodeName string
+	// ServerPort is the port to bind the node problem detector server. Use 0 to disable.
+	ServerPort int
+	// ServerAddress is the address to bind the node problem detector server.
+	ServerAddress string
+}
+
+func NewNodeProblemDetectorOptions() *NodeProblemDetectorOptions {
+	return &NodeProblemDetectorOptions{}
+}
+
+// AddFlags adds node problem detector command line options to pflag.
+func (npdo *NodeProblemDetectorOptions) AddFlags(fs *pflag.FlagSet) {
+	fs.StringVar(&npdo.KernelMonitorConfigPath, "kernel-monitor",
+		"/config/kernel-monitor.json", "The path to the kernel monitor config file")
+	fs.StringVar(&npdo.ApiServerOverride, "apiserver-override",
+		"", "Custom URI used to connect to Kubernetes ApiServer")
+	fs.BoolVar(&npdo.PrintVersion, "version", false, "Print version information and quit")
+	fs.StringVar(&npdo.HostnameOverride, "hostname-override",
+		"", "Custom node name used to override hostname")
+	fs.IntVar(&npdo.ServerPort, "port",
+		10256, "The port to bind the node problem detector server. Use 0 to disable.")
+	fs.StringVar(&npdo.ServerAddress, "address",
+		"127.0.0.1", "The address to bind the node problem detector server.")
+}
+
+// ValidOrDie validates node problem detector command line options.
+func (npdo *NodeProblemDetectorOptions) ValidOrDie() {
+	if _, err := url.Parse(npdo.ApiServerOverride); err != nil {
+		panic(fmt.Sprintf("apiserver-override %q is not a valid HTTP URI: %v",
+			npdo.ApiServerOverride, err))
+	}
+}
+
+// SetNodeNameOrDie sets `NodeName` field with valid value.
+func (npdo *NodeProblemDetectorOptions) SetNodeNameOrDie() {
+	// Check hostname override first for customized node name.
+	if npdo.HostnameOverride != "" {
+		npdo.NodeName = npdo.HostnameOverride
+		return
+	}
+
+	// Get node name from environment variable NODE_NAME
+	// By default, assume that the NODE_NAME env should have been set with
+	// downward api or user defined exported environment variable. We prefer it because sometimes
+	// the hostname returned by os.Hostname is not right because:
+	// 1. User may override the hostname.
+	// 2. For some cloud providers, os.Hostname is different from the real hostname.
+	npdo.NodeName = os.Getenv("NODE_NAME")
+	if npdo.NodeName != "" {
+		return
+	}
+
+	// For backward compatibility. If the env is not set, get the hostname
+	// from os.Hostname(). This may not work for all configurations and
+	// environments.
+	nodeName, err := os.Hostname()
+	if err != nil {
+		panic(fmt.Sprintf("Failed to get host name: %v", err))
+	}
+
+	npdo.NodeName = nodeName
+}
+
+func init() {
+	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
+}
