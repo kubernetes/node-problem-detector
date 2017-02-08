@@ -44,10 +44,12 @@ func startHTTPServer(p problemdetector.ProblemDetector, npdo *options.NodeProble
 	p.RegisterHTTPHandlers()
 
 	addr := net.JoinHostPort(npdo.ServerAddress, strconv.Itoa(npdo.ServerPort))
-	err := http.ListenAndServe(addr, nil)
-	if err != nil {
-		glog.Fatalf("Failed to start server: %v", err)
-	}
+	go func() {
+		err := http.ListenAndServe(addr, nil)
+		if err != nil {
+			glog.Fatalf("Failed to start server: %v", err)
+		}
+	}()
 }
 
 func main() {
