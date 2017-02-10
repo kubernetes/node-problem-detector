@@ -24,5 +24,5 @@ const syslogPluginName = "syslog"
 
 func init() {
 	// Register the syslog plugin.
-	registerLogWatcher(syslogPluginName, syslog.NewSyslogWatcher)
+	registerLogWatcher(syslogPluginName, syslog.NewSyslogWatcherOrDie)
 }

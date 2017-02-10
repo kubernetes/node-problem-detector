@@ -17,8 +17,6 @@ limitations under the License.
 package logwatchers
 
 import (
-	"fmt"
-
 	"k8s.io/node-problem-detector/pkg/kernelmonitor/logwatchers/types"
 
 	"github.com/golang/glog"
@@ -32,12 +30,13 @@ func registerLogWatcher(name string, create types.WatcherCreateFunc) {
 	createFuncs[name] = create
 }
 
-// GetLogWatcher get a log watcher based on the passed in configuration.
-func GetLogWatcher(config types.WatcherConfig) (types.LogWatcher, error) {
+// GetLogWatcherOrDie get a log watcher based on the passed in configuration.
+// The function panics when encounts an error.
+func GetLogWatcherOrDie(config types.WatcherConfig) types.LogWatcher {
 	create, ok := createFuncs[config.Plugin]
 	if !ok {
-		return nil, fmt.Errorf("no create function found for plugin %q", config.Plugin)
+		glog.Fatalf("No create function found for plugin %q", config.Plugin)
 	}
 	glog.Infof("Use log watcher of plugin %q", config.Plugin)
-	return create(config), nil
+	return create(config)
 }
