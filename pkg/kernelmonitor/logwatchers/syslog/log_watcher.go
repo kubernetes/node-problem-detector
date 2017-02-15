@@ -19,12 +19,16 @@ package syslog
 import (
 	"bufio"
 	"bytes"
+	"fmt"
 	"io"
+	"os"
+	"strings"
 	"syscall"
 	"time"
 
 	utilclock "code.cloudfoundry.org/clock"
 	"github.com/golang/glog"
+	"github.com/google/cadvisor/utils/tail"
 
 	"k8s.io/node-problem-detector/pkg/kernelmonitor/logwatchers/types"
 	kerntypes "k8s.io/node-problem-detector/pkg/kernelmonitor/types"
@@ -32,13 +36,14 @@ import (
 )
 
 type syslogWatcher struct {
-	cfg    types.WatcherConfig
-	reader *bufio.Reader
-	closer io.Closer
-	logCh  chan *kerntypes.KernelLog
-	uptime time.Time
-	tomb   *util.Tomb
-	clock  utilclock.Clock
+	cfg        types.WatcherConfig
+	reader     *bufio.Reader
+	closer     io.Closer
+	translator *translator
+	logCh      chan *kerntypes.KernelLog
+	uptime     time.Time
+	tomb       *util.Tomb
+	clock      utilclock.Clock
 }
 
 // NewSyslogWatcherOrDie creates a new kernel log watcher. The function panics
@@ -49,9 +54,10 @@ func NewSyslogWatcherOrDie(cfg types.WatcherConfig) types.LogWatcher {
 		glog.Fatalf("Failed to get system info: %v", err)
 	}
 	return &syslogWatcher{
-		cfg:    cfg,
-		uptime: time.Now().Add(time.Duration(-info.Uptime * int64(time.Second))),
-		tomb:   util.NewTomb(),
+		cfg:        cfg,
+		translator: newTranslatorOrDie(cfg.PluginConfig),
+		uptime:     time.Now().Add(time.Duration(-info.Uptime * int64(time.Second))),
+		tomb:       util.NewTomb(),
 		// A capacity 1000 buffer should be enough
 		logCh: make(chan *kerntypes.KernelLog, 1000),
 		clock: utilclock.NewClock(),
@@ -116,7 +122,7 @@ func (s *syslogWatcher) watchLoop() {
 		}
 		line = buffer.String()
 		buffer.Reset()
-		log, err := translate(line)
+		log, err := s.translator.translate(strings.TrimSuffix(line, "\n"))
 		if err != nil {
 			glog.Warningf("Unable to parse line: %q, %v", line, err)
 			continue
@@ -127,4 +133,27 @@ func (s *syslogWatcher) watchLoop() {
 		}
 		s.logCh <- log
 	}
+}
+
+// getLogReader returns log reader for syslog log. Note that getLogReader doesn't look back
+// to the rolled out logs.
+func getLogReader(path string) (io.ReadCloser, error) {
+	if path == "" {
+		return nil, fmt.Errorf("unexpected empty log path")
+	}
+	// To handle log rotation, tail will not report error immediately if
+	// the file doesn't exist. So we check file existence first.
+	// This could go wrong during mid-rotation. It should recover after
+	// several restart when the log file is created again. The chance
+	// is slim but we should still fix this in the future.
+	// TODO(random-liu): Handle log missing during rotation.
+	_, err := os.Stat(path)
+	if err != nil {
+		return nil, fmt.Errorf("failed to stat the file %q: %v", path, err)
+	}
+	tail, err := tail.NewTail(path)
+	if err != nil {
+		return nil, fmt.Errorf("failed to tail the file %q: %v", path, err)
+	}
+	return tail, nil
 }

@@ -33,6 +33,9 @@ type WatcherConfig struct {
 	// Plugin is the name of plugin which is currently used.
 	// Currently supported: syslog, journald.
 	Plugin string `json:"plugin, omitempty"`
+	// PluginConfig is a key/value configuration of a plugin. Valid configurations
+	// are defined in different log watcher plugin.
+	PluginConfig map[string]string `json:"pluginConfig, omitempty"`
 	// LogPath is the path to the log
 	LogPath string `json:"logPath, omitempty"`
 	// Lookback is the time kernel watcher looks up
