@@ -14,28 +14,28 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package kernelmonitor
+package systemlogmonitor
 
 import (
 	"regexp"
 	"strings"
 
-	"k8s.io/node-problem-detector/pkg/kernelmonitor/types"
+	"k8s.io/node-problem-detector/pkg/systemlogmonitor/types"
 )
 
 // LogBuffer buffers the logs and supports match in the log buffer with regular expression.
 type LogBuffer interface {
 	// Push pushes log into the log buffer.
-	Push(*types.KernelLog)
+	Push(*types.Log)
 	// Match with regular expression in the log buffer.
-	Match(string) []*types.KernelLog
+	Match(string) []*types.Log
 	// String returns a concatenated string of the buffered logs.
 	String() string
 }
 
 type logBuffer struct {
 	// buffer is a simple ring buffer.
-	buffer  []*types.KernelLog
+	buffer  []*types.Log
 	msg     []string
 	max     int
 	current int
@@ -47,20 +47,20 @@ type logBuffer struct {
 // lines of patterns we support.
 func NewLogBuffer(maxLines int) *logBuffer {
 	return &logBuffer{
-		buffer: make([]*types.KernelLog, maxLines, maxLines),
+		buffer: make([]*types.Log, maxLines, maxLines),
 		msg:    make([]string, maxLines, maxLines),
 		max:    maxLines,
 	}
 }
 
-func (b *logBuffer) Push(log *types.KernelLog) {
+func (b *logBuffer) Push(log *types.Log) {
 	b.buffer[b.current%b.max] = log
 	b.msg[b.current%b.max] = log.Message
 	b.current++
 }
 
 // TODO(random-liu): Cache regexp if garbage collection becomes a problem someday.
-func (b *logBuffer) Match(expr string) []*types.KernelLog {
+func (b *logBuffer) Match(expr string) []*types.Log {
 	// The expression should be checked outside, and it must match to the end.
 	reg := regexp.MustCompile(expr + `\z`)
 	log := b.String()
@@ -72,7 +72,7 @@ func (b *logBuffer) Match(expr string) []*types.KernelLog {
 	// reverse index
 	s := len(log) - loc[0] - 1
 	total := 0
-	matched := []*types.KernelLog{}
+	matched := []*types.Log{}
 	for i := b.tail(); i >= b.current && b.buffer[i%b.max] != nil; i-- {
 		matched = append(matched, b.buffer[i%b.max])
 		total += len(b.msg[i%b.max]) + 1 // Add '\n'

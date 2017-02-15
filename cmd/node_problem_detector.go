@@ -26,10 +26,10 @@ import (
 	"github.com/golang/glog"
 	"github.com/spf13/pflag"
 
-	"k8s.io/node-problem-detector/pkg/kernelmonitor"
 	"k8s.io/node-problem-detector/pkg/options"
 	"k8s.io/node-problem-detector/pkg/problemclient"
 	"k8s.io/node-problem-detector/pkg/problemdetector"
+	"k8s.io/node-problem-detector/pkg/systemlogmonitor"
 	"k8s.io/node-problem-detector/pkg/version"
 )
 
@@ -67,9 +67,9 @@ func main() {
 		os.Exit(0)
 	}
 
-	k := kernelmonitor.NewKernelMonitorOrDie(npdo.KernelMonitorConfigPath)
+	l := systemlogmonitor.NewLogMonitorOrDie(npdo.SystemLogMonitorConfigPath)
 	c := problemclient.NewClientOrDie(npdo)
-	p := problemdetector.NewProblemDetector(k, c)
+	p := problemdetector.NewProblemDetector(l, c)
 
 	// Start http server.
 	if npdo.ServerPort > 0 {

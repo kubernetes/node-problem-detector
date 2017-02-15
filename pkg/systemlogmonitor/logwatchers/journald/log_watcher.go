@@ -26,9 +26,9 @@ import (
 	"github.com/coreos/go-systemd/sdjournal"
 	"github.com/golang/glog"
 
-	"k8s.io/node-problem-detector/pkg/kernelmonitor/logwatchers/types"
-	kerntypes "k8s.io/node-problem-detector/pkg/kernelmonitor/types"
-	"k8s.io/node-problem-detector/pkg/kernelmonitor/util"
+	"k8s.io/node-problem-detector/pkg/systemlogmonitor/logwatchers/types"
+	logtypes "k8s.io/node-problem-detector/pkg/systemlogmonitor/types"
+	"k8s.io/node-problem-detector/pkg/systemlogmonitor/util"
 )
 
 // Compiling go-systemd/sdjournald needs libsystemd-dev or libsystemd-journal-dev,
@@ -40,7 +40,7 @@ import (
 type journaldWatcher struct {
 	journal *sdjournal.Journal
 	cfg     types.WatcherConfig
-	logCh   chan *kerntypes.KernelLog
+	logCh   chan *logtypes.Log
 	tomb    *util.Tomb
 }
 
@@ -50,7 +50,7 @@ func NewJournaldWatcher(cfg types.WatcherConfig) types.LogWatcher {
 		cfg:  cfg,
 		tomb: util.NewTomb(),
 		// A capacity 1000 buffer should be enough
-		logCh: make(chan *kerntypes.KernelLog, 1000),
+		logCh: make(chan *logtypes.Log, 1000),
 	}
 }
 
@@ -58,7 +58,7 @@ func NewJournaldWatcher(cfg types.WatcherConfig) types.LogWatcher {
 var _ types.WatcherCreateFunc = NewJournaldWatcher
 
 // Watch starts the journal watcher.
-func (j *journaldWatcher) Watch() (<-chan *kerntypes.KernelLog, error) {
+func (j *journaldWatcher) Watch() (<-chan *logtypes.Log, error) {
 	journal, err := getJournal(j.cfg)
 	if err != nil {
 		return nil, err
@@ -162,10 +162,10 @@ func getJournal(cfg types.WatcherConfig) (*sdjournal.Journal, error) {
 }
 
 // translate translates journal entry into internal type.
-func translate(entry *sdjournal.JournalEntry) *kerntypes.KernelLog {
+func translate(entry *sdjournal.JournalEntry) *logtypes.Log {
 	timestamp := time.Unix(0, int64(time.Duration(entry.RealtimeTimestamp)*time.Microsecond))
 	message := strings.TrimSpace(entry.Fields["MESSAGE"])
-	return &kerntypes.KernelLog{
+	return &logtypes.Log{
 		Timestamp: timestamp,
 		Message:   message,
 	}

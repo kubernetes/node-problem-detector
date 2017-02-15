@@ -17,7 +17,7 @@ limitations under the License.
 package logwatchers
 
 import (
-	"k8s.io/node-problem-detector/pkg/kernelmonitor/logwatchers/types"
+	"k8s.io/node-problem-detector/pkg/systemlogmonitor/logwatchers/types"
 
 	"github.com/golang/glog"
 )

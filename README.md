@@ -49,12 +49,12 @@ List of supported problem daemons:
 
 | Problem Daemon |  NodeCondition  | Description |
 |----------------|:---------------:|:------------|
-| [KernelMonitor](https://github.com/kubernetes/node-problem-detector/tree/master/pkg/kernelmonitor) | KernelDeadlock | A problem daemon monitors kernel log and reports problem according to predefined rules. |
+| [KernelMonitor](https://github.com/kubernetes/node-problem-detector/blob/master/config/kernel-monitor.json) | KernelDeadlock | A system log monitor monitors kernel log and reports problem according to predefined rules. |
 
 # Usage
 ## Flags
 * `--version`: Print current version of node-problem-detector.
-* `--kernel-monitor`: The configuration used by the kernel monitor, e.g.
+* `--system-log-monitor`: The configuration used by the system log monitor, e.g.
   [config/kernel-monitor.json](https://github.com/kubernetes/node-problem-detector/blob/master/config/kernel-monitor.json).
 * `--apiserver-override`: A URI parameter used to customize how node-problem-detector
 connects the apiserver. The format is same as the
@@ -112,7 +112,7 @@ spec:
         hostPath:
           path: /etc/localtime
 ```
-* Edit node-problem-detector.yaml to fit your environment: Set `log` volume to your system log diretory. (Used by KernelMonitor)
+* Edit node-problem-detector.yaml to fit your environment: Set `log` volume to your system log diretory. (Used by SystemLogMonitor)
 * Create the DaemonSet with `kubectl create -f node-problem-detector.yaml`
 * If needed, you can use [ConfigMap](http://kubernetes.io/docs/user-guide/configmap/)
 to overwrite the `config/`.

@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package syslog
+package filelog
 
 import (
 	"bufio"
@@ -30,36 +30,36 @@ import (
 	"github.com/golang/glog"
 	"github.com/google/cadvisor/utils/tail"
 
-	"k8s.io/node-problem-detector/pkg/kernelmonitor/logwatchers/types"
-	kerntypes "k8s.io/node-problem-detector/pkg/kernelmonitor/types"
-	"k8s.io/node-problem-detector/pkg/kernelmonitor/util"
+	"k8s.io/node-problem-detector/pkg/systemlogmonitor/logwatchers/types"
+	logtypes "k8s.io/node-problem-detector/pkg/systemlogmonitor/types"
+	"k8s.io/node-problem-detector/pkg/systemlogmonitor/util"
 )
 
-type syslogWatcher struct {
+type filelogWatcher struct {
 	cfg        types.WatcherConfig
 	reader     *bufio.Reader
 	closer     io.Closer
 	translator *translator
-	logCh      chan *kerntypes.KernelLog
+	logCh      chan *logtypes.Log
 	uptime     time.Time
 	tomb       *util.Tomb
 	clock      utilclock.Clock
 }
 
-// NewSyslogWatcherOrDie creates a new kernel log watcher. The function panics
+// NewSyslogWatcherOrDie creates a new log watcher. The function panics
 // when encounters an error.
 func NewSyslogWatcherOrDie(cfg types.WatcherConfig) types.LogWatcher {
 	var info syscall.Sysinfo_t
 	if err := syscall.Sysinfo(&info); err != nil {
 		glog.Fatalf("Failed to get system info: %v", err)
 	}
-	return &syslogWatcher{
+	return &filelogWatcher{
 		cfg:        cfg,
 		translator: newTranslatorOrDie(cfg.PluginConfig),
 		uptime:     time.Now().Add(time.Duration(-info.Uptime * int64(time.Second))),
 		tomb:       util.NewTomb(),
 		// A capacity 1000 buffer should be enough
-		logCh: make(chan *kerntypes.KernelLog, 1000),
+		logCh: make(chan *logtypes.Log, 1000),
 		clock: utilclock.NewClock(),
 	}
 }
@@ -67,30 +67,30 @@ func NewSyslogWatcherOrDie(cfg types.WatcherConfig) types.LogWatcher {
 // Make sure NewSyslogWathcer is types.WatcherCreateFunc.
 var _ types.WatcherCreateFunc = NewSyslogWatcherOrDie
 
-// Watch starts the syslog watcher.
-func (s *syslogWatcher) Watch() (<-chan *kerntypes.KernelLog, error) {
+// Watch starts the filelog watcher.
+func (s *filelogWatcher) Watch() (<-chan *logtypes.Log, error) {
 	r, err := getLogReader(s.cfg.LogPath)
 	if err != nil {
 		return nil, err
 	}
 	s.reader = bufio.NewReader(r)
 	s.closer = r
-	glog.Info("Start watching syslog")
+	glog.Info("Start watching filelog")
 	go s.watchLoop()
 	return s.logCh, nil
 }
 
-// Stop stops the syslog watcher.
-func (s *syslogWatcher) Stop() {
+// Stop stops the filelog watcher.
+func (s *filelogWatcher) Stop() {
 	s.tomb.Stop()
 }
 
-// watchPollInterval is the interval syslog log watcher will
+// watchPollInterval is the interval filelog log watcher will
 // poll for pod change after reading to the end.
 const watchPollInterval = 500 * time.Millisecond
 
-// watchLoop is the main watch loop of syslog watcher.
-func (s *syslogWatcher) watchLoop() {
+// watchLoop is the main watch loop of filelog watcher.
+func (s *filelogWatcher) watchLoop() {
 	defer func() {
 		s.closer.Close()
 		close(s.logCh)
@@ -105,14 +105,14 @@ func (s *syslogWatcher) watchLoop() {
 	for {
 		select {
 		case <-s.tomb.Stopping():
-			glog.Infof("Stop watching syslog")
+			glog.Infof("Stop watching filelog")
 			return
 		default:
 		}
 
 		line, err := s.reader.ReadString('\n')
 		if err != nil && err != io.EOF {
-			glog.Errorf("Exiting syslog watch with error: %v", err)
+			glog.Errorf("Exiting filelog watch with error: %v", err)
 			return
 		}
 		buffer.WriteString(line)
@@ -135,7 +135,7 @@ func (s *syslogWatcher) watchLoop() {
 	}
 }
 
-// getLogReader returns log reader for syslog log. Note that getLogReader doesn't look back
+// getLogReader returns log reader for filelog log. Note that getLogReader doesn't look back
 // to the rolled out logs.
 func getLogReader(path string) (io.ReadCloser, error) {
 	if path == "" {

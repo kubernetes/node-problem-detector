@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package syslog
+package filelog
 
 import (
 	"io/ioutil"
@@ -22,8 +22,8 @@ import (
 	"testing"
 	"time"
 
-	"k8s.io/node-problem-detector/pkg/kernelmonitor/logwatchers/types"
-	kerntypes "k8s.io/node-problem-detector/pkg/kernelmonitor/types"
+	"k8s.io/node-problem-detector/pkg/systemlogmonitor/logwatchers/types"
+	logtypes "k8s.io/node-problem-detector/pkg/systemlogmonitor/types"
 
 	"code.cloudfoundry.org/clock/fakeclock"
 	"github.com/stretchr/testify/assert"
@@ -45,7 +45,7 @@ func TestWatch(t *testing.T) {
 	fakeClock := fakeclock.NewFakeClock(now)
 	testCases := []struct {
 		log      string
-		logs     []kerntypes.KernelLog
+		logs     []logtypes.Log
 		uptime   time.Time
 		lookback string
 	}{
@@ -56,7 +56,7 @@ Jan  2 03:04:06 kernel: [1.000000] 2
 Jan  2 03:04:07 kernel: [2.000000] 3
 			`,
 			lookback: "0",
-			logs: []kerntypes.KernelLog{
+			logs: []logtypes.Log{
 				{
 					Timestamp: now,
 					Message:   "1",
@@ -78,7 +78,7 @@ Jan  2 03:04:05 kernel: [1.000000] 2
 Jan  2 03:04:06 kernel: [2.000000] 3
 			`,
 			lookback: "0",
-			logs: []kerntypes.KernelLog{
+			logs: []logtypes.Log{
 				{
 					Timestamp: now,
 					Message:   "2",
@@ -96,7 +96,7 @@ Jan  2 03:04:04 kernel: [1.000000] 2
 Jan  2 03:04:05 kernel: [2.000000] 3
 			`,
 			lookback: "1s",
-			logs: []kerntypes.KernelLog{
+			logs: []logtypes.Log{
 				{
 					Timestamp: now.Add(-time.Second),
 					Message:   "2",
@@ -116,7 +116,7 @@ Jan  2 03:04:05 kernel: [2.000000] 3
 			`,
 			uptime:   time.Date(time.Now().Year(), time.January, 2, 3, 4, 4, 0, time.Local),
 			lookback: "2s",
-			logs: []kerntypes.KernelLog{
+			logs: []logtypes.Log{
 				{
 					Timestamp: now.Add(-time.Second),
 					Message:   "2",
@@ -130,7 +130,7 @@ Jan  2 03:04:05 kernel: [2.000000] 3
 	}
 	for c, test := range testCases {
 		t.Logf("TestCase #%d: %#v", c+1, test)
-		f, err := ioutil.TempFile("", "kernel_log_watcher_test")
+		f, err := ioutil.TempFile("", "log_watcher_test")
 		assert.NoError(t, err)
 		defer func() {
 			f.Close()
@@ -140,15 +140,15 @@ Jan  2 03:04:05 kernel: [2.000000] 3
 		assert.NoError(t, err)
 
 		w := NewSyslogWatcherOrDie(types.WatcherConfig{
-			Plugin:       "syslog",
+			Plugin:       "filelog",
 			PluginConfig: getTestPluginConfig(),
 			LogPath:      f.Name(),
 			Lookback:     test.lookback,
 		})
 		// Set the uptime.
-		w.(*syslogWatcher).uptime = test.uptime
+		w.(*filelogWatcher).uptime = test.uptime
 		// Set the fake clock.
-		w.(*syslogWatcher).clock = fakeClock
+		w.(*filelogWatcher).clock = fakeClock
 		logCh, err := w.Watch()
 		assert.NoError(t, err)
 		defer w.Stop()

@@ -17,13 +17,13 @@ limitations under the License.
 package types
 
 import (
-	"k8s.io/node-problem-detector/pkg/kernelmonitor/types"
+	"k8s.io/node-problem-detector/pkg/systemlogmonitor/types"
 )
 
 // LogWatcher is the interface of a log watcher.
 type LogWatcher interface {
 	// Watch starts watching logs and returns logs via a channel.
-	Watch() (<-chan *types.KernelLog, error)
+	Watch() (<-chan *types.Log, error)
 	// Stop stops the log watcher. Resources open should be closed properly.
 	Stop()
 }
@@ -31,14 +31,14 @@ type LogWatcher interface {
 // WatcherConfig is the configuration of the log watcher.
 type WatcherConfig struct {
 	// Plugin is the name of plugin which is currently used.
-	// Currently supported: syslog, journald.
+	// Currently supported: filelog, journald.
 	Plugin string `json:"plugin, omitempty"`
 	// PluginConfig is a key/value configuration of a plugin. Valid configurations
 	// are defined in different log watcher plugin.
 	PluginConfig map[string]string `json:"pluginConfig, omitempty"`
 	// LogPath is the path to the log
 	LogPath string `json:"logPath, omitempty"`
-	// Lookback is the time kernel watcher looks up
+	// Lookback is the time log watcher looks up
 	Lookback string `json:"lookback, omitempty"`
 }
 

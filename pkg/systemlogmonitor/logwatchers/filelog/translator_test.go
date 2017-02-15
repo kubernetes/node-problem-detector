@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package syslog
+package filelog
 
 import (
 	"testing"
@@ -23,7 +23,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	kerntypes "k8s.io/node-problem-detector/pkg/kernelmonitor/types"
+	logtypes "k8s.io/node-problem-detector/pkg/systemlogmonitor/types"
 )
 
 func TestTranslate(t *testing.T) {
@@ -32,7 +32,7 @@ func TestTranslate(t *testing.T) {
 		config map[string]string
 		input  string
 		err    bool
-		log    *kerntypes.KernelLog
+		log    *logtypes.Log
 	}{
 		{
 			// missing year and timezone
@@ -41,7 +41,7 @@ func TestTranslate(t *testing.T) {
 			// "timestampFormat": "Jan _2 15:04:05",
 			config: getTestPluginConfig(),
 			input:  "May  1 12:23:45 hostname kernel: [0.000000] component: log message",
-			log: &kerntypes.KernelLog{
+			log: &logtypes.Log{
 				Timestamp: time.Date(year, time.May, 1, 12, 23, 45, 0, time.Local),
 				Message:   "component: log message",
 			},
@@ -50,7 +50,7 @@ func TestTranslate(t *testing.T) {
 			// no log message
 			config: getTestPluginConfig(),
 			input:  "May 21 12:23:45 hostname kernel: [9.999999] ",
-			log: &kerntypes.KernelLog{
+			log: &logtypes.Log{
 				Timestamp: time.Date(year, time.May, 21, 12, 23, 45, 0, time.Local),
 				Message:   "",
 			},
@@ -69,7 +69,7 @@ func TestTranslate(t *testing.T) {
 				"timestampFormat": "2006-01-02T15:04:05.999999999-07:00",
 			},
 			input: `time="2017-02-01T17:58:34.999999999-08:00" level=error msg="test log line1\n test log line2"`,
-			log: &kerntypes.KernelLog{
+			log: &logtypes.Log{
 				Timestamp: time.Date(2017, 2, 1, 17, 58, 34, 999999999, time.FixedZone("PST", -8*3600)),
 				Message:   `test log line1\n test log line2`,
 			},

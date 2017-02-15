@@ -14,26 +14,26 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package kernelmonitor
+package systemlogmonitor
 
 import (
-	watchertypes "k8s.io/node-problem-detector/pkg/kernelmonitor/logwatchers/types"
-	kerntypes "k8s.io/node-problem-detector/pkg/kernelmonitor/types"
+	watchertypes "k8s.io/node-problem-detector/pkg/systemlogmonitor/logwatchers/types"
+	logtypes "k8s.io/node-problem-detector/pkg/systemlogmonitor/types"
 	"k8s.io/node-problem-detector/pkg/types"
 )
 
-// MonitorConfig is the configuration of kernel monitor.
+// MonitorConfig is the configuration of log monitor.
 type MonitorConfig struct {
-	// WatcherConfig is the configuration of kernel log watcher.
+	// WatcherConfig is the configuration of log watcher.
 	watchertypes.WatcherConfig
 	// BufferSize is the size (in lines) of the log buffer.
 	BufferSize int `json:"bufferSize"`
-	// Source is the source name of the kernel monitor
+	// Source is the source name of the log monitor
 	Source string `json:"source"`
-	// DefaultConditions are the default states of all the conditions kernel monitor should handle.
+	// DefaultConditions are the default states of all the conditions log monitor should handle.
 	DefaultConditions []types.Condition `json:"conditions"`
-	// Rules are the rules kernel monitor will follow to parse the log file.
-	Rules []kerntypes.Rule `json:"rules"`
+	// Rules are the rules log monitor will follow to parse the log file.
+	Rules []logtypes.Rule `json:"rules"`
 }
 
 // applyDefaultConfiguration applies default configurations.

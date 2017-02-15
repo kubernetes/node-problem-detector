@@ -1,5 +1,3 @@
-// +build journald
-
 /*
 Copyright 2016 The Kubernetes Authors All rights reserved.
 
@@ -19,12 +17,12 @@ limitations under the License.
 package logwatchers
 
 import (
-	"k8s.io/node-problem-detector/pkg/kernelmonitor/logwatchers/journald"
+	"k8s.io/node-problem-detector/pkg/systemlogmonitor/logwatchers/filelog"
 )
 
-const journaldPluginName = "journald"
+const filelogPluginName = "filelog"
 
 func init() {
-	// Register the syslog plugin.
-	registerLogWatcher(journaldPluginName, journald.NewJournaldWatcher)
+	// Register the filelog plugin.
+	registerLogWatcher(filelogPluginName, filelog.NewSyslogWatcherOrDie)
 }

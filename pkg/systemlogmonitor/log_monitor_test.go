@@ -14,14 +14,14 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package kernelmonitor
+package systemlogmonitor
 
 import (
 	"reflect"
 	"testing"
 	"time"
 
-	kerntypes "k8s.io/node-problem-detector/pkg/kernelmonitor/types"
+	logtypes "k8s.io/node-problem-detector/pkg/systemlogmonitor/types"
 	"k8s.io/node-problem-detector/pkg/types"
 )
 
@@ -45,7 +45,7 @@ func TestGenerateStatus(t *testing.T) {
 			Transition: time.Unix(500, 500),
 		},
 	}
-	logs := []*kerntypes.KernelLog{
+	logs := []*logtypes.Log{
 		{
 			Timestamp: time.Unix(1000, 1000),
 			Message:   "test message 1",
@@ -56,13 +56,13 @@ func TestGenerateStatus(t *testing.T) {
 		},
 	}
 	for c, test := range []struct {
-		rule     kerntypes.Rule
+		rule     logtypes.Rule
 		expected types.Status
 	}{
 		// Do not need Pattern because we don't do pattern match in this test
 		{
-			rule: kerntypes.Rule{
-				Type:      kerntypes.Perm,
+			rule: logtypes.Rule{
+				Type:      logtypes.Perm,
 				Condition: testConditionA,
 				Reason:    "test reason",
 			},
@@ -82,8 +82,8 @@ func TestGenerateStatus(t *testing.T) {
 		},
 		// Should not update transition time when status and reason are not changed.
 		{
-			rule: kerntypes.Rule{
-				Type:      kerntypes.Perm,
+			rule: logtypes.Rule{
+				Type:      logtypes.Perm,
 				Condition: testConditionA,
 				Reason:    "initial reason",
 			},
@@ -101,8 +101,8 @@ func TestGenerateStatus(t *testing.T) {
 			},
 		},
 		{
-			rule: kerntypes.Rule{
-				Type:   kerntypes.Temp,
+			rule: logtypes.Rule{
+				Type:   logtypes.Temp,
 				Reason: "test reason",
 			},
 			expected: types.Status{
@@ -117,7 +117,7 @@ func TestGenerateStatus(t *testing.T) {
 			},
 		},
 	} {
-		k := &kernelMonitor{
+		l := &logMonitor{
 			config: MonitorConfig{
 				Source: testSource,
 			},
@@ -125,7 +125,7 @@ func TestGenerateStatus(t *testing.T) {
 			// during the test.
 			conditions: append([]types.Condition{}, initConditions...),
 		}
-		got := k.generateStatus(logs, test.rule)
+		got := l.generateStatus(logs, test.rule)
 		if !reflect.DeepEqual(&test.expected, got) {
 			t.Errorf("case %d: expected status %+v, got %+v", c+1, test.expected, got)
 		}

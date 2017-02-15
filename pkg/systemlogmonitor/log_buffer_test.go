@@ -14,13 +14,13 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package kernelmonitor
+package systemlogmonitor
 
 import (
 	"reflect"
 	"testing"
 
-	"k8s.io/node-problem-detector/pkg/kernelmonitor/types"
+	"k8s.io/node-problem-detector/pkg/systemlogmonitor/types"
 )
 
 func TestPush(t *testing.T) {
@@ -52,7 +52,7 @@ func TestPush(t *testing.T) {
 	} {
 		b := NewLogBuffer(test.max)
 		for _, log := range test.logs {
-			b.Push(&types.KernelLog{Message: log})
+			b.Push(&types.Log{Message: log})
 		}
 		got := b.String()
 		if test.expected != got {
@@ -94,13 +94,13 @@ func TestMatch(t *testing.T) {
 	} {
 		b := NewLogBuffer(max)
 		for _, log := range test.logs {
-			b.Push(&types.KernelLog{Message: log})
+			b.Push(&types.Log{Message: log})
 		}
 		for i, expr := range test.exprs {
-			kLogs := b.Match(expr)
+			logs := b.Match(expr)
 			got := []string{}
-			for _, kLog := range kLogs {
-				got = append(got, kLog.Message)
+			for _, log := range logs {
+				got = append(got, log.Message)
 			}
 			if !reflect.DeepEqual(test.expected[i], got) {
 				t.Errorf("case %d.%d: expected %v, got %v", c+1, i+1, test.expected[i], got)
