@@ -30,8 +30,9 @@ import (
 type NodeProblemDetectorOptions struct {
 	// command line options
 
-	// SystemLogMonitorConfigPath specifies the path to system log monitor configuration file.
-	SystemLogMonitorConfigPath string
+	// SystemLogMonitorConfigPaths specifies the list of paths to system log monitor configuration
+	// files.
+	SystemLogMonitorConfigPaths []string
 	// ApiServerOverride is the custom URI used to connect to Kubernetes ApiServer.
 	ApiServerOverride string
 	// PrintVersion is the flag determining whether version information is printed.
@@ -55,8 +56,8 @@ func NewNodeProblemDetectorOptions() *NodeProblemDetectorOptions {
 
 // AddFlags adds node problem detector command line options to pflag.
 func (npdo *NodeProblemDetectorOptions) AddFlags(fs *pflag.FlagSet) {
-	fs.StringVar(&npdo.SystemLogMonitorConfigPath, "system-log-monitor",
-		"/config/kernel-monitor.json", "The path to the system log monitor config file")
+	fs.StringSliceVar(&npdo.SystemLogMonitorConfigPaths, "system-log-monitors",
+		[]string{}, "List of paths to system log monitor config files, comma separated.")
 	fs.StringVar(&npdo.ApiServerOverride, "apiserver-override",
 		"", "Custom URI used to connect to Kubernetes ApiServer")
 	fs.BoolVar(&npdo.PrintVersion, "version", false, "Print version information and quit")

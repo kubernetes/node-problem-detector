@@ -20,6 +20,7 @@ package journald
 
 import (
 	"fmt"
+	"os"
 	"strings"
 	"time"
 
@@ -133,6 +134,11 @@ func getJournal(cfg types.WatcherConfig) (*sdjournal.Journal, error) {
 	since, err := time.ParseDuration(cfg.Lookback)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse lookback duration %q: %v", cfg.Lookback, err)
+	}
+	// If the path doesn't present, NewJournalFromDir will create it instead of
+	// returning error. So check the path existence ourselves.
+	if _, err := os.Stat(path); err != nil {
+		return nil, fmt.Errorf("failed to stat the log path %q: %v", path, err)
 	}
 	// Get journal client from the log path.
 	journal, err := sdjournal.NewJournalFromDir(path)
