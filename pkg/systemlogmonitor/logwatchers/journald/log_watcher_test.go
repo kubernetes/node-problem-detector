@@ -19,12 +19,14 @@ limitations under the License.
 package journald
 
 import (
+	"runtime"
 	"testing"
 	"time"
 
 	"github.com/coreos/go-systemd/sdjournal"
 	"github.com/stretchr/testify/assert"
 
+	"k8s.io/node-problem-detector/pkg/systemlogmonitor/logwatchers/types"
 	logtypes "k8s.io/node-problem-detector/pkg/systemlogmonitor/types"
 )
 
@@ -61,4 +63,17 @@ func TestTranslate(t *testing.T) {
 		t.Logf("TestCase #%d: %#v", c+1, test)
 		assert.Equal(t, test.log, translate(test.entry))
 	}
+}
+
+func TestGoroutineLeak(t *testing.T) {
+	orignal := runtime.NumGoroutine()
+	w := NewJournaldWatcher(types.WatcherConfig{
+		Plugin:       "journald",
+		PluginConfig: map[string]string{"source": "not-exist-service"},
+		LogPath:      "/not/exist/path",
+		Lookback:     "10m",
+	})
+	_, err := w.Watch()
+	assert.Error(t, err)
+	assert.Equal(t, orignal, runtime.NumGoroutine())
 }
