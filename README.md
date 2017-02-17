@@ -54,8 +54,10 @@ List of supported problem daemons:
 # Usage
 ## Flags
 * `--version`: Print current version of node-problem-detector.
-* `--system-log-monitor`: The configuration used by the system log monitor, e.g.
+* `--system-log-monitors`: List of paths to system log monitor configuration files, comma separated, e.g.
   [config/kernel-monitor.json](https://github.com/kubernetes/node-problem-detector/blob/master/config/kernel-monitor.json).
+  Node problem detector will start a separate log monitor for each configuration. You can
+  use different log monitors to monitor different system log.
 * `--apiserver-override`: A URI parameter used to customize how node-problem-detector
 connects the apiserver. The format is same as the
 [`source`](https://github.com/kubernetes/heapster/blob/master/docs/source-configuration.md#kubernetes)

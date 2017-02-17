@@ -67,9 +67,17 @@ func main() {
 		os.Exit(0)
 	}
 
-	l := systemlogmonitor.NewLogMonitorOrDie(npdo.SystemLogMonitorConfigPath)
+	monitors := make(map[string]systemlogmonitor.LogMonitor)
+	for _, config := range npdo.SystemLogMonitorConfigPaths {
+		if _, ok := monitors[config]; ok {
+			// Skip the config if it's duplictaed.
+			glog.Warningf("Duplicated log monitor configuration %q", config)
+			continue
+		}
+		monitors[config] = systemlogmonitor.NewLogMonitorOrDie(config)
+	}
 	c := problemclient.NewClientOrDie(npdo)
-	p := problemdetector.NewProblemDetector(l, c)
+	p := problemdetector.NewProblemDetector(monitors, c)
 
 	// Start http server.
 	if npdo.ServerPort > 0 {

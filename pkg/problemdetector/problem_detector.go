@@ -17,6 +17,7 @@ limitations under the License.
 package problemdetector
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/golang/glog"
@@ -26,6 +27,7 @@ import (
 	"k8s.io/node-problem-detector/pkg/condition"
 	"k8s.io/node-problem-detector/pkg/problemclient"
 	"k8s.io/node-problem-detector/pkg/systemlogmonitor"
+	"k8s.io/node-problem-detector/pkg/types"
 	"k8s.io/node-problem-detector/pkg/util"
 )
 
@@ -38,28 +40,39 @@ type ProblemDetector interface {
 type problemDetector struct {
 	client           problemclient.Client
 	conditionManager condition.ConditionManager
-	// TODO(random-liu): Use slices of problem daemons if multiple monitors are needed in the future
-	monitor systemlogmonitor.LogMonitor
+	monitors         map[string]systemlogmonitor.LogMonitor
 }
 
 // NewProblemDetector creates the problem detector. Currently we just directly passed in the problem daemons, but
 // in the future we may want to let the problem daemons register themselves.
-func NewProblemDetector(monitor systemlogmonitor.LogMonitor, client problemclient.Client) ProblemDetector {
+func NewProblemDetector(monitors map[string]systemlogmonitor.LogMonitor, client problemclient.Client) ProblemDetector {
 	return &problemDetector{
 		client:           client,
 		conditionManager: condition.NewConditionManager(client, clock.RealClock{}),
-		monitor:          monitor,
+		monitors:         monitors,
 	}
 }
 
 // Run starts the problem detector.
 func (p *problemDetector) Run() error {
 	p.conditionManager.Start()
-	ch, err := p.monitor.Start()
-	if err != nil {
-		return err
+	// Start the log monitors one by one.
+	var chans []<-chan *types.Status
+	for cfg, m := range p.monitors {
+		ch, err := m.Start()
+		if err != nil {
+			// Do not return error and keep on trying the following config files.
+			glog.Errorf("Failed to start log monitor %q: %v", cfg, err)
+			continue
+		}
+		chans = append(chans, ch)
 	}
+	if len(chans) == 0 {
+		return fmt.Errorf("no log montior is successfully setup")
+	}
+	ch := groupChannel(chans)
 	glog.Info("Problem detector started")
+
 	for {
 		select {
 		case status := <-ch:
@@ -79,4 +92,16 @@ func (p *problemDetector) RegisterHTTPHandlers() {
 	http.HandleFunc("/conditions", func(w http.ResponseWriter, r *http.Request) {
 		util.ReturnHTTPJson(w, p.conditionManager.GetConditions())
 	})
+}
+
+func groupChannel(chans []<-chan *types.Status) <-chan *types.Status {
+	statuses := make(chan *types.Status)
+	for _, ch := range chans {
+		go func(c <-chan *types.Status) {
+			for status := range c {
+				statuses <- status
+			}
+		}(ch)
+	}
+	return statuses
 }
