@@ -66,7 +66,7 @@ func (t *translator) translate(line string) (*logtypes.Log, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse timestamp %q: %v", matches[len(matches)-1], err)
 	}
-	// Formalize the timestmap.
+	// Formalize the timestamp.
 	timestamp = formalizeTimestamp(timestamp)
 	// Parse message.
 	matches = t.messageRegexp.FindStringSubmatch(line)
