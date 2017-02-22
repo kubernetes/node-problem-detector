@@ -81,7 +81,7 @@ version:
 ./bin/node-problem-detector: $(PKG_SOURCES)
 	CGO_ENABLED=$(CGO_ENABLED) GOOS=linux go build -o bin/node-problem-detector \
 	     -ldflags '-X $(PKG)/pkg/version.version=$(VERSION)' \
-	     $(BUILD_TAGS) cmd/node_problem_detector.go
+	     $(BUILD_TAGS) cmd/node_problem_detector/node_problem_detector.go
 
 Dockerfile: Dockerfile.in
 	sed -e 's|@BASEIMAGE@|$(BASEIMAGE)|g' $< >$@

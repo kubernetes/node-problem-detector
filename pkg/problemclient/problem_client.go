@@ -29,7 +29,7 @@ import (
 	"k8s.io/kubernetes/pkg/util/clock"
 
 	"k8s.io/heapster/common/kubernetes"
-	"k8s.io/node-problem-detector/pkg/options"
+	"k8s.io/node-problem-detector/cmd/node_problem_detector/options"
 )
 
 // Client is the interface of problem client
