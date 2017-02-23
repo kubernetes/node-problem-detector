@@ -26,7 +26,7 @@ import (
 	"github.com/golang/glog"
 	"github.com/spf13/pflag"
 
-	"k8s.io/node-problem-detector/pkg/options"
+	"k8s.io/node-problem-detector/cmd/options"
 	"k8s.io/node-problem-detector/pkg/problemclient"
 	"k8s.io/node-problem-detector/pkg/problemdetector"
 	"k8s.io/node-problem-detector/pkg/systemlogmonitor"
