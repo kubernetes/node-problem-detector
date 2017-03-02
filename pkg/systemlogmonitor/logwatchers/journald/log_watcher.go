@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/coreos/go-systemd/sdjournal"
@@ -131,7 +132,7 @@ func getJournal(cfg types.WatcherConfig) (*sdjournal.Journal, error) {
 		path = cfg.LogPath
 	}
 	// Get lookback duration.
-	since, err := time.ParseDuration(cfg.Lookback)
+	lookback, err := time.ParseDuration(cfg.Lookback)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse lookback duration %q: %v", cfg.Lookback, err)
 	}
@@ -145,11 +146,24 @@ func getJournal(cfg types.WatcherConfig) (*sdjournal.Journal, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to create journal client from path %q: %v", path, err)
 	}
+	// Use system uptime if lookback duration is longer than it.
+	// Ideally, we should use monotonic timestamp + boot id in journald. However, it doesn't seem
+	// to work with go-system/journal package.
+	// TODO(random-liu): Use monotonic timestamp + boot id.
+	var info syscall.Sysinfo_t
+	if err := syscall.Sysinfo(&info); err != nil {
+		return nil, fmt.Errorf("failed to get system info: %v", err)
+	}
+	uptime := time.Duration(info.Uptime) * time.Second
+	if lookback > uptime {
+		lookback = uptime
+		glog.Infof("Lookback changed to system uptime: %v", lookback)
+	}
 	// Seek journal client based on the lookback duration.
-	start := time.Now().Add(-since)
+	start := time.Now().Add(-lookback)
 	err = journal.SeekRealtimeUsec(uint64(start.UnixNano() / 1000))
 	if err != nil {
-		return nil, fmt.Errorf("failed to lookback %q: %v", since, err)
+		return nil, fmt.Errorf("failed to lookback %q: %v", lookback, err)
 	}
 	// Empty source is not allowed and treated as an error.
 	source := cfg.PluginConfig[configSourceKey]
