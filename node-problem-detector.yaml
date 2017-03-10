@@ -27,6 +27,9 @@ spec:
         - name: log
           mountPath: /var/log
           readOnly: true
+        - name: kmsg
+          mountPath: /dev/kmsg
+          readOnly: true
         # Make sure node problem detector is in the same timezone
         # with the host.
         - name: localtime
@@ -40,6 +43,9 @@ spec:
         # Config `log` to your system log directory
         hostPath:
           path: /var/log/
+      - name: kmsg
+        hostPath:
+          path: /dev/kmsg
       - name: localtime
         hostPath:
           path: /etc/localtime
