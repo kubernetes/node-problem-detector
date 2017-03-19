@@ -1,7 +1,7 @@
 # node-problem-detector
 node-problem-detector aims to make various node problems visible to the upstream
 layers in cluster management stack.
-It is a daemon runs on each node, detects node
+It is a daemon which runs on each node, detects node
 problems and reports them to apiserver.
 node-problem-detector can either run as a
 [DaemonSet](http://kubernetes.io/docs/admin/daemons/) or run standalone.
