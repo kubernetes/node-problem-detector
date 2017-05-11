@@ -12,7 +12,7 @@
 		{
 			"type": "temporary",
 			"reason": "CCPPCrash",
-			"pattern": "Process \\d+ \\(\\S+\\) crashed in \\S+"
+			"pattern": "Process \\d+ \\(\\S+\\) crashed in .*"
 		},
 		{
 			"type": "temporary",
