@@ -17,7 +17,6 @@ limitations under the License.
 package kmsg
 
 import (
-	"io"
 	"testing"
 
 	"code.cloudfoundry.org/clock/fakeclock"
@@ -139,22 +138,4 @@ func TestWatch(t *testing.T) {
 		case <-timeout:
 		}
 	}
-}
-
-type fakeKmsgReader struct {
-	logLines []string
-}
-
-func (r *fakeKmsgReader) Read(data []byte) (int, error) {
-	if len(r.logLines) == 0 {
-		return 0, io.EOF
-	}
-	l := r.logLines[0]
-	r.logLines = r.logLines[1:]
-	copy(data, []byte(l))
-	return len(l), nil
-}
-
-func (r *fakeKmsgReader) Close() error {
-	return nil
 }
