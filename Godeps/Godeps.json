@@ -1,7 +1,7 @@
 {
 	"ImportPath": "k8s.io/node-problem-detector",
 	"GoVersion": "go1.7",
-	"GodepVersion": "v74",
+	"GodepVersion": "v77",
 	"Packages": [
 		"./..."
 	],
@@ -103,6 +103,11 @@
 			"ImportPath": "github.com/emicklei/go-restful/swagger",
 			"Comment": "v1.2-54-g7c47e25",
 			"Rev": "7c47e2558a0bbbaba9ecab06bc6681e73028a28a"
+		},
+		{
+			"ImportPath": "github.com/euank/go-kmsg-parser/kmsgparser",
+			"Comment": "v2.0.0",
+			"Rev": "5ba4d492e455a77d25dcf0d2c4acc9f2afebef4e"
 		},
 		{
 			"ImportPath": "github.com/ghodss/yaml",

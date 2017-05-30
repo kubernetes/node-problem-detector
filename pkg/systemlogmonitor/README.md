@@ -8,10 +8,11 @@ the configuration files. (
 [`config/kernel-monitor.json`](https://github.com/kubernetes/node-problem-detector/blob/master/config/kernel-monitor.json) as an example).
 The rule list is extensible.
 
-## Limitations
+## Supported sources
 
-* System Log Monitor only supports file based log and journald now, but it is easy
-  to extend it with [new log watcher](#new-log-watcher)
+* System Log Monitor currently supports file-based logs, journald, and kmsg.
+  Additional sources can be added by implementing a [new log
+  watcher](#new-log-watcher).
 
 ## Add New NodeConditions
 
@@ -44,10 +45,10 @@ with new rule definition:
 
 System log monitor supports different log management tools with different log
 watchers:
-* [filelog](https://github.com/kubernetes/node-problem-detector/blob/master/pkg/systemlogmonitor/logwatchers/filelog): Log watcher for
+* [filelog](./logwatchers/filelog): Log watcher for
 arbitrary file based log.
-* [journald](https://github.com/kubernetes/node-problem-detector/blob/master/pkg/systemlogmonitor/logwatchers/journald): Log watcher for
-journald.
+* [journald](.//logwatchers/journald): Log watcher for
+* [kmsg](./logwatchers/kmsg): Log watcher for the kernel ring buffer device, /dev/kmsg.
 Set `plugin` in the configuration file to specify log watcher.
 
 ### Plugin Configuration
@@ -66,6 +67,7 @@ Log watcher specific configurations are configured in `pluginConfig`.
   * timestampFormat: The format of the timestamp. The format string is the time
     `2006-01-02T15:04:05Z07:00` in the expected format. (See
     [golang timestamp format](https://golang.org/pkg/time/#pkg-constants))
+* **kmsg**
 
 ### Change Log Path
 
@@ -78,6 +80,6 @@ field in the configurtion file is the log path. You can always configure
 
 ### New Log Watcher
 
-System log monitor uses [Log
-Watcher](https://github.com/kubernetes/node-problem-detector/blob/master/pkg/systemlogmonitor/logwatchers/types/log_watcher.go) to support different log management tools.
-It is easy to implement a new log watcher.
+System log monitor uses [Log Watcher](./logwatchers/types/log_watcher.go) to
+support different log management tools.  It is easy to implement a new log
+watcher.
