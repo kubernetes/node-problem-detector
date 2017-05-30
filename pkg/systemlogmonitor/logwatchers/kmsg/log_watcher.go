@@ -17,7 +17,6 @@ limitations under the License.
 package kmsg
 
 import (
-	"bufio"
 	"fmt"
 	"strings"
 	"time"
@@ -32,10 +31,9 @@ import (
 )
 
 type kernelLogWatcher struct {
-	cfg    types.WatcherConfig
-	logCh  chan *logtypes.Log
-	tomb   *util.Tomb
-	reader *bufio.Reader
+	cfg   types.WatcherConfig
+	logCh chan *logtypes.Log
+	tomb  *util.Tomb
 
 	kmsgParser kmsgparser.Parser
 	clock      utilclock.Clock
@@ -43,7 +41,6 @@ type kernelLogWatcher struct {
 
 // NewKmsgWatcher creates a watcher which will read messages from /dev/kmsg
 func NewKmsgWatcher(cfg types.WatcherConfig) types.LogWatcher {
-	kmsgparser.NewParser()
 	return &kernelLogWatcher{
 		cfg:  cfg,
 		tomb: util.NewTomb(),
@@ -92,7 +89,9 @@ func (k *kernelLogWatcher) watchLoop(lookback time.Duration) {
 		select {
 		case <-k.tomb.Stopping():
 			glog.Infof("Stop watching kernel log")
-			k.kmsgParser.Close()
+			if err := k.kmsgParser.Close(); err != nil {
+				glog.Errorf("Failed to close kmsg parser: %v", err)
+			}
 			return
 		case msg := <-kmsgs:
 			glog.V(5).Infof("got kernel message: %+v", msg)
@@ -102,7 +101,7 @@ func (k *kernelLogWatcher) watchLoop(lookback time.Duration) {
 
 			// Discard too old messages
 			if k.clock.Since(msg.Timestamp) > lookback {
-				glog.V(5).Infof("throwing away msg %v for being too old: %v > %v", msg.Message, msg.Timestamp.String(), lookback.String())
+				glog.V(5).Infof("Throwing away msg %v for being too old: %v > %v", msg.Message, msg.Timestamp.String(), lookback.String())
 				continue
 			}
 

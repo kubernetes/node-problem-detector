@@ -47,7 +47,7 @@ System log monitor supports different log management tools with different log
 watchers:
 * [filelog](./logwatchers/filelog): Log watcher for
 arbitrary file based log.
-* [journald](.//logwatchers/journald): Log watcher for
+* [journald](.//logwatchers/journald): Log watcher for journald.
 * [kmsg](./logwatchers/kmsg): Log watcher for the kernel ring buffer device, /dev/kmsg.
 Set `plugin` in the configuration file to specify log watcher.
 
@@ -67,7 +67,7 @@ Log watcher specific configurations are configured in `pluginConfig`.
   * timestampFormat: The format of the timestamp. The format string is the time
     `2006-01-02T15:04:05Z07:00` in the expected format. (See
     [golang timestamp format](https://golang.org/pkg/time/#pkg-constants))
-* **kmsg**
+* **kmsg**: No configuration for now.
 
 ### Change Log Path
 
