@@ -8,5 +8,11 @@
 	"bufferSize": 10,
 	"source": "docker-monitor",
 	"conditions": [],
-	"rules": []
+	"rules": [
+		{
+			"type": "temporary",
+			"reason": "CorruptDockerImage",
+			"pattern": "Error trying v2 registry: failed to register layer: rename /var/lib/docker/image/(.+) /var/lib/docker/image/(.+): directory not empty.*"
+		}
+	]
 }
