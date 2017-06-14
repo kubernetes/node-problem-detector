@@ -10,5 +10,11 @@
 	"bufferSize": 10,
 	"source": "docker-monitor",
 	"conditions": [],
-	"rules": []
+	"rules": [
+		{
+			"type": "permanent",
+			"reason": "CorruptDockerImage",
+			"pattern": "container start failed: ErrImagePull: (.+): directory not empty"
+		}
+	]
 }
