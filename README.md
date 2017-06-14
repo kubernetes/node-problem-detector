@@ -87,10 +87,17 @@ metadata:
   name: node-problem-detector
 spec:
   template:
+    metadata:
+      labels:
+        app: node-problem-detector
     spec:
       containers:
       - name: node-problem-detector
-        image: gcr.io/google_containers/node-problem-detector:v0.2
+        command:
+        - /node-problem-detector
+        - --logtostderr
+        - --kernel-monitor=/config/kernel-monitor.json
+        image: gcr.io/google_containers/node-problem-detector:v0.4
         imagePullPolicy: Always
         securityContext:
           privileged: true
@@ -101,24 +108,36 @@ spec:
               fieldPath: spec.nodeName
         volumeMounts:
         - name: log
-          mountPath: /log
+          mountPath: /var/log
           readOnly: true
+        - name: kmsg
+          mountPath: /dev/kmsg
+          readOnly: true
+        # Make sure node problem detector is in the same timezone
+        # with the host.
         - name: localtime
           mountPath: /etc/localtime
+          readOnly: true
+        - name: config
+          mountPath: /config
           readOnly: true
       volumes:
       - name: log
         # Config `log` to your system log directory
         hostPath:
           path: /var/log/
+      - name: kmsg
+        hostPath:
+          path: /dev/kmsg
       - name: localtime
         hostPath:
           path: /etc/localtime
 ```
-* Edit node-problem-detector.yaml to fit your environment: Set `log` volume to your system log diretory. (Used by SystemLogMonitor)
+* Edit node-problem-detector.yaml to fit your environment: the example assumes using systemd/journald, change your log directory if needed and use the proper monitor file.
 * Create the DaemonSet with `kubectl create -f node-problem-detector.yaml`
 * If needed, you can use [ConfigMap](http://kubernetes.io/docs/user-guide/configmap/)
 to overwrite the `config/`.
+* You may chose to mount /etc/machine-id into your pod if you would like to see journalctl output in the pod.
 
 ## Start Standalone
 To run node-problem-detector standalone, you should set `inClusterConfig` to `false` and
@@ -130,6 +149,22 @@ node-problem-detector --apiserver-override=http://APISERVER_IP:APISERVER_INSECUR
 ```
 
 For more scenarios, see [here](https://github.com/kubernetes/heapster/blob/master/docs/source-configuration.md#kubernetes)
+
+Running standalone as a systemd service is a common way to use the node problem detector. Here is a sample systemd unit file:
+```
+[Unit]
+Description=Kubernetes node problem detector
+Requires=network-online.target
+After=network-online.target
+
+[Service]
+Restart=always
+RestartSec=10
+ExecStart=/path/to/node-problem-detector ${NPD_FLAGS}
+
+[Install]
+WantedBy=multi-user.target
+```
 
 # Links
 * [Design Doc](https://docs.google.com/document/d/1cs1kqLziG-Ww145yN6vvlKguPbQQ0psrSBnEqpy0pzE/edit?usp=sharing)
