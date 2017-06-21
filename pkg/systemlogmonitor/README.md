@@ -41,6 +41,9 @@ with new rule definition:
 }
 ```
 
+*Note that the pattern must match to the end of the line excluding the
+tailing newline character, and multi-line pattern is supported.*
+
 ## Log Watchers
 
 System log monitor supports different log management tools with different log
