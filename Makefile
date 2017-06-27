@@ -100,7 +100,7 @@ build-tar: ./bin/node-problem-detector
 build: build-container build-tar
 
 push-container: build-container
-	gcloud docker push $(IMAGE)
+	gcloud docker -- push $(IMAGE)
 
 push-tar: build-tar
 	gsutil cp $(TARBALL) $(UPLOAD_PATH)/node-problem-detector/
