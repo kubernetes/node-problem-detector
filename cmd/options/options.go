@@ -64,7 +64,7 @@ func (npdo *NodeProblemDetectorOptions) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&npdo.HostnameOverride, "hostname-override",
 		"", "Custom node name used to override hostname")
 	fs.IntVar(&npdo.ServerPort, "port",
-		10256, "The port to bind the node problem detector server. Use 0 to disable.")
+		20256, "The port to bind the node problem detector server. Use 0 to disable.")
 	fs.StringVar(&npdo.ServerAddress, "address",
 		"127.0.0.1", "The address to bind the node problem detector server.")
 }
