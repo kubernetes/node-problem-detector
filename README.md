@@ -1,4 +1,6 @@
 # node-problem-detector
+[![Build Status](https://travis-ci.org/kubernetes/node-problem-detector.svg?branch=master)](https://travis-ci.org/kubernetes/node-problem-detector)  [![Go Report Card](https://goreportcard.com/badge/github.com/kubernetes/node-problem-detector)](https://goreportcard.com/report/github.com/kubernetes/node-problem-detector)
+
 node-problem-detector aims to make various node problems visible to the upstream
 layers in cluster management stack.
 It is a daemon which runs on each node, detects node
