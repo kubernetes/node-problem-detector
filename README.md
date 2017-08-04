@@ -115,7 +115,7 @@ spec:
         hostPath:
           path: /etc/localtime
 ```
-* Edit node-problem-detector.yaml to fit your environment: Set `log` volume to your system log diretory. (Used by SystemLogMonitor)
+* Edit node-problem-detector.yaml to fit your environment: Set `log` volume to your system log directory. (Used by SystemLogMonitor)
 * Create the DaemonSet with `kubectl create -f node-problem-detector.yaml`
 * If needed, you can use [ConfigMap](http://kubernetes.io/docs/user-guide/configmap/)
 to overwrite the `config/`.
