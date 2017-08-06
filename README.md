@@ -52,7 +52,7 @@ List of supported problem daemons:
 | Problem Daemon |  NodeCondition  | Description |
 |----------------|:---------------:|:------------|
 | [KernelMonitor](https://github.com/kubernetes/node-problem-detector/blob/master/config/kernel-monitor.json) | KernelDeadlock | A system log monitor monitors kernel log and reports problem according to predefined rules. |
-| [AbrtAdaptor](https://github.com/kubernetes/node-problem-detector/blob/master/config/abrt-adaptor.json) | None | Monitor ABRT log messages and report them further. ABRT (Automatic Bug Report Tool) is health monitoring daemon able to catch kernel problems as well as application crashes of various kinds occured on the host. For more information visit the [link](https://github.com/abrt). |
+| [AbrtAdaptor](https://github.com/kubernetes/node-problem-detector/blob/master/config/abrt-adaptor.json) | None | Monitor ABRT log messages and report them further. ABRT (Automatic Bug Report Tool) is health monitoring daemon able to catch kernel problems as well as application crashes of various kinds occurred on the host. For more information visit the [link](https://github.com/abrt). |
 
 # Usage
 ## Flags
