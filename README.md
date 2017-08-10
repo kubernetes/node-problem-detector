@@ -89,6 +89,9 @@ metadata:
   name: node-problem-detector
 spec:
   template:
+    metadata:
+      labels:
+        name: nodeProblemDetector
     spec:
       containers:
       - name: node-problem-detector
