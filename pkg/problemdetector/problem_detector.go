@@ -82,8 +82,10 @@ func (p *problemDetector) Run() error {
 			for _, event := range status.Events {
 				p.client.Eventf(util.ConvertToAPIEventType(event.Severity), status.Source, event.Reason, event.Message)
 				prometheus.MustRegister(prometheus.NewCounter(prometheus.CounterOpts{
-					Name: event.Reason,
-					Help: event.Message,
+					Namespace: "npd",
+					Subsystem: "event",
+					Name:      event.Reason,
+					Help:      event.Message,
 				}))
 			}
 			for _, condition := range status.Conditions {
