@@ -44,17 +44,15 @@ type problemDetector struct {
 	client           problemclient.Client
 	conditionManager condition.ConditionManager
 	monitors         map[string]systemlogmonitor.LogMonitor
-	registry         *prometheus.Registry
 }
 
 // NewProblemDetector creates the problem detector. Currently we just directly passed in the problem daemons, but
 // in the future we may want to let the problem daemons register themselves.
-func NewProblemDetector(monitors map[string]systemlogmonitor.LogMonitor, client problemclient.Client, registry prometheus.Registry) ProblemDetector {
+func NewProblemDetector(monitors map[string]systemlogmonitor.LogMonitor, client problemclient.Client) ProblemDetector {
 	return &problemDetector{
 		client:           client,
 		conditionManager: condition.NewConditionManager(client, clock.RealClock{}),
 		monitors:         monitors,
-		registry:         &registry,
 	}
 }
 
@@ -83,7 +81,7 @@ func (p *problemDetector) Run() error {
 		case status := <-ch:
 			for _, event := range status.Events {
 				p.client.Eventf(util.ConvertToAPIEventType(event.Severity), status.Source, event.Reason, event.Message)
-				p.registry.MustRegister(prometheus.NewCounter(prometheus.CounterOpts{
+				prometheus.MustRegister(prometheus.NewCounter(prometheus.CounterOpts{
 					Name: event.Reason,
 					Help: event.Message,
 				}))
