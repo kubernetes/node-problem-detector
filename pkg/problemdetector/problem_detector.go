@@ -49,12 +49,12 @@ type problemDetector struct {
 
 // NewProblemDetector creates the problem detector. Currently we just directly passed in the problem daemons, but
 // in the future we may want to let the problem daemons register themselves.
-func NewProblemDetector(monitors map[string]systemlogmonitor.LogMonitor, client problemclient.Client, registry *prometheus.Registry) ProblemDetector {
+func NewProblemDetector(monitors map[string]systemlogmonitor.LogMonitor, client problemclient.Client, registry prometheus.Registry) ProblemDetector {
 	return &problemDetector{
 		client:           client,
 		conditionManager: condition.NewConditionManager(client, clock.RealClock{}),
 		monitors:         monitors,
-		registry:         registry,
+		registry:         &registry,
 	}
 }
 
