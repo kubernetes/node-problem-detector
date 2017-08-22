@@ -29,6 +29,9 @@ import (
 	"k8s.io/node-problem-detector/pkg/types"
 
 	"github.com/golang/glog"
+
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/push"
 )
 
 // LogMonitor monitors the log and reports node problem condition and event according to
@@ -158,12 +161,38 @@ func (l *logMonitor) generateStatus(logs []*logtypes.Log, rule logtypes.Rule) *t
 			}
 		}
 	}
+	// Send everything to Prometheus
+	sendToPrometheus(events)
 	return &types.Status{
 		Source: l.config.Source,
 		// TODO(random-liu): Aggregate events and conditions and then do periodically report.
 		Events:     events,
 		Conditions: l.conditions,
 	}
+}
+
+func sendToPrometheus(events []types.Event) {
+	// Set up a new registry for events
+	registry := prometheus.NewRegistry()
+
+	// Go through each event, and add it to the registry
+	for _, e := range events {
+		registry.MustRegister(prometheus.NewCounter(prometheus.CounterOpts{
+			Name: e.Reason,
+			Help: e.Message,
+		}))
+	}
+
+	err := push.AddFromGatherer(
+		"node_problem",
+		nil,
+		"http://pushgateway:9091",
+		registry,
+	)
+	if err != nil {
+		glog.Infof("Couldn't push to Pushgateway: %s\n", err)
+	}
+
 }
 
 // initializeStatus initializes the internal condition and also reports it to the node problem detector.
