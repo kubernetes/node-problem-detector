@@ -24,6 +24,7 @@ import (
 	"strconv"
 
 	"github.com/golang/glog"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/spf13/pflag"
 
 	"k8s.io/node-problem-detector/cmd/options"
@@ -76,8 +77,11 @@ func main() {
 		}
 		monitors[config] = systemlogmonitor.NewLogMonitorOrDie(config)
 	}
+
+	nodeRegistry := prometheus.NewRegistry()
+
 	c := problemclient.NewClientOrDie(npdo)
-	p := problemdetector.NewProblemDetector(monitors, c)
+	p := problemdetector.NewProblemDetector(monitors, c, nodeRegistry)
 
 	// Start http server.
 	if npdo.ServerPort > 0 {

@@ -29,6 +29,9 @@ import (
 	"k8s.io/node-problem-detector/pkg/systemlogmonitor"
 	"k8s.io/node-problem-detector/pkg/types"
 	"k8s.io/node-problem-detector/pkg/util"
+
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 // ProblemDetector collects statuses from all problem daemons and update the node condition and send node event.
@@ -41,15 +44,17 @@ type problemDetector struct {
 	client           problemclient.Client
 	conditionManager condition.ConditionManager
 	monitors         map[string]systemlogmonitor.LogMonitor
+	registry         *prometheus.Registry
 }
 
 // NewProblemDetector creates the problem detector. Currently we just directly passed in the problem daemons, but
 // in the future we may want to let the problem daemons register themselves.
-func NewProblemDetector(monitors map[string]systemlogmonitor.LogMonitor, client problemclient.Client) ProblemDetector {
+func NewProblemDetector(monitors map[string]systemlogmonitor.LogMonitor, client problemclient.Client, registry *prometheus.Registry) ProblemDetector {
 	return &problemDetector{
 		client:           client,
 		conditionManager: condition.NewConditionManager(client, clock.RealClock{}),
 		monitors:         monitors,
+		registry:         registry,
 	}
 }
 
@@ -78,6 +83,10 @@ func (p *problemDetector) Run() error {
 		case status := <-ch:
 			for _, event := range status.Events {
 				p.client.Eventf(util.ConvertToAPIEventType(event.Severity), status.Source, event.Reason, event.Message)
+				p.registry.MustRegister(prometheus.NewCounter(prometheus.CounterOpts{
+					Name: event.Reason,
+					Help: event.Message,
+				}))
 			}
 			for _, condition := range status.Conditions {
 				p.conditionManager.UpdateCondition(condition)
@@ -92,6 +101,7 @@ func (p *problemDetector) RegisterHTTPHandlers() {
 	http.HandleFunc("/conditions", func(w http.ResponseWriter, r *http.Request) {
 		util.ReturnHTTPJson(w, p.conditionManager.GetConditions())
 	})
+	http.Handle("/metrics", promhttp.Handler())
 }
 
 func groupChannel(chans []<-chan *types.Status) <-chan *types.Status {
