@@ -93,7 +93,7 @@ func (c *nodeProblemClient) SetConditions(newConditions []api.NodeCondition) err
 	}
 	patch, err := generatePatch(newConditions)
 	if err != nil {
-		return nil
+		return err
 	}
 	return c.client.Patch(api.StrategicMergePatchType).Resource("nodes").Name(c.nodeName).SubResource("status").Body(patch).Do().Error()
 }
