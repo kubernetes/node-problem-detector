@@ -118,8 +118,10 @@ func registerRules(rules []logtypes.Rule) {
 	for _, rule := range rules {
 		glog.Infof("Reason: %s\n", rule.Reason)
 		prometheus.MustRegister(prometheus.NewCounter(prometheus.CounterOpts{
-			Name: rule.Reason,
-			Help: rule.Reason,
+			Namespace: "npd",
+			Subsystem: string(rule.Type),
+			Name:      rule.Reason,
+			Help:      rule.Pattern,
 		}))
 	}
 }
