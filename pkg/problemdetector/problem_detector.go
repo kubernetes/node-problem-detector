@@ -27,6 +27,7 @@ import (
 	"k8s.io/node-problem-detector/pkg/condition"
 	"k8s.io/node-problem-detector/pkg/problemclient"
 	"k8s.io/node-problem-detector/pkg/systemlogmonitor"
+	logtypes "k8s.io/node-problem-detector/pkg/systemlogmonitor/types"
 	"k8s.io/node-problem-detector/pkg/types"
 	"k8s.io/node-problem-detector/pkg/util"
 
@@ -59,6 +60,7 @@ func NewProblemDetector(monitors map[string]systemlogmonitor.LogMonitor, client 
 // Run starts the problem detector.
 func (p *problemDetector) Run() error {
 	p.conditionManager.Start()
+
 	// Start the log monitors one by one.
 	var chans []<-chan *types.Status
 	for cfg, m := range p.monitors {
@@ -70,6 +72,7 @@ func (p *problemDetector) Run() error {
 			continue
 		}
 		chans = append(chans, ch)
+		registerRules(m.GetRules())
 	}
 	if len(chans) == 0 {
 		return fmt.Errorf("no log montior is successfully setup")
@@ -77,21 +80,11 @@ func (p *problemDetector) Run() error {
 	ch := groupChannel(chans)
 	glog.Info("Problem detector started")
 
-	for _, c := range p.conditionManager.GetConditions() {
-		glog.Infof("Type: %s\tReason: %s\tMessage: %s\n", c.Type, c.Reason, c.Message)
-	}
-
 	for {
 		select {
 		case status := <-ch:
 			for _, event := range status.Events {
 				p.client.Eventf(util.ConvertToAPIEventType(event.Severity), status.Source, event.Reason, event.Message)
-				prometheus.MustRegister(prometheus.NewCounter(prometheus.CounterOpts{
-					Namespace: "npd",
-					Subsystem: "event",
-					Name:      event.Reason,
-					Help:      event.Message,
-				}))
 			}
 			for _, condition := range status.Conditions {
 				p.conditionManager.UpdateCondition(condition)
@@ -119,4 +112,13 @@ func groupChannel(chans []<-chan *types.Status) <-chan *types.Status {
 		}(ch)
 	}
 	return statuses
+}
+
+func registerRules(rules []logtypes.Rule) {
+	for _, rule := range rules {
+		prometheus.MustRegister(prometheus.NewCounter(prometheus.CounterOpts{
+			Name: rule.Reason,
+			Help: rule.Reason,
+		}))
+	}
 }
