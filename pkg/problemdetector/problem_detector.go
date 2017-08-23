@@ -62,6 +62,7 @@ func (p *problemDetector) Run() error {
 	// Start the log monitors one by one.
 	var chans []<-chan *types.Status
 	for cfg, m := range p.monitors {
+		glog.Infof("Name of monitor: %s\n", cfg)
 		ch, err := m.Start()
 		if err != nil {
 			// Do not return error and keep on trying the following config files.
@@ -75,6 +76,10 @@ func (p *problemDetector) Run() error {
 	}
 	ch := groupChannel(chans)
 	glog.Info("Problem detector started")
+
+	for _, c := range p.conditionManager.GetConditions() {
+		glog.Infof("Type: %s\tReason: %s\tMessage: %s\n", c.Type, c.Reason, c.Message)
+	}
 
 	for {
 		select {
