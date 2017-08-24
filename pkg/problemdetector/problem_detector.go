@@ -83,6 +83,7 @@ func (p *problemDetector) Run() error {
 		select {
 		case status := <-ch:
 			for _, event := range status.Events {
+				glog.Infof("Event happening: %s\n", event.Reason)
 				p.client.Eventf(util.ConvertToAPIEventType(event.Severity), status.Source, event.Reason, event.Message)
 				counter, _ := p.counters.Fetch(event.Reason, event.Message)
 				counter.WithLabelValues().Inc()
