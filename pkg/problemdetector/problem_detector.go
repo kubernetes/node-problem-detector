@@ -91,11 +91,11 @@ func (p *problemDetector) Run() error {
 			for _, event := range status.Events {
 				glog.Infof("Event happening: %v\n", event)
 				p.client.Eventf(util.ConvertToAPIEventType(event.Severity), status.Source, event.Reason, event.Message)
-				counter, new := p.counters.Fetch(event.Reason, event.Message, "host")
+				counter, new := p.counters.Fetch(event.Reason, event.Message, "hostname")
 				if new {
 					prometheus.MustRegister(counter)
 				}
-				counter.WithLabelValues().Inc()
+				counter.WithLabelValues(hostname).Inc()
 			}
 			for _, condition := range status.Conditions {
 				glog.Infof("Condition happening: %v\n", condition)
