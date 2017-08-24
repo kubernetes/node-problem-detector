@@ -25,7 +25,7 @@ VERSION:=$(shell git describe --tags --dirty)
 TAG?=$(VERSION)
 
 # PROJ is the image project.
-PROJ?=gcr.io/google_containers
+PROJ?=artifactory.amer.gettywan.com/groundcontrol
 
 # UPLOAD_PATH is the cloud storage path to upload release tar.
 UPLOAD_PATH?=gs://kubernetes-release
@@ -100,7 +100,7 @@ build-tar: ./bin/node-problem-detector
 build: build-container build-tar
 
 push-container: build-container
-	gcloud docker -- push $(IMAGE)
+	docker push $(IMAGE)
 
 push-tar: build-tar
 	gsutil cp $(TARBALL) $(UPLOAD_PATH)/node-problem-detector/

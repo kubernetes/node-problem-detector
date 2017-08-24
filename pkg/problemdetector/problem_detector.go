@@ -27,11 +27,9 @@ import (
 	"k8s.io/node-problem-detector/pkg/condition"
 	"k8s.io/node-problem-detector/pkg/problemclient"
 	"k8s.io/node-problem-detector/pkg/systemlogmonitor"
-	logtypes "k8s.io/node-problem-detector/pkg/systemlogmonitor/types"
 	"k8s.io/node-problem-detector/pkg/types"
 	"k8s.io/node-problem-detector/pkg/util"
 
-	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
@@ -74,7 +72,6 @@ func (p *problemDetector) Run() error {
 			continue
 		}
 		chans = append(chans, ch)
-		registerRules(m.GetRules())
 	}
 	if len(chans) == 0 {
 		return fmt.Errorf("no log montior is successfully setup")
@@ -118,16 +115,4 @@ func groupChannel(chans []<-chan *types.Status) <-chan *types.Status {
 		}(ch)
 	}
 	return statuses
-}
-
-func registerRules(rules []logtypes.Rule) {
-	for _, rule := range rules {
-		glog.Infof("Reason: %s\n", rule.Reason)
-		prometheus.MustRegister(prometheus.NewCounter(prometheus.CounterOpts{
-			Namespace: "npd",
-			Subsystem: string(rule.Type),
-			Name:      rule.Reason,
-			Help:      rule.Pattern,
-		}))
-	}
 }
