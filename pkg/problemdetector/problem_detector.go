@@ -19,6 +19,7 @@ package problemdetector
 import (
 	"fmt"
 	"net/http"
+	"os"
 
 	"github.com/golang/glog"
 
@@ -46,6 +47,10 @@ type problemDetector struct {
 	monitors         map[string]systemlogmonitor.LogMonitor
 	counters         *CounterContainer
 }
+
+var (
+	hostname = os.Getenv("NODE_NAME")
+)
 
 // NewProblemDetector creates the problem detector. Currently we just directly passed in the problem daemons, but
 // in the future we may want to let the problem daemons register themselves.
@@ -95,11 +100,11 @@ func (p *problemDetector) Run() error {
 			for _, condition := range status.Conditions {
 				glog.Infof("Condition happening: %v\n", condition)
 				p.conditionManager.UpdateCondition(condition)
-				counter, new := p.counters.Fetch(condition.Reason, condition.Message, "host", "npd")
+				counter, new := p.counters.Fetch(condition.Reason, condition.Message, "hostname")
 				if new {
 					prometheus.MustRegister(counter)
 				}
-				counter.WithLabelValues().Inc()
+				counter.WithLabelValues(hostname).Inc()
 			}
 		}
 	}
