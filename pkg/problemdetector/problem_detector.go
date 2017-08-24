@@ -83,12 +83,13 @@ func (p *problemDetector) Run() error {
 		select {
 		case status := <-ch:
 			for _, event := range status.Events {
-				glog.Infof("Event happening: %s\n", event.Reason)
+				glog.Infof("Event happening: %v\n", event)
 				p.client.Eventf(util.ConvertToAPIEventType(event.Severity), status.Source, event.Reason, event.Message)
 				counter, _ := p.counters.Fetch(event.Reason, event.Message)
 				counter.WithLabelValues().Inc()
 			}
 			for _, condition := range status.Conditions {
+				glog.Infof("Condition happening: %v\n", condition)
 				p.conditionManager.UpdateCondition(condition)
 				counter, _ := p.counters.Fetch(condition.Reason, condition.Message)
 				counter.WithLabelValues().Inc()
