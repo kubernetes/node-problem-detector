@@ -2,11 +2,16 @@ package problemdetector
 
 import (
 	"fmt"
+	"os"
 	"sort"
 	"strings"
 	"sync"
 
 	"github.com/prometheus/client_golang/prometheus"
+)
+
+var (
+	hostname = os.Getenv("NODE_NAME")
 )
 
 type CounterContainer struct {
