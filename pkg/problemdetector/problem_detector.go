@@ -45,6 +45,7 @@ type problemDetector struct {
 	client           problemclient.Client
 	conditionManager condition.ConditionManager
 	monitors         map[string]systemlogmonitor.LogMonitor
+	counters         *CounterContainer
 }
 
 // NewProblemDetector creates the problem detector. Currently we just directly passed in the problem daemons, but
@@ -60,6 +61,7 @@ func NewProblemDetector(monitors map[string]systemlogmonitor.LogMonitor, client 
 // Run starts the problem detector.
 func (p *problemDetector) Run() error {
 	p.conditionManager.Start()
+	p.counters = NewCounterContainer("npd")
 
 	// Start the log monitors one by one.
 	var chans []<-chan *types.Status
@@ -85,9 +87,13 @@ func (p *problemDetector) Run() error {
 		case status := <-ch:
 			for _, event := range status.Events {
 				p.client.Eventf(util.ConvertToAPIEventType(event.Severity), status.Source, event.Reason, event.Message)
+				counter, _ := p.counters.Fetch(event.Reason, event.Message)
+				counter.WithLabelValues().Inc()
 			}
 			for _, condition := range status.Conditions {
 				p.conditionManager.UpdateCondition(condition)
+				counter, _ := p.counters.Fetch(condition.Reason, condition.Message)
+				counter.WithLabelValues().Inc()
 			}
 		}
 	}
