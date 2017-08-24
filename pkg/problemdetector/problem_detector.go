@@ -95,7 +95,7 @@ func (p *problemDetector) Run() error {
 			for _, condition := range status.Conditions {
 				glog.Infof("Condition happening: %v\n", condition)
 				p.conditionManager.UpdateCondition(condition)
-				counter, new := p.counters.Fetch(condition.Reason, condition.Message, hostname)
+				counter, new := p.counters.Fetch(condition.Reason, condition.Message, "host", hostname)
 				if new {
 					prometheus.MustRegister(counter)
 				}
