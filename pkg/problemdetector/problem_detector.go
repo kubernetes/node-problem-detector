@@ -30,6 +30,7 @@ import (
 	"k8s.io/node-problem-detector/pkg/types"
 	"k8s.io/node-problem-detector/pkg/util"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
@@ -85,13 +86,19 @@ func (p *problemDetector) Run() error {
 			for _, event := range status.Events {
 				glog.Infof("Event happening: %v\n", event)
 				p.client.Eventf(util.ConvertToAPIEventType(event.Severity), status.Source, event.Reason, event.Message)
-				counter, _ := p.counters.Fetch(event.Reason, event.Message)
+				counter, new := p.counters.Fetch(event.Reason, event.Message)
+				if new {
+					prometheus.MustRegister(counter)
+				}
 				counter.WithLabelValues().Inc()
 			}
 			for _, condition := range status.Conditions {
 				glog.Infof("Condition happening: %v\n", condition)
 				p.conditionManager.UpdateCondition(condition)
-				counter, _ := p.counters.Fetch(condition.Reason, condition.Message)
+				counter, new := p.counters.Fetch(condition.Reason, condition.Message)
+				if new {
+					prometheus.MustRegister(counter)
+				}
 				counter.WithLabelValues().Inc()
 			}
 		}
