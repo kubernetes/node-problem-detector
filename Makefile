@@ -25,7 +25,7 @@ VERSION:=$(shell git describe --tags --dirty)
 TAG?=$(VERSION)
 
 # PROJ is the image project.
-PROJ?=artifactory.amer.gettywan.com/groundcontrol
+PROJ?=gcr.io/google_containers
 
 # UPLOAD_PATH is the cloud storage path to upload release tar.
 UPLOAD_PATH?=gs://kubernetes-release
