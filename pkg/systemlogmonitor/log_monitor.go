@@ -38,8 +38,6 @@ type LogMonitor interface {
 	Start() (<-chan *types.Status, error)
 	// Stop stops the log monitor.
 	Stop()
-	// Get all the rules currently monitoring
-	GetRules() []logtypes.Rule
 }
 
 type logMonitor struct {
@@ -94,10 +92,6 @@ func (l *logMonitor) Start() (<-chan *types.Status, error) {
 func (l *logMonitor) Stop() {
 	glog.Info("Stop log monitor")
 	l.tomb.Stop()
-}
-
-func (l *logMonitor) GetRules() []logtypes.Rule {
-	return l.config.Rules
 }
 
 // monitorLoop is the main loop of log monitor.

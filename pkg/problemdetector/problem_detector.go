@@ -89,7 +89,6 @@ func (p *problemDetector) Run() error {
 		select {
 		case status := <-ch:
 			for _, event := range status.Events {
-				glog.Infof("Event happening: %v\n", event)
 				p.client.Eventf(util.ConvertToAPIEventType(event.Severity), status.Source, event.Reason, event.Message)
 				counter, new := p.counters.Fetch(event.Reason, event.Message, "hostname")
 				if new {
@@ -98,7 +97,6 @@ func (p *problemDetector) Run() error {
 				counter.WithLabelValues(hostname).Inc()
 			}
 			for _, condition := range status.Conditions {
-				glog.Infof("Condition happening: %v\n", condition)
 				p.conditionManager.UpdateCondition(condition)
 				counter, new := p.counters.Fetch(condition.Reason, condition.Message, "hostname")
 				if new {
