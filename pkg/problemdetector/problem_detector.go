@@ -70,7 +70,6 @@ func (p *problemDetector) Run() error {
 	// Start the log monitors one by one.
 	var chans []<-chan *types.Status
 	for cfg, m := range p.monitors {
-		glog.Infof("Name of monitor: %s\n", cfg)
 		ch, err := m.Start()
 		if err != nil {
 			// Do not return error and keep on trying the following config files.

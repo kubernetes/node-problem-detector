@@ -74,7 +74,6 @@ func NewLogMonitorOrDie(configPath string) LogMonitor {
 	l.buffer = NewLogBuffer(l.config.BufferSize)
 	// A 1000 size channel should be big enough.
 	l.output = make(chan *types.Status, 1000)
-
 	return l
 }
 

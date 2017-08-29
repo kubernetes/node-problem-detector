@@ -67,10 +67,6 @@ func main() {
 		os.Exit(0)
 	}
 
-	for _, c := range npdo.SystemLogMonitorConfigPaths {
-		glog.Infof("%s\n", c)
-	}
-
 	monitors := make(map[string]systemlogmonitor.LogMonitor)
 	for _, config := range npdo.SystemLogMonitorConfigPaths {
 		if _, ok := monitors[config]; ok {
@@ -80,7 +76,6 @@ func main() {
 		}
 		monitors[config] = systemlogmonitor.NewLogMonitorOrDie(config)
 	}
-
 	c := problemclient.NewClientOrDie(npdo)
 	p := problemdetector.NewProblemDetector(monitors, c)
 
