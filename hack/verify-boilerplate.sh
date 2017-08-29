@@ -1,4 +1,6 @@
-# Copyright 2017 The Kubernetes Authors All rights reserved.
+#!/bin/bash
+
+# Copyright 2014 The Kubernetes Authors All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,20 +14,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Build the kernel problem generator.
+set -o errexit
+set -o nounset
+set -o pipefail
 
-.PHONY: all build push
+KUBE_ROOT=$(dirname "${BASH_SOURCE}")/..
 
-PROJ ?= gcr.io/google_containers
-TAG := 0.1
+boilerDir="${KUBE_ROOT}/hack/boilerplate"
+boiler="${boilerDir}/boilerplate.py"
 
-all: push
+files_need_boilerplate=($(${boiler} "$@"))
 
-build:
-	docker build -t $(PROJ)/kernel_log_generator:$(TAG) .
+# Run boilerplate check
+if [[ ${#files_need_boilerplate[@]} -gt 0 ]]; then
+  for file in "${files_need_boilerplate[@]}"; do
+    echo "Boilerplate header is wrong for: ${file}"
+  done
 
-push:
-	gcloud docker -- push $(PROJ)/kernel_log_generator:$(TAG)
-
-clean:
-	docker rmi $(PROJ)/kernel_log_generator:$(TAG)
+  exit 1
+fi

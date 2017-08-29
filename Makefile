@@ -1,4 +1,4 @@
-# Copyright 2017 The Kubernetes Authors.
+# Copyright 2017 The Kubernetes Authors All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 
 # Build the node-problem-detector image.
 
-.PHONY: all build-container build-tar build push-container push-tar push clean vet fmt version Dockerfile
+.PHONY: all build-container build-tar build push-container push-tar push clean vet fmt boilerplate version Dockerfile
 
 all: build
 
@@ -75,6 +75,9 @@ vet:
 fmt:
 	find . -type f -name "*.go" | grep -v "./vendor/*" | xargs gofmt -s -w -l
 
+boilerplate:
+	hack/verify-boilerplate.sh
+
 version:
 	@echo $(VERSION)
 
@@ -86,7 +89,7 @@ version:
 Dockerfile: Dockerfile.in
 	sed -e 's|@BASEIMAGE@|$(BASEIMAGE)|g' $< >$@
 
-test: vet fmt
+test: vet fmt boilerplate
 	go test -timeout=1m -v -race ./pkg/... $(BUILD_TAGS)
 
 build-container: ./bin/node-problem-detector Dockerfile

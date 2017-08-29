@@ -1,4 +1,8 @@
-# Copyright 2017 The Kubernetes Authors All rights reserved.
+#!/usr/bin/env python
+
+# Copyright 2015 The Kubernetes Authors.
+#
+# failed
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,21 +15,3 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-# Build the kernel problem generator.
-
-.PHONY: all build push
-
-PROJ ?= gcr.io/google_containers
-TAG := 0.1
-
-all: push
-
-build:
-	docker build -t $(PROJ)/kernel_log_generator:$(TAG) .
-
-push:
-	gcloud docker -- push $(PROJ)/kernel_log_generator:$(TAG)
-
-clean:
-	docker rmi $(PROJ)/kernel_log_generator:$(TAG)
