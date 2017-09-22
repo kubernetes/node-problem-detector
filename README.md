@@ -76,9 +76,11 @@ Refer [heapster docs](https://github.com/kubernetes/heapster/blob/master/docs/so
 Run `make` in the top directory. It will:
 * Build the binary.
 * Build the docker image. The binary and `config/` are copied into the docker image.
-* Upload the docker image to registry. By default, the image will be uploaded to
+
+## Push Image
+`make push` uploads the docker image to registry. By default, the image will be uploaded to
 `gcr.io/google_containers`. It's easy to modify the `Makefile` to push the image
-to another registry
+to another registry.
 
 ## Start DaemonSet
 * Create a file node-problem-detector.yaml with the following yaml.
