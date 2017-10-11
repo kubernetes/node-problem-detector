@@ -32,12 +32,12 @@
 		},
 		{
 			"type": "temporary",
-			"reason": "KernelOops",
+			"reason": "KernelOops1",
 			"pattern": "BUG: unable to handle kernel NULL pointer dereference at .*"
 		},
 		{
 			"type": "temporary",
-			"reason": "KernelOops",
+			"reason": "KernelOops2",
 			"pattern": "divide error: 0000 \\[#\\d+\\] SMP"
 		},
 		{

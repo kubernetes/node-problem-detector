@@ -19,6 +19,7 @@ package problemdetector
 import (
 	"fmt"
 	"net/http"
+	"os"
 
 	"github.com/golang/glog"
 
@@ -29,6 +30,9 @@ import (
 	"k8s.io/node-problem-detector/pkg/systemlogmonitor"
 	"k8s.io/node-problem-detector/pkg/types"
 	"k8s.io/node-problem-detector/pkg/util"
+
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 // ProblemDetector collects statuses from all problem daemons and update the node condition and send node event.
@@ -41,7 +45,12 @@ type problemDetector struct {
 	client           problemclient.Client
 	conditionManager condition.ConditionManager
 	monitors         map[string]systemlogmonitor.LogMonitor
+	counters         *CounterContainer
 }
+
+var (
+	hostname = os.Getenv("NODE_NAME")
+)
 
 // NewProblemDetector creates the problem detector. Currently we just directly passed in the problem daemons, but
 // in the future we may want to let the problem daemons register themselves.
@@ -56,6 +65,8 @@ func NewProblemDetector(monitors map[string]systemlogmonitor.LogMonitor, client 
 // Run starts the problem detector.
 func (p *problemDetector) Run() error {
 	p.conditionManager.Start()
+	p.counters = NewCounterContainer("npd")
+
 	// Start the log monitors one by one.
 	var chans []<-chan *types.Status
 	for cfg, m := range p.monitors {
@@ -78,9 +89,19 @@ func (p *problemDetector) Run() error {
 		case status := <-ch:
 			for _, event := range status.Events {
 				p.client.Eventf(util.ConvertToAPIEventType(event.Severity), status.Source, event.Reason, event.Message)
+				counter, new := p.counters.Fetch(event.Reason, event.Message, "hostname")
+				if new {
+					prometheus.MustRegister(counter)
+				}
+				counter.WithLabelValues(hostname).Inc()
 			}
 			for _, condition := range status.Conditions {
 				p.conditionManager.UpdateCondition(condition)
+				counter, new := p.counters.Fetch(condition.Reason, condition.Message, "hostname")
+				if new {
+					prometheus.MustRegister(counter)
+				}
+				counter.WithLabelValues(hostname).Inc()
 			}
 		}
 	}
@@ -92,6 +113,7 @@ func (p *problemDetector) RegisterHTTPHandlers() {
 	http.HandleFunc("/conditions", func(w http.ResponseWriter, r *http.Request) {
 		util.ReturnHTTPJson(w, p.conditionManager.GetConditions())
 	})
+	http.Handle("/metrics", promhttp.Handler())
 }
 
 func groupChannel(chans []<-chan *types.Status) <-chan *types.Status {
