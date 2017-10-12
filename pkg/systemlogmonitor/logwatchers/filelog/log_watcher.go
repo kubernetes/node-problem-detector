@@ -56,7 +56,7 @@ func NewSyslogWatcherOrDie(cfg types.WatcherConfig) types.LogWatcher {
 	return &filelogWatcher{
 		cfg:        cfg,
 		translator: newTranslatorOrDie(cfg.PluginConfig),
-		uptime:     time.Now().Add(time.Duration(-info.Uptime * int64(time.Second))),
+		uptime:     time.Now().Add(-time.Duration(info.Uptime) * time.Second),
 		tomb:       tomb.NewTomb(),
 		// A capacity 1000 buffer should be enough
 		logCh: make(chan *logtypes.Log, 1000),
