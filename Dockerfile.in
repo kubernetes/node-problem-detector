@@ -15,12 +15,13 @@
 FROM @BASEIMAGE@
 MAINTAINER Random Liu <lantaol@google.com>
 
+CROSS_BUILD_COPY qemu-ARCH-static /usr/bin/
 RUN clean-install libsystemd0 bash
 
 # Avoid symlink of /etc/localtime.
 RUN test -h /etc/localtime && rm -f /etc/localtime && cp /usr/share/zoneinfo/UTC /etc/localtime || true
 
-ADD ./bin/node-problem-detector /node-problem-detector
-ADD ./bin/log-counter /home/kubernetes/bin/log-counter
+ADD ./bin/node-problem-detector-BINARCH /node-problem-detector
+ADD ./bin/log-counter-BINARCH /home/kubernetes/bin/log-counter
 ADD config /config
 ENTRYPOINT ["/node-problem-detector", "--system-log-monitors=/config/kernel-monitor.json"]

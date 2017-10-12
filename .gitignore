@@ -1,5 +1,6 @@
-/bin/
+/bin/*
 /Dockerfile
 /*.tar.gz
 ci.env
 pr.env
+qemu*
