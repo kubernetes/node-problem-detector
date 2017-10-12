@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM golang:1.11.0
+FROM gcr.io/google_containers/kube-cross:v1.12.9-1
 LABEL maintainer="Andy Xie <andy.xning@gmail.com>"
 
 ENV GOPATH /gopath/

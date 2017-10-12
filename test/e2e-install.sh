@@ -55,10 +55,10 @@ function install-npd() {
   mount -o remount,exec "${BIN_DIR}"
 
   echo "Installing NPD binary."
-  cp "${workdir}"/bin/node-problem-detector "${BIN_DIR}"
+  cp "${workdir}"/bin/node-problem-detector-amd64 "${BIN_DIR}"/node-problem-detector
 
   echo "Installing log-counter binary."
-  cp "${workdir}"/bin/log-counter "${BIN_DIR}"
+  cp "${workdir}"/bin/log-counter-amd64 "${BIN_DIR}"/log-counter
 
   echo "Installing NPD configurations."
   mkdir -p "${CONFIG_DIR}"

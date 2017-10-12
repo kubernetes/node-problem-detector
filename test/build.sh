@@ -131,7 +131,7 @@ function build-pr() {
   export REGISTRY="${NPD_STAGING_REGISTRY}/pr/${PR}"
   export VERSION=$(get-version)
   export TAG="${VERSION}"
-  make push
+  make push-all
   write-env-file ${PR_ENV_FILENAME}
 }
 
@@ -141,7 +141,7 @@ function build-ci() {
   export REGISTRY="${NPD_STAGING_REGISTRY}/ci"
   export VERSION="$(get-version)-$(date +%Y%m%d.%H%M)"
   export TAG="${VERSION}"
-  make push
+  make push-all
 
   # Create the env file with and without custom flags at the same time.
   build-npd-custom-flags
