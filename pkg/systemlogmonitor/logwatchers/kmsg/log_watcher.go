@@ -27,13 +27,13 @@ import (
 
 	"k8s.io/node-problem-detector/pkg/systemlogmonitor/logwatchers/types"
 	logtypes "k8s.io/node-problem-detector/pkg/systemlogmonitor/types"
-	"k8s.io/node-problem-detector/pkg/systemlogmonitor/util"
+	"k8s.io/node-problem-detector/pkg/util/tomb"
 )
 
 type kernelLogWatcher struct {
 	cfg   types.WatcherConfig
 	logCh chan *logtypes.Log
-	tomb  *util.Tomb
+	tomb  *tomb.Tomb
 
 	kmsgParser kmsgparser.Parser
 	clock      utilclock.Clock
@@ -43,7 +43,7 @@ type kernelLogWatcher struct {
 func NewKmsgWatcher(cfg types.WatcherConfig) types.LogWatcher {
 	return &kernelLogWatcher{
 		cfg:  cfg,
-		tomb: util.NewTomb(),
+		tomb: tomb.NewTomb(),
 		// Arbitrary capacity
 		logCh: make(chan *logtypes.Log, 100),
 		clock: utilclock.NewClock(),

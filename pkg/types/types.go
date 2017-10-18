@@ -76,3 +76,55 @@ type Status struct {
 	// newest node conditions in this field.
 	Conditions []Condition `json:"conditions"`
 }
+
+// Type is the type of the problem.
+type Type string
+
+const (
+	// Temp means the problem is temporary, only need to report an event.
+	Temp Type = "temporary"
+	// Perm means the problem is permanent, need to change the node condition.
+	Perm Type = "permanent"
+)
+
+// Rule describes how log monitor should analyze the log.
+type Rule struct {
+	// Type is the type of matched problem.
+	Type Type `json:"type"`
+	// Condition is the type of the condition the problem triggered. Notice that
+	// the Condition field should be set only when the problem is permanent, or
+	// else the field will be ignored.
+	Condition string `json:"condition"`
+	// Reason is the short reason of the problem.
+	Reason string `json:"reason"`
+	// Pattern is the regular expression to match the problem in log.
+	// Notice that the pattern must match to the end of the line.
+	Pattern string `json:"pattern"`
+}
+
+// CustomRule describes how custom plugin monitor should invoke and analyze plugins.
+type CustomRule struct {
+	// Type is the type of the problem.
+	Type Type `json:"type"`
+	// Condition is the type of the condition the problem triggered. Notice that
+	// the Condition field should be set only when the problem is permanent, or
+	// else the field will be ignored.
+	Condition string `json:"condition"`
+	// Reason is the short reason of the problem.
+	Reason string `json:"reason"`
+	// Path is the path to the custom plugin.
+	Path string `json:"path"`
+	// Timeout is the timeout string for the custom plugin to execute.
+	TimeoutString *string `json:"timeout"`
+	// Timeout is the timeout for the custom plugin to execute.
+	Timeout *time.Duration `json:"-"`
+}
+
+// Monitor monitors log and custom plugins and reports node problem condition and event according to
+// the rules.
+type Monitor interface {
+	// Start starts the log monitor.
+	Start() (<-chan *Status, error)
+	// Stop stops the log monitor.
+	Stop()
+}

@@ -61,13 +61,13 @@ func TestGenerateStatus(t *testing.T) {
 		},
 	}
 	for c, test := range []struct {
-		rule     logtypes.Rule
+		rule     types.Rule
 		expected types.Status
 	}{
 		// Do not need Pattern because we don't do pattern match in this test
 		{
-			rule: logtypes.Rule{
-				Type:      logtypes.Perm,
+			rule: types.Rule{
+				Type:      types.Perm,
 				Condition: testConditionA,
 				Reason:    "test reason",
 			},
@@ -87,8 +87,8 @@ func TestGenerateStatus(t *testing.T) {
 		},
 		// Should not update transition time when status and reason are not changed.
 		{
-			rule: logtypes.Rule{
-				Type:      logtypes.Perm,
+			rule: types.Rule{
+				Type:      types.Perm,
 				Condition: testConditionA,
 				Reason:    "initial reason",
 			},
@@ -106,8 +106,8 @@ func TestGenerateStatus(t *testing.T) {
 			},
 		},
 		{
-			rule: logtypes.Rule{
-				Type:   logtypes.Temp,
+			rule: types.Rule{
+				Type:   types.Temp,
 				Reason: "test reason",
 			},
 			expected: types.Status{

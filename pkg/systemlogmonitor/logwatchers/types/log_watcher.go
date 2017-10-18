@@ -31,7 +31,7 @@ type LogWatcher interface {
 // WatcherConfig is the configuration of the log watcher.
 type WatcherConfig struct {
 	// Plugin is the name of plugin which is currently used.
-	// Currently supported: filelog, journald.
+	// Currently supported: filelog, journald, kmsg.
 	Plugin string `json:"plugin, omitempty"`
 	// PluginConfig is a key/value configuration of a plugin. Valid configurations
 	// are defined in different log watcher plugin.
