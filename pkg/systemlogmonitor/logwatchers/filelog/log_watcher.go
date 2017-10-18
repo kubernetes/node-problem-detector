@@ -32,7 +32,7 @@ import (
 
 	"k8s.io/node-problem-detector/pkg/systemlogmonitor/logwatchers/types"
 	logtypes "k8s.io/node-problem-detector/pkg/systemlogmonitor/types"
-	"k8s.io/node-problem-detector/pkg/systemlogmonitor/util"
+	"k8s.io/node-problem-detector/pkg/util/tomb"
 )
 
 type filelogWatcher struct {
@@ -42,7 +42,7 @@ type filelogWatcher struct {
 	translator *translator
 	logCh      chan *logtypes.Log
 	uptime     time.Time
-	tomb       *util.Tomb
+	tomb       *tomb.Tomb
 	clock      utilclock.Clock
 }
 
@@ -57,7 +57,7 @@ func NewSyslogWatcherOrDie(cfg types.WatcherConfig) types.LogWatcher {
 		cfg:        cfg,
 		translator: newTranslatorOrDie(cfg.PluginConfig),
 		uptime:     time.Now().Add(time.Duration(-info.Uptime * int64(time.Second))),
-		tomb:       util.NewTomb(),
+		tomb:       tomb.NewTomb(),
 		// A capacity 1000 buffer should be enough
 		logCh: make(chan *logtypes.Log, 1000),
 		clock: utilclock.NewClock(),

@@ -19,26 +19,17 @@ package systemlogmonitor
 import (
 	"encoding/json"
 	"io/ioutil"
-	"regexp"
 	"time"
 
 	"k8s.io/node-problem-detector/pkg/systemlogmonitor/logwatchers"
 	watchertypes "k8s.io/node-problem-detector/pkg/systemlogmonitor/logwatchers/types"
 	logtypes "k8s.io/node-problem-detector/pkg/systemlogmonitor/types"
-	"k8s.io/node-problem-detector/pkg/systemlogmonitor/util"
+	systemlogtypes "k8s.io/node-problem-detector/pkg/systemlogmonitor/types"
 	"k8s.io/node-problem-detector/pkg/types"
 
 	"github.com/golang/glog"
+	"k8s.io/node-problem-detector/pkg/util/tomb"
 )
-
-// LogMonitor monitors the log and reports node problem condition and event according to
-// the rules.
-type LogMonitor interface {
-	// Start starts the log monitor.
-	Start() (<-chan *types.Status, error)
-	// Stop stops the log monitor.
-	Stop()
-}
 
 type logMonitor struct {
 	watcher    watchertypes.LogWatcher
@@ -47,13 +38,13 @@ type logMonitor struct {
 	conditions []types.Condition
 	logCh      <-chan *logtypes.Log
 	output     chan *types.Status
-	tomb       *util.Tomb
+	tomb       *tomb.Tomb
 }
 
 // NewLogMonitorOrDie create a new LogMonitor, panic if error occurs.
-func NewLogMonitorOrDie(configPath string) LogMonitor {
+func NewLogMonitorOrDie(configPath string) types.Monitor {
 	l := &logMonitor{
-		tomb: util.NewTomb(),
+		tomb: tomb.NewTomb(),
 	}
 	f, err := ioutil.ReadFile(configPath)
 	if err != nil {
@@ -64,10 +55,10 @@ func NewLogMonitorOrDie(configPath string) LogMonitor {
 		glog.Fatalf("Failed to unmarshal configuration file %q: %v", configPath, err)
 	}
 	// Apply default configurations
-	applyDefaultConfiguration(&l.config)
-	err = validateRules(l.config.Rules)
+	(&l.config).ApplyDefaultConfiguration()
+	err = l.config.ValidateRules()
 	if err != nil {
-		glog.Fatalf("Failed to validate matching rules %#v: %v", l.config.Rules, err)
+		glog.Fatalf("Failed to validate matching rules %+v: %v", l.config.Rules, err)
 	}
 	glog.Infof("Finish parsing log monitor config file: %+v", l.config)
 	l.watcher = logwatchers.GetLogWatcherOrDie(l.config.WatcherConfig)
@@ -126,12 +117,12 @@ func (l *logMonitor) parseLog(log *logtypes.Log) {
 }
 
 // generateStatus generates status from the logs.
-func (l *logMonitor) generateStatus(logs []*logtypes.Log, rule logtypes.Rule) *types.Status {
+func (l *logMonitor) generateStatus(logs []*logtypes.Log, rule systemlogtypes.Rule) *types.Status {
 	// We use the timestamp of the first log line as the timestamp of the status.
 	timestamp := logs[0].Timestamp
 	message := generateMessage(logs)
 	var events []types.Event
-	if rule.Type == logtypes.Temp {
+	if rule.Type == types.Temp {
 		// For temporary error only generate event
 		events = append(events, types.Event{
 			Severity:  types.Warn,
@@ -144,7 +135,6 @@ func (l *logMonitor) generateStatus(logs []*logtypes.Log, rule logtypes.Rule) *t
 		for i := range l.conditions {
 			condition := &l.conditions[i]
 			if condition.Type == rule.Condition {
-				condition.Type = rule.Condition
 				// Update transition timestamp and message when the condition
 				// changes. Condition is considered to be changed only when
 				// status or reason changes.
@@ -187,17 +177,6 @@ func initialConditions(defaults []types.Condition) []types.Condition {
 		conditions[i].Transition = time.Now()
 	}
 	return conditions
-}
-
-// validateRules verifies whether the regular expressions in the rules are valid.
-func validateRules(rules []logtypes.Rule) error {
-	for _, rule := range rules {
-		_, err := regexp.Compile(rule.Pattern)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
 }
 
 func generateMessage(logs []*logtypes.Log) string {

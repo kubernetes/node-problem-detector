@@ -1,5 +1,5 @@
 /*
-Copyright 2016 The Kubernetes Authors All rights reserved.
+Copyright 2017 The Kubernetes Authors All rights reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -21,16 +21,24 @@ import (
 	"time"
 )
 
-// Log is the log item returned by translator. It's very easy to extend this
-// to support other log monitoring, such as docker log monitoring.
-type Log struct {
-	Timestamp time.Time
-	Message   string
+type Status int
+
+const (
+	OK      Status = 0
+	NonOK   Status = 1
+	Unknown Status = 2
+)
+
+// Result is the custom plugin check result returned by plugin.
+type Result struct {
+	Rule       *CustomRule
+	ExitStatus Status
+	Message    string
 }
 
-// Rule describes how log monitor should analyze the log.
-type Rule struct {
-	// Type is the type of matched problem.
+// CustomRule describes how custom plugin monitor should invoke and analyze plugins.
+type CustomRule struct {
+	// Type is the type of the problem.
 	Type types.Type `json:"type"`
 	// Condition is the type of the condition the problem triggered. Notice that
 	// the Condition field should be set only when the problem is permanent, or
@@ -38,7 +46,11 @@ type Rule struct {
 	Condition string `json:"condition"`
 	// Reason is the short reason of the problem.
 	Reason string `json:"reason"`
-	// Pattern is the regular expression to match the problem in log.
-	// Notice that the pattern must match to the end of the line.
-	Pattern string `json:"pattern"`
+	// Path is the path to the custom plugin.
+	Path string `json:"path"`
+	// Timeout is the timeout string for the custom plugin to execute.
+	TimeoutString *string `json:"timeout"`
+	// Timeout is the timeout for the custom plugin to execute.
+	Timeout *time.Duration `json:"-"`
+	// TODO(andyxning) Add support for per-rule interval.
 }

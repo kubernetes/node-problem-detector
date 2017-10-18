@@ -14,26 +14,34 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package util
+package tomb
 
-import (
-	"reflect"
-	"testing"
-)
+// Tomb is used to control the lifecycle of a goroutine.
+type Tomb struct {
+	stop chan struct{}
+	done chan struct{}
+}
 
-func TestTomb(t *testing.T) {
-	tomb := NewTomb()
-	workflow := []string{}
-	expected := []string{"stop", "stopping", "stopped"}
-	go func() {
-		defer tomb.Done()
-		<-tomb.Stopping()
-		workflow = append(workflow, "stopping")
-	}()
-	workflow = append(workflow, "stop")
-	tomb.Stop()
-	workflow = append(workflow, "stopped")
-	if !reflect.DeepEqual(workflow, expected) {
-		t.Errorf("expected workflow %v, got %v", expected, workflow)
+// NewTomb creates a new tomb.
+func NewTomb() *Tomb {
+	return &Tomb{
+		stop: make(chan struct{}),
+		done: make(chan struct{}),
 	}
+}
+
+// Stop is used to stop the goroutine outside.
+func (t *Tomb) Stop() {
+	close(t.stop)
+	<-t.done
+}
+
+// Stopping is used by the goroutine to tell whether it should stop.
+func (t *Tomb) Stopping() <-chan struct{} {
+	return t.stop
+}
+
+// Done is used by the goroutine to inform that it has stopped.
+func (t *Tomb) Done() {
+	close(t.done)
 }

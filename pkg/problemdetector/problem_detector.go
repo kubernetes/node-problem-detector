@@ -26,7 +26,6 @@ import (
 
 	"k8s.io/node-problem-detector/pkg/condition"
 	"k8s.io/node-problem-detector/pkg/problemclient"
-	"k8s.io/node-problem-detector/pkg/systemlogmonitor"
 	"k8s.io/node-problem-detector/pkg/types"
 	"k8s.io/node-problem-detector/pkg/util"
 )
@@ -40,12 +39,12 @@ type ProblemDetector interface {
 type problemDetector struct {
 	client           problemclient.Client
 	conditionManager condition.ConditionManager
-	monitors         map[string]systemlogmonitor.LogMonitor
+	monitors         map[string]types.Monitor
 }
 
 // NewProblemDetector creates the problem detector. Currently we just directly passed in the problem daemons, but
 // in the future we may want to let the problem daemons register themselves.
-func NewProblemDetector(monitors map[string]systemlogmonitor.LogMonitor, client problemclient.Client) ProblemDetector {
+func NewProblemDetector(monitors map[string]types.Monitor, client problemclient.Client) ProblemDetector {
 	return &problemDetector{
 		client:           client,
 		conditionManager: condition.NewConditionManager(client, clock.RealClock{}),
