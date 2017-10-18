@@ -17,8 +17,10 @@ limitations under the License.
 package systemlogmonitor
 
 import (
+	"regexp"
+
 	watchertypes "k8s.io/node-problem-detector/pkg/systemlogmonitor/logwatchers/types"
-	logtypes "k8s.io/node-problem-detector/pkg/systemlogmonitor/types"
+	systemlogtypes "k8s.io/node-problem-detector/pkg/systemlogmonitor/types"
 	"k8s.io/node-problem-detector/pkg/types"
 )
 
@@ -33,15 +35,26 @@ type MonitorConfig struct {
 	// DefaultConditions are the default states of all the conditions log monitor should handle.
 	DefaultConditions []types.Condition `json:"conditions"`
 	// Rules are the rules log monitor will follow to parse the log file.
-	Rules []logtypes.Rule `json:"rules"`
+	Rules []systemlogtypes.Rule `json:"rules"`
 }
 
-// applyDefaultConfiguration applies default configurations.
-func applyDefaultConfiguration(cfg *MonitorConfig) {
-	if cfg.BufferSize == 0 {
-		cfg.BufferSize = 10
+// ApplyConfiguration applies default configurations.
+func (mc *MonitorConfig) ApplyDefaultConfiguration() {
+	if mc.BufferSize == 0 {
+		mc.BufferSize = 10
 	}
-	if cfg.WatcherConfig.Lookback == "" {
-		cfg.WatcherConfig.Lookback = "0"
+	if mc.WatcherConfig.Lookback == "" {
+		mc.WatcherConfig.Lookback = "0"
 	}
+}
+
+// ValidateRules verifies whether the regular expressions in the rules are valid.
+func (mc MonitorConfig) ValidateRules() error {
+	for _, rule := range mc.Rules {
+		_, err := regexp.Compile(rule.Pattern)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }

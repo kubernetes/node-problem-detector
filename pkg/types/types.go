@@ -76,3 +76,22 @@ type Status struct {
 	// newest node conditions in this field.
 	Conditions []Condition `json:"conditions"`
 }
+
+// Type is the type of the problem.
+type Type string
+
+const (
+	// Temp means the problem is temporary, only need to report an event.
+	Temp Type = "temporary"
+	// Perm means the problem is permanent, need to change the node condition.
+	Perm Type = "permanent"
+)
+
+// Monitor monitors log and custom plugins and reports node problem condition and event according to
+// the rules.
+type Monitor interface {
+	// Start starts the log monitor.
+	Start() (<-chan *Status, error)
+	// Stop stops the log monitor.
+	Stop()
+}

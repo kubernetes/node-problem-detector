@@ -30,7 +30,7 @@ import (
 
 	"k8s.io/node-problem-detector/pkg/systemlogmonitor/logwatchers/types"
 	logtypes "k8s.io/node-problem-detector/pkg/systemlogmonitor/types"
-	"k8s.io/node-problem-detector/pkg/systemlogmonitor/util"
+	"k8s.io/node-problem-detector/pkg/util/tomb"
 )
 
 // Compiling go-systemd/sdjournald needs libsystemd-dev or libsystemd-journal-dev,
@@ -43,14 +43,14 @@ type journaldWatcher struct {
 	journal *sdjournal.Journal
 	cfg     types.WatcherConfig
 	logCh   chan *logtypes.Log
-	tomb    *util.Tomb
+	tomb    *tomb.Tomb
 }
 
 // NewJournaldWatcher is the create function of journald watcher.
 func NewJournaldWatcher(cfg types.WatcherConfig) types.LogWatcher {
 	return &journaldWatcher{
 		cfg:  cfg,
-		tomb: util.NewTomb(),
+		tomb: tomb.NewTomb(),
 		// A capacity 1000 buffer should be enough
 		logCh: make(chan *logtypes.Log, 1000),
 	}

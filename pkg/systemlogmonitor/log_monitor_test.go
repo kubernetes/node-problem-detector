@@ -67,7 +67,7 @@ func TestGenerateStatus(t *testing.T) {
 		// Do not need Pattern because we don't do pattern match in this test
 		{
 			rule: logtypes.Rule{
-				Type:      logtypes.Perm,
+				Type:      types.Perm,
 				Condition: testConditionA,
 				Reason:    "test reason",
 			},
@@ -88,7 +88,7 @@ func TestGenerateStatus(t *testing.T) {
 		// Should not update transition time when status and reason are not changed.
 		{
 			rule: logtypes.Rule{
-				Type:      logtypes.Perm,
+				Type:      types.Perm,
 				Condition: testConditionA,
 				Reason:    "initial reason",
 			},
@@ -107,7 +107,7 @@ func TestGenerateStatus(t *testing.T) {
 		},
 		{
 			rule: logtypes.Rule{
-				Type:   logtypes.Temp,
+				Type:   types.Temp,
 				Reason: "test reason",
 			},
 			expected: types.Status{
