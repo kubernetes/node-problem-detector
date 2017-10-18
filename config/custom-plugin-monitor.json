@@ -1,0 +1,32 @@
+{
+  "plugin": "custom",
+  "pluginConfig": {
+    "invoke_interval": "30s",
+    "timeout": "5s",
+    "max_output_length": 80,
+    "concurrency": 3
+  },
+  "source": "ntp-custom-plugin-monitor",
+  "conditions": [
+    {
+      "type": "NTPProblem",
+      "reason": "NTPIsUp",
+      "message": "ntp service is up"
+    }
+  ],
+  "rules": [
+    {
+      "type": "temporary",
+      "reason": "NTPIsDown",
+      "path": "./config/plugin/check_ntp.sh",
+      "timeout": "3s"
+    },
+    {
+      "type": "permanent",
+      "condition": "NTPProblem",
+      "reason": "NTPIsDown",
+      "path": "./config/plugin/check_ntp.sh",
+      "timeout": "3s"
+    }
+  ]
+}
