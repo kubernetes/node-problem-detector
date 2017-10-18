@@ -14,7 +14,7 @@ enabled by default in the GCE cluster.
 # Background
 There are tons of node problems could possibly affect the pods running on the
 node such as:
-* Hardware issues: Bad cpu, memory or disk;
+* Hardware issues: Bad cpu, memory or disk, ntp service down;
 * Kernel issues: Kernel deadlock, corrupted file system;
 * Container runtime issues: Unresponsive runtime daemon;
 * ...
@@ -44,8 +44,7 @@ A problem daemon could be:
 * An existing node health monitoring daemon integrated with node-problem-detector.
 
 Currently, a problem daemon is running as a goroutine in the node-problem-detector
-binary. In the future, we'll separate node-problem-detector and problem daemons into
-different containers, and compose them with pod specification.
+binary.
 
 List of supported problem daemons:
 
@@ -53,23 +52,30 @@ List of supported problem daemons:
 |----------------|:---------------:|:------------|
 | [KernelMonitor](https://github.com/kubernetes/node-problem-detector/blob/master/config/kernel-monitor.json) | KernelDeadlock | A system log monitor monitors kernel log and reports problem according to predefined rules. |
 | [AbrtAdaptor](https://github.com/kubernetes/node-problem-detector/blob/master/config/abrt-adaptor.json) | None | Monitor ABRT log messages and report them further. ABRT (Automatic Bug Report Tool) is health monitoring daemon able to catch kernel problems as well as application crashes of various kinds occurred on the host. For more information visit the [link](https://github.com/abrt). |
+| [CustomPluginMonitor](https://github.com/kubernetes/node-problem-detector/blob/master/config/custom-plugin-monitor.json) | On-demand(According to users configuration) | A custom plugin monitor for node-problem-detector to invoke and check various node problems with user defined check scripts. [Proposal is here](https://docs.google.com/document/d/1jK_5YloSYtboj-DtfjmYKxfNnUxCAvohLnsH5aGCAYQ/edit#). |
 
 # Usage
 ## Flags
 * `--version`: Print current version of node-problem-detector.
+* `--address`: The address to bind the node problem detector server.
+* `--port`: The port to bind the node problem detector server. Use 0 to disable.
 * `--system-log-monitors`: List of paths to system log monitor configuration files, comma separated, e.g.
   [config/kernel-monitor.json](https://github.com/kubernetes/node-problem-detector/blob/master/config/kernel-monitor.json).
   Node problem detector will start a separate log monitor for each configuration. You can
   use different log monitors to monitor different system log.
+* `--custom-plugin-monitors`: List of paths to custom plugin monitor config files, comma separated, e.g.
+  [config/custom-plugin-monitor.json](https://github.com/kubernetes/node-problem-detector/blob/master/config/custom-plugin-monitor.json).
+  Node problem detector will start a separate custom plugin monitor for each configuration. You can
+    use different custom plugin monitors to monitor different node problems.
 * `--apiserver-override`: A URI parameter used to customize how node-problem-detector
 connects the apiserver. The format is same as the
 [`source`](https://github.com/kubernetes/heapster/blob/master/docs/source-configuration.md#kubernetes)
 flag of [Heapster](https://github.com/kubernetes/heapster).
 For example, to run without auth, use the following config:
-```
-http://APISERVER_IP:APISERVER_PORT?inClusterConfig=false
-```
-Refer [heapster docs](https://github.com/kubernetes/heapster/blob/master/docs/source-configuration.md#kubernetes) for a complete list of available options.
+   ```
+   http://APISERVER_IP:APISERVER_PORT?inClusterConfig=false
+   ```
+   Refer [heapster docs](https://github.com/kubernetes/heapster/blob/master/docs/source-configuration.md#kubernetes) for a complete list of available options.
 * `--hostname-override`: A customized node name used for node-problem-detector to update conditions and emit events. node-problem-detector gets node name first from `hostname-override`, then `NODE_NAME` environment variable and finally fall back to `os.Hostname`.
 
 ## Build Image
@@ -138,4 +144,5 @@ For more scenarios, see [here](https://github.com/kubernetes/heapster/blob/maste
 # Links
 * [Design Doc](https://docs.google.com/document/d/1cs1kqLziG-Ww145yN6vvlKguPbQQ0psrSBnEqpy0pzE/edit?usp=sharing)
 * [Slides](https://docs.google.com/presentation/d/1bkJibjwWXy8YnB5fna6p-Ltiy-N5p01zUsA22wCNkXA/edit?usp=sharing)
+* [Plugin Interface Proposal](https://docs.google.com/document/d/1jK_5YloSYtboj-DtfjmYKxfNnUxCAvohLnsH5aGCAYQ/edit#)
 * [Addon Manifest](https://github.com/kubernetes/kubernetes/tree/master/cluster/addons/node-problem-detector)

@@ -27,9 +27,11 @@ import (
 	"github.com/spf13/pflag"
 
 	"k8s.io/node-problem-detector/cmd/options"
+	"k8s.io/node-problem-detector/pkg/custompluginmonitor"
 	"k8s.io/node-problem-detector/pkg/problemclient"
 	"k8s.io/node-problem-detector/pkg/problemdetector"
 	"k8s.io/node-problem-detector/pkg/systemlogmonitor"
+	"k8s.io/node-problem-detector/pkg/types"
 	"k8s.io/node-problem-detector/pkg/version"
 )
 
@@ -67,14 +69,23 @@ func main() {
 		os.Exit(0)
 	}
 
-	monitors := make(map[string]systemlogmonitor.LogMonitor)
+	monitors := make(map[string]types.Monitor)
 	for _, config := range npdo.SystemLogMonitorConfigPaths {
 		if _, ok := monitors[config]; ok {
-			// Skip the config if it's duplictaed.
-			glog.Warningf("Duplicated log monitor configuration %q", config)
+			// Skip the config if it's duplicated.
+			glog.Warningf("Duplicated monitor configuration %q", config)
 			continue
 		}
 		monitors[config] = systemlogmonitor.NewLogMonitorOrDie(config)
+	}
+
+	for _, config := range npdo.CustomPluginMonitorConfigPaths {
+		if _, ok := monitors[config]; ok {
+			// Skip the config if it's duplicated.
+			glog.Warningf("Duplicated monitor configuration %q", config)
+			continue
+		}
+		monitors[config] = custompluginmonitor.NewCustomPluginMonitorOrDie(config)
 	}
 	c := problemclient.NewClientOrDie(npdo)
 	p := problemdetector.NewProblemDetector(monitors, c)
