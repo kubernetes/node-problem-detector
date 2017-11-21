@@ -37,11 +37,17 @@ func ConvertToAPICondition(condition types.Condition) api.NodeCondition {
 }
 
 // ConvertToAPIConditionStatus converts the internal node condition status to api.ConditionStatus.
-func ConvertToAPIConditionStatus(status bool) api.ConditionStatus {
-	if status {
+func ConvertToAPIConditionStatus(status types.ConditionStatus) api.ConditionStatus {
+	switch status {
+	case types.True:
 		return api.ConditionTrue
+	case types.False:
+		return api.ConditionFalse
+	case types.Unknown:
+		return api.ConditionUnknown
+	default:
+		panic("unknown condition status")
 	}
-	return api.ConditionFalse
 }
 
 // ConvertToAPIEventType converts the internal severity to event type.

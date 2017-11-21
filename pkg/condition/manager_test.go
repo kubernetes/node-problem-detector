@@ -41,7 +41,7 @@ func newTestManager() (*conditionManager, *problemclient.FakeProblemClient, *clo
 func newTestCondition(condition string) types.Condition {
 	return types.Condition{
 		Type:       condition,
-		Status:     true,
+		Status:     types.True,
 		Transition: time.Now(),
 		Reason:     "TestReason",
 		Message:    "test message",

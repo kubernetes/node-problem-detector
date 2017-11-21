@@ -30,7 +30,7 @@ func TestConvertToAPICondition(t *testing.T) {
 	now := time.Now()
 	condition := types.Condition{
 		Type:       "TestCondition",
-		Status:     true,
+		Status:     types.True,
 		Transition: now,
 		Reason:     "test reason",
 		Message:    "test message",
