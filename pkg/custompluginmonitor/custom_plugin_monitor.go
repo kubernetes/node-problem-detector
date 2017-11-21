@@ -26,6 +26,7 @@ import (
 	"k8s.io/node-problem-detector/pkg/custompluginmonitor/plugin"
 	cpmtypes "k8s.io/node-problem-detector/pkg/custompluginmonitor/types"
 	"k8s.io/node-problem-detector/pkg/types"
+	"k8s.io/node-problem-detector/pkg/util"
 	"k8s.io/node-problem-detector/pkg/util/tomb"
 )
 
@@ -124,10 +125,16 @@ func (c *customPluginMonitor) generateStatus(result cpmtypes.Result) *types.Stat
 		for i := range c.conditions {
 			condition := &c.conditions[i]
 			if condition.Type == result.Rule.Condition {
-				status := result.ExitStatus >= cpmtypes.NonOK
+				status := toConditionStatus(result.ExitStatus)
 				if condition.Status != status || condition.Reason != result.Rule.Reason {
 					condition.Transition = timestamp
 					condition.Message = result.Message
+					events = append(events, util.GenerateConditionChangeEvent(
+						condition.Type,
+						status,
+						result.Rule.Reason,
+						timestamp,
+					))
 				}
 				condition.Status = status
 				condition.Reason = result.Rule.Reason
@@ -140,6 +147,17 @@ func (c *customPluginMonitor) generateStatus(result cpmtypes.Result) *types.Stat
 		// TODO(random-liu): Aggregate events and conditions and then do periodically report.
 		Events:     events,
 		Conditions: c.conditions,
+	}
+}
+
+func toConditionStatus(s cpmtypes.Status) types.ConditionStatus {
+	switch s {
+	case cpmtypes.OK:
+		return types.False
+	case cpmtypes.NonOK:
+		return types.True
+	default:
+		return types.Unknown
 	}
 }
 
@@ -159,8 +177,7 @@ func initialConditions(defaults []types.Condition) []types.Condition {
 	conditions := make([]types.Condition, len(defaults))
 	copy(conditions, defaults)
 	for i := range conditions {
-		// TODO(random-liu): Validate default conditions
-		conditions[i].Status = false
+		conditions[i].Status = types.False
 		conditions[i].Transition = time.Now()
 	}
 	return conditions

@@ -21,13 +21,14 @@ import (
 	"io/ioutil"
 	"time"
 
+	"github.com/golang/glog"
+
 	"k8s.io/node-problem-detector/pkg/systemlogmonitor/logwatchers"
 	watchertypes "k8s.io/node-problem-detector/pkg/systemlogmonitor/logwatchers/types"
 	logtypes "k8s.io/node-problem-detector/pkg/systemlogmonitor/types"
 	systemlogtypes "k8s.io/node-problem-detector/pkg/systemlogmonitor/types"
 	"k8s.io/node-problem-detector/pkg/types"
-
-	"github.com/golang/glog"
+	"k8s.io/node-problem-detector/pkg/util"
 	"k8s.io/node-problem-detector/pkg/util/tomb"
 )
 
@@ -138,11 +139,17 @@ func (l *logMonitor) generateStatus(logs []*logtypes.Log, rule systemlogtypes.Ru
 				// Update transition timestamp and message when the condition
 				// changes. Condition is considered to be changed only when
 				// status or reason changes.
-				if !condition.Status || condition.Reason != rule.Reason {
+				if condition.Status == types.False || condition.Reason != rule.Reason {
 					condition.Transition = timestamp
 					condition.Message = message
+					events = append(events, util.GenerateConditionChangeEvent(
+						condition.Type,
+						types.True,
+						rule.Reason,
+						timestamp,
+					))
 				}
-				condition.Status = true
+				condition.Status = types.True
 				condition.Reason = rule.Reason
 				break
 			}
@@ -172,8 +179,7 @@ func initialConditions(defaults []types.Condition) []types.Condition {
 	conditions := make([]types.Condition, len(defaults))
 	copy(conditions, defaults)
 	for i := range conditions {
-		// TODO(random-liu): Validate default conditions
-		conditions[i].Status = false
+		conditions[i].Status = types.False
 		conditions[i].Transition = time.Now()
 	}
 	return conditions

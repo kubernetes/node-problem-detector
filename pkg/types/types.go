@@ -38,13 +38,25 @@ const (
 	Warn Severity = "warn"
 )
 
+// ConditionStatus is the status of the condition.
+type ConditionStatus string
+
+const (
+	// True means the condition status is true.
+	True ConditionStatus = "True"
+	// False means the condition status is false.
+	False ConditionStatus = "False"
+	// Unknown means the condition status is unknown.
+	Unknown ConditionStatus = "Unknown"
+)
+
 // Condition is the node condition used internally by problem detector.
 type Condition struct {
 	// Type is the condition type. It should describe the condition of node in problem. For example
 	// KernelDeadlock, OutOfResource etc.
 	Type string `json:"type"`
 	// Status indicates whether the node is in the condition or not.
-	Status bool `json:"status"`
+	Status ConditionStatus `json:"status"`
 	// Transition is the time when the node transits to this condition.
 	Transition time.Time `json:"transition"`
 	// Reason is a short reason of why node goes into this condition.
