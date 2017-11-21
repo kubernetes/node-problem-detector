@@ -16,12 +16,6 @@
   ],
   "rules": [
     {
-      "type": "temporary",
-      "reason": "NTPIsDown",
-      "path": "./config/plugin/check_ntp.sh",
-      "timeout": "3s"
-    },
-    {
       "type": "permanent",
       "condition": "NTPProblem",
       "reason": "NTPIsDown",
