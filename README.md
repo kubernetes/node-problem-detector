@@ -87,7 +87,7 @@ Run `make` in the top directory. It will:
 
 ## Push Image
 `make push` uploads the docker image to registry. By default, the image will be uploaded to
-`gcr.io/google_containers`. It's easy to modify the `Makefile` to push the image
+`k8s.gcr.io`. It's easy to modify the `Makefile` to push the image
 to another registry.
 
 ## Start DaemonSet
@@ -102,7 +102,7 @@ spec:
     spec:
       containers:
       - name: node-problem-detector
-        image: gcr.io/google_containers/node-problem-detector:v0.2
+        image: k8s.gcr.io/node-problem-detector:v0.2
         imagePullPolicy: Always
         securityContext:
           privileged: true
