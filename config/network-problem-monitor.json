@@ -1,0 +1,19 @@
+{
+  "plugin": "custom",
+  "pluginConfig": {
+    "invoke_interval": "30s",
+    "timeout": "5s",
+    "max_output_length": 80,
+    "concurrency": 3
+  },
+  "source": "network-custom-plugin-monitor",
+  "conditions": [],
+  "rules": [
+    {
+      "type": "temporary",
+      "reason": "ConntrackFull",
+      "path": "./config/plugin/network_problem.sh",
+      "timeout": "3s"
+    }
+  ]
+}
