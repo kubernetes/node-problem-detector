@@ -25,7 +25,7 @@ VERSION:=$(shell git describe --tags --dirty)
 TAG?=$(VERSION)
 
 # PROJ is the image project.
-PROJ?=gcr.io/google_containers
+PROJ?=k8s.gcr.io
 
 # UPLOAD_PATH is the cloud storage path to upload release tar.
 UPLOAD_PATH?=gs://kubernetes-release

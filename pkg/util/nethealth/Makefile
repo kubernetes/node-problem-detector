@@ -12,16 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Makefile for the Docker image gcr.io/google_containers/kube-nethealth-<ARCH>
+# Makefile for the Docker image k8s.gcr.io/kube-nethealth-<ARCH>
 # MAINTAINER: Girish kalele <abshah@google.com>
 # If you update this image please bump the tag value before pushing.
 #
 # Usage:
-#   [TAG=1.0] [REGISTRY=gcr.io/google_containers] make push
+#   [TAG=1.0] [REGISTRY=k8s.gcr.io] make push
 
 # Default registry, arch and tag. This can be overwritten by arguments to make
 TAG?=1.0
-REGISTRY?=gcr.io/google_containers
+REGISTRY?=k8s.gcr.io
 ARCH?=amd64
 
 all: build
@@ -33,7 +33,7 @@ build: nethealth
 	docker build -t $(REGISTRY)/kube-nethealth-$(ARCH):$(TAG) .
 
 push: build
-ifeq ($(REGISTRY),gcr.io/google_containers)
+ifeq ($(REGISTRY),k8s.gcr.io)
 	gcloud docker push $(REGISTRY)/kube-nethealth-$(ARCH):$(TAG)
 else
 	docker push $(REGISTRY)/kube-nethealth-$(ARCH):$(TAG)
