@@ -102,7 +102,7 @@ spec:
     spec:
       containers:
       - name: node-problem-detector
-        image: gcr.io/google_containers/node-problem-detector:v0.2
+        image: gcr.io/google_containers/node-problem-detector:v0.4.1
         imagePullPolicy: Always
         securityContext:
           privileged: true
