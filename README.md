@@ -87,7 +87,7 @@ Run `make` in the top directory. It will:
 
 ## Push Image
 `make push` uploads the docker image to registry. By default, the image will be uploaded to
-`k8s.gcr.io`. It's easy to modify the `Makefile` to push the image
+`staging-k8s.gcr.io`. It's easy to modify the `Makefile` to push the image
 to another registry.
 
 ## Start DaemonSet

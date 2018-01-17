@@ -24,8 +24,8 @@ VERSION:=$(shell git describe --tags --dirty)
 # TAG is the tag of the container image, default to binary version.
 TAG?=$(VERSION)
 
-# PROJ is the image project.
-PROJ?=k8s.gcr.io
+# REGISTRY is the container registry to push into.
+REGISTRY?=staging-k8s.gcr.io
 
 # UPLOAD_PATH is the cloud storage path to upload release tar.
 UPLOAD_PATH?=gs://kubernetes-release
@@ -42,7 +42,7 @@ PKG_SOURCES:=$(shell find pkg cmd -name '*.go')
 TARBALL:=node-problem-detector-$(VERSION).tar.gz
 
 # IMAGE is the image name of the node problem detector container image.
-IMAGE:=$(PROJ)/node-problem-detector:$(TAG)
+IMAGE:=$(REGISTRY)/node-problem-detector:$(TAG)
 
 # ENABLE_JOURNALD enables build journald support or not. Building journald support needs libsystemd-dev
 # or libsystemd-journal-dev.
