@@ -82,12 +82,12 @@ func (cpc *CustomPluginConfig) ApplyConfiguration() error {
 		cpc.PluginGlobalConfig.InvokeIntervalString = &defaultInvokeIntervalString
 	}
 
-	invoke_interval, err := time.ParseDuration(*cpc.PluginGlobalConfig.InvokeIntervalString)
+	invokeInterval, err := time.ParseDuration(*cpc.PluginGlobalConfig.InvokeIntervalString)
 	if err != nil {
 		return fmt.Errorf("error in parsing invoke interval %q: %v", *cpc.PluginGlobalConfig.InvokeIntervalString, err)
 	}
 
-	cpc.PluginGlobalConfig.InvokeInterval = &invoke_interval
+	cpc.PluginGlobalConfig.InvokeInterval = &invokeInterval
 
 	if cpc.PluginGlobalConfig.MaxOutputLength == nil {
 		cpc.PluginGlobalConfig.MaxOutputLength = &defaultMaxOutputLength
