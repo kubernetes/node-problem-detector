@@ -129,7 +129,7 @@ spec:
 ```
 * Edit node-problem-detector.yaml to fit your environment: Set `log` volume to your system log directory. (Used by SystemLogMonitor)
 * Create the DaemonSet with `kubectl create -f node-problem-detector.yaml`
-* If needed, you can use [ConfigMap](http://kubernetes.io/docs/user-guide/configmap/)
+* If needed, you can use [ConfigMap](https://kubernetes.io/docs/tasks/configure-pod-container/configure-pod-configmap/)
 to overwrite the `config/`.
 
 ## Start Standalone
