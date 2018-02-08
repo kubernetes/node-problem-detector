@@ -17,11 +17,11 @@
 # If you update this image please bump the tag value before pushing.
 #
 # Usage:
-#   [TAG=1.0] [REGISTRY=k8s.gcr.io] make push
+#   [TAG=1.0] [REGISTRY=staging-k8s.gcr.io] make push
 
 # Default registry, arch and tag. This can be overwritten by arguments to make
 TAG?=1.0
-REGISTRY?=k8s.gcr.io
+REGISTRY?=staging-k8s.gcr.io
 ARCH?=amd64
 
 all: build
@@ -33,8 +33,8 @@ build: nethealth
 	docker build -t $(REGISTRY)/kube-nethealth-$(ARCH):$(TAG) .
 
 push: build
-ifeq ($(REGISTRY),k8s.gcr.io)
-	gcloud docker push $(REGISTRY)/kube-nethealth-$(ARCH):$(TAG)
+ifeq ($(REGISTRY),staging-k8s.gcr.io)
+	gcloud docker -- push $(REGISTRY)/kube-nethealth-$(ARCH):$(TAG)
 else
 	docker push $(REGISTRY)/kube-nethealth-$(ARCH):$(TAG)
 endif

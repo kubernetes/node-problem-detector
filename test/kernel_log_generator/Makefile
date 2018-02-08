@@ -16,7 +16,7 @@
 
 .PHONY: all build push
 
-PROJ ?= k8s.gcr.io
+PROJ ?= staging-k8s.gcr.io
 TAG := 0.1
 
 all: push
