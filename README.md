@@ -81,6 +81,34 @@ For example, to run without auth, use the following config:
 * `--hostname-override`: A customized node name used for node-problem-detector to update conditions and emit events. node-problem-detector gets node name first from `hostname-override`, then `NODE_NAME` environment variable and finally fall back to `os.Hostname`.
 
 ## Build Image
+Install and launch the docker (Fedora 25 setup):
+
+`sudo dnf install docker`
+
+`sudo systemctl start docker` (or `sudo service docker start`)
+
+Make your directory for go binaries to import, for example:
+
+`mkdir ~/go`
+
+Set GOPATH to contain that place (you can add it to your bashrc):
+
+`export GOPATH=$HOME/go`
+
+Install dependencies
+
+`go get github.com/golang/glog && go get github.com/spf13/pflag`
+
+Create following directory in the directory you choosen (~/go)
+
+`mkdir ~/go/src/k8s.io`
+
+Place the workspace there
+
+`cd ~/go/src/k8s.io; git clone https://github.com/kubernetes/node-problem-detector.git`
+
+`cd node-problem-detector`
+
 Run `make` in the top directory. It will:
 * Build the binary.
 * Build the docker image. The binary and `config/` are copied into the docker image.
