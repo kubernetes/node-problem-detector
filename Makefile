@@ -50,18 +50,17 @@ IMAGE:=$(REGISTRY)/node-problem-detector:$(TAG)
 ENABLE_JOURNALD?=1
 
 # TODO(random-liu): Support different architectures.
-BASEIMAGE:=alpine:3.4
+# The debian-base:0.3 image built from kubernetes repository is based on Debian Stretch.
+# It includes systemd 232 with support for both +XZ and +LZ4 compression.
+# +LZ4 is needed on some os distros such as COS.
+BASEIMAGE:=gcr.io/google-containers/debian-base-amd64:0.3
 
 # Disable cgo by default to make the binary statically linked.
 CGO_ENABLED:=0
 
-# NOTE that enable journald will increase the image size.
 ifeq ($(ENABLE_JOURNALD), 1)
 	# Enable journald build tag.
 	BUILD_TAGS:=-tags journald
-	# Use fedora because it has newer systemd version (229) and support +LZ4. +LZ4 is needed
-	# on some os distros such as GCI.
-	BASEIMAGE:=fedora
 	# Enable cgo because sdjournal needs cgo to compile. The binary will be dynamically
 	# linked if CGO_ENABLED is enabled. This is fine because fedora already has necessary
 	# dynamic library. We can not use `-extldflags "-static"` here, because go-systemd uses
