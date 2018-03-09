@@ -28,73 +28,57 @@ type options struct {
 
 // TestSetNodeNameOrDie tests for permutations of nodename, hostname and hostnameoverride.
 func TestSetNodeNameOrDie(t *testing.T) {
-	option := map[string]struct {
-		Expected         options
-		ObtainedNodeName string
-	}{
-		"Check Node and HostnameOverride only": {
-			Expected: options{
-				Nodename:         "my-node-name",
-				HostnameOverride: "override",
-			},
-		},
-		"Check Nodename only": {
-			Expected: options{
-				Nodename:         "my-node-name",
-				HostnameOverride: "",
-			},
-		},
-
-		"Check HostnameOverride only": {
-			Expected: options{
-				Nodename:         "",
-				HostnameOverride: "override",
-			},
-		},
-		"Check empty": {
-			Expected: options{
-				Nodename:         "",
-				HostnameOverride: "",
-			},
-		},
-	}
-
-	orig_node_name := os.Getenv("NODE_NAME")
-	orig_host_name, err := os.Hostname()
+	hostName, err := os.Hostname()
 	if err != nil {
-		t.Errorf("Unable to get hostname")
+		t.Errorf("Query hostname error: %v", err)
 	}
 
-	for str, opt := range option {
-
-		// Setting with expected(desired) NODE_NAME env.
-		err = os.Setenv("NODE_NAME", opt.Expected.Nodename)
-		if err != nil {
-			t.Errorf("Unable to set env NODE_NAME")
-		}
-
-		npdObj := NewNodeProblemDetectorOptions()
-
-		// Setting with expected(desired) HostnameOverride.
-		npdObj.HostnameOverride = opt.Expected.HostnameOverride
-
-		npdObj.SetNodeNameOrDie()
-		opt.ObtainedNodeName = npdObj.NodeName
-
-		// Setting back the original node name.
-		err = os.Setenv("NODE_NAME", orig_node_name)
-		if err != nil {
-			t.Errorf("Unable to set original : env NODE_NAME")
-		}
-
-		// Checking for obtained node name.
-		if opt.ObtainedNodeName != opt.Expected.HostnameOverride &&
-			opt.ObtainedNodeName != opt.Expected.Nodename &&
-			opt.ObtainedNodeName != orig_host_name {
-			t.Errorf("Error at : %+v", str)
-			t.Errorf("Wanted: %+v. \nGot: %+v", opt.Expected.Nodename, opt.ObtainedNodeName)
-		}
-
+	uts := map[string]struct {
+		WantedNodeName string
+		Meta           options
+	}{
+		"Check hostname override only": {
+			WantedNodeName: "hostname-override",
+			Meta: options{
+				Nodename:         "node-name-env",
+				HostnameOverride: "hostname-override",
+			},
+		},
+		"Check hostname override and NDDE_NAME env": {
+			WantedNodeName: "node-name-env",
+			Meta: options{
+				Nodename:         "node-name-env",
+				HostnameOverride: "",
+			},
+		},
+		"Check hostname override, NODE_NAME env and hostname": {
+			WantedNodeName: hostName,
+			Meta: options{
+				Nodename:         "",
+				HostnameOverride: "",
+			},
+		},
 	}
 
+	for desc, ut := range uts {
+		err := os.Unsetenv("NODE_NAME")
+		if err != nil {
+			t.Errorf("Desc: %v. Unset NODE_NAME env error: %v", desc, err)
+		}
+
+		if len(ut.Meta.Nodename) != 0 {
+			err := os.Setenv("NODE_NAME", ut.Meta.Nodename)
+			if err != nil {
+				t.Errorf("Desc: %v. Set NODE_NAME env error: %v", desc, err)
+			}
+		}
+
+		npdOpts := NewNodeProblemDetectorOptions()
+		npdOpts.HostnameOverride = ut.Meta.HostnameOverride
+		npdOpts.SetNodeNameOrDie()
+
+		if npdOpts.NodeName != ut.WantedNodeName {
+			t.Errorf("Desc: %v. Set node name error. Wanted: %v. Got: %v", desc, ut.WantedNodeName, npdOpts.NodeName)
+		}
+	}
 }
