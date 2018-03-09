@@ -26,7 +26,7 @@ type options struct {
 	HostnameOverride string
 }
 
-// TestSetNodeNameOrDie tests for permutations of nodename, hostname and hostnameoverride
+// TestSetNodeNameOrDie tests for permutations of nodename, hostname and hostnameoverride.
 func TestSetNodeNameOrDie(t *testing.T) {
 	option := map[string]struct {
 		Expected         options
@@ -67,7 +67,7 @@ func TestSetNodeNameOrDie(t *testing.T) {
 
 	for str, opt := range option {
 
-		// Setting with expected(desired) NODE_NAME env
+		// Setting with expected(desired) NODE_NAME env.
 		err = os.Setenv("NODE_NAME", opt.Expected.Nodename)
 		if err != nil {
 			t.Errorf("Unable to set env NODE_NAME")
@@ -75,19 +75,19 @@ func TestSetNodeNameOrDie(t *testing.T) {
 
 		npdObj := NewNodeProblemDetectorOptions()
 
-		// Setting with expected(desired) HostnameOverride
+		// Setting with expected(desired) HostnameOverride.
 		npdObj.HostnameOverride = opt.Expected.HostnameOverride
 
 		npdObj.SetNodeNameOrDie()
 		opt.ObtainedNodeName = npdObj.NodeName
 
-		// Setting back the original node name
+		// Setting back the original node name.
 		err = os.Setenv("NODE_NAME", orig_node_name)
 		if err != nil {
 			t.Errorf("Unable to set original : env NODE_NAME")
 		}
 
-		// Checking for obtained node name
+		// Checking for obtained node name.
 		if opt.ObtainedNodeName != opt.Expected.HostnameOverride &&
 			opt.ObtainedNodeName != opt.Expected.Nodename &&
 			opt.ObtainedNodeName != orig_host_name {
