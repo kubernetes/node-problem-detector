@@ -86,7 +86,7 @@ Dockerfile: Dockerfile.in
 	sed -e 's|@BASEIMAGE@|$(BASEIMAGE)|g' $< >$@
 
 test: vet fmt
-	go test -timeout=1m -v -race ./pkg/... $(BUILD_TAGS)
+	go test -timeout=1m -v -race ./cmd/options ./pkg/... $(BUILD_TAGS)
 
 build-container: ./bin/node-problem-detector Dockerfile
 	docker build -t $(IMAGE) .
