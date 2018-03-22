@@ -127,6 +127,53 @@ spec:
         hostPath:
           path: /etc/localtime
 ```
+
+For Kubernetes >= 1.9 you need to add selector tag as bellow:
+
+```yaml
+apiVersion: extensions/v1beta1
+kind: DaemonSet
+metadata:
+  name: node-problem-detector
+spec:
+  selector:
+    matchLabels:
+      name: node-problem-detector
+  template:
+    metadata:
+      labels:
+        name: node-problem-detector
+  template:
+    spec:
+      containers:
+      - name: node-problem-detector
+        image: k8s.gcr.io/node-problem-detector:v0.2
+        imagePullPolicy: Always
+        securityContext:
+          privileged: true
+        env:
+        - name: NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        volumeMounts:
+        - name: log
+          mountPath: /log
+          readOnly: true
+        - name: localtime
+          mountPath: /etc/localtime
+          readOnly: true
+      volumes:
+      - name: log
+        # Config `log` to your system log directory
+        hostPath:
+          path: /var/log/
+      - name: localtime
+        hostPath:
+          path: /etc/localtime
+```
+
+
 * Edit node-problem-detector.yaml to fit your environment: Set `log` volume to your system log directory. (Used by SystemLogMonitor)
 * Create the DaemonSet with `kubectl create -f node-problem-detector.yaml`
 * If needed, you can use [ConfigMap](https://kubernetes.io/docs/tasks/configure-pod-container/configure-pod-configmap/)
