@@ -93,12 +93,18 @@ to another registry.
 ## Start DaemonSet
 * Create a file node-problem-detector.yaml with the following yaml.
 ```yaml
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   name: node-problem-detector
 spec:
+  selector:
+    matchLabels:
+      name: node-problem-detector
   template:
+    metadata:
+      labels:
+        name: node-problem-detector
     spec:
       containers:
       - name: node-problem-detector
