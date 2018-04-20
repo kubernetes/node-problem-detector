@@ -7,8 +7,8 @@ OK=0
 NONOK=1
 UNKNOWN=2
 
-[ -f /proc/sys/net/ipv4/netfilter/ip_conntrack_max ] || echo $UNKNOWN
-[ -f /proc/sys/net/ipv4/netfilter/ip_conntrack_count ] || echo $UNKNOWN
+[ -f /proc/sys/net/ipv4/netfilter/ip_conntrack_max ] || exit $UNKNOWN
+[ -f /proc/sys/net/ipv4/netfilter/ip_conntrack_count ] || exit $UNKNOWN
 
 conntrack_max=$(cat /proc/sys/net/ipv4/netfilter/ip_conntrack_max)
 conntrack_count=$(cat /proc/sys/net/ipv4/netfilter/ip_conntrack_count)
