@@ -5,7 +5,7 @@ metadata:
 spec:
   selector:
     matchLabels:
-      name: node-problem-detector
+      app: node-problem-detector
   template:
     metadata:
       labels:
