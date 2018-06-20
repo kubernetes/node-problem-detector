@@ -48,6 +48,8 @@ type CustomRule struct {
 	Reason string `json:"reason"`
 	// Path is the path to the custom plugin.
 	Path string `json:"path"`
+	// Args is the args passed to the custom plugin.
+	Args []string `json:"args"`
 	// Timeout is the timeout string for the custom plugin to execute.
 	TimeoutString *string `json:"timeout"`
 	// Timeout is the timeout for the custom plugin to execute.
