@@ -77,6 +77,11 @@ fmt:
 version:
 	@echo $(VERSION)
 
+./bin/log-counter: $(PKG_SOURCES)
+	CGO_ENABLED=$(CGO_ENABLED) GOOS=linux go build -o bin/log-counter \
+	     -ldflags '-X $(PKG)/pkg/version.version=$(VERSION)' \
+	     $(BUILD_TAGS) cmd/logcounter/log_counter.go
+
 ./bin/node-problem-detector: $(PKG_SOURCES)
 	CGO_ENABLED=$(CGO_ENABLED) GOOS=linux go build -o bin/node-problem-detector \
 	     -ldflags '-X $(PKG)/pkg/version.version=$(VERSION)' \
@@ -88,10 +93,10 @@ Dockerfile: Dockerfile.in
 test: vet fmt
 	go test -timeout=1m -v -race ./cmd/options ./pkg/... $(BUILD_TAGS)
 
-build-container: ./bin/node-problem-detector Dockerfile
+build-container: ./bin/node-problem-detector ./bin/log-counter Dockerfile
 	docker build -t $(IMAGE) .
 
-build-tar: ./bin/node-problem-detector
+build-tar: ./bin/node-problem-detector ./bin/log-counter
 	tar -zcvf $(TARBALL) bin/ config/
 	sha1sum $(TARBALL)
 	md5sum $(TARBALL)
@@ -107,5 +112,6 @@ push-tar: build-tar
 push: push-container push-tar
 
 clean:
+	rm -f bin/log-counter
 	rm -f bin/node-problem-detector
 	rm -f node-problem-detector-*.tar.gz

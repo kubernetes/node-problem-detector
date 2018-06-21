@@ -1,0 +1,31 @@
+{
+  "plugin": "custom",
+  "pluginConfig": {
+    "invoke_interval": "5m",
+    "timeout": "1m",
+    "max_output_length": 80,
+    "concurrency": 1
+  },
+  "source": "kernel-monitor",
+  "conditions": [
+    {
+      "type": "FrequentUnregisterNetDevice",
+      "reason": "NoFrequentUnregisterNetDevice",
+      "message": "node is functioning properly"
+    }
+  ],
+  "rules": [
+    {
+      "type": "permanent",
+      "condition": "FrequentUnregisterNetDevice",
+      "reason": "UnregisterNetDevice",
+      "path": "/home/kubernetes/bin/log-counter",
+      "args": [
+        "--lookback=20m",
+        "--count=3",
+        "--pattern=unregister_netdevice: waiting for \\w+ to become free. Usage count = \\d+"
+      ],
+      "timeout": "1m"
+    }
+  ]
+}

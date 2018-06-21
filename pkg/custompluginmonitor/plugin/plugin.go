@@ -108,7 +108,7 @@ func (p *Plugin) run(rule cpmtypes.CustomRule) (exitStatus cpmtypes.Status, outp
 	}
 	defer cancel()
 
-	cmd := exec.CommandContext(ctx, rule.Path)
+	cmd := exec.CommandContext(ctx, rule.Path, rule.Args...)
 	stdout, err := cmd.Output()
 	if err != nil {
 		if _, ok := err.(*exec.ExitError); !ok {
