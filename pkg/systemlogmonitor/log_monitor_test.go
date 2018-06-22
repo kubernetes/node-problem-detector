@@ -28,6 +28,7 @@ import (
 	watchertest "k8s.io/node-problem-detector/pkg/systemlogmonitor/logwatchers/testing"
 	logtypes "k8s.io/node-problem-detector/pkg/systemlogmonitor/types"
 	"k8s.io/node-problem-detector/pkg/types"
+	"k8s.io/node-problem-detector/pkg/util"
 )
 
 const (
@@ -40,13 +41,13 @@ func TestGenerateStatus(t *testing.T) {
 	initConditions := []types.Condition{
 		{
 			Type:       testConditionA,
-			Status:     true,
+			Status:     types.True,
 			Transition: time.Unix(500, 500),
 			Reason:     "initial reason",
 		},
 		{
 			Type:       testConditionB,
-			Status:     false,
+			Status:     types.False,
 			Transition: time.Unix(500, 500),
 		},
 	}
@@ -73,10 +74,16 @@ func TestGenerateStatus(t *testing.T) {
 			},
 			expected: types.Status{
 				Source: testSource,
+				Events: []types.Event{util.GenerateConditionChangeEvent(
+					testConditionA,
+					types.True,
+					"test reason",
+					time.Unix(1000, 1000),
+				)},
 				Conditions: []types.Condition{
 					{
 						Type:       testConditionA,
-						Status:     true,
+						Status:     types.True,
 						Transition: time.Unix(1000, 1000),
 						Reason:     "test reason",
 						Message:    "test message 1\ntest message 2",
@@ -97,7 +104,7 @@ func TestGenerateStatus(t *testing.T) {
 				Conditions: []types.Condition{
 					{
 						Type:       testConditionA,
-						Status:     true,
+						Status:     types.True,
 						Transition: time.Unix(500, 500),
 						Reason:     "initial reason",
 					},
