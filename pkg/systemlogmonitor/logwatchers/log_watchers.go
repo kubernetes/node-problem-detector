@@ -31,7 +31,7 @@ func registerLogWatcher(name string, create types.WatcherCreateFunc) {
 }
 
 // GetLogWatcherOrDie get a log watcher based on the passed in configuration.
-// The function panics when encounts an error.
+// The function panics when encounters an error.
 func GetLogWatcherOrDie(config types.WatcherConfig) types.LogWatcher {
 	create, ok := createFuncs[config.Plugin]
 	if !ok {
