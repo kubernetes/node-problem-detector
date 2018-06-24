@@ -20,6 +20,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
+	"os"
+	"path/filepath"
 
 	"k8s.io/kubernetes/pkg/api"
 	"k8s.io/kubernetes/pkg/api/unversioned"
@@ -30,6 +32,7 @@ import (
 
 	"k8s.io/heapster/common/kubernetes"
 	"k8s.io/node-problem-detector/cmd/options"
+	"k8s.io/node-problem-detector/pkg/version"
 )
 
 // Client is the interface of problem client
@@ -62,6 +65,7 @@ func NewClientOrDie(npdo *options.NodeProblemDetectorOptions) Client {
 		panic(err)
 	}
 
+	cfg.UserAgent = fmt.Sprintf("%s/%s", filepath.Base(os.Args[0]), version.Version())
 	// TODO(random-liu): Set QPS Limit
 	c.client = client.NewOrDie(cfg)
 	c.nodeName = npdo.NodeName
