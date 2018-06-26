@@ -18,6 +18,10 @@ import "fmt"
 // version defines node-problem-detector version string.
 var version string = "UNKNOWN"
 
+func Version() string {
+	return version
+}
+
 func PrintVersion() {
 	fmt.Println(version)
 }
