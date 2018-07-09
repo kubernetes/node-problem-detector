@@ -22,10 +22,10 @@ import (
 	"testing"
 	"time"
 
-	"k8s.io/kubernetes/pkg/api"
-	"k8s.io/kubernetes/pkg/api/unversioned"
-	"k8s.io/kubernetes/pkg/client/record"
-	"k8s.io/kubernetes/pkg/util/clock"
+	"k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/clock"
+	"k8s.io/client-go/tools/record"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -48,18 +48,18 @@ func newFakeProblemClient() *nodeProblemClient {
 
 func TestGeneratePatch(t *testing.T) {
 	now := time.Now()
-	update := []api.NodeCondition{
+	update := []v1.NodeCondition{
 		{
 			Type:               "TestType1",
-			Status:             api.ConditionTrue,
-			LastTransitionTime: unversioned.NewTime(now),
+			Status:             v1.ConditionTrue,
+			LastTransitionTime: metav1.NewTime(now),
 			Reason:             "TestReason1",
 			Message:            "TestMessage1",
 		},
 		{
 			Type:               "TestType2",
-			Status:             api.ConditionFalse,
-			LastTransitionTime: unversioned.NewTime(now),
+			Status:             v1.ConditionFalse,
+			LastTransitionTime: metav1.NewTime(now),
 			Reason:             "TestReason2",
 			Message:            "TestMessage2",
 		},
@@ -79,8 +79,8 @@ func TestEvent(t *testing.T) {
 	fakeRecorder := record.NewFakeRecorder(1)
 	client := newFakeProblemClient()
 	client.recorders[testSource] = fakeRecorder
-	client.Eventf(api.EventTypeWarning, testSource, "test reason", "test message")
-	expected := fmt.Sprintf("%s %s %s", api.EventTypeWarning, "test reason", "test message")
+	client.Eventf(v1.EventTypeWarning, testSource, "test reason", "test message")
+	expected := fmt.Sprintf("%s %s %s", v1.EventTypeWarning, "test reason", "test message")
 	got := <-fakeRecorder.Events
 	if expected != got {
 		t.Errorf("expected event %q, got %q", expected, got)

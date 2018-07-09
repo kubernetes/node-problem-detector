@@ -9,7 +9,7 @@ import (
 	"net/http"
 )
 
-// DEPRECATED, use DefaultResponseContentType(mime)
+// DefaultResponseMimeType is DEPRECATED, use DefaultResponseContentType(mime)
 var DefaultResponseMimeType string
 
 //PrettyPrintResponses controls the indentation feature of XML and JSON serialization
@@ -27,11 +27,12 @@ type Response struct {
 	err           error    // err property is kept when WriteError is called
 }
 
-// Creates a new response based on a http ResponseWriter.
+// NewResponse creates a new response based on a http ResponseWriter.
 func NewResponse(httpWriter http.ResponseWriter) *Response {
 	return &Response{httpWriter, "", []string{}, http.StatusOK, 0, PrettyPrintResponses, nil} // empty content-types
 }
 
+// DefaultResponseContentType set a default.
 // If Accept header matching fails, fall back to this type.
 // Valid values are restful.MIME_JSON and restful.MIME_XML
 // Example:
@@ -130,25 +131,25 @@ func (r *Response) WriteHeaderAndEntity(status int, value interface{}) error {
 }
 
 // WriteAsXml is a convenience method for writing a value in xml (requires Xml tags on the value)
-// It uses the standard encoding/xml package for marshalling the valuel ; not using a registered EntityReaderWriter.
+// It uses the standard encoding/xml package for marshalling the value ; not using a registered EntityReaderWriter.
 func (r *Response) WriteAsXml(value interface{}) error {
 	return writeXML(r, http.StatusOK, MIME_XML, value)
 }
 
 // WriteHeaderAndXml is a convenience method for writing a status and value in xml (requires Xml tags on the value)
-// It uses the standard encoding/xml package for marshalling the valuel ; not using a registered EntityReaderWriter.
+// It uses the standard encoding/xml package for marshalling the value ; not using a registered EntityReaderWriter.
 func (r *Response) WriteHeaderAndXml(status int, value interface{}) error {
 	return writeXML(r, status, MIME_XML, value)
 }
 
 // WriteAsJson is a convenience method for writing a value in json.
-// It uses the standard encoding/json package for marshalling the valuel ; not using a registered EntityReaderWriter.
+// It uses the standard encoding/json package for marshalling the value ; not using a registered EntityReaderWriter.
 func (r *Response) WriteAsJson(value interface{}) error {
 	return writeJSON(r, http.StatusOK, MIME_JSON, value)
 }
 
 // WriteJson is a convenience method for writing a value in Json with a given Content-Type.
-// It uses the standard encoding/json package for marshalling the valuel ; not using a registered EntityReaderWriter.
+// It uses the standard encoding/json package for marshalling the value ; not using a registered EntityReaderWriter.
 func (r *Response) WriteJson(value interface{}, contentType string) error {
 	return writeJSON(r, http.StatusOK, contentType, value)
 }
