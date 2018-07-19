@@ -81,7 +81,7 @@ For example, to run without auth, use the following config:
 * `--hostname-override`: A customized node name used for node-problem-detector to update conditions and emit events. node-problem-detector gets node name first from `hostname-override`, then `NODE_NAME` environment variable and finally fall back to `os.Hostname`.
 
 ## Build Image
-* `go get` or `git clone` node-problem-detector repo into `$GOPATH/src/k8s.io` or `$GOROOT/src/k8s.io` 
+* `go get` or `git clone` node-problem-detector repo into `$GOPATH/src/k8s.io` or `$GOROOT/src/k8s.io`
 with one of the below directions:
   * `cd $GOPATH/src/k8s.io && git clone git@github.com:kubernetes/node-problem-detector.git`
   * `cd $GOROOT/src/k8s.io && git clone git@github.com:kubernetes/node-problem-detector.git`
@@ -92,9 +92,9 @@ with one of the below directions:
   * Build the docker image. The binary and `config/` are copied into the docker image.
 
 **Note**:
-By default node-problem-detector will be built with systemd support with `make` command. This requires systemd develop files. 
-You should download the systemd develop files first. For Ubuntu, `libsystemd-journal-dev` package should 
-be installed.
+By default node-problem-detector will be built with systemd support with `make` command. This requires systemd develop files.
+You should download the systemd develop files first. For Ubuntu, `libsystemd-journal-dev` package should
+be installed. For Debian, `libsystemd-dev` package should be installed.
 
 ## Push Image
 `make push` uploads the docker image to registry. By default, the image will be uploaded to
