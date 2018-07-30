@@ -1,2 +1,2 @@
 Memory cgroup out of memory: Kill process 1012 (heapster) score 1035 or sacrifice child
-Killed process 1012 (heapster) total-vm:327128kB, anon-rss:306328kB, file-rss:11132kB
+Killed process 1012 (heapster) total-vm:327128kB, anon-rss:306328kB, file-rss:11132kB, shmem-rss:12345kB
