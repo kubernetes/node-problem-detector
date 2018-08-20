@@ -24,8 +24,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/fsnotify/fsnotify"
 	"github.com/golang/glog"
-	"golang.org/x/exp/inotify"
 )
 
 type Tail struct {
@@ -35,7 +35,7 @@ type Tail struct {
 	filename   string
 	file       *os.File
 	stop       chan bool
-	watcher    *inotify.Watcher
+	watcher    *fsnotify.Watcher
 }
 
 const (
@@ -60,9 +60,9 @@ func newTail(filename string) (*Tail, error) {
 	}
 	var err error
 	t.stop = make(chan bool)
-	t.watcher, err = inotify.NewWatcher()
+	t.watcher, err = fsnotify.NewWatcher()
 	if err != nil {
-		return nil, fmt.Errorf("inotify init failed on %s: %v", t.filename, err)
+		return nil, fmt.Errorf("fsnotify init failed on %s: %v", t.filename, err)
 	}
 	// Initialize readerErr as io.EOF, so that the reader can work properly
 	// during initialization.
@@ -93,6 +93,7 @@ func (t *Tail) attemptOpen() error {
 	defer t.readerLock.Unlock()
 	t.readerErr = nil
 	attempt := 0
+	var lastErr error
 	for interval := defaultRetryInterval; ; interval *= 2 {
 		attempt++
 		glog.V(4).Infof("Opening %s (attempt %d)", t.filename, attempt)
@@ -104,6 +105,9 @@ func (t *Tail) attemptOpen() error {
 			t.reader = bufio.NewReader(t.file)
 			return nil
 		}
+		lastErr = err
+		glog.V(4).Infof("open log file %s error: %v", t.filename, err)
+
 		if interval >= maxRetryInterval {
 			break
 		}
@@ -114,7 +118,7 @@ func (t *Tail) attemptOpen() error {
 			return fmt.Errorf("watch was cancelled")
 		}
 	}
-	err := fmt.Errorf("can't open log file %s", t.filename)
+	err := fmt.Errorf("can't open log file %s: %v", t.filename, lastErr)
 	t.readerErr = err
 	return err
 }
@@ -137,15 +141,15 @@ func (t *Tail) watchFile() error {
 	defer t.file.Close()
 
 	watchDir := filepath.Dir(t.filename)
-	err = t.watcher.AddWatch(watchDir, inotify.IN_MOVED_FROM|inotify.IN_DELETE)
+	err = t.watcher.Add(watchDir)
 	if err != nil {
 		return fmt.Errorf("Failed to add watch to directory %s: %v", watchDir, err)
 	}
-	defer t.watcher.RemoveWatch(watchDir)
+	defer t.watcher.Remove(watchDir)
 
 	for {
 		select {
-		case event := <-t.watcher.Event:
+		case event := <-t.watcher.Events:
 			eventPath := filepath.Clean(event.Name) // Directory events have an extra '/'
 			if eventPath == t.filename {
 				glog.V(4).Infof("Log file %s moved/deleted", t.filename)

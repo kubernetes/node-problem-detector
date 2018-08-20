@@ -27,8 +27,8 @@ import (
 	"k8s.io/node-problem-detector/pkg/types"
 	problemutil "k8s.io/node-problem-detector/pkg/util"
 
-	"k8s.io/kubernetes/pkg/api"
-	"k8s.io/kubernetes/pkg/util/clock"
+	"k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/util/clock"
 )
 
 func newTestManager() (*conditionManager, *problemclient.FakeProblemClient, *clock.FakeClock) {
@@ -98,7 +98,7 @@ func TestResync(t *testing.T) {
 	condition := newTestCondition("TestCondition")
 	m.conditions = map[string]types.Condition{condition.Type: condition}
 	m.sync()
-	expected := []api.NodeCondition{problemutil.ConvertToAPICondition(condition)}
+	expected := []v1.NodeCondition{problemutil.ConvertToAPICondition(condition)}
 	assert.Nil(t, fakeClient.AssertConditions(expected), "Condition should be updated via client")
 
 	assert.False(t, m.needResync(), "Should not resync before resync period")
@@ -118,7 +118,7 @@ func TestHeartbeat(t *testing.T) {
 	condition := newTestCondition("TestCondition")
 	m.conditions = map[string]types.Condition{condition.Type: condition}
 	m.sync()
-	expected := []api.NodeCondition{problemutil.ConvertToAPICondition(condition)}
+	expected := []v1.NodeCondition{problemutil.ConvertToAPICondition(condition)}
 	assert.Nil(t, fakeClient.AssertConditions(expected), "Condition should be updated via client")
 
 	assert.False(t, m.needHeartbeat(), "Should not heartbeat before heartbeat period")

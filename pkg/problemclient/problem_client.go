@@ -23,13 +23,17 @@ import (
 	"os"
 	"path/filepath"
 
-	"k8s.io/kubernetes/pkg/api"
-	"k8s.io/kubernetes/pkg/api/unversioned"
-	"k8s.io/kubernetes/pkg/client/record"
-	client "k8s.io/kubernetes/pkg/client/unversioned"
-	"k8s.io/kubernetes/pkg/types"
-	"k8s.io/kubernetes/pkg/util/clock"
+	typedcorev1 "k8s.io/client-go/kubernetes/typed/core/v1"
+	"k8s.io/kubernetes/pkg/api/legacyscheme"
 
+	"k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/clock"
+	clientset "k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/tools/record"
+
+	"github.com/golang/glog"
 	"k8s.io/heapster/common/kubernetes"
 	"k8s.io/node-problem-detector/cmd/options"
 	"k8s.io/node-problem-detector/pkg/version"
@@ -38,19 +42,19 @@ import (
 // Client is the interface of problem client
 type Client interface {
 	// GetConditions get all specifiec conditions of current node.
-	GetConditions(conditionTypes []api.NodeConditionType) ([]*api.NodeCondition, error)
+	GetConditions(conditionTypes []v1.NodeConditionType) ([]*v1.NodeCondition, error)
 	// SetConditions set or update conditions of current node.
-	SetConditions(conditions []api.NodeCondition) error
+	SetConditions(conditions []v1.NodeCondition) error
 	// Eventf reports the event.
 	Eventf(eventType string, source, reason, messageFmt string, args ...interface{})
 }
 
 type nodeProblemClient struct {
 	nodeName  string
-	client    *client.Client
+	client    typedcorev1.CoreV1Interface
 	clock     clock.Clock
 	recorders map[string]record.EventRecorder
-	nodeRef   *api.ObjectReference
+	nodeRef   *v1.ObjectReference
 }
 
 // NewClientOrDie creates a new problem client, panics if error occurs.
@@ -67,19 +71,19 @@ func NewClientOrDie(npdo *options.NodeProblemDetectorOptions) Client {
 
 	cfg.UserAgent = fmt.Sprintf("%s/%s", filepath.Base(os.Args[0]), version.Version())
 	// TODO(random-liu): Set QPS Limit
-	c.client = client.NewOrDie(cfg)
+	c.client = clientset.NewForConfigOrDie(cfg).CoreV1()
 	c.nodeName = npdo.NodeName
 	c.nodeRef = getNodeRef(c.nodeName)
 	c.recorders = make(map[string]record.EventRecorder)
 	return c
 }
 
-func (c *nodeProblemClient) GetConditions(conditionTypes []api.NodeConditionType) ([]*api.NodeCondition, error) {
-	node, err := c.client.Nodes().Get(c.nodeName)
+func (c *nodeProblemClient) GetConditions(conditionTypes []v1.NodeConditionType) ([]*v1.NodeCondition, error) {
+	node, err := c.client.Nodes().Get(c.nodeName, metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
-	conditions := []*api.NodeCondition{}
+	conditions := []*v1.NodeCondition{}
 	for _, conditionType := range conditionTypes {
 		for _, condition := range node.Status.Conditions {
 			if condition.Type == conditionType {
@@ -90,16 +94,16 @@ func (c *nodeProblemClient) GetConditions(conditionTypes []api.NodeConditionType
 	return conditions, nil
 }
 
-func (c *nodeProblemClient) SetConditions(newConditions []api.NodeCondition) error {
+func (c *nodeProblemClient) SetConditions(newConditions []v1.NodeCondition) error {
 	for i := range newConditions {
 		// Each time we update the conditions, we update the heart beat time
-		newConditions[i].LastHeartbeatTime = unversioned.NewTime(c.clock.Now())
+		newConditions[i].LastHeartbeatTime = metav1.NewTime(c.clock.Now())
 	}
 	patch, err := generatePatch(newConditions)
 	if err != nil {
 		return err
 	}
-	return c.client.Patch(api.StrategicMergePatchType).Resource("nodes").Name(c.nodeName).SubResource("status").Body(patch).Do().Error()
+	return c.client.RESTClient().Patch(types.StrategicMergePatchType).Resource("nodes").Name(c.nodeName).SubResource("status").Body(patch).Do().Error()
 }
 
 func (c *nodeProblemClient) Eventf(eventType, source, reason, messageFmt string, args ...interface{}) {
@@ -113,7 +117,7 @@ func (c *nodeProblemClient) Eventf(eventType, source, reason, messageFmt string,
 }
 
 // generatePatch generates condition patch
-func generatePatch(conditions []api.NodeCondition) ([]byte, error) {
+func generatePatch(conditions []v1.NodeCondition) ([]byte, error) {
 	raw, err := json.Marshal(&conditions)
 	if err != nil {
 		return nil, err
@@ -122,16 +126,17 @@ func generatePatch(conditions []api.NodeCondition) ([]byte, error) {
 }
 
 // getEventRecorder generates a recorder for specific node name and source.
-func getEventRecorder(c *client.Client, nodeName, source string) record.EventRecorder {
+func getEventRecorder(c typedcorev1.CoreV1Interface, nodeName, source string) record.EventRecorder {
 	eventBroadcaster := record.NewBroadcaster()
-	recorder := eventBroadcaster.NewRecorder(api.EventSource{Component: source, Host: nodeName})
-	eventBroadcaster.StartRecordingToSink(c.Events(""))
+	eventBroadcaster.StartLogging(glog.V(4).Infof)
+	recorder := eventBroadcaster.NewRecorder(legacyscheme.Scheme, v1.EventSource{Component: source, Host: nodeName})
+	eventBroadcaster.StartRecordingToSink(&typedcorev1.EventSinkImpl{Interface: c.Events("")})
 	return recorder
 }
 
-func getNodeRef(nodeName string) *api.ObjectReference {
+func getNodeRef(nodeName string) *v1.ObjectReference {
 	// TODO(random-liu): Get node to initialize the node reference
-	return &api.ObjectReference{
+	return &v1.ObjectReference{
 		Kind:      "Node",
 		Name:      nodeName,
 		UID:       types.UID(nodeName),

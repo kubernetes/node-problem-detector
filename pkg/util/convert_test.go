@@ -20,9 +20,8 @@ import (
 	"testing"
 	"time"
 
-	"k8s.io/kubernetes/pkg/api"
-	"k8s.io/kubernetes/pkg/api/unversioned"
-
+	"k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/node-problem-detector/pkg/types"
 )
 
@@ -35,10 +34,10 @@ func TestConvertToAPICondition(t *testing.T) {
 		Reason:     "test reason",
 		Message:    "test message",
 	}
-	expected := api.NodeCondition{
+	expected := v1.NodeCondition{
 		Type:               "TestCondition",
-		Status:             api.ConditionTrue,
-		LastTransitionTime: unversioned.NewTime(now),
+		Status:             v1.ConditionTrue,
+		LastTransitionTime: metav1.NewTime(now),
 		Reason:             "test reason",
 		Message:            "test message",
 	}

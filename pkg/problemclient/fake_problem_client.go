@@ -21,20 +21,20 @@ import (
 	"reflect"
 	"sync"
 
-	"k8s.io/kubernetes/pkg/api"
+	"k8s.io/api/core/v1"
 )
 
 // FakeProblemClient is a fake problem client for debug.
 type FakeProblemClient struct {
 	sync.Mutex
-	conditions map[api.NodeConditionType]api.NodeCondition
+	conditions map[v1.NodeConditionType]v1.NodeCondition
 	errors     map[string]error
 }
 
 // NewFakeProblemClient creates a new fake problem client.
 func NewFakeProblemClient() *FakeProblemClient {
 	return &FakeProblemClient{
-		conditions: make(map[api.NodeConditionType]api.NodeCondition),
+		conditions: make(map[v1.NodeConditionType]v1.NodeCondition),
 		errors:     make(map[string]error),
 	}
 }
@@ -48,8 +48,8 @@ func (f *FakeProblemClient) InjectError(fun string, err error) {
 
 // AssertConditions asserts that the internal conditions in fake problem client should match
 // the expected conditions.
-func (f *FakeProblemClient) AssertConditions(expected []api.NodeCondition) error {
-	conditions := map[api.NodeConditionType]api.NodeCondition{}
+func (f *FakeProblemClient) AssertConditions(expected []v1.NodeCondition) error {
+	conditions := map[v1.NodeConditionType]v1.NodeCondition{}
 	for _, condition := range expected {
 		conditions[condition.Type] = condition
 	}
@@ -60,7 +60,7 @@ func (f *FakeProblemClient) AssertConditions(expected []api.NodeCondition) error
 }
 
 // SetConditions is a fake mimic of SetConditions, it only update the internal condition cache.
-func (f *FakeProblemClient) SetConditions(conditions []api.NodeCondition) error {
+func (f *FakeProblemClient) SetConditions(conditions []v1.NodeCondition) error {
 	f.Lock()
 	defer f.Unlock()
 	if err, ok := f.errors["SetConditions"]; ok {
@@ -73,13 +73,13 @@ func (f *FakeProblemClient) SetConditions(conditions []api.NodeCondition) error 
 }
 
 // GetConditions is a fake mimic of GetConditions, it returns the conditions cached internally.
-func (f *FakeProblemClient) GetConditions(types []api.NodeConditionType) ([]*api.NodeCondition, error) {
+func (f *FakeProblemClient) GetConditions(types []v1.NodeConditionType) ([]*v1.NodeCondition, error) {
 	f.Lock()
 	defer f.Unlock()
 	if err, ok := f.errors["GetConditions"]; ok {
 		return nil, err
 	}
-	conditions := []*api.NodeCondition{}
+	conditions := []*v1.NodeCondition{}
 	for _, t := range types {
 		condition, ok := f.conditions[t]
 		if ok {

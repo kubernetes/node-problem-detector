@@ -25,8 +25,8 @@ import (
 	"k8s.io/node-problem-detector/pkg/types"
 	problemutil "k8s.io/node-problem-detector/pkg/util"
 
-	"k8s.io/kubernetes/pkg/api"
-	"k8s.io/kubernetes/pkg/util/clock"
+	"k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/util/clock"
 
 	"github.com/golang/glog"
 )
@@ -151,7 +151,7 @@ func (c *conditionManager) needHeartbeat() bool {
 func (c *conditionManager) sync() {
 	c.latestTry = c.clock.Now()
 	c.resyncNeeded = false
-	conditions := []api.NodeCondition{}
+	conditions := []v1.NodeCondition{}
 	for i := range c.conditions {
 		conditions = append(conditions, problemutil.ConvertToAPICondition(c.conditions[i]))
 	}

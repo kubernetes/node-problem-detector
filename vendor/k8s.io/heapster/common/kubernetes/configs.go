@@ -20,10 +20,10 @@ import (
 	"net/url"
 	"strconv"
 
-	"k8s.io/kubernetes/pkg/api/unversioned"
-	kube_client "k8s.io/kubernetes/pkg/client/restclient"
-	kubeClientCmd "k8s.io/kubernetes/pkg/client/unversioned/clientcmd"
-	kubeClientCmdApi "k8s.io/kubernetes/pkg/client/unversioned/clientcmd/api"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	kube_rest "k8s.io/client-go/rest"
+	kubeClientCmd "k8s.io/client-go/tools/clientcmd"
+	kubeClientCmdApi "k8s.io/client-go/tools/clientcmd/api"
 )
 
 const (
@@ -38,19 +38,13 @@ const (
 
 func getConfigOverrides(uri *url.URL) (*kubeClientCmd.ConfigOverrides, error) {
 	kubeConfigOverride := kubeClientCmd.ConfigOverrides{
-		ClusterInfo: kubeClientCmdApi.Cluster{
-			APIVersion: APIVersion,
-		},
+		ClusterInfo: kubeClientCmdApi.Cluster{},
 	}
 	if len(uri.Scheme) != 0 && len(uri.Host) != 0 {
 		kubeConfigOverride.ClusterInfo.Server = fmt.Sprintf("%s://%s", uri.Scheme, uri.Host)
 	}
 
 	opts := uri.Query()
-
-	if len(opts["apiVersion"]) >= 1 {
-		kubeConfigOverride.ClusterInfo.APIVersion = opts["apiVersion"][0]
-	}
 
 	if len(opts["insecure"]) > 0 {
 		insecure, err := strconv.ParseBool(opts["insecure"][0])
@@ -63,9 +57,9 @@ func getConfigOverrides(uri *url.URL) (*kubeClientCmd.ConfigOverrides, error) {
 	return &kubeConfigOverride, nil
 }
 
-func GetKubeClientConfig(uri *url.URL) (*kube_client.Config, error) {
+func GetKubeClientConfig(uri *url.URL) (*kube_rest.Config, error) {
 	var (
-		kubeConfig *kube_client.Config
+		kubeConfig *kube_rest.Config
 		err        error
 	)
 
@@ -84,7 +78,7 @@ func GetKubeClientConfig(uri *url.URL) (*kube_client.Config, error) {
 	}
 
 	if inClusterConfig {
-		kubeConfig, err = kube_client.InClusterConfig()
+		kubeConfig, err = kube_rest.InClusterConfig()
 		if err != nil {
 			return nil, err
 		}
@@ -92,7 +86,7 @@ func GetKubeClientConfig(uri *url.URL) (*kube_client.Config, error) {
 		if configOverrides.ClusterInfo.Server != "" {
 			kubeConfig.Host = configOverrides.ClusterInfo.Server
 		}
-		kubeConfig.GroupVersion = &unversioned.GroupVersion{Version: configOverrides.ClusterInfo.APIVersion}
+		kubeConfig.GroupVersion = &schema.GroupVersion{Version: APIVersion}
 		kubeConfig.Insecure = configOverrides.ClusterInfo.InsecureSkipTLSVerify
 		if configOverrides.ClusterInfo.InsecureSkipTLSVerify {
 			kubeConfig.TLSClientConfig.CAFile = ""
@@ -104,17 +98,29 @@ func GetKubeClientConfig(uri *url.URL) (*kube_client.Config, error) {
 		}
 
 		if authFile != "" {
-			if kubeConfig, err = kubeClientCmd.NewNonInteractiveDeferredLoadingClientConfig(
-				&kubeClientCmd.ClientConfigLoadingRules{ExplicitPath: authFile},
-				configOverrides).ClientConfig(); err != nil {
+			// Load structured kubeconfig data from the given path.
+			loader := &kubeClientCmd.ClientConfigLoadingRules{ExplicitPath: authFile}
+			loadedConfig, err := loader.Load()
+			if err != nil {
+				return nil, err
+			}
+
+			// Flatten the loaded data to a particular restclient.Config based on the current context.
+			if kubeConfig, err = kubeClientCmd.NewNonInteractiveClientConfig(
+				*loadedConfig,
+				loadedConfig.CurrentContext,
+				&kubeClientCmd.ConfigOverrides{},
+				loader).ClientConfig(); err != nil {
 				return nil, err
 			}
 		} else {
-			kubeConfig = &kube_client.Config{
-				Host:     configOverrides.ClusterInfo.Server,
-				Insecure: configOverrides.ClusterInfo.InsecureSkipTLSVerify,
+			kubeConfig = &kube_rest.Config{
+				Host: configOverrides.ClusterInfo.Server,
+				TLSClientConfig: kube_rest.TLSClientConfig{
+					Insecure: configOverrides.ClusterInfo.InsecureSkipTLSVerify,
+				},
 			}
-			kubeConfig.GroupVersion = &unversioned.GroupVersion{Version: configOverrides.ClusterInfo.APIVersion}
+			kubeConfig.GroupVersion = &schema.GroupVersion{Version: APIVersion}
 		}
 	}
 	if len(kubeConfig.Host) == 0 {
@@ -135,6 +141,8 @@ func GetKubeClientConfig(uri *url.URL) (*kube_client.Config, error) {
 			kubeConfig.BearerToken = string(contents)
 		}
 	}
+
+	kubeConfig.ContentType = "application/vnd.kubernetes.protobuf"
 
 	return kubeConfig, nil
 }

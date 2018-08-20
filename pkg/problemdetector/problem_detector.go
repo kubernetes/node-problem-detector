@@ -22,7 +22,7 @@ import (
 
 	"github.com/golang/glog"
 
-	"k8s.io/kubernetes/pkg/util/clock"
+	"k8s.io/apimachinery/pkg/util/clock"
 
 	"k8s.io/node-problem-detector/pkg/condition"
 	"k8s.io/node-problem-detector/pkg/problemclient"
@@ -78,8 +78,8 @@ func (p *problemDetector) Run() error {
 			for _, event := range status.Events {
 				p.client.Eventf(util.ConvertToAPIEventType(event.Severity), status.Source, event.Reason, event.Message)
 			}
-			for _, condition := range status.Conditions {
-				p.conditionManager.UpdateCondition(condition)
+			for _, cdt := range status.Conditions {
+				p.conditionManager.UpdateCondition(cdt)
 			}
 		}
 	}

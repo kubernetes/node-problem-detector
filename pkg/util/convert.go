@@ -19,16 +19,16 @@ package util
 import (
 	"time"
 
-	"k8s.io/kubernetes/pkg/api"
-	"k8s.io/kubernetes/pkg/api/unversioned"
+	"k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"k8s.io/node-problem-detector/pkg/types"
 )
 
-// ConvertToAPICondition converts the internal node condition to api.NodeCondition.
-func ConvertToAPICondition(condition types.Condition) api.NodeCondition {
-	return api.NodeCondition{
-		Type:               api.NodeConditionType(condition.Type),
+// ConvertToAPICondition converts the internal node condition to v1.NodeCondition.
+func ConvertToAPICondition(condition types.Condition) v1.NodeCondition {
+	return v1.NodeCondition{
+		Type:               v1.NodeConditionType(condition.Type),
 		Status:             ConvertToAPIConditionStatus(condition.Status),
 		LastTransitionTime: ConvertToAPITimestamp(condition.Transition),
 		Reason:             condition.Reason,
@@ -36,15 +36,15 @@ func ConvertToAPICondition(condition types.Condition) api.NodeCondition {
 	}
 }
 
-// ConvertToAPIConditionStatus converts the internal node condition status to api.ConditionStatus.
-func ConvertToAPIConditionStatus(status types.ConditionStatus) api.ConditionStatus {
+// ConvertToAPIConditionStatus converts the internal node condition status to v1.ConditionStatus.
+func ConvertToAPIConditionStatus(status types.ConditionStatus) v1.ConditionStatus {
 	switch status {
 	case types.True:
-		return api.ConditionTrue
+		return v1.ConditionTrue
 	case types.False:
-		return api.ConditionFalse
+		return v1.ConditionFalse
 	case types.Unknown:
-		return api.ConditionUnknown
+		return v1.ConditionUnknown
 	default:
 		panic("unknown condition status")
 	}
@@ -54,16 +54,16 @@ func ConvertToAPIConditionStatus(status types.ConditionStatus) api.ConditionStat
 func ConvertToAPIEventType(severity types.Severity) string {
 	switch severity {
 	case types.Info:
-		return api.EventTypeNormal
+		return v1.EventTypeNormal
 	case types.Warn:
-		return api.EventTypeWarning
+		return v1.EventTypeWarning
 	default:
 		// Should never get here, just in case
-		return api.EventTypeNormal
+		return v1.EventTypeNormal
 	}
 }
 
-// ConvertToAPITimestamp converts the timestamp to unversioned.Time
-func ConvertToAPITimestamp(timestamp time.Time) unversioned.Time {
-	return unversioned.NewTime(timestamp)
+// ConvertToAPITimestamp converts the timestamp to metav1.Time
+func ConvertToAPITimestamp(timestamp time.Time) metav1.Time {
+	return metav1.NewTime(timestamp)
 }
