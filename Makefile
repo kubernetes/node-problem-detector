@@ -19,7 +19,7 @@
 all: build
 
 # VERSION is the version of the binary.
-VERSION:=$(shell git describe --tags --dirty)
+VERSION?=$(shell if [ -d .git ]; then echo `git describe --tags --dirty`; else echo "UNKNOWN"; fi)
 
 # TAG is the tag of the container image, default to binary version.
 TAG?=$(VERSION)
