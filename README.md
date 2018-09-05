@@ -26,7 +26,7 @@ stack, so Kubernetes will continue scheduling pods to the bad nodes.
 To solve this problem, we introduced this new daemon **node-problem-detector** to
 collect node problems from various daemons and make them visible to the upstream
 layers. Once upstream layers have the visibility to those problems, we can discuss the
-remedy system.
+[remedy system](#remedy-systems).
 
 # Problem API
 node-problem-detector uses `Event` and `NodeCondition` to report problems to
@@ -137,6 +137,23 @@ For example, to test [KernelMonitor](https://github.com/kubernetes/node-problem-
 **Note**:
 - You can see more rule examples under [test/kernel_log_generator/problems](https://github.com/kubernetes/node-problem-detector/tree/master/test/kernel_log_generator/problems).
 - For [KernelMonitor](https://github.com/kubernetes/node-problem-detector/blob/master/config/kernel-monitor.json) message injection, all messages should have ```kernel: ``` prefix (also note there is a space after ```:```).
+
+# Remedy Systems
+A _remedy system_ is a process or processes designed to attempt to remedy problems
+detected by the node-problem-detector. Remedy systems observe events and/or node
+conditions emitted by the node-problem-detector and take action to return the
+Kubernetes cluster to a healthy state. The following remedy systems exist:
+
+* [**Draino**](https://github.com/negz/draino) automatically drains Kubernetes
+  nodes based on labels and node conditions. Nodes that match _all_ of the supplied
+  labels and _any_ of the supplied node conditions will be prevented from accepting
+  new pods (aka 'cordoned') immediately, and
+  [drained](https://kubernetes.io/docs/tasks/administer-cluster/safely-drain-node/)
+  after a configurable time. Draino can be used in conjunction with the
+  [Cluster Autoscaler](https://github.com/kubernetes/autoscaler/tree/master/cluster-autoscaler)
+  to automatically terminate drained nodes. Refer to
+  [this issue](https://github.com/kubernetes/node-problem-detector/issues/199)
+  for an example production use case for Draino.
 
 # Links
 * [Design Doc](https://docs.google.com/document/d/1cs1kqLziG-Ww145yN6vvlKguPbQQ0psrSBnEqpy0pzE/edit?usp=sharing)
