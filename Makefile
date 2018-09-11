@@ -46,7 +46,6 @@ IMAGE:=$(REGISTRY)/node-problem-detector:$(TAG)
 
 # ENABLE_JOURNALD enables build journald support or not. Building journald support needs libsystemd-dev
 # or libsystemd-journal-dev.
-# TODO(random-liu): Build NPD inside container.
 ENABLE_JOURNALD?=1
 
 # TODO(random-liu): Support different architectures.
@@ -93,7 +92,9 @@ Dockerfile: Dockerfile.in
 test: vet fmt
 	go test -timeout=1m -v -race ./cmd/options ./pkg/... $(BUILD_TAGS)
 
-build-container: ./bin/node-problem-detector ./bin/log-counter Dockerfile
+build-binaries: ./bin/node-problem-detector ./bin/log-counter
+
+build-container: build-binaries Dockerfile
 	docker build -t $(IMAGE) .
 
 build-tar: ./bin/node-problem-detector ./bin/log-counter
@@ -102,6 +103,12 @@ build-tar: ./bin/node-problem-detector ./bin/log-counter
 	md5sum $(TARBALL)
 
 build: build-container build-tar
+
+docker-builder:
+	docker build -t npd-builder ./builder
+
+build-in-docker: clean docker-builder
+	docker run -v `pwd`:/gopath/src/k8s.io/node-problem-detector/ npd-builder:latest bash -c 'cd /gopath/src/k8s.io/node-problem-detector/ && make build-binaries'
 
 push-container: build-container
 	gcloud docker -- push $(IMAGE)
