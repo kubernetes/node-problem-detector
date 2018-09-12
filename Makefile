@@ -14,7 +14,8 @@
 
 # Build the node-problem-detector image.
 
-.PHONY: all build-container build-tar build push-container push-tar push clean vet fmt version Dockerfile
+.PHONY: all build-container build-tar build push-container push-tar push clean vet fmt version \
+        Dockerfile build-binaries docker-builder build-in-docker
 
 all: build
 
