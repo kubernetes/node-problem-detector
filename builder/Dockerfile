@@ -13,7 +13,7 @@
 # limitations under the License.
 
 FROM golang:1.11.0
-LABEL maintainer="Marcin Wielgus <mwielgus@google.com>"
+LABEL maintainer="Andy Xie <andy.xning@gmail.com>"
 
 ENV GOPATH /gopath/
 ENV PATH $GOPATH/bin:$PATH
