@@ -128,7 +128,6 @@ func (c *customPluginMonitor) generateStatus(result cpmtypes.Result) *types.Stat
 				status := toConditionStatus(result.ExitStatus)
 				if condition.Status != status || condition.Reason != result.Rule.Reason {
 					condition.Transition = timestamp
-					condition.Message = result.Message
 					events = append(events, util.GenerateConditionChangeEvent(
 						condition.Type,
 						status,
@@ -136,6 +135,7 @@ func (c *customPluginMonitor) generateStatus(result cpmtypes.Result) *types.Stat
 						timestamp,
 					))
 				}
+				condition.Message = result.Message
 				condition.Status = status
 				condition.Reason = result.Rule.Reason
 				break
