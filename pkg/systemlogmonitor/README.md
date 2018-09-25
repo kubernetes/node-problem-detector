@@ -75,7 +75,7 @@ Log watcher specific configurations are configured in `pluginConfig`.
 ### Change Log Path
 
 Log on different OS distros may locate in different path. The `logPath`
-field in the configurtion file is the log path. You can always configure
+field in the configuration file is the log path. You can always configure
 `logPath` to match your OS distro.
 * filelog: `logPath` is the path of log file, e.g. `/var/log/kern.log` for kernel
   log.
