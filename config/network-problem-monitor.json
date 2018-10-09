@@ -12,7 +12,7 @@
     {
       "type": "temporary",
       "reason": "ConntrackFull",
-      "path": "./config/plugin/network_problem.sh",
+      "path": "/config/plugin/network_problem.sh",
       "timeout": "3s"
     }
   ]
