@@ -16,8 +16,8 @@ spec:
         command:
         - /node-problem-detector
         - --logtostderr
-        - --kernel-monitor=/config/kernel-monitor.json
-        image: k8s.gcr.io/node-problem-detector:v0.2
+        - --system-log-monitors=/config/kernel-monitor.json,/config/docker-monitor.json
+        image: k8s.gcr.io/node-problem-detector:v0.5.0
         imagePullPolicy: Always
         securityContext:
           privileged: true
@@ -55,3 +55,8 @@ spec:
       - name: config
         configMap:
           name: node-problem-detector-config
+          items:
+          - key: kernel-monitor.json
+            path: kernel-monitor.json
+          - key: docker-monitor.json
+            path: docker-monitor.json

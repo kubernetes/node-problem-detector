@@ -103,9 +103,9 @@ to another registry.
 
 ## Start DaemonSet
 * Edit [node-problem-detector.yaml](https://github.com/kubernetes/node-problem-detector/blob/master/deployment/node-problem-detector.yaml) to fit your environment: Set `log` volume to your system log directory. (Used by SystemLogMonitor). For **kubernetes <1.9** use [node-problem-detector-old.yaml](https://github.com/kubernetes/node-problem-detector/blob/master/deployment/node-problem-detector-old.yaml)
-* Create the DaemonSet with `kubectl create -f node-problem-detector.yaml`
 * If needed, you can use [ConfigMap](https://kubernetes.io/docs/tasks/configure-pod-container/configure-pod-configmap/)
-to overwrite the `config/`.
+to overwrite the `config/`, Edit [node-problem-detector-config.yaml](https://github.com/kubernetes/node-problem-detector/blob/master/deployment/node-problem-detector-config.yaml) to fit your environment. and create the ConfigMap with `kubectl create -f node-problem-detector-config.yaml`.
+* Create the DaemonSet with `kubectl create -f node-problem-detector.yaml`.
 
 ## Start Standalone
 To run node-problem-detector standalone, you should set `inClusterConfig` to `false` and
