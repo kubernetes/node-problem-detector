@@ -1,4 +1,5 @@
 # node-problem-detector
+
 [![Build Status](https://travis-ci.org/kubernetes/node-problem-detector.svg?branch=master)](https://travis-ci.org/kubernetes/node-problem-detector)  [![Go Report Card](https://goreportcard.com/badge/github.com/kubernetes/node-problem-detector)](https://goreportcard.com/report/github.com/kubernetes/node-problem-detector)
 
 node-problem-detector aims to make various node problems visible to the upstream
@@ -12,6 +13,7 @@ Now it is running as a
 enabled by default in the GCE cluster.
 
 # Background
+
 There are tons of node problems could possibly affect the pods running on the
 node such as:
 * Infrastructure daemon issues: ntp service down;
@@ -29,6 +31,7 @@ layers. Once upstream layers have the visibility to those problems, we can discu
 [remedy system](#remedy-systems).
 
 # Problem API
+
 node-problem-detector uses `Event` and `NodeCondition` to report problems to
 apiserver.
 * `NodeCondition`: Permanent problem that makes the node unavailable for pods should
@@ -37,6 +40,7 @@ be reported as `NodeCondition`.
 should be reported as `Event`.
 
 # Problem Daemon
+
 A problem daemon is a sub-daemon of node-problem-detector. It monitors a specific
 kind of node problems and reports them to node-problem-detector.
 
@@ -57,7 +61,9 @@ List of supported problem daemons:
 | [CustomPluginMonitor](https://github.com/kubernetes/node-problem-detector/blob/master/config/custom-plugin-monitor.json) | On-demand(According to users configuration) | A custom plugin monitor for node-problem-detector to invoke and check various node problems with user defined check scripts. See proposal [here](https://docs.google.com/document/d/1jK_5YloSYtboj-DtfjmYKxfNnUxCAvohLnsH5aGCAYQ/edit#). |
 
 # Usage
+
 ## Flags
+
 * `--version`: Print current version of node-problem-detector.
 * `--address`: The address to bind the node problem detector server.
 * `--port`: The port to bind the node problem detector server. Use 0 to disable.
@@ -81,6 +87,7 @@ For example, to run without auth, use the following config:
 * `--hostname-override`: A customized node name used for node-problem-detector to update conditions and emit events. node-problem-detector gets node name first from `hostname-override`, then `NODE_NAME` environment variable and finally fall back to `os.Hostname`.
 
 ## Build Image
+
 * `go get` or `git clone` node-problem-detector repo into `$GOPATH/src/k8s.io` or `$GOROOT/src/k8s.io`
 with one of the below directions:
   * `cd $GOPATH/src/k8s.io && git clone git@github.com:kubernetes/node-problem-detector.git`
@@ -97,17 +104,23 @@ You should download the systemd develop files first. For Ubuntu, `libsystemd-jou
 be installed. For Debian, `libsystemd-dev` package should be installed.
 
 ## Push Image
+
 `make push` uploads the docker image to registry. By default, the image will be uploaded to
 `staging-k8s.gcr.io`. It's easy to modify the `Makefile` to push the image
 to another registry.
 
-## Start DaemonSet
-* Edit [node-problem-detector.yaml](https://github.com/kubernetes/node-problem-detector/blob/master/deployment/node-problem-detector.yaml) to fit your environment: Set `log` volume to your system log directory. (Used by SystemLogMonitor). For **kubernetes <1.9** use [node-problem-detector-old.yaml](https://github.com/kubernetes/node-problem-detector/blob/master/deployment/node-problem-detector-old.yaml)
-* If needed, you can use [ConfigMap](https://kubernetes.io/docs/tasks/configure-pod-container/configure-pod-configmap/)
-to overwrite the `config/`, Edit [node-problem-detector-config.yaml](https://github.com/kubernetes/node-problem-detector/blob/master/deployment/node-problem-detector-config.yaml) to fit your environment. and create the ConfigMap with `kubectl create -f node-problem-detector-config.yaml`.
-* Create the DaemonSet with `kubectl create -f node-problem-detector.yaml`.
+## Installation
+
+The easiest way to install node-problem-detector into your cluster is to use the [Helm](https://helm.sh/) [chart](https://github.com/helm/charts/tree/master/stable/node-problem-detector):
+
+```
+helm install stable/node-problem-detector
+```
+
+Alternatively you can edit [node-problem-detector.yaml](deployment/node-problem-detector.yaml) to fit your environment. Set `log` volume to your system log directory (used by SystemLogMonitor). For  Kubernetes versions older than 1.9 use [node-problem-detector-old.yaml](deployment/node-problem-detector-old.yaml). Create the DaemonSet with `kubectl create -f deployment/node-problem-detector.yaml`. If needed, you can use a [ConfigMap](https://kubernetes.io/docs/tasks/configure-pod-container/configure-pod-configmap/) to overwrite the `config` directory inside the pod.
 
 ## Start Standalone
+
 To run node-problem-detector standalone, you should set `inClusterConfig` to `false` and
 teach node-problem-detector how to access apiserver with `apiserver-override`.
 
@@ -119,6 +132,7 @@ node-problem-detector --apiserver-override=http://APISERVER_IP:APISERVER_INSECUR
 For more scenarios, see [here](https://github.com/kubernetes/heapster/blob/master/docs/source-configuration.md#kubernetes)
 
 ## Try It Out
+
 You can try node-problem-detector in a running cluster by injecting messages to the logs that node-problem-detector is watching. For example, Let's assume node-problem-detector is using [KernelMonitor](https://github.com/kubernetes/node-problem-detector/blob/master/config/kernel-monitor.json). On your workstation, run ```kubectl get events -w```. On the node, run ```sudo sh -c "echo 'kernel: BUG: unable to handle kernel NULL pointer dereference at TESTING' >> /dev/kmsg"```. Then you should see the ```KernelOops``` event.
 
 When adding new rules or developing node-problem-detector, it is probably easier to test it on the local workstation in the standalone mode. For the API server, an easy way is to use ```kubectl proxy``` to make a running cluster's API server available locally. You will get some errors because your local workstation is not recognized by the API server. But you should still be able to test your new rules regardless.
@@ -139,6 +153,7 @@ For example, to test [KernelMonitor](https://github.com/kubernetes/node-problem-
 - For [KernelMonitor](https://github.com/kubernetes/node-problem-detector/blob/master/config/kernel-monitor.json) message injection, all messages should have ```kernel: ``` prefix (also note there is a space after ```:```).
 
 # Remedy Systems
+
 A _remedy system_ is a process or processes designed to attempt to remedy problems
 detected by the node-problem-detector. Remedy systems observe events and/or node
 conditions emitted by the node-problem-detector and take action to return the
@@ -156,6 +171,7 @@ Kubernetes cluster to a healthy state. The following remedy systems exist:
   for an example production use case for Draino.
 
 # Links
+
 * [Design Doc](https://docs.google.com/document/d/1cs1kqLziG-Ww145yN6vvlKguPbQQ0psrSBnEqpy0pzE/edit?usp=sharing)
 * [Slides](https://docs.google.com/presentation/d/1bkJibjwWXy8YnB5fna6p-Ltiy-N5p01zUsA22wCNkXA/edit?usp=sharing)
 * [Plugin Interface Proposal](https://docs.google.com/document/d/1jK_5YloSYtboj-DtfjmYKxfNnUxCAvohLnsH5aGCAYQ/edit#)
