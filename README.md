@@ -117,7 +117,10 @@ The easiest way to install node-problem-detector into your cluster is to use the
 helm install stable/node-problem-detector
 ```
 
-Alternatively you can edit [node-problem-detector.yaml](deployment/node-problem-detector.yaml) to fit your environment. Set `log` volume to your system log directory (used by SystemLogMonitor). For  Kubernetes versions older than 1.9 use [node-problem-detector-old.yaml](deployment/node-problem-detector-old.yaml). Create the DaemonSet with `kubectl create -f deployment/node-problem-detector.yaml`. If needed, you can use a [ConfigMap](https://kubernetes.io/docs/tasks/configure-pod-container/configure-pod-configmap/) to overwrite the `config` directory inside the pod.
+Alternatively, you can edit [node-problem-detector.yaml](deployment/node-problem-detector.yaml) to fit your environment. Set `log` volume to your system log directory (used by SystemLogMonitor). For Kubernetes versions older than 1.9, use [node-problem-detector-old.yaml](deployment/node-problem-detector-old.yaml).
+
+- Create the DaemonSet with `kubectl create -f deployment/node-problem-detector.yaml`.
+- If needed, you can use a [ConfigMap](https://kubernetes.io/docs/tasks/configure-pod-container/configure-pod-configmap/) to overwrite the `config` directory inside the pod.
 
 ## Start Standalone
 
