@@ -67,7 +67,7 @@ func (p *problemDetector) Run() error {
 		chans = append(chans, ch)
 	}
 	if len(chans) == 0 {
-		return fmt.Errorf("no log montior is successfully setup")
+		return fmt.Errorf("no log monitor is successfully setup")
 	}
 	ch := groupChannel(chans)
 	glog.Info("Problem detector started")
