@@ -2,11 +2,8 @@ apiVersion: v1
 data:
   kernel-monitor.json: |
     {
-        "plugin": "journald",
-        "pluginConfig": {
-            "source": "kernel"
-        },
-        "logPath": "/var/log/journal",
+        "plugin": "kmsg",
+        "logPath": "/dev/kmsg",
         "lookback": "5m",
         "bufferSize": 10,
         "source": "kernel-monitor",
@@ -15,6 +12,11 @@ data:
                 "type": "KernelDeadlock",
                 "reason": "KernelHasNoDeadlock",
                 "message": "kernel has no deadlock"
+            },
+            {
+                "type": "ReadonlyFilesystem",
+                "reason": "FilesystemIsReadOnly",
+                "message": "Filesystem is read-only"
             }
         ],
         "rules": [
@@ -54,6 +56,12 @@ data:
                 "condition": "KernelDeadlock",
                 "reason": "DockerHung",
                 "pattern": "task docker:\\w+ blocked for more than \\w+ seconds\\."
+            },
+            {
+                "type": "permanent",
+                "condition": "ReadonlyFilesystem",
+                "reason": "FilesystemIsReadOnly",
+                "pattern": "Remounting filesystem read-only"
             }
         ]
     }
