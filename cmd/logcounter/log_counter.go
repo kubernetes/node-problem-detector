@@ -32,7 +32,7 @@ func main() {
 	fedo.AddFlags(pflag.CommandLine)
 	pflag.Parse()
 
-	counter, err := logcounter.NewKmsgLogCounter(fedo)
+	counter, err := logcounter.NewJournaldLogCounter(fedo)
 	if err != nil {
 		fmt.Print(err)
 		os.Exit(int(types.Unknown))

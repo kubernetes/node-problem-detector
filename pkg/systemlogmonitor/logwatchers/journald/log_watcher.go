@@ -22,7 +22,6 @@ import (
 	"fmt"
 	"os"
 	"strings"
-	"syscall"
 	"time"
 
 	"github.com/coreos/go-systemd/sdjournal"
@@ -30,6 +29,7 @@ import (
 
 	"k8s.io/node-problem-detector/pkg/systemlogmonitor/logwatchers/types"
 	logtypes "k8s.io/node-problem-detector/pkg/systemlogmonitor/types"
+	"k8s.io/node-problem-detector/pkg/util"
 	"k8s.io/node-problem-detector/pkg/util/tomb"
 )
 
@@ -40,17 +40,28 @@ import (
 
 // journaldWatcher is the log watcher for journald.
 type journaldWatcher struct {
-	journal *sdjournal.Journal
-	cfg     types.WatcherConfig
-	logCh   chan *logtypes.Log
-	tomb    *tomb.Tomb
+	journal   *sdjournal.Journal
+	cfg       types.WatcherConfig
+	startTime time.Time
+	logCh     chan *logtypes.Log
+	tomb      *tomb.Tomb
 }
 
 // NewJournaldWatcher is the create function of journald watcher.
 func NewJournaldWatcher(cfg types.WatcherConfig) types.LogWatcher {
+	uptime, err := util.GetUptimeDuration()
+	if err != nil {
+		glog.Fatalf("failed to get uptime: %v", err)
+	}
+	startTime, err := util.GetStartTime(time.Now(), uptime, cfg.Lookback, cfg.Delay)
+	if err != nil {
+		glog.Fatalf("failed to get start time: %v", err)
+	}
+
 	return &journaldWatcher{
-		cfg:  cfg,
-		tomb: tomb.NewTomb(),
+		cfg:       cfg,
+		startTime: startTime,
+		tomb:      tomb.NewTomb(),
 		// A capacity 1000 buffer should be enough
 		logCh: make(chan *logtypes.Log, 1000),
 	}
@@ -61,7 +72,7 @@ var _ types.WatcherCreateFunc = NewJournaldWatcher
 
 // Watch starts the journal watcher.
 func (j *journaldWatcher) Watch() (<-chan *logtypes.Log, error) {
-	journal, err := getJournal(j.cfg)
+	journal, err := getJournal(j.cfg, j.startTime)
 	if err != nil {
 		return nil, err
 	}
@@ -81,6 +92,7 @@ const waitLogTimeout = 5 * time.Second
 
 // watchLoop is the main watch loop of journald watcher.
 func (j *journaldWatcher) watchLoop() {
+	startTimestamp := timeToJournalTimestamp(j.startTime)
 	defer func() {
 		if err := j.journal.Close(); err != nil {
 			glog.Errorf("Failed to close journal client: %v", err)
@@ -112,6 +124,12 @@ func (j *journaldWatcher) watchLoop() {
 			continue
 		}
 
+		if entry.RealtimeTimestamp < startTimestamp {
+			glog.V(5).Infof("Throwing away journal entry %q before start time: %v < %v",
+				entry.Fields[sdjournal.SD_JOURNAL_FIELD_MESSAGE], entry.RealtimeTimestamp, startTimestamp)
+			continue
+		}
+
 		j.logCh <- translate(entry)
 	}
 }
@@ -125,16 +143,11 @@ const (
 )
 
 // getJournal returns a journal client.
-func getJournal(cfg types.WatcherConfig) (*sdjournal.Journal, error) {
+func getJournal(cfg types.WatcherConfig, startTime time.Time) (*sdjournal.Journal, error) {
 	// Get journal log path.
 	path := defaultJournalLogPath
 	if cfg.LogPath != "" {
 		path = cfg.LogPath
-	}
-	// Get lookback duration.
-	lookback, err := time.ParseDuration(cfg.Lookback)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse lookback duration %q: %v", cfg.Lookback, err)
 	}
 	// If the path doesn't present, NewJournalFromDir will create it instead of
 	// returning error. So check the path existence ourselves.
@@ -146,24 +159,15 @@ func getJournal(cfg types.WatcherConfig) (*sdjournal.Journal, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to create journal client from path %q: %v", path, err)
 	}
-	// Use system uptime if lookback duration is longer than it.
-	// Ideally, we should use monotonic timestamp + boot id in journald. However, it doesn't seem
-	// to work with go-system/journal package.
-	// TODO(random-liu): Use monotonic timestamp + boot id.
-	var info syscall.Sysinfo_t
-	if err := syscall.Sysinfo(&info); err != nil {
-		return nil, fmt.Errorf("failed to get system info: %v", err)
+	// Seek journal client based on startTime.
+	seekTime := startTime
+	now := time.Now()
+	if now.Before(seekTime) {
+		seekTime = now
 	}
-	uptime := time.Duration(info.Uptime) * time.Second
-	if lookback > uptime {
-		lookback = uptime
-		glog.Infof("Lookback changed to system uptime: %v", lookback)
-	}
-	// Seek journal client based on the lookback duration.
-	start := time.Now().Add(-lookback)
-	err = journal.SeekRealtimeUsec(uint64(start.UnixNano() / 1000))
+	err = journal.SeekRealtimeUsec(timeToJournalTimestamp(seekTime))
 	if err != nil {
-		return nil, fmt.Errorf("failed to lookback %q: %v", lookback, err)
+		return nil, fmt.Errorf("failed to seek journal at %v (now %v): %v", seekTime, now, err)
 	}
 	// Empty source is not allowed and treated as an error.
 	source := cfg.PluginConfig[configSourceKey]
@@ -189,4 +193,8 @@ func translate(entry *sdjournal.JournalEntry) *logtypes.Log {
 		Timestamp: timestamp,
 		Message:   message,
 	}
+}
+
+func timeToJournalTimestamp(t time.Time) uint64 {
+	return uint64(t.UnixNano() / 1000)
 }

@@ -32,14 +32,18 @@ type LogWatcher interface {
 type WatcherConfig struct {
 	// Plugin is the name of plugin which is currently used.
 	// Currently supported: filelog, journald, kmsg.
-	Plugin string `json:"plugin, omitempty"`
+	Plugin string `json:"plugin,omitempty"`
 	// PluginConfig is a key/value configuration of a plugin. Valid configurations
 	// are defined in different log watcher plugin.
-	PluginConfig map[string]string `json:"pluginConfig, omitempty"`
+	PluginConfig map[string]string `json:"pluginConfig,omitempty"`
 	// LogPath is the path to the log
-	LogPath string `json:"logPath, omitempty"`
+	LogPath string `json:"logPath,omitempty"`
 	// Lookback is the time log watcher looks up
-	Lookback string `json:"lookback, omitempty"`
+	Lookback string `json:"lookback,omitempty"`
+	// Delay is the time duration log watcher delays after node boot time. This is
+	// useful when the log watcher needs to wait for some time until the node
+	// becomes stable.
+	Delay string `json:"delay,omitempty"`
 }
 
 // WatcherCreateFunc is the create function of a log watcher.

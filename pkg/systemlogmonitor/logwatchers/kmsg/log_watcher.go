@@ -27,13 +27,15 @@ import (
 
 	"k8s.io/node-problem-detector/pkg/systemlogmonitor/logwatchers/types"
 	logtypes "k8s.io/node-problem-detector/pkg/systemlogmonitor/types"
+	"k8s.io/node-problem-detector/pkg/util"
 	"k8s.io/node-problem-detector/pkg/util/tomb"
 )
 
 type kernelLogWatcher struct {
-	cfg   types.WatcherConfig
-	logCh chan *logtypes.Log
-	tomb  *tomb.Tomb
+	cfg       types.WatcherConfig
+	startTime time.Time
+	logCh     chan *logtypes.Log
+	tomb      *tomb.Tomb
 
 	kmsgParser kmsgparser.Parser
 	clock      utilclock.Clock
@@ -41,9 +43,19 @@ type kernelLogWatcher struct {
 
 // NewKmsgWatcher creates a watcher which will read messages from /dev/kmsg
 func NewKmsgWatcher(cfg types.WatcherConfig) types.LogWatcher {
+	uptime, err := util.GetUptimeDuration()
+	if err != nil {
+		glog.Fatalf("failed to get uptime: %v", err)
+	}
+	startTime, err := util.GetStartTime(time.Now(), uptime, cfg.Lookback, cfg.Delay)
+	if err != nil {
+		glog.Fatalf("failed to get start time: %v", err)
+	}
+
 	return &kernelLogWatcher{
-		cfg:  cfg,
-		tomb: tomb.NewTomb(),
+		cfg:       cfg,
+		startTime: startTime,
+		tomb:      tomb.NewTomb(),
 		// Arbitrary capacity
 		logCh: make(chan *logtypes.Log, 100),
 		clock: utilclock.NewClock(),
@@ -62,12 +74,7 @@ func (k *kernelLogWatcher) Watch() (<-chan *logtypes.Log, error) {
 		k.kmsgParser = parser
 	}
 
-	lookback, err := time.ParseDuration(k.cfg.Lookback)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse lookback duration %q: %v", k.cfg.Lookback, err)
-	}
-
-	go k.watchLoop(lookback)
+	go k.watchLoop()
 	return k.logCh, nil
 }
 
@@ -78,7 +85,7 @@ func (k *kernelLogWatcher) Stop() {
 }
 
 // watchLoop is the main watch loop of kernel log watcher.
-func (k *kernelLogWatcher) watchLoop(lookback time.Duration) {
+func (k *kernelLogWatcher) watchLoop() {
 	defer func() {
 		close(k.logCh)
 		k.tomb.Done()
@@ -99,9 +106,9 @@ func (k *kernelLogWatcher) watchLoop(lookback time.Duration) {
 				continue
 			}
 
-			// Discard too old messages
-			if k.clock.Since(msg.Timestamp) > lookback {
-				glog.V(5).Infof("Throwing away msg %v for being too old: %v > %v", msg.Message, msg.Timestamp.String(), lookback.String())
+			// Discard messages before start time.
+			if msg.Timestamp.Before(k.startTime) {
+				glog.V(5).Infof("Throwing away msg %q before start time: %v < %v", msg.Message, msg.Timestamp, k.startTime)
 				continue
 			}
 

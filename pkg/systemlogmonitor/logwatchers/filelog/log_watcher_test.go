@@ -25,6 +25,7 @@ import (
 
 	"k8s.io/node-problem-detector/pkg/systemlogmonitor/logwatchers/types"
 	logtypes "k8s.io/node-problem-detector/pkg/systemlogmonitor/types"
+	"k8s.io/node-problem-detector/pkg/util"
 
 	"code.cloudfoundry.org/clock/fakeclock"
 	"github.com/stretchr/testify/assert"
@@ -45,18 +46,21 @@ func TestWatch(t *testing.T) {
 	now := time.Date(time.Now().Year(), time.January, 2, 3, 4, 5, 0, time.Local)
 	fakeClock := fakeclock.NewFakeClock(now)
 	testCases := []struct {
+		uptime   time.Duration
+		lookback string
+		delay    string
 		log      string
 		logs     []logtypes.Log
-		uptime   time.Time
-		lookback string
 	}{
 		{
 			// The start point is at the head of the log file.
+			uptime:   0,
+			lookback: "0",
+			delay:    "0",
 			log: `Jan  2 03:04:05 kernel: [0.000000] 1
 Jan  2 03:04:06 kernel: [1.000000] 2
 Jan  2 03:04:07 kernel: [2.000000] 3
 			`,
-			lookback: "0",
 			logs: []logtypes.Log{
 				{
 					Timestamp: now,
@@ -74,11 +78,13 @@ Jan  2 03:04:07 kernel: [2.000000] 3
 		},
 		{
 			// The start point is in the middle of the log file.
+			uptime:   0,
+			lookback: "0",
+			delay:    "0",
 			log: `Jan  2 03:04:04 kernel: [0.000000] 1
 Jan  2 03:04:05 kernel: [1.000000] 2
 Jan  2 03:04:06 kernel: [2.000000] 3
 			`,
-			lookback: "0",
 			logs: []logtypes.Log{
 				{
 					Timestamp: now,
@@ -92,11 +98,13 @@ Jan  2 03:04:06 kernel: [2.000000] 3
 		},
 		{
 			// The start point is at the end of the log file, but we look back.
+			uptime:   2 * time.Second,
+			lookback: "1s",
+			delay:    "0",
 			log: `Jan  2 03:04:03 kernel: [0.000000] 1
 Jan  2 03:04:04 kernel: [1.000000] 2
 Jan  2 03:04:05 kernel: [2.000000] 3
 			`,
-			lookback: "1s",
 			logs: []logtypes.Log{
 				{
 					Timestamp: now.Add(-time.Second),
@@ -111,12 +119,13 @@ Jan  2 03:04:05 kernel: [2.000000] 3
 		{
 			// The start point is at the end of the log file, we look back, but
 			// system rebooted at in the middle of the log file.
+			uptime:   time.Second,
+			lookback: "2s",
+			delay:    "0",
 			log: `Jan  2 03:04:03 kernel: [0.000000] 1
 Jan  2 03:04:04 kernel: [1.000000] 2
 Jan  2 03:04:05 kernel: [2.000000] 3
 			`,
-			uptime:   time.Date(time.Now().Year(), time.January, 2, 3, 4, 4, 0, time.Local),
-			lookback: "2s",
 			logs: []logtypes.Log{
 				{
 					Timestamp: now.Add(-time.Second),
@@ -146,8 +155,8 @@ Jan  2 03:04:05 kernel: [2.000000] 3
 			LogPath:      f.Name(),
 			Lookback:     test.lookback,
 		})
-		// Set the uptime.
-		w.(*filelogWatcher).uptime = test.uptime
+		// Set the startTime.
+		w.(*filelogWatcher).startTime, _ = util.GetStartTime(fakeClock.Now(), test.uptime, test.lookback, test.delay)
 		// Set the fake clock.
 		w.(*filelogWatcher).clock = fakeClock
 		logCh, err := w.Watch()

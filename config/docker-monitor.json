@@ -1,7 +1,7 @@
 {
 	"plugin": "journald",
 	"pluginConfig": {
-		"source": "docker"
+		"source": "dockerd"
 	},
 	"logPath": "/var/log/journal",
 	"lookback": "5m",
