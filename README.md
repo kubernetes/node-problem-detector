@@ -165,7 +165,7 @@ detected by the node-problem-detector. Remedy systems observe events and/or node
 conditions emitted by the node-problem-detector and take action to return the
 Kubernetes cluster to a healthy state. The following remedy systems exist:
 
-* [**Draino**](https://github.com/negz/draino) automatically drains Kubernetes
+* [**Draino**](https://github.com/planetlabs/draino) automatically drains Kubernetes
   nodes based on labels and node conditions. Nodes that match _all_ of the supplied
   labels and _any_ of the supplied node conditions will be prevented from accepting
   new pods (aka 'cordoned') immediately, and
