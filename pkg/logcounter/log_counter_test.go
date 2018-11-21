@@ -115,7 +115,7 @@ func TestCount(t *testing.T) {
 				for _, log := range logs {
 					ch <- log
 				}
-				// trigger the timeout to ensure the test doesn't block permenantly
+				// trigger the timeout to ensure the test doesn't block permanently
 				for {
 					fakeClock.Step(2 * timeout)
 				}

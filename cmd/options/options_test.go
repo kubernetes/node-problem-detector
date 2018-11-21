@@ -44,7 +44,7 @@ func TestSetNodeNameOrDie(t *testing.T) {
 				HostnameOverride: "hostname-override",
 			},
 		},
-		"Check hostname override and NDDE_NAME env": {
+		"Check hostname override and NODE_NAME env": {
 			WantedNodeName: "node-name-env",
 			Meta: options{
 				Nodename:         "node-name-env",
