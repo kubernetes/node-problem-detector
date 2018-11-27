@@ -69,7 +69,7 @@ ifeq ($(ENABLE_JOURNALD), 1)
 endif
 
 vet:
-	go list ./... | grep -v "./vendor/*" | xargs go vet
+	go list ./... | grep -v "./vendor/*" | xargs go vet $(BUILD_TAGS)
 
 fmt:
 	find . -type f -name "*.go" | grep -v "./vendor/*" | xargs gofmt -s -w -l

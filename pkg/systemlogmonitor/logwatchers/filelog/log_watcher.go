@@ -23,7 +23,6 @@ import (
 	"io"
 	"os"
 	"strings"
-	"syscall"
 	"time"
 
 	utilclock "code.cloudfoundry.org/clock"
@@ -32,6 +31,7 @@ import (
 
 	"k8s.io/node-problem-detector/pkg/systemlogmonitor/logwatchers/types"
 	logtypes "k8s.io/node-problem-detector/pkg/systemlogmonitor/types"
+	"k8s.io/node-problem-detector/pkg/util"
 	"k8s.io/node-problem-detector/pkg/util/tomb"
 )
 
@@ -41,7 +41,7 @@ type filelogWatcher struct {
 	closer     io.Closer
 	translator *translator
 	logCh      chan *logtypes.Log
-	uptime     time.Time
+	startTime  time.Time
 	tomb       *tomb.Tomb
 	clock      utilclock.Clock
 }
@@ -49,14 +49,19 @@ type filelogWatcher struct {
 // NewSyslogWatcherOrDie creates a new log watcher. The function panics
 // when encounters an error.
 func NewSyslogWatcherOrDie(cfg types.WatcherConfig) types.LogWatcher {
-	var info syscall.Sysinfo_t
-	if err := syscall.Sysinfo(&info); err != nil {
-		glog.Fatalf("Failed to get system info: %v", err)
+	uptime, err := util.GetUptimeDuration()
+	if err != nil {
+		glog.Fatalf("failed to get uptime: %v", err)
 	}
+	startTime, err := util.GetStartTime(time.Now(), uptime, cfg.Lookback, cfg.Delay)
+	if err != nil {
+		glog.Fatalf("failed to get start time: %v", err)
+	}
+
 	return &filelogWatcher{
 		cfg:        cfg,
 		translator: newTranslatorOrDie(cfg.PluginConfig),
-		uptime:     time.Now().Add(time.Duration(-info.Uptime * int64(time.Second))),
+		startTime:  startTime,
 		tomb:       tomb.NewTomb(),
 		// A capacity 1000 buffer should be enough
 		logCh: make(chan *logtypes.Log, 1000),
@@ -96,11 +101,6 @@ func (s *filelogWatcher) watchLoop() {
 		close(s.logCh)
 		s.tomb.Done()
 	}()
-	lookback, err := time.ParseDuration(s.cfg.Lookback)
-	if err != nil {
-		glog.Fatalf("Failed to parse duration %q: %v", s.cfg.Lookback, err)
-	}
-	glog.Info("Lookback:", lookback)
 	var buffer bytes.Buffer
 	for {
 		select {
@@ -127,8 +127,9 @@ func (s *filelogWatcher) watchLoop() {
 			glog.Warningf("Unable to parse line: %q, %v", line, err)
 			continue
 		}
-		// If the log is older than look back duration or system boot time, discard it.
-		if s.clock.Since(log.Timestamp) > lookback || log.Timestamp.Before(s.uptime) {
+		// Discard messages before start time.
+		if log.Timestamp.Before(s.startTime) {
+			glog.V(5).Infof("Throwing away msg %q before start time: %v < %v", log.Message, log.Timestamp, s.startTime)
 			continue
 		}
 		s.logCh <- log

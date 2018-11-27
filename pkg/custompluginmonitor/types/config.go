@@ -37,26 +37,26 @@ var (
 
 type pluginGlobalConfig struct {
 	// InvokeIntervalString is the interval string at which plugins will be invoked.
-	InvokeIntervalString *string `json:"invoke_interval, omitempty"`
+	InvokeIntervalString *string `json:"invoke_interval,omitempty"`
 	// TimeoutString is the global plugin execution timeout string.
-	TimeoutString *string `json:"timeout, omitempty"`
+	TimeoutString *string `json:"timeout,omitempty"`
 	// InvokeInterval is the interval at which plugins will be invoked.
 	InvokeInterval *time.Duration `json:"-"`
 	// Timeout is the global plugin execution timeout.
 	Timeout *time.Duration `json:"-"`
 	// MaxOutputLength is the maximum plugin output message length.
-	MaxOutputLength *int `json:"max_output_length, omitempty"`
+	MaxOutputLength *int `json:"max_output_length,omitempty"`
 	// Concurrency is the number of concurrent running plugins.
-	Concurrency *int `json:"concurrency, omitempty"`
+	Concurrency *int `json:"concurrency,omitempty"`
 }
 
 // Custom plugin config is the configuration of custom plugin monitor.
 type CustomPluginConfig struct {
 	// Plugin is the name of plugin which is currently used.
 	// Currently supported: custom.
-	Plugin string `json:"plugin, omitempty"`
+	Plugin string `json:"plugin,omitempty"`
 	// PluginConfig is global plugin configuration.
-	PluginGlobalConfig pluginGlobalConfig `json:"pluginConfig, omitempty"`
+	PluginGlobalConfig pluginGlobalConfig `json:"pluginConfig,omitempty"`
 	// Source is the source name of the custom plugin monitor
 	Source string `json:"source"`
 	// DefaultConditions are the default states of all the conditions custom plugin monitor should handle.

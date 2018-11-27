@@ -29,14 +29,21 @@ func NewLogCounterOptions() *LogCounterOptions {
 // LogCounterOptions contains frequent event detector command line and application options.
 type LogCounterOptions struct {
 	// command line options. See flag descriptions for the description
-	Lookback string
-	Pattern  string
-	Count    int
+	JournaldSource string
+	LogPath        string
+	Lookback       string
+	Delay          string
+	Pattern        string
+	Count          int
 }
 
 // AddFlags adds log counter command line options to pflag.
 func (fedo *LogCounterOptions) AddFlags(fs *pflag.FlagSet) {
+	fs.StringVar(&fedo.JournaldSource, "journald-source", "", "The source configuration of journald, e.g., kernel, kubelet, dockerd, etc")
+	fs.StringVar(&fedo.LogPath, "log-path", "", "The log path that log watcher looks up")
 	fs.StringVar(&fedo.Lookback, "lookback", "", "The time log watcher looks up")
+	fs.StringVar(&fedo.Delay, "delay", "",
+		"The time duration log watcher delays after node boot time. This is useful when log watcher needs to wait for some time until the node is stable.")
 	fs.StringVar(&fedo.Pattern, "pattern", "",
 		"The regular expression to match the problem in log. The pattern must match to the end of the line.")
 	fs.IntVar(&fedo.Count, "count", 1,

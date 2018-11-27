@@ -1,0 +1,72 @@
+{
+  "plugin": "custom",
+  "pluginConfig": {
+    "invoke_interval": "5m",
+    "timeout": "1m",
+    "max_output_length": 80,
+    "concurrency": 1
+  },
+  "source": "systemd-monitor",
+  "conditions": [
+    {
+      "type": "FrequentKubeletRestart",
+      "reason": "NoFrequentKubeletRestart",
+      "message": "kubelet is functioning properly"
+    },
+    {
+      "type": "FrequentDockerRestart",
+      "reason": "NoFrequentDockerRestart",
+      "message": "docker is functioning properly"
+    },
+    {
+      "type": "FrequentContainerdRestart",
+      "reason": "NoFrequentContainerdRestart",
+      "message": "containerd is functioning properly"
+    }
+  ],
+  "rules": [
+    {
+      "type": "permanent",
+      "condition": "FrequentKubeletRestart",
+      "reason": "FrequentKubeletRestart",
+      "path": "/home/kubernetes/bin/log-counter",
+      "args": [
+        "--journald-source=systemd",
+        "--log-path=/var/log/journal",
+        "--lookback=20m",
+        "--delay=5m",
+        "--count=5",
+        "--pattern=Started Kubernetes kubelet."
+      ],
+      "timeout": "1m"
+    },
+    {
+      "type": "permanent",
+      "condition": "FrequentDockerRestart",
+      "reason": "FrequentDockerRestart",
+      "path": "/home/kubernetes/bin/log-counter",
+      "args": [
+        "--journald-source=systemd",
+        "--log-path=/var/log/journal",
+        "--lookback=20m",
+        "--count=5",
+        "--pattern=Starting Docker Application Container Engine..."
+      ],
+      "timeout": "1m"
+    },
+    {
+      "type": "permanent",
+      "condition": "FrequentContainerdRestart",
+      "reason": "FrequentContainerdRestart",
+      "path": "/home/kubernetes/bin/log-counter",
+      "args": [
+        "--journald-source=systemd",
+        "--log-path=/var/log/journal",
+        "--lookback=20m",
+        "--count=5",
+        "--pattern=Starting containerd container runtime..."
+      ],
+      "timeout": "1m"
+    }
+  ]
+}
