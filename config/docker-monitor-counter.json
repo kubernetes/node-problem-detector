@@ -1,0 +1,33 @@
+{
+  "plugin": "custom",
+  "pluginConfig": {
+    "invoke_interval": "5m",
+    "timeout": "1m",
+    "max_output_length": 80,
+    "concurrency": 1
+  },
+  "source": "docker-monitor",
+  "conditions": [
+    {
+      "type": "CorruptDockerOverlay2",
+      "reason": "NoCorruptDockerOverlay2",
+      "message": "docker overlay2 is functioning properly"
+    }
+  ],
+  "rules": [
+    {
+      "type": "permanent",
+      "condition": "CorruptDockerOverlay2",
+      "reason": "CorruptDockerOverlay2",
+      "path": "/home/kubernetes/bin/log-counter",
+      "args": [
+        "--journald-source=dockerd",
+        "--log-path=/var/log/journal",
+        "--lookback=5m",
+        "--count=10",
+        "--pattern=returned error: readlink /var/lib/docker/overlay2.*: invalid argument.*"
+      ],
+      "timeout": "1m"
+    }
+  ]
+}
