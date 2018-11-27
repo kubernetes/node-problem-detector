@@ -126,7 +126,32 @@ func (c *customPluginMonitor) generateStatus(result cpmtypes.Result) *types.Stat
 			condition := &c.conditions[i]
 			if condition.Type == result.Rule.Condition {
 				status := toConditionStatus(result.ExitStatus)
-				if condition.Status != status || condition.Reason != result.Rule.Reason {
+				// change 1: Condition status change from True to False/Unknown
+				if condition.Status == types.True && status != types.True {
+					condition.Transition = timestamp
+					var defaultConditionReason string
+					var defaultConditionMessage string
+					for j := range c.config.DefaultConditions {
+						defaultCondition := &c.config.DefaultConditions[j]
+						if defaultCondition.Type == result.Rule.Condition {
+							defaultConditionReason = defaultCondition.Reason
+							defaultConditionMessage = defaultCondition.Message
+							break
+						}
+					}
+
+					events = append(events, util.GenerateConditionChangeEvent(
+						condition.Type,
+						status,
+						defaultConditionReason,
+						timestamp,
+					))
+
+					condition.Status = status
+					condition.Message = defaultConditionMessage
+					condition.Reason = defaultConditionReason
+				} else if condition.Status != types.True && status == types.True {
+					// change 2: Condition status change from False/Unknown to True
 					condition.Transition = timestamp
 					condition.Message = result.Message
 					events = append(events, util.GenerateConditionChangeEvent(
@@ -135,9 +160,34 @@ func (c *customPluginMonitor) generateStatus(result cpmtypes.Result) *types.Stat
 						result.Rule.Reason,
 						timestamp,
 					))
+
+					condition.Status = status
+					condition.Reason = result.Rule.Reason
+				} else if condition.Status != status {
+					// change 3: Condition status change from False to Unknown or vice versa
+					condition.Transition = timestamp
+					condition.Message = result.Message
+					events = append(events, util.GenerateConditionChangeEvent(
+						condition.Type,
+						status,
+						result.Rule.Reason,
+						timestamp,
+					))
+
+					condition.Status = status
+					condition.Reason = result.Rule.Reason
+				} else if condition.Status == status && condition.Message != result.Message {
+					// change 4: Condition status do not change. condition message changes.
+					condition.Transition = timestamp
+					condition.Message = result.Message
+					events = append(events, util.GenerateConditionChangeEvent(
+						condition.Type,
+						status,
+						condition.Reason,
+						timestamp,
+					))
 				}
-				condition.Status = status
-				condition.Reason = result.Rule.Reason
+
 				break
 			}
 		}
