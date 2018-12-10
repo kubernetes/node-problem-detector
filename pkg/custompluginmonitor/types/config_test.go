@@ -29,6 +29,7 @@ func TestCustomPluginConfigApplyConfiguration(t *testing.T) {
 	invokeIntervalString := invokeInterval.String()
 	maxOutputLength := 79
 	concurrency := 2
+	messageChangeBasedConditionUpdate := true
 
 	ruleTimeout := 1 * time.Second
 	ruleTimeoutString := ruleTimeout.String()
@@ -51,12 +52,13 @@ func TestCustomPluginConfigApplyConfiguration(t *testing.T) {
 			},
 			Wanted: CustomPluginConfig{
 				PluginGlobalConfig: pluginGlobalConfig{
-					InvokeIntervalString: &defaultInvokeIntervalString,
-					InvokeInterval:       &defaultInvokeInterval,
-					TimeoutString:        &defaultGlobalTimeoutString,
-					Timeout:              &defaultGlobalTimeout,
-					MaxOutputLength:      &defaultMaxOutputLength,
-					Concurrency:          &defaultConcurrency,
+					InvokeIntervalString:                    &defaultInvokeIntervalString,
+					InvokeInterval:                          &defaultInvokeInterval,
+					TimeoutString:                           &defaultGlobalTimeoutString,
+					Timeout:                                 &defaultGlobalTimeout,
+					MaxOutputLength:                         &defaultMaxOutputLength,
+					Concurrency:                             &defaultConcurrency,
+					EnableMessageChangeBasedConditionUpdate: &defaultMessageChangeBasedConditionUpdate,
 				},
 				Rules: []*CustomRule{
 					{
@@ -78,12 +80,13 @@ func TestCustomPluginConfigApplyConfiguration(t *testing.T) {
 			},
 			Wanted: CustomPluginConfig{
 				PluginGlobalConfig: pluginGlobalConfig{
-					InvokeIntervalString: &invokeIntervalString,
-					InvokeInterval:       &invokeInterval,
-					TimeoutString:        &defaultGlobalTimeoutString,
-					Timeout:              &defaultGlobalTimeout,
-					MaxOutputLength:      &defaultMaxOutputLength,
-					Concurrency:          &defaultConcurrency,
+					InvokeIntervalString:                    &invokeIntervalString,
+					InvokeInterval:                          &invokeInterval,
+					TimeoutString:                           &defaultGlobalTimeoutString,
+					Timeout:                                 &defaultGlobalTimeout,
+					MaxOutputLength:                         &defaultMaxOutputLength,
+					Concurrency:                             &defaultConcurrency,
+					EnableMessageChangeBasedConditionUpdate: &defaultMessageChangeBasedConditionUpdate,
 				},
 			},
 		},
@@ -95,12 +98,13 @@ func TestCustomPluginConfigApplyConfiguration(t *testing.T) {
 			},
 			Wanted: CustomPluginConfig{
 				PluginGlobalConfig: pluginGlobalConfig{
-					InvokeIntervalString: &defaultInvokeIntervalString,
-					InvokeInterval:       &defaultInvokeInterval,
-					TimeoutString:        &globalTimeoutString,
-					Timeout:              &globalTimeout,
-					MaxOutputLength:      &defaultMaxOutputLength,
-					Concurrency:          &defaultConcurrency,
+					InvokeIntervalString:                    &defaultInvokeIntervalString,
+					InvokeInterval:                          &defaultInvokeInterval,
+					TimeoutString:                           &globalTimeoutString,
+					Timeout:                                 &globalTimeout,
+					MaxOutputLength:                         &defaultMaxOutputLength,
+					Concurrency:                             &defaultConcurrency,
+					EnableMessageChangeBasedConditionUpdate: &defaultMessageChangeBasedConditionUpdate,
 				},
 			},
 		},
@@ -112,12 +116,13 @@ func TestCustomPluginConfigApplyConfiguration(t *testing.T) {
 			},
 			Wanted: CustomPluginConfig{
 				PluginGlobalConfig: pluginGlobalConfig{
-					InvokeIntervalString: &defaultInvokeIntervalString,
-					InvokeInterval:       &defaultInvokeInterval,
-					TimeoutString:        &defaultGlobalTimeoutString,
-					Timeout:              &defaultGlobalTimeout,
-					MaxOutputLength:      &maxOutputLength,
-					Concurrency:          &defaultConcurrency,
+					InvokeIntervalString:                    &defaultInvokeIntervalString,
+					InvokeInterval:                          &defaultInvokeInterval,
+					TimeoutString:                           &defaultGlobalTimeoutString,
+					Timeout:                                 &defaultGlobalTimeout,
+					MaxOutputLength:                         &maxOutputLength,
+					Concurrency:                             &defaultConcurrency,
+					EnableMessageChangeBasedConditionUpdate: &defaultMessageChangeBasedConditionUpdate,
 				},
 			},
 		},
@@ -129,12 +134,31 @@ func TestCustomPluginConfigApplyConfiguration(t *testing.T) {
 			},
 			Wanted: CustomPluginConfig{
 				PluginGlobalConfig: pluginGlobalConfig{
-					InvokeIntervalString: &defaultInvokeIntervalString,
-					InvokeInterval:       &defaultInvokeInterval,
-					TimeoutString:        &defaultGlobalTimeoutString,
-					Timeout:              &defaultGlobalTimeout,
-					MaxOutputLength:      &defaultMaxOutputLength,
-					Concurrency:          &concurrency,
+					InvokeIntervalString:                    &defaultInvokeIntervalString,
+					InvokeInterval:                          &defaultInvokeInterval,
+					TimeoutString:                           &defaultGlobalTimeoutString,
+					Timeout:                                 &defaultGlobalTimeout,
+					MaxOutputLength:                         &defaultMaxOutputLength,
+					Concurrency:                             &concurrency,
+					EnableMessageChangeBasedConditionUpdate: &defaultMessageChangeBasedConditionUpdate,
+				},
+			},
+		},
+		"custom message change based condition update": {
+			Orig: CustomPluginConfig{
+				PluginGlobalConfig: pluginGlobalConfig{
+					EnableMessageChangeBasedConditionUpdate: &messageChangeBasedConditionUpdate,
+				},
+			},
+			Wanted: CustomPluginConfig{
+				PluginGlobalConfig: pluginGlobalConfig{
+					InvokeIntervalString:                    &defaultInvokeIntervalString,
+					InvokeInterval:                          &defaultInvokeInterval,
+					TimeoutString:                           &defaultGlobalTimeoutString,
+					Timeout:                                 &defaultGlobalTimeout,
+					MaxOutputLength:                         &defaultMaxOutputLength,
+					Concurrency:                             &defaultConcurrency,
+					EnableMessageChangeBasedConditionUpdate: &messageChangeBasedConditionUpdate,
 				},
 			},
 		},
