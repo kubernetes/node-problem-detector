@@ -177,6 +177,10 @@ Kubernetes cluster to a healthy state. The following remedy systems exist:
   [this issue](https://github.com/kubernetes/node-problem-detector/issues/199)
   for an example production use case for Draino.
 
+# Docs
+
+* [Custom plugin monitor](docs/custom_plugin_monitor.md)
+
 # Links
 
 * [Design Doc](https://docs.google.com/document/d/1cs1kqLziG-Ww145yN6vvlKguPbQQ0psrSBnEqpy0pzE/edit?usp=sharing)
