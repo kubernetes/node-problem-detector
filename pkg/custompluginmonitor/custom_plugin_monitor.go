@@ -176,8 +176,12 @@ func (c *customPluginMonitor) generateStatus(result cpmtypes.Result) *types.Stat
 
 					condition.Status = status
 					condition.Reason = result.Rule.Reason
-				} else if condition.Status == status && condition.Reason != result.Rule.Reason {
-					// change 4: Condition status do not change. condition reason changes.
+				} else if condition.Status == status &&
+					(condition.Reason != result.Rule.Reason ||
+						(*c.config.PluginGlobalConfig.EnableMessageChangeBasedConditionUpdate && condition.Message != result.Message)) {
+					// change 4: Condition status do not change.
+					// condition reason changes or
+					// condition message changes when message based condition update is enabled.
 					condition.Transition = timestamp
 					condition.Reason = result.Rule.Reason
 					condition.Message = result.Message

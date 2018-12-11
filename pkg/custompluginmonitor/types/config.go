@@ -25,12 +25,13 @@ import (
 )
 
 var (
-	defaultGlobalTimeout        = 5 * time.Second
-	defaultGlobalTimeoutString  = defaultGlobalTimeout.String()
-	defaultInvokeInterval       = 30 * time.Second
-	defaultInvokeIntervalString = defaultInvokeInterval.String()
-	defaultMaxOutputLength      = 80
-	defaultConcurrency          = 3
+	defaultGlobalTimeout                     = 5 * time.Second
+	defaultGlobalTimeoutString               = defaultGlobalTimeout.String()
+	defaultInvokeInterval                    = 30 * time.Second
+	defaultInvokeIntervalString              = defaultInvokeInterval.String()
+	defaultMaxOutputLength                   = 80
+	defaultConcurrency                       = 3
+	defaultMessageChangeBasedConditionUpdate = false
 
 	customPluginName = "custom"
 )
@@ -48,6 +49,8 @@ type pluginGlobalConfig struct {
 	MaxOutputLength *int `json:"max_output_length,omitempty"`
 	// Concurrency is the number of concurrent running plugins.
 	Concurrency *int `json:"concurrency,omitempty"`
+	// EnableMessageChangeBasedConditionUpdate indicates whether NPD should enable message change based condition update.
+	EnableMessageChangeBasedConditionUpdate *bool `json:"enable_message_change_based_condition_update,omitempty"`
 }
 
 // Custom plugin config is the configuration of custom plugin monitor.
@@ -94,6 +97,9 @@ func (cpc *CustomPluginConfig) ApplyConfiguration() error {
 	}
 	if cpc.PluginGlobalConfig.Concurrency == nil {
 		cpc.PluginGlobalConfig.Concurrency = &defaultConcurrency
+	}
+	if cpc.PluginGlobalConfig.EnableMessageChangeBasedConditionUpdate == nil {
+		cpc.PluginGlobalConfig.EnableMessageChangeBasedConditionUpdate = &defaultMessageChangeBasedConditionUpdate
 	}
 
 	for _, rule := range cpc.Rules {
