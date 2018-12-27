@@ -18,6 +18,13 @@ spec:
         - --logtostderr
         - --system-log-monitors=/config/kernel-monitor.json,/config/docker-monitor.json
         image: k8s.gcr.io/node-problem-detector:v0.6.1
+        resources:
+          limits:
+            cpu: 10m
+            memory: 80Mi
+          requests:
+            cpu: 10m
+            memory: 80Mi
         imagePullPolicy: Always
         securityContext:
           privileged: true
