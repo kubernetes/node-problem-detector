@@ -135,29 +135,32 @@ func (j *journaldWatcher) watchLoop() {
 }
 
 const (
-	// defaultJournalLogPath is the default path of journal log.
-	defaultJournalLogPath = "/var/log/journal"
-
 	// configSourceKey is the key of source configuration in the plugin configuration.
 	configSourceKey = "source"
 )
 
 // getJournal returns a journal client.
 func getJournal(cfg types.WatcherConfig, startTime time.Time) (*sdjournal.Journal, error) {
-	// Get journal log path.
-	path := defaultJournalLogPath
-	if cfg.LogPath != "" {
-		path = cfg.LogPath
-	}
-	// If the path doesn't present, NewJournalFromDir will create it instead of
-	// returning error. So check the path existence ourselves.
-	if _, err := os.Stat(path); err != nil {
-		return nil, fmt.Errorf("failed to stat the log path %q: %v", path, err)
-	}
-	// Get journal client from the log path.
-	journal, err := sdjournal.NewJournalFromDir(path)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create journal client from path %q: %v", path, err)
+	var journal *sdjournal.Journal
+	var err error
+	if cfg.LogPath == "" {
+		journal, err = sdjournal.NewJournal()
+		if err != nil {
+			return nil, fmt.Errorf("failed to create journal client from default log path: %v", err)
+		}
+		glog.Info("unspecified log path so using systemd default")
+	} else {
+		// If the path doesn't exist, NewJournalFromDir will
+		// create it instead of returning error. So check the
+		// path existence ourselves.
+		if _, err = os.Stat(cfg.LogPath); err != nil {
+			return nil, fmt.Errorf("failed to stat the log path %q: %v", cfg.LogPath, err)
+		}
+		// Get journal client from the log path.
+		journal, err = sdjournal.NewJournalFromDir(cfg.LogPath)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create journal client from path %q: %v", cfg.LogPath, err)
+		}
 	}
 	// Seek journal client based on startTime.
 	seekTime := startTime
