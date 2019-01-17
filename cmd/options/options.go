@@ -80,6 +80,9 @@ func (npdo *NodeProblemDetectorOptions) ValidOrDie() {
 		panic(fmt.Sprintf("apiserver-override %q is not a valid HTTP URI: %v",
 			npdo.ApiServerOverride, err))
 	}
+	if len(npdo.SystemLogMonitorConfigPaths) == 0 && len(npdo.CustomPluginMonitorConfigPaths) == 0 {
+		panic(fmt.Sprintf("Either --system-log-monitors or --custom-plugin-monitors is required"))
+	}
 }
 
 // SetNodeNameOrDie sets `NodeName` field with valid value.
