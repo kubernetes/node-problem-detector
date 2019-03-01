@@ -19,11 +19,9 @@ install:
  - mv $TRAVIS_BUILD_DIR $HOME/gopath/src/k8s.io/node-problem-detector
  - cd $HOME/gopath/src/k8s.io/node-problem-detector
 script:
- - make
- - make test
-# jobs:
-#   include:
-#     - stage: Test
-#       script: make test
-#     - stage: Build
-#       script: make
+jobs:
+  include:
+    - stage: Test
+      script: make test
+    - stage: Build
+      script: make
