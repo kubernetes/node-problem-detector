@@ -91,6 +91,9 @@ Dockerfile: Dockerfile.in
 	sed -e 's|@BASEIMAGE@|$(BASEIMAGE)|g' $< >$@
 
 test: vet fmt
+	echo *********************
+	echo $(BUILD_TAGS)
+	echo *********************
 	go test -timeout=1m -v -race ./cmd/options ./pkg/... $(BUILD_TAGS)
 
 build-binaries: ./bin/node-problem-detector ./bin/log-counter
