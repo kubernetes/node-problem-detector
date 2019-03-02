@@ -4,8 +4,11 @@ sudo: required
 dist: trusty
 language: go
 go:
- - 1.9
+ - "1.9"
  - "1.10"
+ - "1.11"
+ - "1.12"
+ - master
 services:
  - docker
 before_install:
@@ -15,9 +18,6 @@ install:
  - mkdir -p $HOME/gopath/src/k8s.io
  - mv $TRAVIS_BUILD_DIR $HOME/gopath/src/k8s.io/node-problem-detector
  - cd $HOME/gopath/src/k8s.io/node-problem-detector
-jobs:
-  include:
-    - stage: Test
-      script: make test
-    - stage: Build
-      script: make
+script:
+ - make
+ - make test
