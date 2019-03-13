@@ -27,13 +27,14 @@ NPD_STAGING_REGISTRY=${NPD_STAGING_REGISTRY:-"gcr.io/node-problem-detector-stagi
 PR_ENV_FILENAME=${PR_ENV_FILENAME:-"pr.env"}
 CI_ENV_FILENAME=${CI_ENV_FILENAME:-"ci.env"}
 ROOT_PATH=$(git rev-parse --show-toplevel)
+GCS_URL_PREFIX="https://storage.googleapis.com/"
 
 function print-help() {
   echo "Usage: build.sh [args...]"
   echo "Available arguments:"
-  echo "  pr [pull_refs]: Build node-problem-detector for presubmit jobs and push to staging."
-  echo "  ci:             Build node-problem-detector for CI jobs and push to staging."
-  echo "  get-ci-env:     Download environment variable file from staging for CI job."
+  echo "  pr [pull_number]: Build node-problem-detector for presubmit jobs and push to staging."
+  echo "  ci:               Build node-problem-detector for CI jobs and push to staging."
+  echo "  get-ci-env:       Download environment variable file from staging for CI job."
 }
 
 function get-version() {
@@ -44,6 +45,11 @@ function get-version() {
   fi
 }
 
+function install-lib() {
+  apt-get update
+  apt-get install -y libsystemd-dev
+}
+
 function write-env-file() {
   local -r env_file="${1}"
   if [[ -z "${env_file}" ]]; then
@@ -52,20 +58,29 @@ function write-env-file() {
   fi
 
   cat > ${ROOT_PATH}/${env_file} <<EOF
-export EXTRA_ENVS=NODE_PROBLEM_DETECTOR_IMAGE=${REGISTRY}/node-problem-detector:${TAG}
-export NODE_PROBLEM_DETECTOR_RELEASE_PATH=${UPLOAD_PATH}
+export KUBE_ENABLE_NODE_PROBLEM_DETECTOR=standalone
+export NODE_PROBLEM_DETECTOR_RELEASE_PATH=${UPLOAD_PATH/gs:\/\//${GCS_URL_PREFIX}}
 export NODE_PROBLEM_DETECTOR_VERSION=${VERSION}
 export NODE_PROBLEM_DETECTOR_TAR_HASH=$(sha1sum ${ROOT_PATH}/node-problem-detector-${VERSION}.tar.gz | cut -d ' ' -f1)
+export EXTRA_ENVS=NODE_PROBLEM_DETECTOR_IMAGE=${REGISTRY}/node-problem-detector:${TAG}
 EOF
+
+  set -x
+  cat ${ROOT_PATH}/${env_file}
+  set +x
 }
 
 function build-pr() {
-  local -r PR="${1}"
-  if [[ -z "${PR}" ]]; then
-    echo "ERROR: pull_refs is missing."
+  local -r PR_NUMBER="${1}"
+  if [[ -z "${PR_NUMBER}" ]]; then
+    echo "ERROR: pull_number is missing."
     print-help
     exit 1
   fi
+  # Use the PR number and current time as the name, e.g., pr261-20190314.224907.862195792
+  local -r PR="pr${PR_NUMBER}-$(date +%Y%m%d.%H%M%S.%N)"
+  echo "Building for PR ${PR}..."
+  install-lib
 
   export UPLOAD_PATH="${NPD_STAGING_PATH}/pr/${PR}"
   export REGISTRY="${NPD_STAGING_REGISTRY}/pr/${PR}"
@@ -76,6 +91,7 @@ function build-pr() {
 }
 
 function build-ci() {
+  install-lib
   export UPLOAD_PATH="${NPD_STAGING_PATH}/ci"
   export REGISTRY="${NPD_STAGING_REGISTRY}/ci"
   export VERSION=$(get-version)
@@ -101,7 +117,7 @@ COMMAND="${1}"
 
 if [[ "${COMMAND}" == "pr" ]]; then
   if [[ "$#" -ne 2 ]]; then
-    echo "ERROR: pull_refs is missing."
+    echo "ERROR: pull_number is missing."
     print-help
     exit 1
   fi
@@ -110,9 +126,10 @@ elif [[ "${COMMAND}" == "ci" ]]; then
   build-ci
 elif [[ "${COMMAND}" == "get-ci-env" ]]; then
   get-ci-env
+elif [[ "${COMMAND}" == "install-lib" ]]; then
+  install-lib
 else
   echo "ERROR: Invalid command."
   print-help
   exit 1
 fi
-
