@@ -65,9 +65,8 @@ export NODE_PROBLEM_DETECTOR_TAR_HASH=$(sha1sum ${ROOT_PATH}/node-problem-detect
 export EXTRA_ENVS=NODE_PROBLEM_DETECTOR_IMAGE=${REGISTRY}/node-problem-detector:${TAG}
 EOF
 
-  set -x
+  echo "Written env file ${ROOT_PATH}/${env_file}:"
   cat ${ROOT_PATH}/${env_file}
-  set +x
 }
 
 function build-pr() {
@@ -94,7 +93,7 @@ function build-ci() {
   install-lib
   export UPLOAD_PATH="${NPD_STAGING_PATH}/ci"
   export REGISTRY="${NPD_STAGING_REGISTRY}/ci"
-  export VERSION=$(get-version)
+  export VERSION="$(get-version)-$(date +%Y%m%d.%H%M)"
   export TAG="${VERSION}"
   make push
   write-env-file ${CI_ENV_FILENAME}
@@ -103,6 +102,9 @@ function build-ci() {
 
 function get-ci-env() {
   gsutil cp ${NPD_STAGING_PATH}/ci/${CI_ENV_FILENAME} ${ROOT_PATH}/${CI_ENV_FILENAME}
+
+  echo "Using env file ${ROOT_PATH}/${CI_ENV_FILENAME}:"
+  cat ${ROOT_PATH}/${CI_ENV_FILENAME}
 }
 
 
