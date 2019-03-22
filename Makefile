@@ -112,7 +112,8 @@ build-in-docker: clean docker-builder
 	docker run -v `pwd`:/gopath/src/k8s.io/node-problem-detector/ npd-builder:latest bash -c 'cd /gopath/src/k8s.io/node-problem-detector/ && make build-binaries'
 
 push-container: build-container
-	gcloud docker -- push $(IMAGE)
+	gcloud auth configure-docker
+	docker push $(IMAGE)
 
 push-tar: build-tar
 	gsutil cp $(TARBALL) $(UPLOAD_PATH)/node-problem-detector/
