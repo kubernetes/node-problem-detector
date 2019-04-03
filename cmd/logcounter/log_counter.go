@@ -17,6 +17,7 @@ limitations under the License.
 package main
 
 import (
+	"flag"
 	"fmt"
 	"os"
 
@@ -28,6 +29,12 @@ import (
 )
 
 func main() {
+	// Set glog flag so that it does not log to files.
+	if err := flag.Set("logtostderr", "true"); err != nil {
+		fmt.Printf("Failed to set logtostderr=true: %v", err)
+		os.Exit(int(types.Unknown))
+	}
+
 	fedo := options.NewLogCounterOptions()
 	fedo.AddFlags(pflag.CommandLine)
 	pflag.Parse()
