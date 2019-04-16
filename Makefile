@@ -42,18 +42,35 @@ PKG_SOURCES:=$(shell find pkg cmd -name '*.go')
 # TARBALL is the name of release tar. Include binary version by default.
 TARBALL:=node-problem-detector-$(VERSION).tar.gz
 
-# IMAGE is the image name of the node problem detector container image.
-IMAGE:=$(REGISTRY)/node-problem-detector:$(TAG)
-
 # ENABLE_JOURNALD enables build journald support or not. Building journald support needs libsystemd-dev
 # or libsystemd-journal-dev.
 ENABLE_JOURNALD?=1
 
-# TODO(random-liu): Support different architectures.
 # The debian-base:0.4.0 image built from kubernetes repository is based on Debian Stretch.
 # It includes systemd 232 with support for both +XZ and +LZ4 compression.
 # +LZ4 is needed on some os distros such as COS.
-BASEIMAGE:=k8s.gcr.io/debian-base-amd64:0.4.0
+ARCH?=amd64
+DOCKER_ARCH_TARGETS?=amd64 arm64
+PLATFORMS?=linux/amd64,linux/arm64
+CC?=gcc
+
+ifeq ($(ARCH),amd64)
+	BASEIMAGE:=k8s.gcr.io/debian-base-amd64:0.4.0
+	IMAGE:=$(REGISTRY)/node-problem-detector-amd64:$(TAG)
+endif
+ifeq ($(ARCH),arm64)
+	BASEIMAGE:=k8s.gcr.io/debian-base-arm64:0.4.0
+	IMAGE:=$(REGISTRY)/node-problem-detector-arm64:$(TAG)
+	# apt install gcc-4.8-aarch64-linux-gnu
+	CC:=aarch64-linux-gnu-gcc
+endif
+ifeq ($(ARCH),ppc64le)
+	BASEIMAGE:=k8s.gcr.io/debian-base-ppc64le:0.4.0
+	IMAGE:=$(REGISTRY)/node-problem-detector-ppc64le:$(TAG)
+	# TODO: Support ppc64le architectures.
+	# No result was found in "apt search ppc64le-linux-gnu-gcc"
+	CC:=ppc64le-linux-gnu-gcc
+endif
 
 # Disable cgo by default to make the binary statically linked.
 CGO_ENABLED:=0
@@ -78,12 +95,12 @@ version:
 	@echo $(VERSION)
 
 ./bin/log-counter: $(PKG_SOURCES)
-	CGO_ENABLED=$(CGO_ENABLED) GOOS=linux go build -o bin/log-counter \
+	CGO_ENABLED=$(CGO_ENABLED) CC=$(CC) GOOS=linux GOARCH=$(ARCH) go build -o bin/log-counter \
 	     -ldflags '-X $(PKG)/pkg/version.version=$(VERSION)' \
 	     $(BUILD_TAGS) cmd/logcounter/log_counter.go
 
 ./bin/node-problem-detector: $(PKG_SOURCES)
-	CGO_ENABLED=$(CGO_ENABLED) GOOS=linux go build -o bin/node-problem-detector \
+	CGO_ENABLED=$(CGO_ENABLED) CC=$(CC) GOOS=linux GOARCH=$(ARCH) go build -o bin/node-problem-detector \
 	     -ldflags '-X $(PKG)/pkg/version.version=$(VERSION)' \
 	     $(BUILD_TAGS) cmd/node_problem_detector.go
 
@@ -98,6 +115,13 @@ build-binaries: ./bin/node-problem-detector ./bin/log-counter
 build-container: build-binaries Dockerfile
 	docker build -t $(IMAGE) .
 
+build-container-all:
+	for arch in $(DOCKER_ARCH_TARGETS); do \
+		$(MAKE) clean; \
+		$(MAKE) build-one-container ARCH=$$arch; \
+		$(MAKE) clean; \
+	done
+
 build-tar: ./bin/node-problem-detector ./bin/log-counter
 	tar -zcvf $(TARBALL) bin/ config/
 	sha1sum $(TARBALL)
@@ -111,9 +135,18 @@ docker-builder:
 build-in-docker: clean docker-builder
 	docker run -v `pwd`:/gopath/src/k8s.io/node-problem-detector/ npd-builder:latest bash -c 'cd /gopath/src/k8s.io/node-problem-detector/ && make build-binaries'
 
-push-container: build-container
+push-one-container: build-container
 	gcloud auth configure-docker
 	docker push $(IMAGE)
+
+push-pre-manifest:
+	go get github.com/estesp/manifest-tool
+
+push-container: build-container-all push-pre-manifest
+	for arch in $(DOCKER_ARCH_TARGETS); do \
+		$(MAKE) push-one-container ARCH=$$arch; \
+	done
+	$(GOPATH)/bin/manifest-tool push from-args --platforms $(PLATFORMS) --template $(REGISTRY)/node-problem-detector-ARCH:$(TAG) --target  $(REGISTRY)/node-problem-detector:$(TAG)
 
 push-tar: build-tar
 	gsutil cp $(TARBALL) $(UPLOAD_PATH)/node-problem-detector/
@@ -121,6 +154,7 @@ push-tar: build-tar
 push: push-container push-tar
 
 clean:
+	rm -f Dockerfile
 	rm -f bin/log-counter
 	rm -f bin/node-problem-detector
 	rm -f node-problem-detector-*.tar.gz
