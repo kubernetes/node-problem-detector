@@ -60,14 +60,14 @@ func main() {
 
 	pflag.Parse()
 
-	npdo.SetNodeNameOrDie()
-
-	npdo.ValidOrDie()
-
 	if npdo.PrintVersion {
 		version.PrintVersion()
 		os.Exit(0)
 	}
+
+	npdo.SetNodeNameOrDie()
+
+	npdo.ValidOrDie()
 
 	monitors := make(map[string]types.Monitor)
 	for _, config := range npdo.SystemLogMonitorConfigPaths {
