@@ -79,12 +79,12 @@
 		},
 		{
 			"ImportPath": "github.com/gogo/protobuf/proto",
-			"Comment": "v0.4-3-gc0656ed",
+			"Comment": "v0.4-3-gc0656edd",
 			"Rev": "c0656edd0d9eab7c66d1eb0c568f9039345796f7"
 		},
 		{
 			"ImportPath": "github.com/gogo/protobuf/sortkeys",
-			"Comment": "v0.4-3-gc0656ed",
+			"Comment": "v0.4-3-gc0656edd",
 			"Rev": "c0656edd0d9eab7c66d1eb0c568f9039345796f7"
 		},
 		{
@@ -121,7 +121,7 @@
 		},
 		{
 			"ImportPath": "github.com/google/cadvisor/utils/tail",
-			"Comment": "v0.28.0-14-g5231853",
+			"Comment": "v0.28.0-14-g5231853e",
 			"Rev": "5231853e7124d03b32678c7d2b0f4651dfa6110c"
 		},
 		{
@@ -863,7 +863,7 @@
 		},
 		{
 			"ImportPath": "k8s.io/heapster/common/kubernetes",
-			"Comment": "v1.4.0-312-gb25f8a1",
+			"Comment": "v1.5.0-beta.3-119-gb25f8a16",
 			"Rev": "b25f8a16208fcfb8a8d104b0047e46d356b4da4a"
 		},
 		{
