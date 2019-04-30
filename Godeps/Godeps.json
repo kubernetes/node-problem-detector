@@ -15,6 +15,11 @@
 			"Rev": "07af930eb5e50f99b6e7b413774d1a6b1cc8e598"
 		},
 		{
+			"ImportPath": "contrib.go.opencensus.io/exporter/prometheus",
+			"Comment": "v0.1.0-2-gf6cda26",
+			"Rev": "f6cda26f80a388eabda7766388c14e96370440e5"
+		},
+		{
 			"ImportPath": "github.com/PuerkitoBio/purell",
 			"Comment": "v1.0.0",
 			"Rev": "8a290539e2e8629dbc4e6bad948158f790ec31f4"
@@ -22,6 +27,11 @@
 		{
 			"ImportPath": "github.com/PuerkitoBio/urlesc",
 			"Rev": "5bd2802263f21d8788851d5305584c82a5c75d7e"
+		},
+		{
+			"ImportPath": "github.com/beorn7/perks/quantile",
+			"Comment": "v1.0.0",
+			"Rev": "4b2b341e8d7715fae06375aa633dbb6e91b3fb46"
 		},
 		{
 			"ImportPath": "github.com/coreos/go-systemd/sdjournal",
@@ -152,6 +162,11 @@
 			"Rev": "c1f8028e62adb3d518b823a2f8e6a95c38bdd3aa"
 		},
 		{
+			"ImportPath": "github.com/hashicorp/golang-lru/simplelru",
+			"Comment": "v0.5.1",
+			"Rev": "7087cb70de9f7a8bc0a10c375cb0d2280a8edf9c"
+		},
+		{
 			"ImportPath": "github.com/howeyc/gopass",
 			"Rev": "3ca23474a7c7203e0a0a070fd33508f6efdb9b3d"
 		},
@@ -183,6 +198,11 @@
 			"Rev": "d5b7844b561a7bc640052f1b935f7b800330d7e0"
 		},
 		{
+			"ImportPath": "github.com/matttproud/golang_protobuf_extensions/pbutil",
+			"Comment": "v1.0.1-2-gc182aff",
+			"Rev": "c182affec369e30f25d3eb8cd8a478dee585ae7d"
+		},
+		{
 			"ImportPath": "github.com/modern-go/concurrent",
 			"Comment": "1.0.3",
 			"Rev": "bacd9c7ef1dd9b15be4a9909b8ac7a4e313eec94"
@@ -202,6 +222,45 @@
 			"Rev": "d8ed2627bdf02c080bf22230dbb337003b7aba2d"
 		},
 		{
+			"ImportPath": "github.com/prometheus/client_golang/prometheus",
+			"Comment": "v0.9.2-56-ga4daf00",
+			"Rev": "a4daf0098cbdb8d67db6a1cef73c7e7956edef05"
+		},
+		{
+			"ImportPath": "github.com/prometheus/client_golang/prometheus/internal",
+			"Comment": "v0.9.2-56-ga4daf00",
+			"Rev": "a4daf0098cbdb8d67db6a1cef73c7e7956edef05"
+		},
+		{
+			"ImportPath": "github.com/prometheus/client_golang/prometheus/promhttp",
+			"Comment": "v0.9.2-56-ga4daf00",
+			"Rev": "a4daf0098cbdb8d67db6a1cef73c7e7956edef05"
+		},
+		{
+			"ImportPath": "github.com/prometheus/client_model/go",
+			"Comment": "model-0.0.2-24-gfd36f42",
+			"Rev": "fd36f4220a901265f90734c3183c5f0c91daa0b8"
+		},
+		{
+			"ImportPath": "github.com/prometheus/common/expfmt",
+			"Comment": "v0.3.0-2-gc873fb1",
+			"Rev": "c873fb1f9420b83ee703b4361c61183b4619f74d"
+		},
+		{
+			"ImportPath": "github.com/prometheus/common/internal/bitbucket.org/ww/goautoneg",
+			"Comment": "v0.3.0-2-gc873fb1",
+			"Rev": "c873fb1f9420b83ee703b4361c61183b4619f74d"
+		},
+		{
+			"ImportPath": "github.com/prometheus/common/model",
+			"Comment": "v0.3.0-2-gc873fb1",
+			"Rev": "c873fb1f9420b83ee703b4361c61183b4619f74d"
+		},
+		{
+			"ImportPath": "github.com/prometheus/procfs",
+			"Rev": "87a4384529e0652f5035fb5cc8095faf73ea9b0b"
+		},
+		{
 			"ImportPath": "github.com/spf13/pflag",
 			"Rev": "5ccb023bc27df288a957c5e994cd44fd19619465"
 		},
@@ -214,6 +273,76 @@
 			"ImportPath": "github.com/stretchr/testify/require",
 			"Comment": "v1.0-88-ge3a8ff8",
 			"Rev": "e3a8ff8ce36581f87a15341206f205b1da467059"
+		},
+		{
+			"ImportPath": "go.opencensus.io",
+			"Comment": "v0.21.0-2-g3f87460",
+			"Rev": "3f87460392ecb6a7d045e65de9b0dee340fa3a40"
+		},
+		{
+			"ImportPath": "go.opencensus.io/internal",
+			"Comment": "v0.21.0-2-g3f87460",
+			"Rev": "3f87460392ecb6a7d045e65de9b0dee340fa3a40"
+		},
+		{
+			"ImportPath": "go.opencensus.io/internal/tagencoding",
+			"Comment": "v0.21.0-2-g3f87460",
+			"Rev": "3f87460392ecb6a7d045e65de9b0dee340fa3a40"
+		},
+		{
+			"ImportPath": "go.opencensus.io/metric/metricdata",
+			"Comment": "v0.21.0-2-g3f87460",
+			"Rev": "3f87460392ecb6a7d045e65de9b0dee340fa3a40"
+		},
+		{
+			"ImportPath": "go.opencensus.io/metric/metricexport",
+			"Comment": "v0.21.0-2-g3f87460",
+			"Rev": "3f87460392ecb6a7d045e65de9b0dee340fa3a40"
+		},
+		{
+			"ImportPath": "go.opencensus.io/metric/metricproducer",
+			"Comment": "v0.21.0-2-g3f87460",
+			"Rev": "3f87460392ecb6a7d045e65de9b0dee340fa3a40"
+		},
+		{
+			"ImportPath": "go.opencensus.io/resource",
+			"Comment": "v0.21.0-2-g3f87460",
+			"Rev": "3f87460392ecb6a7d045e65de9b0dee340fa3a40"
+		},
+		{
+			"ImportPath": "go.opencensus.io/stats",
+			"Comment": "v0.21.0-2-g3f87460",
+			"Rev": "3f87460392ecb6a7d045e65de9b0dee340fa3a40"
+		},
+		{
+			"ImportPath": "go.opencensus.io/stats/internal",
+			"Comment": "v0.21.0-2-g3f87460",
+			"Rev": "3f87460392ecb6a7d045e65de9b0dee340fa3a40"
+		},
+		{
+			"ImportPath": "go.opencensus.io/stats/view",
+			"Comment": "v0.21.0-2-g3f87460",
+			"Rev": "3f87460392ecb6a7d045e65de9b0dee340fa3a40"
+		},
+		{
+			"ImportPath": "go.opencensus.io/tag",
+			"Comment": "v0.21.0-2-g3f87460",
+			"Rev": "3f87460392ecb6a7d045e65de9b0dee340fa3a40"
+		},
+		{
+			"ImportPath": "go.opencensus.io/trace",
+			"Comment": "v0.21.0-2-g3f87460",
+			"Rev": "3f87460392ecb6a7d045e65de9b0dee340fa3a40"
+		},
+		{
+			"ImportPath": "go.opencensus.io/trace/internal",
+			"Comment": "v0.21.0-2-g3f87460",
+			"Rev": "3f87460392ecb6a7d045e65de9b0dee340fa3a40"
+		},
+		{
+			"ImportPath": "go.opencensus.io/trace/tracestate",
+			"Comment": "v0.21.0-2-g3f87460",
+			"Rev": "3f87460392ecb6a7d045e65de9b0dee340fa3a40"
 		},
 		{
 			"ImportPath": "golang.org/x/crypto/ssh/terminal",
