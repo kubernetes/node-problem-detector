@@ -29,6 +29,11 @@
 			"Rev": "5bd2802263f21d8788851d5305584c82a5c75d7e"
 		},
 		{
+			"ImportPath": "github.com/StackExchange/wmi",
+			"Comment": "1.0.0-5-ge0a55b9",
+			"Rev": "e0a55b97c70558c92ce14085e41b35a894e93d3d"
+		},
+		{
 			"ImportPath": "github.com/beorn7/perks/quantile",
 			"Comment": "v1.0.0",
 			"Rev": "4b2b341e8d7715fae06375aa633dbb6e91b3fb46"
@@ -70,6 +75,16 @@
 		{
 			"ImportPath": "github.com/ghodss/yaml",
 			"Rev": "73d445a93680fa1a78ae23a5839bad48f32ba1ee"
+		},
+		{
+			"ImportPath": "github.com/go-ole/go-ole",
+			"Comment": "v1.2.4",
+			"Rev": "97b6244175ae18ea6eef668034fd6565847501c9"
+		},
+		{
+			"ImportPath": "github.com/go-ole/go-ole/oleutil",
+			"Comment": "v1.2.4",
+			"Rev": "97b6244175ae18ea6eef668034fd6565847501c9"
 		},
 		{
 			"ImportPath": "github.com/go-openapi/jsonpointer",
@@ -264,6 +279,16 @@
 		{
 			"ImportPath": "github.com/prometheus/procfs",
 			"Rev": "87a4384529e0652f5035fb5cc8095faf73ea9b0b"
+		},
+		{
+			"ImportPath": "github.com/shirou/gopsutil/disk",
+			"Comment": "v2.19.04",
+			"Rev": "fa9845945e5b5c6ffb19b436586ff702a30417c5"
+		},
+		{
+			"ImportPath": "github.com/shirou/gopsutil/internal/common",
+			"Comment": "v2.19.04",
+			"Rev": "fa9845945e5b5c6ffb19b436586ff702a30417c5"
 		},
 		{
 			"ImportPath": "github.com/spf13/pflag",
