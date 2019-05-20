@@ -52,6 +52,12 @@ type NodeProblemDetectorOptions struct {
 	// ApiServerOverride is the custom URI used to connect to Kubernetes ApiServer.
 	ApiServerOverride string
 
+	// prometheusExporter options
+	// PrometheusServerPort is the port to bind the Prometheus scrape endpoint. Use 0 to disable.
+	PrometheusServerPort int
+	// PrometheusServerAddress is the address to bind the Prometheus scrape endpoint.
+	PrometheusServerAddress string
+
 	// problem daemon options
 
 	// SystemLogMonitorConfigPaths specifies the list of paths to system log monitor configuration
@@ -95,6 +101,11 @@ func (npdo *NodeProblemDetectorOptions) AddFlags(fs *pflag.FlagSet) {
 		20256, "The port to bind the node problem detector server. Use 0 to disable.")
 	fs.StringVar(&npdo.ServerAddress, "address",
 		"127.0.0.1", "The address to bind the node problem detector server.")
+
+	fs.IntVar(&npdo.PrometheusServerPort, "prometheus-port",
+		20257, "The port to bind the Prometheus scrape endpoint. Prometheus exporter is enabled by default at port 20257. Use 0 to disable.")
+	fs.StringVar(&npdo.PrometheusServerAddress, "prometheus-address",
+		"127.0.0.1", "The address to bind the Prometheus scrape endpoint.")
 
 	for _, problemDaemonName := range problemdaemon.GetProblemDaemonNames() {
 		npdo.MonitorConfigPaths[problemDaemonName] = &[]string{}

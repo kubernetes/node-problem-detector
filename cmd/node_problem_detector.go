@@ -24,6 +24,7 @@ import (
 
 	"k8s.io/node-problem-detector/cmd/options"
 	"k8s.io/node-problem-detector/pkg/exporters/k8sexporter"
+	"k8s.io/node-problem-detector/pkg/exporters/prometheusexporter"
 	"k8s.io/node-problem-detector/pkg/problemdaemon"
 	"k8s.io/node-problem-detector/pkg/problemdetector"
 	"k8s.io/node-problem-detector/pkg/types"
@@ -56,6 +57,10 @@ func main() {
 	if ke := k8sexporter.NewExporterOrDie(npdo); ke != nil {
 		exporters = append(exporters, ke)
 		glog.Info("K8s exporter started.")
+	}
+	if pe := prometheusexporter.NewExporterOrDie(npdo); pe != nil {
+		exporters = append(exporters, pe)
+		glog.Info("Prometheus exporter started.")
 	}
 	if len(exporters) == 0 {
 		glog.Fatalf("No exporter is successfully setup")
