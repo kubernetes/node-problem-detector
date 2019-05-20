@@ -25,7 +25,9 @@ import (
 
 	"github.com/spf13/pflag"
 
+	"k8s.io/node-problem-detector/pkg/custompluginmonitor"
 	"k8s.io/node-problem-detector/pkg/problemdaemon"
+	"k8s.io/node-problem-detector/pkg/systemlogmonitor"
 	"k8s.io/node-problem-detector/pkg/types"
 )
 
@@ -54,9 +56,13 @@ type NodeProblemDetectorOptions struct {
 
 	// SystemLogMonitorConfigPaths specifies the list of paths to system log monitor configuration
 	// files.
+	// SystemLogMonitorConfigPaths is used by the deprecated option --system-log-monitors. The new
+	// option --config.system-log-monitor will stored the config file paths in MonitorConfigPaths.
 	SystemLogMonitorConfigPaths []string
 	// CustomPluginMonitorConfigPaths specifies the list of paths to custom plugin monitor configuration
 	// files.
+	// CustomPluginMonitorConfigPaths is used by the deprecated option --custom-plugin-monitors. The
+	// new option --config.custom-plugin-monitor will stored the config file paths in MonitorConfigPaths.
 	CustomPluginMonitorConfigPaths []string
 	// MonitorConfigPaths specifies the list of paths to configuration files for each monitor.
 	MonitorConfigPaths types.ProblemDaemonConfigPathMap
@@ -75,8 +81,10 @@ func NewNodeProblemDetectorOptions() *NodeProblemDetectorOptions {
 func (npdo *NodeProblemDetectorOptions) AddFlags(fs *pflag.FlagSet) {
 	fs.StringSliceVar(&npdo.SystemLogMonitorConfigPaths, "system-log-monitors",
 		[]string{}, "List of paths to system log monitor config files, comma separated.")
+	fs.MarkDeprecated("system-log-monitors", "replaced by --config.system-log-monitor. NPD will panic if both --system-log-monitors and --config.system-log-monitor are set.")
 	fs.StringSliceVar(&npdo.CustomPluginMonitorConfigPaths, "custom-plugin-monitors",
 		[]string{}, "List of paths to custom plugin monitor config files, comma separated.")
+	fs.MarkDeprecated("custom-plugin-monitors", "replaced by --config.custom-plugin-monitor. NPD will panic if both --custom-plugin-monitors and --config.custom-plugin-monitor are set.")
 	fs.BoolVar(&npdo.EnableK8sExporter, "enable-k8s-exporter", true, "Enables reporting to Kubernetes API server.")
 	fs.StringVar(&npdo.ApiServerOverride, "apiserver-override",
 		"", "Custom URI used to connect to Kubernetes ApiServer. This is ignored if --enable-k8s-exporter is false.")
@@ -106,14 +114,53 @@ func (npdo *NodeProblemDetectorOptions) ValidOrDie() {
 		panic(fmt.Sprintf("apiserver-override %q is not a valid HTTP URI: %v",
 			npdo.ApiServerOverride, err))
 	}
-	if len(npdo.SystemLogMonitorConfigPaths) == 0 && len(npdo.CustomPluginMonitorConfigPaths) == 0 {
-		panic(fmt.Sprintf("Either --system-log-monitors or --custom-plugin-monitors is required"))
+
+	if len(npdo.SystemLogMonitorConfigPaths) != 0 {
+		panic("SystemLogMonitorConfigPaths is deprecated. It should have been reassigned to MonitorConfigPaths. This should not happen.")
+	}
+	if len(npdo.CustomPluginMonitorConfigPaths) != 0 {
+		panic("CustomPluginMonitorConfigPaths is deprecated. It should have been reassigned to MonitorConfigPaths. This should not happen.")
 	}
 
-	for problemDaemonName, configs := range npdo.MonitorConfigPaths {
-		if configs == nil {
-			panic(fmt.Sprintf("nil config for problem daemon %q. This should never happen, might indicates bug in pflag.", problemDaemonName))
+	configCount := 0
+	for _, problemDaemonConfigPaths := range npdo.MonitorConfigPaths {
+		configCount += len(*problemDaemonConfigPaths)
+	}
+	if configCount == 0 {
+		panic("No configuration option for any problem daemon is specified.")
+	}
+}
+
+// SetConfigFromDeprecatedOptionsOrDie sets NPD option using deprecated options.
+func (npdo *NodeProblemDetectorOptions) SetConfigFromDeprecatedOptionsOrDie() {
+	if len(npdo.SystemLogMonitorConfigPaths) != 0 {
+		if npdo.MonitorConfigPaths[systemlogmonitor.SystemLogMonitorName] == nil {
+			npdo.MonitorConfigPaths[systemlogmonitor.SystemLogMonitorName] = &[]string{}
 		}
+
+		if len(*npdo.MonitorConfigPaths[systemlogmonitor.SystemLogMonitorName]) != 0 {
+			panic("Option --system-log-monitors is deprecated in favor of --config.system-log-monitor. They cannot be set at the same time.")
+		}
+
+		*npdo.MonitorConfigPaths[systemlogmonitor.SystemLogMonitorName] = append(
+			*npdo.MonitorConfigPaths[systemlogmonitor.SystemLogMonitorName],
+			npdo.SystemLogMonitorConfigPaths...)
+		npdo.SystemLogMonitorConfigPaths = []string{}
+	}
+
+	if len(npdo.CustomPluginMonitorConfigPaths) != 0 {
+		if npdo.MonitorConfigPaths[custompluginmonitor.CustomPluginMonitorName] == nil {
+			npdo.MonitorConfigPaths[custompluginmonitor.CustomPluginMonitorName] = &[]string{}
+		}
+
+		if len(*npdo.MonitorConfigPaths[custompluginmonitor.CustomPluginMonitorName]) != 0 {
+			panic("Option --custom-plugin-monitors is deprecated in favor of --config.custom-plugin-monitor. They cannot be set at the same time.")
+		}
+
+		*npdo.MonitorConfigPaths[custompluginmonitor.CustomPluginMonitorName] = append(
+			*npdo.MonitorConfigPaths[custompluginmonitor.CustomPluginMonitorName],
+			npdo.CustomPluginMonitorConfigPaths...)
+		npdo.CustomPluginMonitorConfigPaths = []string{}
 	}
 }
 

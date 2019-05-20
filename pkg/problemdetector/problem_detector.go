@@ -30,13 +30,13 @@ type ProblemDetector interface {
 }
 
 type problemDetector struct {
-	monitors  map[string]types.Monitor
+	monitors  []types.Monitor
 	exporters []types.Exporter
 }
 
 // NewProblemDetector creates the problem detector. Currently we just directly passed in the problem daemons, but
 // in the future we may want to let the problem daemons register themselves.
-func NewProblemDetector(monitors map[string]types.Monitor, exporters []types.Exporter) ProblemDetector {
+func NewProblemDetector(monitors []types.Monitor, exporters []types.Exporter) ProblemDetector {
 	return &problemDetector{
 		monitors:  monitors,
 		exporters: exporters,
@@ -47,17 +47,19 @@ func NewProblemDetector(monitors map[string]types.Monitor, exporters []types.Exp
 func (p *problemDetector) Run() error {
 	// Start the log monitors one by one.
 	var chans []<-chan *types.Status
-	for cfg, m := range p.monitors {
+	for _, m := range p.monitors {
 		ch, err := m.Start()
 		if err != nil {
 			// Do not return error and keep on trying the following config files.
-			glog.Errorf("Failed to start log monitor %q: %v", cfg, err)
+			glog.Errorf("Failed to start problem daemon %v: %v", m, err)
 			continue
 		}
-		chans = append(chans, ch)
+		if ch != nil {
+			chans = append(chans, ch)
+		}
 	}
 	if len(chans) == 0 {
-		return fmt.Errorf("no log monitor is successfully setup")
+		return fmt.Errorf("no problem daemon is successfully setup")
 	}
 	ch := groupChannel(chans)
 	glog.Info("Problem detector started")

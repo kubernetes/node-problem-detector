@@ -21,6 +21,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
+
+	"k8s.io/node-problem-detector/pkg/problemdaemon"
 	logtypes "k8s.io/node-problem-detector/pkg/systemlogmonitor/types"
 	"k8s.io/node-problem-detector/pkg/types"
 	"k8s.io/node-problem-detector/pkg/util"
@@ -31,6 +34,12 @@ const (
 	testConditionA = "TestConditionA"
 	testConditionB = "TestConditionB"
 )
+
+func TestRegistration(t *testing.T) {
+	assert.NotPanics(t,
+		func() { problemdaemon.GetProblemDaemonHandlerOrDie("system-log-monitor") },
+		"System log monitor failed to register itself as a problem daemon.")
+}
 
 func TestGenerateStatus(t *testing.T) {
 	initConditions := []types.Condition{

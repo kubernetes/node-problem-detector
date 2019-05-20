@@ -18,8 +18,46 @@ package options
 
 import (
 	"os"
+	"reflect"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+
+	"k8s.io/node-problem-detector/pkg/custompluginmonitor"
+	"k8s.io/node-problem-detector/pkg/systemlogmonitor"
+	"k8s.io/node-problem-detector/pkg/types"
 )
+
+func equalMonitorConfigPaths(npdoX NodeProblemDetectorOptions, npdoY NodeProblemDetectorOptions) bool {
+	monitorConfigPathsX, monitorConfigPathsY := npdoX.MonitorConfigPaths, npdoY.MonitorConfigPaths
+
+	if monitorConfigPathsX == nil && monitorConfigPathsY == nil {
+		return true
+	}
+	if monitorConfigPathsX == nil || monitorConfigPathsY == nil {
+		return false
+	}
+	if len(monitorConfigPathsX) != len(monitorConfigPathsY) {
+		return false
+	}
+
+	for problemDaemonType, configPathsX := range monitorConfigPathsX {
+		configPathsY, ok := monitorConfigPathsY[problemDaemonType]
+		if !ok {
+			return false
+		}
+		if configPathsX == nil && configPathsY == nil {
+			continue
+		}
+		if configPathsX == nil || configPathsY == nil {
+			return false
+		}
+		if !reflect.DeepEqual(*configPathsX, *configPathsY) {
+			return false
+		}
+	}
+	return true
+}
 
 type options struct {
 	Nodename         string
@@ -80,5 +118,250 @@ func TestSetNodeNameOrDie(t *testing.T) {
 		if npdOpts.NodeName != ut.WantedNodeName {
 			t.Errorf("Desc: %v. Set node name error. Wanted: %v. Got: %v", desc, ut.WantedNodeName, npdOpts.NodeName)
 		}
+	}
+}
+
+func TestValidOrDie(t *testing.T) {
+	fooMonitorConfigMap := types.ProblemDaemonConfigPathMap{}
+	fooMonitorConfigMap["foo-monitor"] = &[]string{"config-a", "config-b"}
+
+	emptyMonitorConfigMap := types.ProblemDaemonConfigPathMap{}
+
+	testCases := []struct {
+		name        string
+		npdo        NodeProblemDetectorOptions
+		expectPanic bool
+	}{
+		{
+			name: "default k8s exporter config",
+			npdo: NodeProblemDetectorOptions{
+				MonitorConfigPaths: fooMonitorConfigMap,
+			},
+			expectPanic: false,
+		},
+		{
+			name: "enables k8s exporter config",
+			npdo: NodeProblemDetectorOptions{
+				ApiServerOverride:  "",
+				EnableK8sExporter:  true,
+				MonitorConfigPaths: fooMonitorConfigMap,
+			},
+			expectPanic: false,
+		},
+		{
+			name: "k8s exporter config with valid ApiServerOverride",
+			npdo: NodeProblemDetectorOptions{
+				ApiServerOverride:  "127.0.0.1",
+				EnableK8sExporter:  true,
+				MonitorConfigPaths: fooMonitorConfigMap,
+			},
+			expectPanic: false,
+		},
+		{
+			name: "k8s exporter config with invalid ApiServerOverride",
+			npdo: NodeProblemDetectorOptions{
+				ApiServerOverride:  ":foo",
+				EnableK8sExporter:  true,
+				MonitorConfigPaths: fooMonitorConfigMap,
+			},
+			expectPanic: true,
+		},
+		{
+			name: "non-empty MonitorConfigPaths",
+			npdo: NodeProblemDetectorOptions{
+				MonitorConfigPaths: fooMonitorConfigMap,
+			},
+			expectPanic: false,
+		},
+		{
+			name: "empty MonitorConfigPaths",
+			npdo: NodeProblemDetectorOptions{
+				MonitorConfigPaths: emptyMonitorConfigMap,
+			},
+			expectPanic: true,
+		},
+		{
+			name:        "un-initialized MonitorConfigPaths",
+			npdo:        NodeProblemDetectorOptions{},
+			expectPanic: true,
+		},
+		{
+			name: "mixture of deprecated SystemLogMonitorConfigPaths and new MonitorConfigPaths",
+			npdo: NodeProblemDetectorOptions{
+				SystemLogMonitorConfigPaths: []string{"config-a"},
+				MonitorConfigPaths:          fooMonitorConfigMap,
+			},
+			expectPanic: true,
+		},
+		{
+			name: "mixture of deprecated CustomPluginMonitorConfigPaths and new MonitorConfigPaths",
+			npdo: NodeProblemDetectorOptions{
+				CustomPluginMonitorConfigPaths: []string{"config-a"},
+				MonitorConfigPaths:             fooMonitorConfigMap,
+			},
+			expectPanic: true,
+		},
+		{
+			name: "deprecated SystemLogMonitor option with empty MonitorConfigPaths",
+			npdo: NodeProblemDetectorOptions{
+				SystemLogMonitorConfigPaths: []string{"config-a"},
+				MonitorConfigPaths:          emptyMonitorConfigMap,
+			},
+			expectPanic: true,
+		},
+		{
+			name: "deprecated SystemLogMonitor option with un-initialized MonitorConfigPaths",
+			npdo: NodeProblemDetectorOptions{
+				SystemLogMonitorConfigPaths: []string{"config-a"},
+			},
+			expectPanic: true,
+		},
+		{
+			name: "deprecated CustomPluginMonitor option with empty MonitorConfigPaths",
+			npdo: NodeProblemDetectorOptions{
+				CustomPluginMonitorConfigPaths: []string{"config-b"},
+				MonitorConfigPaths:             emptyMonitorConfigMap,
+			},
+			expectPanic: true,
+		},
+		{
+			name: "deprecated CustomPluginMonitor option with un-initialized MonitorConfigPaths",
+			npdo: NodeProblemDetectorOptions{
+				CustomPluginMonitorConfigPaths: []string{"config-b"},
+			},
+			expectPanic: true,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.name, func(t *testing.T) {
+			if test.expectPanic {
+				assert.Panics(t, test.npdo.ValidOrDie, "NPD option %+v is invalid. Expected ValidOrDie to panic.", test.npdo)
+			} else {
+				assert.NotPanics(t, test.npdo.ValidOrDie, "NPD option %+v is valid. Expected ValidOrDie to not panic.", test.npdo)
+			}
+		})
+	}
+}
+
+func TestSetConfigFromDeprecatedOptionsOrDie(t *testing.T) {
+	testCases := []struct {
+		name        string
+		orig        NodeProblemDetectorOptions
+		wanted      NodeProblemDetectorOptions
+		expectPanic bool
+	}{
+		{
+			name: "no deprecated options",
+			orig: NodeProblemDetectorOptions{
+				MonitorConfigPaths: types.ProblemDaemonConfigPathMap{
+					systemlogmonitor.SystemLogMonitorName:       &[]string{"config-a", "config-b"},
+					custompluginmonitor.CustomPluginMonitorName: &[]string{"config-c", "config-d"},
+				},
+			},
+			expectPanic: false,
+			wanted: NodeProblemDetectorOptions{
+				MonitorConfigPaths: types.ProblemDaemonConfigPathMap{
+					systemlogmonitor.SystemLogMonitorName:       &[]string{"config-a", "config-b"},
+					custompluginmonitor.CustomPluginMonitorName: &[]string{"config-c", "config-d"},
+				},
+			},
+		},
+		{
+			name: "correctly using deprecated options",
+			orig: NodeProblemDetectorOptions{
+				SystemLogMonitorConfigPaths:    []string{"config-a", "config-b"},
+				CustomPluginMonitorConfigPaths: []string{"config-c", "config-d"},
+				MonitorConfigPaths:             types.ProblemDaemonConfigPathMap{},
+			},
+			expectPanic: false,
+			wanted: NodeProblemDetectorOptions{
+				MonitorConfigPaths: types.ProblemDaemonConfigPathMap{
+					systemlogmonitor.SystemLogMonitorName:       &[]string{"config-a", "config-b"},
+					custompluginmonitor.CustomPluginMonitorName: &[]string{"config-c", "config-d"},
+				},
+			},
+		},
+		{
+			name: "using deprecated SystemLogMonitor option and new CustomPluginMonitor option",
+			orig: NodeProblemDetectorOptions{
+				SystemLogMonitorConfigPaths: []string{"config-a", "config-b"},
+				MonitorConfigPaths: types.ProblemDaemonConfigPathMap{
+					custompluginmonitor.CustomPluginMonitorName: &[]string{"config-c", "config-d"},
+				},
+			},
+			expectPanic: false,
+			wanted: NodeProblemDetectorOptions{
+				MonitorConfigPaths: types.ProblemDaemonConfigPathMap{
+					systemlogmonitor.SystemLogMonitorName:       &[]string{"config-a", "config-b"},
+					custompluginmonitor.CustomPluginMonitorName: &[]string{"config-c", "config-d"},
+				},
+			},
+		},
+		{
+			name: "using deprecated CustomPluginMonitor option and new SystemLogMonitor option",
+			orig: NodeProblemDetectorOptions{
+				CustomPluginMonitorConfigPaths: []string{"config-a", "config-b"},
+				MonitorConfigPaths: types.ProblemDaemonConfigPathMap{
+					systemlogmonitor.SystemLogMonitorName: &[]string{"config-c", "config-d"},
+				},
+			},
+			expectPanic: false,
+			wanted: NodeProblemDetectorOptions{
+				MonitorConfigPaths: types.ProblemDaemonConfigPathMap{
+					systemlogmonitor.SystemLogMonitorName:       &[]string{"config-c", "config-d"},
+					custompluginmonitor.CustomPluginMonitorName: &[]string{"config-a", "config-b"},
+				},
+			},
+		},
+		{
+			name: "using deprecated & new options on SystemLogMonitor",
+			orig: NodeProblemDetectorOptions{
+				SystemLogMonitorConfigPaths: []string{"config-a"},
+				MonitorConfigPaths: types.ProblemDaemonConfigPathMap{
+					systemlogmonitor.SystemLogMonitorName: &[]string{"config-b"},
+				},
+			},
+			expectPanic: true,
+			wanted: NodeProblemDetectorOptions{
+				MonitorConfigPaths: types.ProblemDaemonConfigPathMap{
+					systemlogmonitor.SystemLogMonitorName: &[]string{"config-b"},
+				},
+			},
+		},
+		{
+			name: "using deprecated & new options on CustomPluginMonitor",
+			orig: NodeProblemDetectorOptions{
+				CustomPluginMonitorConfigPaths: []string{"config-a"},
+				MonitorConfigPaths: types.ProblemDaemonConfigPathMap{
+					custompluginmonitor.CustomPluginMonitorName: &[]string{"config-b"},
+				},
+			},
+			expectPanic: true,
+			wanted: NodeProblemDetectorOptions{
+				MonitorConfigPaths: types.ProblemDaemonConfigPathMap{
+					custompluginmonitor.CustomPluginMonitorName: &[]string{"config-b"},
+				},
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.name, func(t *testing.T) {
+			if test.expectPanic {
+				assert.Panics(t, test.orig.SetConfigFromDeprecatedOptionsOrDie,
+					"NPD option %+v is illegal. Expected SetConfigFromDeprecatedOptionsOrDie to panic.", test.orig)
+			} else {
+				assert.NotPanics(t, test.orig.SetConfigFromDeprecatedOptionsOrDie,
+					"NPD option %+v is illegal. Expected SetConfigFromDeprecatedOptionsOrDie to not panic.", test.orig)
+				if !equalMonitorConfigPaths(test.orig, test.wanted) {
+					t.Errorf("Expect to get NPD option %+v, but got %+v", test.wanted, test.orig)
+				}
+				assert.Len(t, test.orig.SystemLogMonitorConfigPaths, 0,
+					"SystemLogMonitorConfigPaths is deprecated and should to be cleared.")
+				assert.Len(t, test.orig.CustomPluginMonitorConfigPaths, 0,
+					"CustomPluginMonitorConfigPaths is deprecated and should to be cleared.")
+			}
+		})
 	}
 }

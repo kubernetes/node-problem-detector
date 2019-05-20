@@ -23,10 +23,9 @@ import (
 	"github.com/spf13/pflag"
 
 	"k8s.io/node-problem-detector/cmd/options"
-	"k8s.io/node-problem-detector/pkg/custompluginmonitor"
 	"k8s.io/node-problem-detector/pkg/exporters/k8sexporter"
+	"k8s.io/node-problem-detector/pkg/problemdaemon"
 	"k8s.io/node-problem-detector/pkg/problemdetector"
-	"k8s.io/node-problem-detector/pkg/systemlogmonitor"
 	"k8s.io/node-problem-detector/pkg/types"
 	"k8s.io/node-problem-detector/pkg/version"
 )
@@ -43,26 +42,13 @@ func main() {
 	}
 
 	npdo.SetNodeNameOrDie()
-
+	npdo.SetConfigFromDeprecatedOptionsOrDie()
 	npdo.ValidOrDie()
 
-	monitors := make(map[string]types.Monitor)
-	for _, config := range npdo.SystemLogMonitorConfigPaths {
-		if _, ok := monitors[config]; ok {
-			// Skip the config if it's duplicated.
-			glog.Warningf("Duplicated monitor configuration %q", config)
-			continue
-		}
-		monitors[config] = systemlogmonitor.NewLogMonitorOrDie(config)
-	}
-
-	for _, config := range npdo.CustomPluginMonitorConfigPaths {
-		if _, ok := monitors[config]; ok {
-			// Skip the config if it's duplicated.
-			glog.Warningf("Duplicated monitor configuration %q", config)
-			continue
-		}
-		monitors[config] = custompluginmonitor.NewCustomPluginMonitorOrDie(config)
+	// Initialize problem daemons.
+	problemDaemons := problemdaemon.NewProblemDaemons(npdo.MonitorConfigPaths)
+	if len(problemDaemons) == 0 {
+		glog.Fatalf("No problem daemon is configured")
 	}
 
 	// Initialize exporters.
@@ -76,7 +62,7 @@ func main() {
 	}
 
 	// Initialize NPD core.
-	p := problemdetector.NewProblemDetector(monitors, exporters)
+	p := problemdetector.NewProblemDetector(problemDaemons, exporters)
 	if err := p.Run(); err != nil {
 		glog.Fatalf("Problem detector failed with error: %v", err)
 	}

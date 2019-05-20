@@ -25,10 +25,21 @@ import (
 
 	"k8s.io/node-problem-detector/pkg/custompluginmonitor/plugin"
 	cpmtypes "k8s.io/node-problem-detector/pkg/custompluginmonitor/types"
+	"k8s.io/node-problem-detector/pkg/problemdaemon"
 	"k8s.io/node-problem-detector/pkg/types"
 	"k8s.io/node-problem-detector/pkg/util"
 	"k8s.io/node-problem-detector/pkg/util/tomb"
 )
+
+const CustomPluginMonitorName = "custom-plugin-monitor"
+
+func init() {
+	problemdaemon.Register(
+		CustomPluginMonitorName,
+		types.ProblemDaemonHandler{
+			CreateProblemDaemonOrDie: NewCustomPluginMonitorOrDie,
+			CmdOptionDescription:     "Set to config file paths."})
+}
 
 type customPluginMonitor struct {
 	config     cpmtypes.CustomPluginConfig
