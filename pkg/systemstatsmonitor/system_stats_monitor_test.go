@@ -14,11 +14,18 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package main
+package systemstatsmonitor
 
-// register problem daemons here
 import (
-	_ "k8s.io/node-problem-detector/pkg/custompluginmonitor"
-	_ "k8s.io/node-problem-detector/pkg/systemlogmonitor"
-	_ "k8s.io/node-problem-detector/pkg/systemstatsmonitor"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+
+	"k8s.io/node-problem-detector/pkg/problemdaemon"
 )
+
+func TestRegistration(t *testing.T) {
+	assert.NotPanics(t,
+		func() { problemdaemon.GetProblemDaemonHandlerOrDie(SystemStatsMonitorName) },
+		"System stats monitor failed to register itself as a problem daemon.")
+}
