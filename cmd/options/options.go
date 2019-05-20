@@ -36,8 +36,6 @@ type NodeProblemDetectorOptions struct {
 	// CustomPluginMonitorConfigPaths specifies the list of paths to custom plugin monitor configuration
 	// files.
 	CustomPluginMonitorConfigPaths []string
-	// ApiServerOverride is the custom URI used to connect to Kubernetes ApiServer.
-	ApiServerOverride string
 	// PrintVersion is the flag determining whether version information is printed.
 	PrintVersion bool
 	// HostnameOverride specifies custom node name used to override hostname.
@@ -46,6 +44,14 @@ type NodeProblemDetectorOptions struct {
 	ServerPort int
 	// ServerAddress is the address to bind the node problem detector server.
 	ServerAddress string
+
+	// exporter options
+
+	// k8sExporter options
+	// EnableK8sExporter is the flag determining whether to report to Kubernetes.
+	EnableK8sExporter bool
+	// ApiServerOverride is the custom URI used to connect to Kubernetes ApiServer.
+	ApiServerOverride string
 
 	// application options
 
@@ -63,8 +69,9 @@ func (npdo *NodeProblemDetectorOptions) AddFlags(fs *pflag.FlagSet) {
 		[]string{}, "List of paths to system log monitor config files, comma separated.")
 	fs.StringSliceVar(&npdo.CustomPluginMonitorConfigPaths, "custom-plugin-monitors",
 		[]string{}, "List of paths to custom plugin monitor config files, comma separated.")
+	fs.BoolVar(&npdo.EnableK8sExporter, "enable-k8s-exporter", true, "Enables reporting to Kubernetes API server.")
 	fs.StringVar(&npdo.ApiServerOverride, "apiserver-override",
-		"", "Custom URI used to connect to Kubernetes ApiServer")
+		"", "Custom URI used to connect to Kubernetes ApiServer. This is ignored if --enable-k8s-exporter is false.")
 	fs.BoolVar(&npdo.PrintVersion, "version", false, "Print version information and quit")
 	fs.StringVar(&npdo.HostnameOverride, "hostname-override",
 		"", "Custom node name used to override hostname")
@@ -76,7 +83,7 @@ func (npdo *NodeProblemDetectorOptions) AddFlags(fs *pflag.FlagSet) {
 
 // ValidOrDie validates node problem detector command line options.
 func (npdo *NodeProblemDetectorOptions) ValidOrDie() {
-	if _, err := url.Parse(npdo.ApiServerOverride); err != nil {
+	if _, err := url.Parse(npdo.ApiServerOverride); npdo.EnableK8sExporter && err != nil {
 		panic(fmt.Sprintf("apiserver-override %q is not a valid HTTP URI: %v",
 			npdo.ApiServerOverride, err))
 	}

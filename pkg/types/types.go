@@ -107,3 +107,9 @@ type Monitor interface {
 	// Stop stops the log monitor.
 	Stop()
 }
+
+// Exporter exports machine health data to certain control plane.
+type Exporter interface {
+	// Export problems to the control plane.
+	ExportProblems(*Status)
+}

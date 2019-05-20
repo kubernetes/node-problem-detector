@@ -17,42 +17,19 @@ limitations under the License.
 package main
 
 import (
-	"net"
-	"net/http"
-	_ "net/http/pprof"
 	"os"
-	"strconv"
 
 	"github.com/golang/glog"
 	"github.com/spf13/pflag"
 
 	"k8s.io/node-problem-detector/cmd/options"
 	"k8s.io/node-problem-detector/pkg/custompluginmonitor"
-	"k8s.io/node-problem-detector/pkg/problemclient"
+	"k8s.io/node-problem-detector/pkg/exporters/k8sexporter"
 	"k8s.io/node-problem-detector/pkg/problemdetector"
 	"k8s.io/node-problem-detector/pkg/systemlogmonitor"
 	"k8s.io/node-problem-detector/pkg/types"
 	"k8s.io/node-problem-detector/pkg/version"
 )
-
-func startHTTPServer(p problemdetector.ProblemDetector, npdo *options.NodeProblemDetectorOptions) {
-	// Add healthz http request handler. Always return ok now, add more health check
-	// logic in the future.
-	http.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("ok"))
-	})
-	// Add the http handlers in problem detector.
-	p.RegisterHTTPHandlers()
-
-	addr := net.JoinHostPort(npdo.ServerAddress, strconv.Itoa(npdo.ServerPort))
-	go func() {
-		err := http.ListenAndServe(addr, nil)
-		if err != nil {
-			glog.Fatalf("Failed to start server: %v", err)
-		}
-	}()
-}
 
 func main() {
 	npdo := options.NewNodeProblemDetectorOptions()
@@ -87,14 +64,19 @@ func main() {
 		}
 		monitors[config] = custompluginmonitor.NewCustomPluginMonitorOrDie(config)
 	}
-	c := problemclient.NewClientOrDie(npdo)
-	p := problemdetector.NewProblemDetector(monitors, c)
 
-	// Start http server.
-	if npdo.ServerPort > 0 {
-		startHTTPServer(p, npdo)
+	// Initialize exporters.
+	exporters := []types.Exporter{}
+	if ke := k8sexporter.NewExporterOrDie(npdo); ke != nil {
+		exporters = append(exporters, ke)
+		glog.Info("K8s exporter started.")
+	}
+	if len(exporters) == 0 {
+		glog.Fatalf("No exporter is successfully setup")
 	}
 
+	// Initialize NPD core.
+	p := problemdetector.NewProblemDetector(monitors, exporters)
 	if err := p.Run(); err != nil {
 		glog.Fatalf("Problem detector failed with error: %v", err)
 	}
