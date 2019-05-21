@@ -19,7 +19,6 @@ package filelog
 import (
 	"io/ioutil"
 	"os"
-	"runtime"
 	"testing"
 	"time"
 
@@ -179,17 +178,4 @@ Jan  2 03:04:05 kernel: [2.000000] 3
 		case <-timeout:
 		}
 	}
-}
-
-func TestGoroutineLeak(t *testing.T) {
-	orignal := runtime.NumGoroutine()
-	w := NewSyslogWatcherOrDie(types.WatcherConfig{
-		Plugin:       "filelog",
-		PluginConfig: getTestPluginConfig(),
-		LogPath:      "/not/exist/path",
-		Lookback:     "10m",
-	})
-	_, err := w.Watch()
-	assert.Error(t, err)
-	assert.Equal(t, orignal, runtime.NumGoroutine())
 }
