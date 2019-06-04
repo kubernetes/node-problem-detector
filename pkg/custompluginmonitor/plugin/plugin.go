@@ -53,46 +53,62 @@ func (p *Plugin) GetResultChan() <-chan cpmtypes.Result {
 }
 
 func (p *Plugin) Run() {
+	defer func() {
+		glog.Info("Stopping plugin execution")
+		p.tomb.Done()
+	}()
+
 	runTicker := time.NewTicker(*p.config.PluginGlobalConfig.InvokeInterval)
+	defer runTicker.Stop()
+
+	runner := func() {
+		glog.Info("Start to run custom plugins")
+
+		for _, rule := range p.config.Rules {
+			p.syncChan <- struct{}{}
+			p.Add(1)
+
+			go func(rule *cpmtypes.CustomRule) {
+				defer p.Done()
+				defer func() {
+					<-p.syncChan
+				}()
+
+				start := time.Now()
+				exitStatus, message := p.run(*rule)
+				end := time.Now()
+
+				glog.V(3).Infof("Rule: %+v. Start time: %v. End time: %v. Duration: %v", rule, start, end, end.Sub(start))
+
+				result := cpmtypes.Result{
+					Rule:       rule,
+					ExitStatus: exitStatus,
+					Message:    message,
+				}
+
+				p.resultChan <- result
+
+				glog.Infof("Add check result %+v for rule %+v", result, rule)
+			}(rule)
+		}
+
+		p.Wait()
+		glog.Info("Finish running custom plugins")
+	}
+
+	select {
+	case <-p.tomb.Stopping():
+		return
+	default:
+		runner()
+	}
 
 	for {
 		select {
 		case <-runTicker.C:
-			glog.Info("Start to run custom plugins")
-
-			for _, rule := range p.config.Rules {
-				p.syncChan <- struct{}{}
-				p.Add(1)
-
-				go func(rule *cpmtypes.CustomRule) {
-					defer p.Done()
-					defer func() {
-						<-p.syncChan
-					}()
-
-					start := time.Now()
-					exitStatus, message := p.run(*rule)
-					end := time.Now()
-
-					glog.V(3).Infof("Rule: %+v. Start time: %v. End time: %v. Duration: %v", rule, start, end, end.Sub(start))
-
-					result := cpmtypes.Result{
-						Rule:       rule,
-						ExitStatus: exitStatus,
-						Message:    message,
-					}
-
-					p.resultChan <- result
-
-					glog.Infof("Add check result %+v for rule %+v", result, rule)
-				}(rule)
-			}
-
-			p.Wait()
-			glog.Info("Finish running custom plugins")
+			runner()
 		case <-p.tomb.Stopping():
-			glog.Info("Stopping plugin execution")
-			p.tomb.Done()
+			return
 		}
 	}
 }
