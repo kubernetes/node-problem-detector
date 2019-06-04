@@ -3,16 +3,16 @@ module k8s.io/node-problem-detector
 go 1.11
 
 require (
-	code.cloudfoundry.org/clock v0.0.0-20161212184238-07af930eb5e5
+	code.cloudfoundry.org/clock v0.0.0-20180518195852-02e53af36e6c
 	contrib.go.opencensus.io/exporter/prometheus v0.0.0-20190427222117-f6cda26f80a3 // indirect
 	github.com/PuerkitoBio/purell v1.0.0 // indirect
 	github.com/PuerkitoBio/urlesc v0.0.0-20160726150825-5bd2802263f2 // indirect
 	github.com/StackExchange/wmi v0.0.0-20181212234831-e0a55b97c705 // indirect
 	github.com/beorn7/perks v1.0.0 // indirect
-	github.com/coreos/go-systemd v0.0.0-20161114122254-48702e0da86b
+	github.com/coreos/go-systemd v0.0.0-20190321100706-95778dfbb74e
 	github.com/coreos/pkg v0.0.0-20160620232715-fa29b1d70f0b // indirect
 	github.com/emicklei/go-restful v0.0.0-20170410110728-ff4f55a20633 // indirect
-	github.com/euank/go-kmsg-parser v2.0.0+incompatible
+	github.com/euank/go-kmsg-parser v2.0.1+incompatible
 	github.com/fsnotify/fsnotify v0.0.0-20160816051541-f12c6236fe7b // indirect
 	github.com/ghodss/yaml v0.0.0-20150909031657-73d445a93680 // indirect
 	github.com/go-ole/go-ole v1.2.4 // indirect
@@ -24,7 +24,7 @@ require (
 	github.com/golang/groupcache v0.0.0-20150125180832-604ed5785183 // indirect
 	github.com/golang/protobuf v1.3.1 // indirect
 	github.com/google/btree v0.0.0-20160524151835-7d79101e329e // indirect
-	github.com/google/cadvisor v0.0.0-20171116003604-5231853e7124
+	github.com/google/cadvisor v0.33.0
 	github.com/google/gofuzz v0.0.0-20161122191042-44d81051d367 // indirect
 	github.com/googleapis/gnostic v0.1.0 // indirect
 	github.com/gregjones/httpcache v0.0.0-20170926212834-c1f8028e62ad // indirect
@@ -41,8 +41,8 @@ require (
 	github.com/prometheus/common v0.3.0 // indirect
 	github.com/prometheus/procfs v0.0.0-20190425082905-87a4384529e0 // indirect
 	github.com/shirou/gopsutil v0.0.0-20190427031343-fa9845945e5b // indirect
-	github.com/spf13/pflag v0.0.0-20161024131444-5ccb023bc27d
-	github.com/stretchr/testify v1.2.2
+	github.com/spf13/pflag v1.0.3
+	github.com/stretchr/testify v1.3.0
 	golang.org/x/sys v0.0.0-20190509141414-a5b02f93d862 // indirect
 	gopkg.in/inf.v0 v0.9.0 // indirect
 	k8s.io/api v0.0.0-20180127130940-acf347b865f2
