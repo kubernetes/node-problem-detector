@@ -222,5 +222,5 @@ k8s.io/heapster/common/kubernetes
 # k8s.io/kube-openapi v0.0.0-20180216212618-50ae88d24ede
 k8s.io/kube-openapi/pkg/common
 k8s.io/kube-openapi/pkg/util/proto
-# k8s.io/kubernetes v1.11.0
+# k8s.io/kubernetes v1.14.2
 k8s.io/kubernetes/pkg/api/legacyscheme
