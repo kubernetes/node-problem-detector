@@ -1,11 +1,11 @@
-# code.cloudfoundry.org/clock v0.0.0-20161212184238-07af930eb5e5
+# code.cloudfoundry.org/clock v0.0.0-20180518195852-02e53af36e6c
 code.cloudfoundry.org/clock
 code.cloudfoundry.org/clock/fakeclock
 # github.com/PuerkitoBio/purell v1.0.0
 github.com/PuerkitoBio/purell
 # github.com/PuerkitoBio/urlesc v0.0.0-20160726150825-5bd2802263f2
 github.com/PuerkitoBio/urlesc
-# github.com/coreos/go-systemd v0.0.0-20161114122254-48702e0da86b
+# github.com/coreos/go-systemd v0.0.0-20190321100706-95778dfbb74e
 github.com/coreos/go-systemd/sdjournal
 # github.com/coreos/pkg v0.0.0-20160620232715-fa29b1d70f0b
 github.com/coreos/pkg/dlopen
@@ -14,10 +14,8 @@ github.com/davecgh/go-spew/spew
 # github.com/emicklei/go-restful v0.0.0-20170410110728-ff4f55a20633
 github.com/emicklei/go-restful
 github.com/emicklei/go-restful/log
-# github.com/euank/go-kmsg-parser v2.0.0+incompatible
+# github.com/euank/go-kmsg-parser v2.0.1+incompatible
 github.com/euank/go-kmsg-parser/kmsgparser
-# github.com/fsnotify/fsnotify v0.0.0-20160816051541-f12c6236fe7b
-github.com/fsnotify/fsnotify
 # github.com/ghodss/yaml v0.0.0-20150909031657-73d445a93680
 github.com/ghodss/yaml
 # github.com/go-openapi/jsonpointer v0.0.0-20160704185906-46af16f9f7b1
@@ -43,7 +41,7 @@ github.com/golang/protobuf/ptypes/duration
 github.com/golang/protobuf/ptypes/timestamp
 # github.com/google/btree v0.0.0-20160524151835-7d79101e329e
 github.com/google/btree
-# github.com/google/cadvisor v0.0.0-20171116003604-5231853e7124
+# github.com/google/cadvisor v0.33.0
 github.com/google/cadvisor/utils/tail
 # github.com/google/gofuzz v0.0.0-20161122191042-44d81051d367
 github.com/google/gofuzz
@@ -70,9 +68,11 @@ github.com/mailru/easyjson/buffer
 github.com/peterbourgon/diskv
 # github.com/pmezard/go-difflib v1.0.0
 github.com/pmezard/go-difflib/difflib
-# github.com/spf13/pflag v0.0.0-20161024131444-5ccb023bc27d
+# github.com/sigma/go-inotify v0.0.0-20181102212354-c87b6cf5033d
+github.com/sigma/go-inotify
+# github.com/spf13/pflag v1.0.3
 github.com/spf13/pflag
-# github.com/stretchr/testify v1.2.2
+# github.com/stretchr/testify v1.3.0
 github.com/stretchr/testify/assert
 github.com/stretchr/testify/require
 # golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2
@@ -219,6 +219,8 @@ k8s.io/client-go/util/homedir
 k8s.io/client-go/tools/clientcmd/api/v1
 # k8s.io/heapster v0.0.0-20180704153620-b25f8a16208f
 k8s.io/heapster/common/kubernetes
+# k8s.io/klog v0.3.2
+k8s.io/klog
 # k8s.io/kube-openapi v0.0.0-20180216212618-50ae88d24ede
 k8s.io/kube-openapi/pkg/common
 k8s.io/kube-openapi/pkg/util/proto

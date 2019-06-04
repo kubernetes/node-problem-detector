@@ -41,6 +41,7 @@ require (
 	github.com/prometheus/common v0.3.0 // indirect
 	github.com/prometheus/procfs v0.0.0-20190425082905-87a4384529e0 // indirect
 	github.com/shirou/gopsutil v0.0.0-20190427031343-fa9845945e5b // indirect
+	github.com/sigma/go-inotify v0.0.0-20181102212354-c87b6cf5033d // indirect
 	github.com/spf13/pflag v1.0.3
 	github.com/stretchr/testify v1.3.0
 	golang.org/x/sys v0.0.0-20190509141414-a5b02f93d862 // indirect
@@ -49,6 +50,7 @@ require (
 	k8s.io/apimachinery v0.0.0-20180126010752-19e3f5aa3adc
 	k8s.io/client-go v0.0.0-20180103015815-9389c055a838
 	k8s.io/heapster v0.0.0-20180704153620-b25f8a16208f
+	k8s.io/klog v0.3.2 // indirect
 	k8s.io/kube-openapi v0.0.0-20180216212618-50ae88d24ede // indirect
 	k8s.io/kubernetes v1.14.2
 )
