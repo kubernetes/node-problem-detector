@@ -50,5 +50,5 @@ require (
 	k8s.io/client-go v0.0.0-20180103015815-9389c055a838
 	k8s.io/heapster v0.0.0-20180704153620-b25f8a16208f
 	k8s.io/kube-openapi v0.0.0-20180216212618-50ae88d24ede // indirect
-	k8s.io/kubernetes v1.11.0
+	k8s.io/kubernetes v1.14.2
 )
