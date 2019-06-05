@@ -161,6 +161,15 @@ For example, to test [KernelMonitor](https://github.com/kubernetes/node-problem-
 - For [KernelMonitor](https://github.com/kubernetes/node-problem-detector/blob/master/config/kernel-monitor.json) message injection, all messages should have ```kernel: ``` prefix (also note there is a space after ```:```); or use [generator.sh](https://github.com/kubernetes/node-problem-detector/blob/master/test/kernel_log_generator/generator.sh).
 - To inject other logs into journald like systemd logs, use ```echo 'Some systemd message' | systemd-cat -t systemd```.
 
+## Dependency Management
+
+node-problem-detector uses [go modules](https://github.com/golang/go/wiki/Modules)
+to manage dependencies. Therefore, building node-problem-detector requires
+golang 1.11+. It still uses vendoring. See the
+[Kubernetes go modules KEP](https://github.com/kubernetes/enhancements/blob/master/keps/sig-architecture/2019-03-19-go-modules.md#alternatives-to-vendoring-using-go-modules)
+for the design decisions. To add a new dependency, update [go.mod](go.mod) and
+run `GO111MODULE=on go mod vendor`.
+
 # Remedy Systems
 
 A _remedy system_ is a process or processes designed to attempt to remedy problems
