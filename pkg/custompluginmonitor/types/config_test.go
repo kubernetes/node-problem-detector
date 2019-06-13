@@ -261,11 +261,11 @@ func TestCustomPluginConfigValidate(t *testing.T) {
 		err := utMeta.Conf.Validate()
 		if err != nil && !utMeta.IsError {
 			t.Error(desp)
-			t.Errorf("Error in validating custom plugin configuration %+v. Want an error got nil", utMeta)
+			t.Errorf("Error in validating custom plugin configuration %+v. Wanted nil got an error", utMeta)
 		}
 		if err == nil && utMeta.IsError {
 			t.Error(desp)
-			t.Errorf("Error in validating custom plugin configuration %+v. Want nil got an error", utMeta)
+			t.Errorf("Error in validating custom plugin configuration %+v. Wanted an error got nil", utMeta)
 		}
 	}
 }

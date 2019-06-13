@@ -23,6 +23,7 @@ import (
 
 	"github.com/golang/glog"
 
+	"k8s.io/node-problem-detector/pkg/problemdaemon"
 	"k8s.io/node-problem-detector/pkg/systemlogmonitor/logwatchers"
 	watchertypes "k8s.io/node-problem-detector/pkg/systemlogmonitor/logwatchers/types"
 	logtypes "k8s.io/node-problem-detector/pkg/systemlogmonitor/types"
@@ -31,6 +32,16 @@ import (
 	"k8s.io/node-problem-detector/pkg/util"
 	"k8s.io/node-problem-detector/pkg/util/tomb"
 )
+
+const SystemLogMonitorName = "system-log-monitor"
+
+func init() {
+	problemdaemon.Register(
+		SystemLogMonitorName,
+		types.ProblemDaemonHandler{
+			CreateProblemDaemonOrDie: NewLogMonitorOrDie,
+			CmdOptionDescription:     "Set to config file paths."})
+}
 
 type logMonitor struct {
 	watcher    watchertypes.LogWatcher

@@ -1,0 +1,19 @@
+{
+	"disk": {
+		"metricsConfigs": {
+			"disk/io_time": {
+				"displayName": "disk/io_time"
+			},
+			"disk/weighted_io": {
+				"displayName": "disk/weighted_io"
+			},
+			"disk/avg_queue_len": {
+				"displayName": "disk/avg_queue_len"
+			}
+		},
+		"includeRootBlk": true,
+		"includeAllAttachedBlk": true,
+		"lsblkTimeout": "5s"
+	},
+	"invokeInterval": "60s"
+}

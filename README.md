@@ -59,6 +59,12 @@ List of supported problem daemons:
 | [KernelMonitor](https://github.com/kubernetes/node-problem-detector/blob/master/config/kernel-monitor.json) | KernelDeadlock | A system log monitor monitors kernel log and reports problem according to predefined rules. |
 | [AbrtAdaptor](https://github.com/kubernetes/node-problem-detector/blob/master/config/abrt-adaptor.json) | None | Monitor ABRT log messages and report them further. ABRT (Automatic Bug Report Tool) is health monitoring daemon able to catch kernel problems as well as application crashes of various kinds occurred on the host. For more information visit the [link](https://github.com/abrt). |
 | [CustomPluginMonitor](https://github.com/kubernetes/node-problem-detector/blob/master/config/custom-plugin-monitor.json) | On-demand(According to users configuration) | A custom plugin monitor for node-problem-detector to invoke and check various node problems with user defined check scripts. See proposal [here](https://docs.google.com/document/d/1jK_5YloSYtboj-DtfjmYKxfNnUxCAvohLnsH5aGCAYQ/edit#). |
+| [SystemStatsMonitor](https://github.com/kubernetes/node-problem-detector/blob/master/config/system-stats-monitor.json) | None(Could be added in the future) | A system stats monitor for node-problem-detector to collect various health-related system stats as metrics. See proposal [here](https://docs.google.com/document/d/1SeaUz6kBavI283Dq8GBpoEUDrHA2a795xtw0OvjM568/edit). |
+
+# Exporter
+
+An exporter is a component of node-problem-detector. It reports node problems and/or metrics to 
+certain back end (e.g. Kubernetes API server, or Prometheus scrape endpoint).
 
 # Usage
 
@@ -67,16 +73,21 @@ List of supported problem daemons:
 * `--version`: Print current version of node-problem-detector.
 * `--address`: The address to bind the node problem detector server.
 * `--port`: The port to bind the node problem detector server. Use 0 to disable.
-* `--system-log-monitors`: List of paths to system log monitor configuration files, comma separated, e.g.
+* `--config.system-log-monitor`: List of paths to system log monitor configuration files, comma separated, e.g.
   [config/kernel-monitor.json](https://github.com/kubernetes/node-problem-detector/blob/master/config/kernel-monitor.json).
   Node problem detector will start a separate log monitor for each configuration. You can
   use different log monitors to monitor different system log.
-* `--custom-plugin-monitors`: List of paths to custom plugin monitor config files, comma separated, e.g.
+* `--config.custom-plugin-monitor`: List of paths to custom plugin monitor config files, comma separated, e.g.
   [config/custom-plugin-monitor.json](https://github.com/kubernetes/node-problem-detector/blob/master/config/custom-plugin-monitor.json).
   Node problem detector will start a separate custom plugin monitor for each configuration. You can
   use different custom plugin monitors to monitor different node problems.
+* `--config.system-stats-monitor`: List of paths to system stats monitor config files, comma separated, e.g.
+  [config/system-stats-monitor.json](https://github.com/kubernetes/node-problem-detector/blob/master/config/system-stats-monitor.json).
+  Node problem detector will start a separate system stats monitor for each configuration. You can
+  use different system stats monitors to monitor different problem-related system stats.
+* `--enable-k8s-exporter`: Enables reporting to Kubernetes API server, default to `true`.
 * `--apiserver-override`: A URI parameter used to customize how node-problem-detector
-connects the apiserver. The format is same as the
+connects the apiserver.  This is ignored if `--enable-k8s-exporter` is `false`. The format is same as the
 [`source`](https://github.com/kubernetes/heapster/blob/master/docs/source-configuration.md#kubernetes)
 flag of [Heapster](https://github.com/kubernetes/heapster).
 For example, to run without auth, use the following config:
@@ -85,6 +96,14 @@ For example, to run without auth, use the following config:
    ```
    Refer [heapster docs](https://github.com/kubernetes/heapster/blob/master/docs/source-configuration.md#kubernetes) for a complete list of available options.
 * `--hostname-override`: A customized node name used for node-problem-detector to update conditions and emit events. node-problem-detector gets node name first from `hostname-override`, then `NODE_NAME` environment variable and finally fall back to `os.Hostname`.
+* `--prometheus-address`: The address to bind the Prometheus scrape endpoint, default to `127.0.0.1`.
+* `--prometheus-port`: The port to bind the Prometheus scrape endpoint, default to 20257. Use 0 to disable.
+
+### Deprecated Flags
+
+* `--system-log-monitors`: List of paths to system log monitor config files, comma separated. This option is deprecated, replaced by `--config.system-log-monitor`, and will be removed. NPD will panic if both `--system-log-monitors` and `--config.system-log-monitor` are set.
+
+* `--custom-plugin-monitors`: List of paths to custom plugin monitor config files, comma separated. This option is deprecated, replaced by `--config.custom-plugin-monitor`, and will be removed. NPD will panic if both `--custom-plugin-monitors` and `--config.custom-plugin-monitor` are set.
 
 ## Build Image
 
@@ -149,12 +168,13 @@ For example, to test [KernelMonitor](https://github.com/kubernetes/node-problem-
 1. ```make``` (build node-problem-detector locally)
 2. ```kubectl proxy --port=8080``` (make a running cluster's API server available locally)
 3. Update [KernelMonitor](https://github.com/kubernetes/node-problem-detector/blob/master/config/kernel-monitor.json)'s ```logPath``` to your local kernel log directory. For example, on some Linux systems, it is ```/run/log/journal``` instead of ```/var/log/journal```.
-3. ```./bin/node-problem-detector --logtostderr --apiserver-override=http://127.0.0.1:8080?inClusterConfig=false --system-log-monitors=config/kernel-monitor.json  --port=20256``` (or point to any API server address:port)
+3. ```./bin/node-problem-detector --logtostderr --apiserver-override=http://127.0.0.1:8080?inClusterConfig=false --config.system-log-monitor=config/kernel-monitor.json --config.system-stats-monitor=config/system-stats-monitor.json --port=20256 --prometheus-port=20257``` (or point to any API server address:port and Prometheus port)
 4. ```sudo sh -c "echo 'kernel: BUG: unable to handle kernel NULL pointer dereference at TESTING' >> /dev/kmsg"```
 5. You can see ```KernelOops``` event in the node-problem-detector log.
 6. ```sudo sh -c "echo 'kernel: INFO: task docker:20744 blocked for more than 120 seconds.' >> /dev/kmsg"```
 7. You can see ```DockerHung``` event and condition in the node-problem-detector log.
 8. You can see ```DockerHung``` condition at [http://127.0.0.1:20256/conditions](http://127.0.0.1:20256/conditions).
+9. You can see disk related system metrics in Prometheus format at [http://127.0.0.1:20257/metrics](http://127.0.0.1:20257/metrics).
 
 **Note**:
 - You can see more rule examples under [test/kernel_log_generator/problems](https://github.com/kubernetes/node-problem-detector/tree/master/test/kernel_log_generator/problems).

@@ -17,42 +17,19 @@ limitations under the License.
 package main
 
 import (
-	"net"
-	"net/http"
-	_ "net/http/pprof"
 	"os"
-	"strconv"
 
 	"github.com/golang/glog"
 	"github.com/spf13/pflag"
 
 	"k8s.io/node-problem-detector/cmd/options"
-	"k8s.io/node-problem-detector/pkg/custompluginmonitor"
-	"k8s.io/node-problem-detector/pkg/problemclient"
+	"k8s.io/node-problem-detector/pkg/exporters/k8sexporter"
+	"k8s.io/node-problem-detector/pkg/exporters/prometheusexporter"
+	"k8s.io/node-problem-detector/pkg/problemdaemon"
 	"k8s.io/node-problem-detector/pkg/problemdetector"
-	"k8s.io/node-problem-detector/pkg/systemlogmonitor"
 	"k8s.io/node-problem-detector/pkg/types"
 	"k8s.io/node-problem-detector/pkg/version"
 )
-
-func startHTTPServer(p problemdetector.ProblemDetector, npdo *options.NodeProblemDetectorOptions) {
-	// Add healthz http request handler. Always return ok now, add more health check
-	// logic in the future.
-	http.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("ok"))
-	})
-	// Add the http handlers in problem detector.
-	p.RegisterHTTPHandlers()
-
-	addr := net.JoinHostPort(npdo.ServerAddress, strconv.Itoa(npdo.ServerPort))
-	go func() {
-		err := http.ListenAndServe(addr, nil)
-		if err != nil {
-			glog.Fatalf("Failed to start server: %v", err)
-		}
-	}()
-}
 
 func main() {
 	npdo := options.NewNodeProblemDetectorOptions()
@@ -66,35 +43,31 @@ func main() {
 	}
 
 	npdo.SetNodeNameOrDie()
-
+	npdo.SetConfigFromDeprecatedOptionsOrDie()
 	npdo.ValidOrDie()
 
-	monitors := make(map[string]types.Monitor)
-	for _, config := range npdo.SystemLogMonitorConfigPaths {
-		if _, ok := monitors[config]; ok {
-			// Skip the config if it's duplicated.
-			glog.Warningf("Duplicated monitor configuration %q", config)
-			continue
-		}
-		monitors[config] = systemlogmonitor.NewLogMonitorOrDie(config)
+	// Initialize problem daemons.
+	problemDaemons := problemdaemon.NewProblemDaemons(npdo.MonitorConfigPaths)
+	if len(problemDaemons) == 0 {
+		glog.Fatalf("No problem daemon is configured")
 	}
 
-	for _, config := range npdo.CustomPluginMonitorConfigPaths {
-		if _, ok := monitors[config]; ok {
-			// Skip the config if it's duplicated.
-			glog.Warningf("Duplicated monitor configuration %q", config)
-			continue
-		}
-		monitors[config] = custompluginmonitor.NewCustomPluginMonitorOrDie(config)
+	// Initialize exporters.
+	exporters := []types.Exporter{}
+	if ke := k8sexporter.NewExporterOrDie(npdo); ke != nil {
+		exporters = append(exporters, ke)
+		glog.Info("K8s exporter started.")
 	}
-	c := problemclient.NewClientOrDie(npdo)
-	p := problemdetector.NewProblemDetector(monitors, c)
-
-	// Start http server.
-	if npdo.ServerPort > 0 {
-		startHTTPServer(p, npdo)
+	if pe := prometheusexporter.NewExporterOrDie(npdo); pe != nil {
+		exporters = append(exporters, pe)
+		glog.Info("Prometheus exporter started.")
+	}
+	if len(exporters) == 0 {
+		glog.Fatalf("No exporter is successfully setup")
 	}
 
+	// Initialize NPD core.
+	p := problemdetector.NewProblemDetector(problemDaemons, exporters)
 	if err := p.Run(); err != nil {
 		glog.Fatalf("Problem detector failed with error: %v", err)
 	}
