@@ -17,15 +17,10 @@ limitations under the License.
 package systemlogmonitor
 
 import (
-	"fmt"
 	"reflect"
-	"runtime"
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
-
-	watchertest "k8s.io/node-problem-detector/pkg/systemlogmonitor/logwatchers/testing"
 	logtypes "k8s.io/node-problem-detector/pkg/systemlogmonitor/types"
 	"k8s.io/node-problem-detector/pkg/types"
 	"k8s.io/node-problem-detector/pkg/util"
@@ -142,14 +137,4 @@ func TestGenerateStatus(t *testing.T) {
 			t.Errorf("case %d: expected status %+v, got %+v", c+1, test.expected, got)
 		}
 	}
-}
-
-func TestGoroutineLeak(t *testing.T) {
-	orignal := runtime.NumGoroutine()
-	f := watchertest.NewFakeLogWatcher(10)
-	f.InjectError(fmt.Errorf("unexpected error"))
-	l := &logMonitor{watcher: f}
-	_, err := l.Start()
-	assert.Error(t, err)
-	assert.Equal(t, orignal, runtime.NumGoroutine())
 }
