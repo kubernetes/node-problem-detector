@@ -1,0 +1,28 @@
+{
+	"plugin": "journald",
+	"pluginConfig": {
+		"source": "systemd"
+	},
+	"logPath": "/var/log/journal",
+	"lookback": "",
+	"bufferSize": 10,
+	"source": "systemd-monitor",
+	"conditions": [],
+	"rules": [
+		{
+			"type": "temporary",
+			"reason": "KubeletStart",
+			"pattern": "Started Kubernetes kubelet."
+		},
+		{
+			"type": "temporary",
+			"reason": "DockerStart",
+			"pattern": "Starting Docker Application Container Engine..."
+		},
+		{
+			"type": "temporary",
+			"reason": "ContainerdStart",
+			"pattern": "Starting containerd container runtime..."
+		}
+	]
+}
