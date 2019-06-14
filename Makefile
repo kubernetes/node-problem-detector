@@ -95,7 +95,7 @@ version:
 		-o bin/node-problem-detector \
 		-ldflags '-X $(PKG)/pkg/version.version=$(VERSION)' \
 		$(BUILD_TAGS) \
-		cmd/node_problem_detector.go
+		./cmd/node-problem-detector
 
 Dockerfile: Dockerfile.in
 	sed -e 's|@BASEIMAGE@|$(BASEIMAGE)|g' $< >$@

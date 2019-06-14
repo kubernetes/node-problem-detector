@@ -25,9 +25,7 @@ import (
 
 	"github.com/spf13/pflag"
 
-	"k8s.io/node-problem-detector/pkg/custompluginmonitor"
 	"k8s.io/node-problem-detector/pkg/problemdaemon"
-	"k8s.io/node-problem-detector/pkg/systemlogmonitor"
 	"k8s.io/node-problem-detector/pkg/types"
 )
 
@@ -80,7 +78,11 @@ type NodeProblemDetectorOptions struct {
 }
 
 func NewNodeProblemDetectorOptions() *NodeProblemDetectorOptions {
-	return &NodeProblemDetectorOptions{MonitorConfigPaths: types.ProblemDaemonConfigPathMap{}}
+	npdo := &NodeProblemDetectorOptions{MonitorConfigPaths: types.ProblemDaemonConfigPathMap{}}
+	for _, problemDaemonName := range problemdaemon.GetProblemDaemonNames() {
+		npdo.MonitorConfigPaths[problemDaemonName] = &[]string{}
+	}
+	return npdo
 }
 
 // AddFlags adds node problem detector command line options to pflag.
@@ -108,7 +110,6 @@ func (npdo *NodeProblemDetectorOptions) AddFlags(fs *pflag.FlagSet) {
 		"127.0.0.1", "The address to bind the Prometheus scrape endpoint.")
 
 	for _, problemDaemonName := range problemdaemon.GetProblemDaemonNames() {
-		npdo.MonitorConfigPaths[problemDaemonName] = &[]string{}
 		fs.StringSliceVar(
 			npdo.MonitorConfigPaths[problemDaemonName],
 			"config."+string(problemDaemonName),
@@ -142,34 +143,48 @@ func (npdo *NodeProblemDetectorOptions) ValidOrDie() {
 	}
 }
 
+// Plugin names for custom plugin monitor and system log monitor.
+// Hard code them here to:
+// 1) Handle deprecated flags for --system-log-monitors and --custom-plugin-monitors.
+// 2) Avoid direct dependencies to packages in those plugins, so that those plugins
+// can be disabled at compile time.
+const (
+	customPluginMonitorName = "custom-plugin-monitor"
+	systemLogMonitorName    = "system-log-monitor"
+)
+
 // SetConfigFromDeprecatedOptionsOrDie sets NPD option using deprecated options.
 func (npdo *NodeProblemDetectorOptions) SetConfigFromDeprecatedOptionsOrDie() {
 	if len(npdo.SystemLogMonitorConfigPaths) != 0 {
-		if npdo.MonitorConfigPaths[systemlogmonitor.SystemLogMonitorName] == nil {
-			npdo.MonitorConfigPaths[systemlogmonitor.SystemLogMonitorName] = &[]string{}
+		if npdo.MonitorConfigPaths[systemLogMonitorName] == nil {
+			// As long as the problem daemon is registered, MonitorConfigPaths should
+			// not be nil.
+			panic("System log monitor is not supported")
 		}
 
-		if len(*npdo.MonitorConfigPaths[systemlogmonitor.SystemLogMonitorName]) != 0 {
+		if len(*npdo.MonitorConfigPaths[systemLogMonitorName]) != 0 {
 			panic("Option --system-log-monitors is deprecated in favor of --config.system-log-monitor. They cannot be set at the same time.")
 		}
 
-		*npdo.MonitorConfigPaths[systemlogmonitor.SystemLogMonitorName] = append(
-			*npdo.MonitorConfigPaths[systemlogmonitor.SystemLogMonitorName],
+		*npdo.MonitorConfigPaths[systemLogMonitorName] = append(
+			*npdo.MonitorConfigPaths[systemLogMonitorName],
 			npdo.SystemLogMonitorConfigPaths...)
 		npdo.SystemLogMonitorConfigPaths = []string{}
 	}
 
 	if len(npdo.CustomPluginMonitorConfigPaths) != 0 {
-		if npdo.MonitorConfigPaths[custompluginmonitor.CustomPluginMonitorName] == nil {
-			npdo.MonitorConfigPaths[custompluginmonitor.CustomPluginMonitorName] = &[]string{}
+		if npdo.MonitorConfigPaths[customPluginMonitorName] == nil {
+			// As long as the problem daemon is registered, MonitorConfigPaths should
+			// not be nil.
+			panic("Custom plugin monitor is not supported")
 		}
 
-		if len(*npdo.MonitorConfigPaths[custompluginmonitor.CustomPluginMonitorName]) != 0 {
+		if len(*npdo.MonitorConfigPaths[customPluginMonitorName]) != 0 {
 			panic("Option --custom-plugin-monitors is deprecated in favor of --config.custom-plugin-monitor. They cannot be set at the same time.")
 		}
 
-		*npdo.MonitorConfigPaths[custompluginmonitor.CustomPluginMonitorName] = append(
-			*npdo.MonitorConfigPaths[custompluginmonitor.CustomPluginMonitorName],
+		*npdo.MonitorConfigPaths[customPluginMonitorName] = append(
+			*npdo.MonitorConfigPaths[customPluginMonitorName],
 			npdo.CustomPluginMonitorConfigPaths...)
 		npdo.CustomPluginMonitorConfigPaths = []string{}
 	}
