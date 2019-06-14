@@ -23,8 +23,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"k8s.io/node-problem-detector/pkg/custompluginmonitor"
-	"k8s.io/node-problem-detector/pkg/systemlogmonitor"
 	"k8s.io/node-problem-detector/pkg/types"
 )
 
@@ -255,15 +253,15 @@ func TestSetConfigFromDeprecatedOptionsOrDie(t *testing.T) {
 			name: "no deprecated options",
 			orig: NodeProblemDetectorOptions{
 				MonitorConfigPaths: types.ProblemDaemonConfigPathMap{
-					systemlogmonitor.SystemLogMonitorName:       &[]string{"config-a", "config-b"},
-					custompluginmonitor.CustomPluginMonitorName: &[]string{"config-c", "config-d"},
+					systemLogMonitorName:    &[]string{"config-a", "config-b"},
+					customPluginMonitorName: &[]string{"config-c", "config-d"},
 				},
 			},
 			expectPanic: false,
 			wanted: NodeProblemDetectorOptions{
 				MonitorConfigPaths: types.ProblemDaemonConfigPathMap{
-					systemlogmonitor.SystemLogMonitorName:       &[]string{"config-a", "config-b"},
-					custompluginmonitor.CustomPluginMonitorName: &[]string{"config-c", "config-d"},
+					systemLogMonitorName:    &[]string{"config-a", "config-b"},
+					customPluginMonitorName: &[]string{"config-c", "config-d"},
 				},
 			},
 		},
@@ -272,13 +270,16 @@ func TestSetConfigFromDeprecatedOptionsOrDie(t *testing.T) {
 			orig: NodeProblemDetectorOptions{
 				SystemLogMonitorConfigPaths:    []string{"config-a", "config-b"},
 				CustomPluginMonitorConfigPaths: []string{"config-c", "config-d"},
-				MonitorConfigPaths:             types.ProblemDaemonConfigPathMap{},
+				MonitorConfigPaths: types.ProblemDaemonConfigPathMap{
+					customPluginMonitorName: &[]string{},
+					systemLogMonitorName:    &[]string{},
+				},
 			},
 			expectPanic: false,
 			wanted: NodeProblemDetectorOptions{
 				MonitorConfigPaths: types.ProblemDaemonConfigPathMap{
-					systemlogmonitor.SystemLogMonitorName:       &[]string{"config-a", "config-b"},
-					custompluginmonitor.CustomPluginMonitorName: &[]string{"config-c", "config-d"},
+					systemLogMonitorName:    &[]string{"config-a", "config-b"},
+					customPluginMonitorName: &[]string{"config-c", "config-d"},
 				},
 			},
 		},
@@ -287,14 +288,15 @@ func TestSetConfigFromDeprecatedOptionsOrDie(t *testing.T) {
 			orig: NodeProblemDetectorOptions{
 				SystemLogMonitorConfigPaths: []string{"config-a", "config-b"},
 				MonitorConfigPaths: types.ProblemDaemonConfigPathMap{
-					custompluginmonitor.CustomPluginMonitorName: &[]string{"config-c", "config-d"},
+					customPluginMonitorName: &[]string{"config-c", "config-d"},
+					systemLogMonitorName:    &[]string{},
 				},
 			},
 			expectPanic: false,
 			wanted: NodeProblemDetectorOptions{
 				MonitorConfigPaths: types.ProblemDaemonConfigPathMap{
-					systemlogmonitor.SystemLogMonitorName:       &[]string{"config-a", "config-b"},
-					custompluginmonitor.CustomPluginMonitorName: &[]string{"config-c", "config-d"},
+					systemLogMonitorName:    &[]string{"config-a", "config-b"},
+					customPluginMonitorName: &[]string{"config-c", "config-d"},
 				},
 			},
 		},
@@ -303,14 +305,15 @@ func TestSetConfigFromDeprecatedOptionsOrDie(t *testing.T) {
 			orig: NodeProblemDetectorOptions{
 				CustomPluginMonitorConfigPaths: []string{"config-a", "config-b"},
 				MonitorConfigPaths: types.ProblemDaemonConfigPathMap{
-					systemlogmonitor.SystemLogMonitorName: &[]string{"config-c", "config-d"},
+					customPluginMonitorName: &[]string{},
+					systemLogMonitorName:    &[]string{"config-c", "config-d"},
 				},
 			},
 			expectPanic: false,
 			wanted: NodeProblemDetectorOptions{
 				MonitorConfigPaths: types.ProblemDaemonConfigPathMap{
-					systemlogmonitor.SystemLogMonitorName:       &[]string{"config-c", "config-d"},
-					custompluginmonitor.CustomPluginMonitorName: &[]string{"config-a", "config-b"},
+					systemLogMonitorName:    &[]string{"config-c", "config-d"},
+					customPluginMonitorName: &[]string{"config-a", "config-b"},
 				},
 			},
 		},
@@ -319,30 +322,42 @@ func TestSetConfigFromDeprecatedOptionsOrDie(t *testing.T) {
 			orig: NodeProblemDetectorOptions{
 				SystemLogMonitorConfigPaths: []string{"config-a"},
 				MonitorConfigPaths: types.ProblemDaemonConfigPathMap{
-					systemlogmonitor.SystemLogMonitorName: &[]string{"config-b"},
+					systemLogMonitorName: &[]string{"config-b"},
 				},
 			},
 			expectPanic: true,
-			wanted: NodeProblemDetectorOptions{
-				MonitorConfigPaths: types.ProblemDaemonConfigPathMap{
-					systemlogmonitor.SystemLogMonitorName: &[]string{"config-b"},
-				},
-			},
 		},
 		{
 			name: "using deprecated & new options on CustomPluginMonitor",
 			orig: NodeProblemDetectorOptions{
 				CustomPluginMonitorConfigPaths: []string{"config-a"},
 				MonitorConfigPaths: types.ProblemDaemonConfigPathMap{
-					custompluginmonitor.CustomPluginMonitorName: &[]string{"config-b"},
+					customPluginMonitorName: &[]string{"config-b"},
 				},
 			},
 			expectPanic: true,
-			wanted: NodeProblemDetectorOptions{
+		},
+		{
+			name: "using deprecated options when SystemLogMonitor is not registered",
+			orig: NodeProblemDetectorOptions{
+				SystemLogMonitorConfigPaths:    []string{"config-a"},
+				CustomPluginMonitorConfigPaths: []string{"config-b"},
 				MonitorConfigPaths: types.ProblemDaemonConfigPathMap{
-					custompluginmonitor.CustomPluginMonitorName: &[]string{"config-b"},
+					customPluginMonitorName: &[]string{},
 				},
 			},
+			expectPanic: true,
+		},
+		{
+			name: "using deprecated options when CustomPluginMonitor is not registered",
+			orig: NodeProblemDetectorOptions{
+				SystemLogMonitorConfigPaths:    []string{"config-a"},
+				CustomPluginMonitorConfigPaths: []string{"config-b"},
+				MonitorConfigPaths: types.ProblemDaemonConfigPathMap{
+					systemLogMonitorName: &[]string{},
+				},
+			},
+			expectPanic: true,
 		},
 	}
 
