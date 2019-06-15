@@ -59,9 +59,11 @@ BASEIMAGE:=k8s.gcr.io/debian-base-amd64:0.4.0
 # Disable cgo by default to make the binary statically linked.
 CGO_ENABLED:=0
 
+# Construct the "-tags" parameter used by "go build".
+BUILD_TAGS?=""
 ifeq ($(ENABLE_JOURNALD), 1)
 	# Enable journald build tag.
-	BUILD_TAGS:=-tags journald
+	BUILD_TAGS:=$(BUILD_TAGS) journald
 	# Enable cgo because sdjournal needs cgo to compile. The binary will be
 	# dynamically linked if CGO_ENABLED is enabled. This is fine because fedora
 	# already has necessary dynamic library. We can not use `-extldflags "-static"`
@@ -69,6 +71,10 @@ ifeq ($(ENABLE_JOURNALD), 1)
 	# statically linked application.
 	CGO_ENABLED:=1
 endif
+ifneq ($(BUILD_TAGS), "")
+	BUILD_TAGS:=-tags "$(BUILD_TAGS)"
+endif
+
 
 vet:
 	GO111MODULE=on go list -mod vendor $(BUILD_TAGS) ./... | \
@@ -95,7 +101,7 @@ version:
 		-o bin/node-problem-detector \
 		-ldflags '-X $(PKG)/pkg/version.version=$(VERSION)' \
 		$(BUILD_TAGS) \
-		./cmd/node-problem-detector
+		./cmd/nodeproblemdetector
 
 Dockerfile: Dockerfile.in
 	sed -e 's|@BASEIMAGE@|$(BASEIMAGE)|g' $< >$@
