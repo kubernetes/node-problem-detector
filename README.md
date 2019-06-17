@@ -52,14 +52,19 @@ Currently, a problem daemon is running as a goroutine in the node-problem-detect
 binary. In the future, we'll separate node-problem-detector and problem daemons into
 different containers, and compose them with pod specification.
 
+Each catagory of problem daemon can be disabled at compilation time by setting
+corresponding build tags. If they are disabled at compilation time, then all their
+build dependencies, global variables and background goroutines will be trimmed out
+of the compiled executable.
+
 List of supported problem daemons:
 
-| Problem Daemon |  NodeCondition  | Description |
-|----------------|:---------------:|:------------|
-| [KernelMonitor](https://github.com/kubernetes/node-problem-detector/blob/master/config/kernel-monitor.json) | KernelDeadlock | A system log monitor monitors kernel log and reports problem according to predefined rules. |
-| [AbrtAdaptor](https://github.com/kubernetes/node-problem-detector/blob/master/config/abrt-adaptor.json) | None | Monitor ABRT log messages and report them further. ABRT (Automatic Bug Report Tool) is health monitoring daemon able to catch kernel problems as well as application crashes of various kinds occurred on the host. For more information visit the [link](https://github.com/abrt). |
-| [CustomPluginMonitor](https://github.com/kubernetes/node-problem-detector/blob/master/config/custom-plugin-monitor.json) | On-demand(According to users configuration) | A custom plugin monitor for node-problem-detector to invoke and check various node problems with user defined check scripts. See proposal [here](https://docs.google.com/document/d/1jK_5YloSYtboj-DtfjmYKxfNnUxCAvohLnsH5aGCAYQ/edit#). |
-| [SystemStatsMonitor](https://github.com/kubernetes/node-problem-detector/blob/master/config/system-stats-monitor.json) | None(Could be added in the future) | A system stats monitor for node-problem-detector to collect various health-related system stats as metrics. See proposal [here](https://docs.google.com/document/d/1SeaUz6kBavI283Dq8GBpoEUDrHA2a795xtw0OvjM568/edit). |
+| Problem Daemon |  NodeCondition  | Description | Disabling Build Tag |
+|----------------|:---------------:|:------------|:--------------------|
+| [KernelMonitor](https://github.com/kubernetes/node-problem-detector/blob/master/config/kernel-monitor.json) | KernelDeadlock | A system log monitor monitors kernel log and reports problem according to predefined rules. | disable_system_log_monitor
+| [AbrtAdaptor](https://github.com/kubernetes/node-problem-detector/blob/master/config/abrt-adaptor.json) | None | Monitor ABRT log messages and report them further. ABRT (Automatic Bug Report Tool) is health monitoring daemon able to catch kernel problems as well as application crashes of various kinds occurred on the host. For more information visit the [link](https://github.com/abrt). | disable_system_log_monitor
+| [CustomPluginMonitor](https://github.com/kubernetes/node-problem-detector/blob/master/config/custom-plugin-monitor.json) | On-demand(According to users configuration) | A custom plugin monitor for node-problem-detector to invoke and check various node problems with user defined check scripts. See proposal [here](https://docs.google.com/document/d/1jK_5YloSYtboj-DtfjmYKxfNnUxCAvohLnsH5aGCAYQ/edit#). | disable_custom_plugin_monitor
+| [SystemStatsMonitor](https://github.com/kubernetes/node-problem-detector/blob/master/config/system-stats-monitor.json) | None(Could be added in the future) | A system stats monitor for node-problem-detector to collect various health-related system stats as metrics. See proposal [here](https://docs.google.com/document/d/1SeaUz6kBavI283Dq8GBpoEUDrHA2a795xtw0OvjM568/edit). | disable_system_stats_monitor
 
 # Exporter
 
@@ -116,6 +121,18 @@ with one of the below directions:
 * run `make` in the top directory. It will:
   * Build the binary.
   * Build the docker image. The binary and `config/` are copied into the docker image.
+
+If you do not need certain categories of problem daemons, you could choose to disable them at compilation time. This is the
+best way of keeping your node-problem-detector runtime compact without unnecessary code (e.g. global
+variables, goroutines, etc). You can do so via setting the `BUILD_TAGS` environment variable
+before running `make`. For example:
+
+`BUILD_TAGS="disable_custom_plugin_monitor disable_system_stats_monitor" make`
+
+Above command will compile the node-problem-detector without [Custom Plugin Monitor](https://github.com/kubernetes/node-problem-detector/tree/master/pkg/custompluginmonitor)
+and [System Stats Monitor](https://github.com/kubernetes/node-problem-detector/tree/master/pkg/systemstatsmonitor).
+Check out the [Problem Daemon](https://github.com/kubernetes/node-problem-detector#problem-daemon) section
+to see how to disable each problem daemon during compilation time.
 
 **Note**:
 By default node-problem-detector will be built with systemd support with `make` command. This requires systemd develop files.

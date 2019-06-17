@@ -23,6 +23,7 @@ import (
 	"github.com/spf13/pflag"
 
 	"k8s.io/node-problem-detector/cmd/options"
+	_ "k8s.io/node-problem-detector/cmd/nodeproblemdetector/problemdaemonplugins"
 	"k8s.io/node-problem-detector/pkg/exporters/k8sexporter"
 	"k8s.io/node-problem-detector/pkg/exporters/prometheusexporter"
 	"k8s.io/node-problem-detector/pkg/problemdaemon"

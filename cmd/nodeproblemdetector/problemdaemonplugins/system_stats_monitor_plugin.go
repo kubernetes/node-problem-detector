@@ -1,3 +1,5 @@
+// +build !disable_system_stats_monitor
+
 /*
 Copyright 2019 The Kubernetes Authors All rights reserved.
 
@@ -14,11 +16,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package main
+package problemdaemonplugins
 
-// register problem daemons here
 import (
-	_ "k8s.io/node-problem-detector/pkg/custompluginmonitor"
-	_ "k8s.io/node-problem-detector/pkg/systemlogmonitor"
 	_ "k8s.io/node-problem-detector/pkg/systemstatsmonitor"
 )
