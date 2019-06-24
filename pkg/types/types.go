@@ -99,12 +99,13 @@ const (
 	Perm Type = "permanent"
 )
 
-// Monitor monitors log and custom plugins and reports node problem condition and event according to
-// the rules.
+// Monitor monitors the system and reports problems and metrics according to the rules.
 type Monitor interface {
-	// Start starts the log monitor.
+	// Start starts the monitor.
+	// The Status channel is used to report problems. If the Monitor does not report any
+	// problem (i.e. metrics reporting only), the channel should be set to nil.
 	Start() (<-chan *Status, error)
-	// Stop stops the log monitor.
+	// Stop stops the monitor.
 	Stop()
 }
 
