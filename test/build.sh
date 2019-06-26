@@ -106,8 +106,8 @@ function build-npd-custom-flags() {
 
   flags="--v=2"
   flags+=" --logtostderr"
-  flags+=" --system-log-monitors=${km_config},${dm_config},${sm_config}"
-  flags+=" --custom-plugin-monitors=${custom_km_config},${custom_dm_config},${custom_sm_config}"
+  flags+=" --config.system-log-monitor=${km_config},${dm_config},${sm_config}"
+  flags+=" --config.custom-plugin-monitor=${custom_km_config},${custom_dm_config},${custom_sm_config}"
   flags+=" --port=20256"
 
   export NODE_PROBLEM_DETECTOR_CUSTOM_FLAGS=${flags}

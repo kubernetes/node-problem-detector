@@ -86,3 +86,30 @@ field in the configuration file is the log path. You can always configure
 System log monitor uses [Log Watcher](./logwatchers/types/log_watcher.go) to
 support different log management tools.  It is easy to implement a new log
 watcher.
+
+## Metrics Reporting
+
+By setting the boolean `metricsReporting` at top level, you can choose to enable or disable
+metrics reporting of System Log Monitor. If you omit the field, it will be set to `true` by
+default.
+
+Temporary problems will be reported as counter metrics, such as below example:
+
+```
+# HELP problem_counter Number of times a specific type of problem have occurred.
+# TYPE problem_counter counter
+problem_counter{reason="TaskHung"} 2
+```
+
+Permanent problems will be reported as both gauge metrics and counter metrics, such as below
+example:
+
+```
+# HELP problem_counter Number of times a specific type of problem have occurred.
+# TYPE problem_counter counter
+problem_counter{reason="DockerHung"} 1
+# HELP problem_gauge Whether a specific type of problem is affecting the node or not.
+# TYPE problem_gauge gauge
+problem_gauge{condition="KernelDeadlock",reason="DockerHung"} 1
+```
+

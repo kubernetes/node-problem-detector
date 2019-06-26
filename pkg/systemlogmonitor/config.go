@@ -24,6 +24,12 @@ import (
 	"k8s.io/node-problem-detector/pkg/types"
 )
 
+var (
+	defaultBufferSize             = 10
+	defaultLookback               = "0"
+	defaultEnableMetricsReporting = true
+)
+
 // MonitorConfig is the configuration of log monitor.
 type MonitorConfig struct {
 	// WatcherConfig is the configuration of log watcher.
@@ -36,15 +42,20 @@ type MonitorConfig struct {
 	DefaultConditions []types.Condition `json:"conditions"`
 	// Rules are the rules log monitor will follow to parse the log file.
 	Rules []systemlogtypes.Rule `json:"rules"`
+	// EnableMetricsReporting describes whether to report problems as metrics or not.
+	EnableMetricsReporting *bool `json:"metricsReporting,omitempty"`
 }
 
 // ApplyConfiguration applies default configurations.
 func (mc *MonitorConfig) ApplyDefaultConfiguration() {
 	if mc.BufferSize == 0 {
-		mc.BufferSize = 10
+		mc.BufferSize = defaultBufferSize
+	}
+	if mc.EnableMetricsReporting == nil {
+		mc.EnableMetricsReporting = &defaultEnableMetricsReporting
 	}
 	if mc.WatcherConfig.Lookback == "" {
-		mc.WatcherConfig.Lookback = "0"
+		mc.WatcherConfig.Lookback = defaultLookback
 	}
 }
 

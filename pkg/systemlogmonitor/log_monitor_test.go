@@ -24,9 +24,11 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"k8s.io/node-problem-detector/pkg/problemdaemon"
+	"k8s.io/node-problem-detector/pkg/problemmetrics"
 	logtypes "k8s.io/node-problem-detector/pkg/systemlogmonitor/types"
 	"k8s.io/node-problem-detector/pkg/types"
 	"k8s.io/node-problem-detector/pkg/util"
+	"k8s.io/node-problem-detector/pkg/util/metrics"
 )
 
 const (
@@ -41,7 +43,7 @@ func TestRegistration(t *testing.T) {
 		"System log monitor failed to register itself as a problem daemon.")
 }
 
-func TestGenerateStatus(t *testing.T) {
+func TestGenerateStatusForConditions(t *testing.T) {
 	initConditions := []types.Condition{
 		{
 			Type:       testConditionA,
@@ -141,9 +143,558 @@ func TestGenerateStatus(t *testing.T) {
 			// during the test.
 			conditions: append([]types.Condition{}, initConditions...),
 		}
+		(&l.config).ApplyDefaultConfiguration()
 		got := l.generateStatus(logs, test.rule)
 		if !reflect.DeepEqual(&test.expected, got) {
 			t.Errorf("case %d: expected status %+v, got %+v", c+1, test.expected, got)
 		}
+	}
+}
+
+func TestGenerateStatusForMetrics(t *testing.T) {
+	testCases := []struct {
+		name            string
+		conditions      []types.Condition
+		triggeredRules  []logtypes.Rule
+		expectedMetrics []metrics.Int64MetricRepresentation
+	}{
+		{
+			name:            "one temporary problem that has not happened",
+			conditions:      []types.Condition{},
+			triggeredRules:  []logtypes.Rule{},
+			expectedMetrics: []metrics.Int64MetricRepresentation{},
+		},
+		{
+			name:       "one temporary problem happened once",
+			conditions: []types.Condition{},
+			triggeredRules: []logtypes.Rule{
+				{
+					Type:   types.Temp,
+					Reason: "problem reason foo",
+				},
+			},
+			expectedMetrics: []metrics.Int64MetricRepresentation{
+				{
+					Name:   "problem_counter",
+					Labels: map[string]string{"reason": "problem reason foo"},
+					Value:  1,
+				},
+			},
+		},
+		{
+			name:       "one temporary problem happened twice",
+			conditions: []types.Condition{},
+			triggeredRules: []logtypes.Rule{
+				{
+					Type:   types.Temp,
+					Reason: "problem reason foo",
+				},
+				{
+					Type:   types.Temp,
+					Reason: "problem reason foo",
+				},
+			},
+			expectedMetrics: []metrics.Int64MetricRepresentation{
+				{
+					Name:   "problem_counter",
+					Labels: map[string]string{"reason": "problem reason foo"},
+					Value:  2,
+				},
+			},
+		},
+		{
+			name:       "two different temporary problems happened",
+			conditions: []types.Condition{},
+			triggeredRules: []logtypes.Rule{
+				{
+					Type:   types.Temp,
+					Reason: "problem reason foo",
+				},
+				{
+					Type:   types.Temp,
+					Reason: "problem reason bar",
+				},
+			},
+			expectedMetrics: []metrics.Int64MetricRepresentation{
+				{
+					Name:   "problem_counter",
+					Labels: map[string]string{"reason": "problem reason foo"},
+					Value:  1,
+				},
+				{
+					Name:   "problem_counter",
+					Labels: map[string]string{"reason": "problem reason bar"},
+					Value:  1,
+				},
+			},
+		},
+		{
+			name: "one permanent problem that is happening",
+			conditions: []types.Condition{
+				{
+					Type:   "ConditionA",
+					Status: types.False,
+				},
+			},
+			triggeredRules: []logtypes.Rule{
+				{
+					Type:      types.Perm,
+					Condition: "ConditionA",
+					Reason:    "problem reason foo",
+				},
+			},
+			expectedMetrics: []metrics.Int64MetricRepresentation{
+				{
+					Name:   "problem_gauge",
+					Labels: map[string]string{"type": "ConditionA", "reason": "problem reason foo"},
+					Value:  1,
+				},
+				{
+					Name:   "problem_counter",
+					Labels: map[string]string{"reason": "problem reason foo"},
+					Value:  1,
+				},
+			},
+		},
+		{
+			name: "one permanent problem observed twice with same reason",
+			conditions: []types.Condition{
+				{
+					Type:   "ConditionA",
+					Status: types.False,
+				},
+			},
+			triggeredRules: []logtypes.Rule{
+				{
+					Type:      types.Perm,
+					Condition: "ConditionA",
+					Reason:    "problem reason foo",
+				},
+				{
+					Type:      types.Perm,
+					Condition: "ConditionA",
+					Reason:    "problem reason foo",
+				},
+			},
+			expectedMetrics: []metrics.Int64MetricRepresentation{
+				{
+					Name:   "problem_gauge",
+					Labels: map[string]string{"type": "ConditionA", "reason": "problem reason foo"},
+					Value:  1,
+				},
+				{
+					Name:   "problem_counter",
+					Labels: map[string]string{"reason": "problem reason foo"},
+					Value:  1,
+				},
+			},
+		},
+		{
+			name: "one permanent problem observed twice with different reasons",
+			conditions: []types.Condition{
+				{
+					Type:   "ConditionA",
+					Status: types.False,
+				},
+			},
+			triggeredRules: []logtypes.Rule{
+				{
+					Type:      types.Perm,
+					Condition: "ConditionA",
+					Reason:    "problem reason foo",
+				},
+				{
+					Type:      types.Perm,
+					Condition: "ConditionA",
+					Reason:    "problem reason bar",
+				},
+			},
+			expectedMetrics: []metrics.Int64MetricRepresentation{
+				{
+					Name:   "problem_gauge",
+					Labels: map[string]string{"type": "ConditionA", "reason": "problem reason foo"},
+					Value:  0,
+				},
+				{
+					Name:   "problem_gauge",
+					Labels: map[string]string{"type": "ConditionA", "reason": "problem reason bar"},
+					Value:  1,
+				},
+				{
+					Name:   "problem_counter",
+					Labels: map[string]string{"reason": "problem reason foo"},
+					Value:  1,
+				},
+				{
+					Name:   "problem_counter",
+					Labels: map[string]string{"reason": "problem reason bar"},
+					Value:  1,
+				},
+			},
+		},
+		{
+			name: "two permanent problem observed once each",
+			conditions: []types.Condition{
+				{
+					Type:   "ConditionA",
+					Status: types.False,
+				},
+				{
+					Type:   "ConditionB",
+					Status: types.False,
+				},
+			},
+			triggeredRules: []logtypes.Rule{
+				{
+					Type:      types.Perm,
+					Condition: "ConditionA",
+					Reason:    "problem reason foo",
+				},
+				{
+					Type:      types.Perm,
+					Condition: "ConditionB",
+					Reason:    "problem reason bar",
+				},
+			},
+			expectedMetrics: []metrics.Int64MetricRepresentation{
+				{
+					Name:   "problem_gauge",
+					Labels: map[string]string{"type": "ConditionA", "reason": "problem reason foo"},
+					Value:  1,
+				},
+				{
+					Name:   "problem_gauge",
+					Labels: map[string]string{"type": "ConditionB", "reason": "problem reason bar"},
+					Value:  1,
+				},
+				{
+					Name:   "problem_counter",
+					Labels: map[string]string{"reason": "problem reason foo"},
+					Value:  1,
+				},
+				{
+					Name:   "problem_counter",
+					Labels: map[string]string{"reason": "problem reason bar"},
+					Value:  1,
+				},
+			},
+		},
+	}
+	for _, test := range testCases {
+		t.Run(test.name, func(t *testing.T) {
+			l := &logMonitor{}
+			l.conditions = test.conditions
+			(&l.config).ApplyDefaultConfiguration()
+
+			originalGlobalProblemMetricsManager := problemmetrics.GlobalProblemMetricsManager
+			defer func() {
+				problemmetrics.GlobalProblemMetricsManager = originalGlobalProblemMetricsManager
+			}()
+
+			fakePMM, fakeProblemCounter, fakeProblemGauge := problemmetrics.NewProblemMetricsManagerStub()
+			problemmetrics.GlobalProblemMetricsManager = fakePMM
+
+			for _, rule := range test.triggeredRules {
+				l.generateStatus([]*logtypes.Log{{}}, rule)
+			}
+
+			gotMetrics := append(fakeProblemCounter.ListMetrics(), fakeProblemGauge.ListMetrics()...)
+
+			assert.ElementsMatch(t, test.expectedMetrics, gotMetrics,
+				"expected metrics: %+v, got: %+v", test.expectedMetrics, gotMetrics)
+		})
+	}
+}
+
+func TestInitializeProblemMetricsOrDie(t *testing.T) {
+	testCases := []struct {
+		name            string
+		rules           []logtypes.Rule
+		expectedMetrics []metrics.Int64MetricRepresentation
+	}{
+		{
+			name:            "no problem type at all",
+			rules:           []logtypes.Rule{},
+			expectedMetrics: []metrics.Int64MetricRepresentation{},
+		},
+		{
+			name: "one type of temporary problem",
+			rules: []logtypes.Rule{
+				{
+					Type:   types.Temp,
+					Reason: "problem reason foo",
+				},
+			},
+			expectedMetrics: []metrics.Int64MetricRepresentation{
+				{
+					Name:   "problem_counter",
+					Labels: map[string]string{"reason": "problem reason foo"},
+					Value:  0,
+				},
+			},
+		},
+		{
+			name: "one type of permanent problem",
+			rules: []logtypes.Rule{
+				{
+					Type:      types.Perm,
+					Condition: "ConditionA",
+					Reason:    "problem reason foo",
+				},
+			},
+			expectedMetrics: []metrics.Int64MetricRepresentation{
+				{
+					Name:   "problem_gauge",
+					Labels: map[string]string{"type": "ConditionA", "reason": "problem reason foo"},
+					Value:  0,
+				},
+				{
+					Name:   "problem_counter",
+					Labels: map[string]string{"reason": "problem reason foo"},
+					Value:  0,
+				},
+			},
+		},
+		{
+			name: "duplicate temporary problem types",
+			rules: []logtypes.Rule{
+				{
+					Type:   types.Temp,
+					Reason: "problem reason foo",
+				},
+				{
+					Type:   types.Temp,
+					Reason: "problem reason foo",
+				},
+			},
+			expectedMetrics: []metrics.Int64MetricRepresentation{
+				{
+					Name:   "problem_counter",
+					Labels: map[string]string{"reason": "problem reason foo"},
+					Value:  0,
+				},
+			},
+		},
+		{
+			name: "multiple temporary problem types",
+			rules: []logtypes.Rule{
+				{
+					Type:   types.Temp,
+					Reason: "problem reason foo",
+				},
+				{
+					Type:   types.Temp,
+					Reason: "problem reason bar",
+				},
+			},
+			expectedMetrics: []metrics.Int64MetricRepresentation{
+				{
+					Name:   "problem_counter",
+					Labels: map[string]string{"reason": "problem reason foo"},
+					Value:  0,
+				},
+				{
+					Name:   "problem_counter",
+					Labels: map[string]string{"reason": "problem reason bar"},
+					Value:  0,
+				},
+			},
+		},
+		{
+			name: "multiple permanent problem types with same condition",
+			rules: []logtypes.Rule{
+				{
+					Type:      types.Perm,
+					Condition: "ConditionA",
+					Reason:    "problem reason foo",
+				},
+				{
+					Type:      types.Perm,
+					Condition: "ConditionA",
+					Reason:    "problem reason bar",
+				},
+			},
+			expectedMetrics: []metrics.Int64MetricRepresentation{
+				{
+					Name:   "problem_gauge",
+					Labels: map[string]string{"type": "ConditionA", "reason": "problem reason foo"},
+					Value:  0,
+				},
+				{
+					Name:   "problem_gauge",
+					Labels: map[string]string{"type": "ConditionA", "reason": "problem reason bar"},
+					Value:  0,
+				},
+				{
+					Name:   "problem_counter",
+					Labels: map[string]string{"reason": "problem reason foo"},
+					Value:  0,
+				},
+				{
+					Name:   "problem_counter",
+					Labels: map[string]string{"reason": "problem reason bar"},
+					Value:  0,
+				},
+			},
+		},
+		{
+			name: "multiple permanent problem types with different conditions",
+			rules: []logtypes.Rule{
+				{
+					Type:      types.Perm,
+					Condition: "ConditionA",
+					Reason:    "problem reason foo",
+				},
+				{
+					Type:      types.Perm,
+					Condition: "ConditionB",
+					Reason:    "problem reason bar",
+				},
+			},
+			expectedMetrics: []metrics.Int64MetricRepresentation{
+				{
+					Name:   "problem_gauge",
+					Labels: map[string]string{"type": "ConditionA", "reason": "problem reason foo"},
+					Value:  0,
+				},
+				{
+					Name:   "problem_gauge",
+					Labels: map[string]string{"type": "ConditionB", "reason": "problem reason bar"},
+					Value:  0,
+				},
+				{
+					Name:   "problem_counter",
+					Labels: map[string]string{"reason": "problem reason foo"},
+					Value:  0,
+				},
+				{
+					Name:   "problem_counter",
+					Labels: map[string]string{"reason": "problem reason bar"},
+					Value:  0,
+				},
+			},
+		},
+		{
+			name: "duplicate permanent problem types",
+			rules: []logtypes.Rule{
+				{
+					Type:      types.Perm,
+					Condition: "ConditionA",
+					Reason:    "problem reason foo",
+				},
+				{
+					Type:      types.Perm,
+					Condition: "ConditionA",
+					Reason:    "problem reason foo",
+				},
+			},
+			expectedMetrics: []metrics.Int64MetricRepresentation{
+				{
+					Name:   "problem_gauge",
+					Labels: map[string]string{"type": "ConditionA", "reason": "problem reason foo"},
+					Value:  0,
+				},
+				{
+					Name:   "problem_counter",
+					Labels: map[string]string{"reason": "problem reason foo"},
+					Value:  0,
+				},
+			},
+		},
+		{
+			name: "mixture of temporary and permanent problem types",
+			rules: []logtypes.Rule{
+				{
+					Type:   types.Temp,
+					Reason: "problem reason foo",
+				},
+				{
+					Type:      types.Perm,
+					Condition: "ConditionA",
+					Reason:    "problem reason hello",
+				},
+				{
+					Type:      types.Perm,
+					Condition: "ConditionA",
+					Reason:    "problem reason foo",
+				},
+				{
+					Type:      types.Perm,
+					Condition: "ConditionB",
+					Reason:    "problem reason foo",
+				},
+				{
+					Type:      types.Perm,
+					Condition: "ConditionB",
+					Reason:    "problem reason bar",
+				},
+				{
+					Type:   types.Temp,
+					Reason: "problem reason foo",
+				},
+				{
+					Type:   types.Temp,
+					Reason: "problem reason bar",
+				},
+			},
+			expectedMetrics: []metrics.Int64MetricRepresentation{
+				{
+					Name:   "problem_gauge",
+					Labels: map[string]string{"type": "ConditionA", "reason": "problem reason hello"},
+					Value:  0,
+				},
+				{
+					Name:   "problem_gauge",
+					Labels: map[string]string{"type": "ConditionA", "reason": "problem reason foo"},
+					Value:  0,
+				},
+				{
+					Name:   "problem_gauge",
+					Labels: map[string]string{"type": "ConditionB", "reason": "problem reason foo"},
+					Value:  0,
+				},
+				{
+					Name:   "problem_gauge",
+					Labels: map[string]string{"type": "ConditionB", "reason": "problem reason bar"},
+					Value:  0,
+				},
+				{
+					Name:   "problem_counter",
+					Labels: map[string]string{"reason": "problem reason hello"},
+					Value:  0,
+				},
+				{
+					Name:   "problem_counter",
+					Labels: map[string]string{"reason": "problem reason foo"},
+					Value:  0,
+				},
+				{
+					Name:   "problem_counter",
+					Labels: map[string]string{"reason": "problem reason bar"},
+					Value:  0,
+				},
+			},
+		},
+	}
+	for _, test := range testCases {
+		t.Run(test.name, func(t *testing.T) {
+			l := &logMonitor{}
+			(&l.config).ApplyDefaultConfiguration()
+
+			originalGlobalProblemMetricsManager := problemmetrics.GlobalProblemMetricsManager
+			defer func() {
+				problemmetrics.GlobalProblemMetricsManager = originalGlobalProblemMetricsManager
+			}()
+
+			fakePMM, fakeProblemCounter, fakeProblemGauge := problemmetrics.NewProblemMetricsManagerStub()
+			problemmetrics.GlobalProblemMetricsManager = fakePMM
+
+			initializeProblemMetricsOrDie(test.rules)
+
+			gotMetrics := append(fakeProblemCounter.ListMetrics(), fakeProblemGauge.ListMetrics()...)
+
+			assert.ElementsMatch(t, test.expectedMetrics, gotMetrics,
+				"expected metrics: %+v, got: %+v", test.expectedMetrics, gotMetrics)
+		})
 	}
 }

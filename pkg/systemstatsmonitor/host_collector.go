@@ -17,13 +17,8 @@ limitations under the License.
 package systemstatsmonitor
 
 import (
-	"context"
-
 	"github.com/golang/glog"
 	"github.com/shirou/gopsutil/host"
-	"go.opencensus.io/stats"
-	"go.opencensus.io/stats/view"
-	"go.opencensus.io/tag"
 
 	ssmtypes "k8s.io/node-problem-detector/pkg/systemstatsmonitor/types"
 	"k8s.io/node-problem-detector/pkg/util"
@@ -31,40 +26,35 @@ import (
 )
 
 type hostCollector struct {
-	tags   []tag.Mutator
-	uptime *stats.Int64Measure
+	tags   map[string]string
+	uptime *metrics.Int64Metric
 }
 
 func NewHostCollectorOrDie(hostConfig *ssmtypes.HostStatsConfig) *hostCollector {
-	hc := hostCollector{}
+	hc := hostCollector{map[string]string{}, nil}
 
-	keyKernelVersion, err := tag.NewKey("kernel_version")
-	if err != nil {
-		glog.Fatalf("Failed to create kernel_version tag during initializing host collector: %v", err)
-	}
 	kernelVersion, err := host.KernelVersion()
 	if err != nil {
 		glog.Fatalf("Failed to retrieve kernel version: %v", err)
 	}
-	hc.tags = append(hc.tags, tag.Upsert(keyKernelVersion, kernelVersion))
+	hc.tags["kernel_version"] = kernelVersion
 
-	keyOSVersion, err := tag.NewKey("os_version")
-	if err != nil {
-		glog.Fatalf("Failed to create os_version tag during initializing host collector: %v", err)
-	}
 	osVersion, err := util.GetOSVersion()
 	if err != nil {
 		glog.Fatalf("Failed to retrieve OS version: %v", err)
 	}
-	hc.tags = append(hc.tags, tag.Upsert(keyOSVersion, osVersion))
+	hc.tags["os_version"] = osVersion
 
 	if hostConfig.MetricsConfigs["host/uptime"].DisplayName != "" {
-		hc.uptime = metrics.NewInt64Metric(
+		hc.uptime, err = metrics.NewInt64Metric(
 			hostConfig.MetricsConfigs["host/uptime"].DisplayName,
 			"The uptime of the operating system",
 			"second",
-			view.LastValue(),
-			[]tag.Key{keyKernelVersion, keyOSVersion})
+			metrics.LastValue,
+			[]string{"kernel_version", "os_version"})
+		if err != nil {
+			glog.Fatalf("Error initializing metric for host/uptime: %v", err)
+		}
 	}
 
 	return &hc
@@ -82,9 +72,6 @@ func (hc *hostCollector) collect() {
 	}
 
 	if hc.uptime != nil {
-		err := stats.RecordWithTags(context.Background(), hc.tags, hc.uptime.M(int64(uptime)))
-		if err != nil {
-			glog.Errorf("Failed to record current uptime (%d seconds) of the host: %v", uptime, err)
-		}
+		hc.uptime.Record(hc.tags, int64(uptime))
 	}
 }
