@@ -40,6 +40,7 @@ func init() {
 type systemStatsMonitor struct {
 	config        ssmtypes.SystemStatsConfig
 	diskCollector *diskCollector
+	hostCollector *hostCollector
 	tomb          *tomb.Tomb
 }
 
@@ -69,9 +70,11 @@ func NewSystemStatsMonitorOrDie(configPath string) types.Monitor {
 		glog.Fatalf("Failed to validate configuration %+v: %v", ssm.config, err)
 	}
 
-	// Initialize diskCollector if needed.
 	if len(ssm.config.DiskConfig.MetricsConfigs) > 0 {
 		ssm.diskCollector = NewDiskCollectorOrDie(&ssm.config.DiskConfig)
+	}
+	if len(ssm.config.HostConfig.MetricsConfigs) > 0 {
+		ssm.hostCollector = NewHostCollectorOrDie(&ssm.config.HostConfig)
 	}
 	return &ssm
 }
@@ -94,12 +97,14 @@ func (ssm *systemStatsMonitor) monitorLoop() {
 		return
 	default:
 		ssm.diskCollector.collect()
+		ssm.hostCollector.collect()
 	}
 
 	for {
 		select {
 		case <-runTicker.C:
 			ssm.diskCollector.collect()
+			ssm.hostCollector.collect()
 		case <-ssm.tomb.Stopping():
 			glog.Infof("System stats monitor stopped")
 			return
