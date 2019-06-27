@@ -16,6 +16,8 @@ github.com/beorn7/perks v0.0.0-20180321164747-3a771d992973/go.mod h1:Dwedo/Wpr24
 github.com/beorn7/perks v1.0.0 h1:HWo1m869IqiPhD389kmkxeTalrjNbbJTC8LXupb+sl0=
 github.com/beorn7/perks v1.0.0/go.mod h1:KWe93zE9D1o94FZ5RNwFwVgaQK1VOXiVxmqh+CedLV8=
 github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDkc90ppPyw=
+github.com/cobaugh/osrelease v0.0.0-20181218015638-a93a0a55a249 h1:R0IDH8daQ3lODvu8YtxnIqqth5qMGCJyADoUQvmLx4o=
+github.com/cobaugh/osrelease v0.0.0-20181218015638-a93a0a55a249/go.mod h1:EHKW9yNEYSBpTKzuu7Y9oOrft/UlzH57rMIB03oev6M=
 github.com/coreos/go-systemd v0.0.0-20190321100706-95778dfbb74e h1:Wf6HqHfScWJN9/ZjdUKyjop4mf3Qdd+1TvvltAvM3m8=
 github.com/coreos/go-systemd v0.0.0-20190321100706-95778dfbb74e/go.mod h1:F5haX7vjVVG0kc13fIWeqUViNPyEJxv/OmvnBo0Yme4=
 github.com/coreos/pkg v0.0.0-20160620232715-fa29b1d70f0b h1:IqgHacj6F3QnV+0H9PXFWAmML5HdxkZakBQgZgfD+FU=
