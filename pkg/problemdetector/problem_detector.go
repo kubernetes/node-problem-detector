@@ -47,18 +47,20 @@ func NewProblemDetector(monitors []types.Monitor, exporters []types.Exporter) Pr
 func (p *problemDetector) Run() error {
 	// Start the log monitors one by one.
 	var chans []<-chan *types.Status
+	failureCount := 0
 	for _, m := range p.monitors {
 		ch, err := m.Start()
 		if err != nil {
 			// Do not return error and keep on trying the following config files.
 			glog.Errorf("Failed to start problem daemon %v: %v", m, err)
+			failureCount += 1
 			continue
 		}
 		if ch != nil {
 			chans = append(chans, ch)
 		}
 	}
-	if len(chans) == 0 {
+	if len(p.monitors) == failureCount {
 		return fmt.Errorf("no problem daemon is successfully setup")
 	}
 	ch := groupChannel(chans)
