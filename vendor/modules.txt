@@ -11,6 +11,8 @@ github.com/PuerkitoBio/urlesc
 github.com/StackExchange/wmi
 # github.com/beorn7/perks v1.0.0
 github.com/beorn7/perks/quantile
+# github.com/cobaugh/osrelease v0.0.0-20181218015638-a93a0a55a249
+github.com/cobaugh/osrelease
 # github.com/coreos/go-systemd v0.0.0-20190321100706-95778dfbb74e
 github.com/coreos/go-systemd/sdjournal
 # github.com/coreos/pkg v0.0.0-20160620232715-fa29b1d70f0b

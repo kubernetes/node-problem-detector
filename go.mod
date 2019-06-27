@@ -9,6 +9,7 @@ require (
 	github.com/PuerkitoBio/urlesc v0.0.0-20160726150825-5bd2802263f2 // indirect
 	github.com/StackExchange/wmi v0.0.0-20181212234831-e0a55b97c705 // indirect
 	github.com/beorn7/perks v1.0.0 // indirect
+	github.com/cobaugh/osrelease v0.0.0-20181218015638-a93a0a55a249
 	github.com/coreos/go-systemd v0.0.0-20190321100706-95778dfbb74e
 	github.com/coreos/pkg v0.0.0-20160620232715-fa29b1d70f0b // indirect
 	github.com/emicklei/go-restful v0.0.0-20170410110728-ff4f55a20633 // indirect
