@@ -27,7 +27,9 @@ import (
 	"go.opencensus.io/stats"
 	"go.opencensus.io/stats/view"
 	"go.opencensus.io/tag"
+
 	ssmtypes "k8s.io/node-problem-detector/pkg/systemstatsmonitor/types"
+	"k8s.io/node-problem-detector/pkg/util/metrics"
 )
 
 type diskCollector struct {
@@ -46,21 +48,21 @@ func NewDiskCollectorOrDie(diskConfig *ssmtypes.DiskStatsConfig) *diskCollector 
 	dc := diskCollector{config: diskConfig}
 	dc.keyDevice, _ = tag.NewKey("device")
 
-	dc.mIOTime = newInt64Metric(
+	dc.mIOTime = metrics.NewInt64Metric(
 		diskConfig.MetricsConfigs["disk/io_time"].DisplayName,
 		"The IO time spent on the disk",
 		"second",
 		view.LastValue(),
 		[]tag.Key{dc.keyDevice})
 
-	dc.mWeightedIO = newInt64Metric(
+	dc.mWeightedIO = metrics.NewInt64Metric(
 		diskConfig.MetricsConfigs["disk/weighted_io"].DisplayName,
 		"The weighted IO on the disk",
 		"second",
 		view.LastValue(),
 		[]tag.Key{dc.keyDevice})
 
-	dc.mAvgQueueLen = newFloat64Metric(
+	dc.mAvgQueueLen = metrics.NewFloat64Metric(
 		diskConfig.MetricsConfigs["disk/avg_queue_len"].DisplayName,
 		"The average queue length on the disk",
 		"second",
