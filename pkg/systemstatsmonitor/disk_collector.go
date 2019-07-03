@@ -27,7 +27,9 @@ import (
 	"go.opencensus.io/stats"
 	"go.opencensus.io/stats/view"
 	"go.opencensus.io/tag"
+
 	ssmtypes "k8s.io/node-problem-detector/pkg/systemstatsmonitor/types"
+	"k8s.io/node-problem-detector/pkg/util/metrics"
 )
 
 type diskCollector struct {
@@ -44,28 +46,39 @@ type diskCollector struct {
 
 func NewDiskCollectorOrDie(diskConfig *ssmtypes.DiskStatsConfig) *diskCollector {
 	dc := diskCollector{config: diskConfig}
-	dc.keyDevice, _ = tag.NewKey("device")
 
-	dc.mIOTime = newInt64Metric(
-		diskConfig.MetricsConfigs["disk/io_time"].DisplayName,
-		"The IO time spent on the disk",
-		"second",
-		view.LastValue(),
-		[]tag.Key{dc.keyDevice})
+	var err error
+	dc.keyDevice, err = tag.NewKey("device")
+	if err != nil {
+		glog.Fatalf("Failed to create device tag during initializing disk collector: %v", err)
+	}
 
-	dc.mWeightedIO = newInt64Metric(
-		diskConfig.MetricsConfigs["disk/weighted_io"].DisplayName,
-		"The weighted IO on the disk",
-		"second",
-		view.LastValue(),
-		[]tag.Key{dc.keyDevice})
+	if diskConfig.MetricsConfigs["disk/io_time"].DisplayName != "" {
+		dc.mIOTime = metrics.NewInt64Metric(
+			diskConfig.MetricsConfigs["disk/io_time"].DisplayName,
+			"The IO time spent on the disk",
+			"second",
+			view.LastValue(),
+			[]tag.Key{dc.keyDevice})
+	}
 
-	dc.mAvgQueueLen = newFloat64Metric(
-		diskConfig.MetricsConfigs["disk/avg_queue_len"].DisplayName,
-		"The average queue length on the disk",
-		"second",
-		view.LastValue(),
-		[]tag.Key{dc.keyDevice})
+	if diskConfig.MetricsConfigs["disk/weighted_io"].DisplayName != "" {
+		dc.mWeightedIO = metrics.NewInt64Metric(
+			diskConfig.MetricsConfigs["disk/weighted_io"].DisplayName,
+			"The weighted IO on the disk",
+			"second",
+			view.LastValue(),
+			[]tag.Key{dc.keyDevice})
+	}
+
+	if diskConfig.MetricsConfigs["disk/avg_queue_len"].DisplayName != "" {
+		dc.mAvgQueueLen = metrics.NewFloat64Metric(
+			diskConfig.MetricsConfigs["disk/avg_queue_len"].DisplayName,
+			"The average queue length on the disk",
+			"second",
+			view.LastValue(),
+			[]tag.Key{dc.keyDevice})
+	}
 
 	dc.historyIOTime = make(map[string]uint64)
 	dc.historyWeightedIO = make(map[string]uint64)
@@ -86,7 +99,11 @@ func (dc *diskCollector) collect() {
 		blks = append(blks, listAttachedBlockDevices()...)
 	}
 
-	ioCountersStats, _ := disk.IOCounters(blks...)
+	ioCountersStats, err := disk.IOCounters(blks...)
+	if err != nil {
+		glog.Errorf("Failed to retrieve disk IO counters: %v", err)
+		return
+	}
 
 	for deviceName, ioCountersStat := range ioCountersStats {
 		// Calculate average IO queue length since last measurement.
@@ -96,21 +113,26 @@ func (dc *diskCollector) collect() {
 		dc.historyIOTime[deviceName] = ioCountersStat.IoTime
 		dc.historyWeightedIO[deviceName] = ioCountersStat.WeightedIO
 
-		avg_queue_len := float64(0.0)
+		avgQueueLen := float64(0.0)
 		if lastIOTime != ioCountersStat.IoTime {
-			avg_queue_len = float64(ioCountersStat.WeightedIO-lastWeightedIO) / float64(ioCountersStat.IoTime-lastIOTime)
+			avgQueueLen = float64(ioCountersStat.WeightedIO-lastWeightedIO) / float64(ioCountersStat.IoTime-lastIOTime)
 		}
 
 		// Attach label {"device": deviceName} to the metrics.
-		device_ctx, _ := tag.New(context.Background(), tag.Upsert(dc.keyDevice, deviceName))
+		deviceCtx, err := tag.New(context.Background(), tag.Upsert(dc.keyDevice, deviceName))
+		if err != nil {
+			glog.Errorf("Failed to create context with device tag: %v", err)
+			deviceCtx = context.Background()
+		}
+
 		if dc.mIOTime != nil {
-			stats.Record(device_ctx, dc.mIOTime.M(int64(ioCountersStat.IoTime)))
+			stats.Record(deviceCtx, dc.mIOTime.M(int64(ioCountersStat.IoTime)))
 		}
 		if dc.mWeightedIO != nil {
-			stats.Record(device_ctx, dc.mWeightedIO.M(int64(ioCountersStat.WeightedIO)))
+			stats.Record(deviceCtx, dc.mWeightedIO.M(int64(ioCountersStat.WeightedIO)))
 		}
 		if dc.mAvgQueueLen != nil {
-			stats.Record(device_ctx, dc.mAvgQueueLen.M(avg_queue_len))
+			stats.Record(deviceCtx, dc.mAvgQueueLen.M(avgQueueLen))
 		}
 	}
 }
@@ -133,8 +155,14 @@ func listRootBlockDevices(timeout time.Duration) []string {
 
 // listAttachedBlockDevices lists all currently attached block devices.
 func listAttachedBlockDevices() []string {
-	partitions, _ := disk.Partitions(false)
 	blks := []string{}
+
+	partitions, err := disk.Partitions(false)
+	if err != nil {
+		glog.Errorf("Failed to retrieve the list of disk partitions: %v", err)
+		return blks
+	}
+
 	for _, partition := range partitions {
 		blks = append(blks, partition.Device)
 	}

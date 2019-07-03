@@ -13,8 +13,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-
-package systemstatsmonitor
+package metrics
 
 import (
 	"go.opencensus.io/stats"
@@ -22,8 +21,8 @@ import (
 	"go.opencensus.io/tag"
 )
 
-// newInt64Metric create a stats.Int64 metrics, returns nil when name is empty.
-func newInt64Metric(name string, description string, unit string, aggregation *view.Aggregation, tagKeys []tag.Key) *stats.Int64Measure {
+// NewInt64Metric create a stats.Int64 metrics, returns nil when name is empty.
+func NewInt64Metric(name string, description string, unit string, aggregation *view.Aggregation, tagKeys []tag.Key) *stats.Int64Measure {
 	if name == "" {
 		return nil
 	}
@@ -39,8 +38,8 @@ func newInt64Metric(name string, description string, unit string, aggregation *v
 	return measure
 }
 
-// newFloat64Metric create a stats.Float64 metrics, returns nil when name is empty.
-func newFloat64Metric(name string, description string, unit string, aggregation *view.Aggregation, tagKeys []tag.Key) *stats.Float64Measure {
+// NewFloat64Metric create a stats.Float64 metrics, returns nil when name is empty.
+func NewFloat64Metric(name string, description string, unit string, aggregation *view.Aggregation, tagKeys []tag.Key) *stats.Float64Measure {
 	if name == "" {
 		return nil
 	}

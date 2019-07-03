@@ -15,5 +15,12 @@
 		"includeAllAttachedBlk": true,
 		"lsblkTimeout": "5s"
 	},
+	"host": {
+		"metricsConfigs": {
+			"host/uptime": {
+				"displayName": "host/uptime"
+			}
+		}
+	},
 	"invokeInterval": "60s"
 }

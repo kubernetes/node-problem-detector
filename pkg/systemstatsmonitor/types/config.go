@@ -38,8 +38,13 @@ type DiskStatsConfig struct {
 	LsblkTimeout          time.Duration           `json:"-"`
 }
 
+type HostStatsConfig struct {
+	MetricsConfigs map[string]MetricConfig `json:"metricsConfigs"`
+}
+
 type SystemStatsConfig struct {
 	DiskConfig           DiskStatsConfig `json:"disk"`
+	HostConfig           HostStatsConfig `json:"host"`
 	InvokeIntervalString string          `json:"invokeInterval"`
 	InvokeInterval       time.Duration   `json:"-"`
 }
