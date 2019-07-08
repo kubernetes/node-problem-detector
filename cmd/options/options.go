@@ -20,6 +20,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"time"
 
 	"net/url"
 
@@ -49,6 +50,12 @@ type NodeProblemDetectorOptions struct {
 	EnableK8sExporter bool
 	// ApiServerOverride is the custom URI used to connect to Kubernetes ApiServer.
 	ApiServerOverride string
+	// APIServerWaitTimeout is the timeout on waiting for kube-apiserver to be
+	// ready.
+	APIServerWaitTimeout time.Duration
+	// APIServerWaitInterval is the interval between the checks on the
+	// readiness of kube-apiserver.
+	APIServerWaitInterval time.Duration
 
 	// prometheusExporter options
 	// PrometheusServerPort is the port to bind the Prometheus scrape endpoint. Use 0 to disable.
@@ -96,6 +103,8 @@ func (npdo *NodeProblemDetectorOptions) AddFlags(fs *pflag.FlagSet) {
 	fs.BoolVar(&npdo.EnableK8sExporter, "enable-k8s-exporter", true, "Enables reporting to Kubernetes API server.")
 	fs.StringVar(&npdo.ApiServerOverride, "apiserver-override",
 		"", "Custom URI used to connect to Kubernetes ApiServer. This is ignored if --enable-k8s-exporter is false.")
+	fs.DurationVar(&npdo.APIServerWaitTimeout, "apiserver-wait-timeout", time.Duration(5)*time.Minute, "The timeout on waiting for kube-apiserver to be ready. This is ignored if --enable-k8s-exporter is false.")
+	fs.DurationVar(&npdo.APIServerWaitInterval, "apiserver-wait-interval", time.Duration(5)*time.Second, "The interval between the checks on the readiness of kube-apiserver. This is ignored if --enable-k8s-exporter is false.")
 	fs.BoolVar(&npdo.PrintVersion, "version", false, "Print version information and quit")
 	fs.StringVar(&npdo.HostnameOverride, "hostname-override",
 		"", "Custom node name used to override hostname")
