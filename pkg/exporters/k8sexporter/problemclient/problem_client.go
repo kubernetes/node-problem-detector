@@ -26,7 +26,7 @@ import (
 	typedcorev1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	"k8s.io/kubernetes/pkg/api/legacyscheme"
 
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/clock"
@@ -47,6 +47,9 @@ type Client interface {
 	SetConditions(conditions []v1.NodeCondition) error
 	// Eventf reports the event.
 	Eventf(eventType string, source, reason, messageFmt string, args ...interface{})
+	// GetNode returns the Node object of the node on which the
+	// node-problem-detector runs.
+	GetNode() (*v1.Node, error)
 }
 
 type nodeProblemClient struct {
@@ -79,7 +82,7 @@ func NewClientOrDie(npdo *options.NodeProblemDetectorOptions) Client {
 }
 
 func (c *nodeProblemClient) GetConditions(conditionTypes []v1.NodeConditionType) ([]*v1.NodeCondition, error) {
-	node, err := c.client.Nodes().Get(c.nodeName, metav1.GetOptions{})
+	node, err := c.GetNode()
 	if err != nil {
 		return nil, err
 	}
@@ -114,6 +117,10 @@ func (c *nodeProblemClient) Eventf(eventType, source, reason, messageFmt string,
 		c.recorders[source] = recorder
 	}
 	recorder.Eventf(c.nodeRef, eventType, reason, messageFmt, args...)
+}
+
+func (c *nodeProblemClient) GetNode() (*v1.Node, error) {
+	return c.client.Nodes().Get(c.nodeName, metav1.GetOptions{})
 }
 
 // generatePatch generates condition patch
