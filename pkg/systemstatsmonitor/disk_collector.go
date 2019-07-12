@@ -24,19 +24,15 @@ import (
 
 	"github.com/golang/glog"
 	"github.com/shirou/gopsutil/disk"
-	"go.opencensus.io/stats"
-	"go.opencensus.io/stats/view"
-	"go.opencensus.io/tag"
 
 	ssmtypes "k8s.io/node-problem-detector/pkg/systemstatsmonitor/types"
 	"k8s.io/node-problem-detector/pkg/util/metrics"
 )
 
 type diskCollector struct {
-	keyDevice    tag.Key
-	mIOTime      *stats.Int64Measure
-	mWeightedIO  *stats.Int64Measure
-	mAvgQueueLen *stats.Float64Measure
+	mIOTime      *metrics.Int64Metric
+	mWeightedIO  *metrics.Int64Metric
+	mAvgQueueLen *metrics.Float64Metric
 
 	config *ssmtypes.DiskStatsConfig
 
@@ -48,36 +44,34 @@ func NewDiskCollectorOrDie(diskConfig *ssmtypes.DiskStatsConfig) *diskCollector 
 	dc := diskCollector{config: diskConfig}
 
 	var err error
-	dc.keyDevice, err = tag.NewKey("device")
+	dc.mIOTime, err = metrics.NewInt64Metric(
+		diskConfig.MetricsConfigs["disk/io_time"].DisplayName,
+		"The IO time spent on the disk",
+		"second",
+		metrics.LastValue,
+		[]string{"device"})
 	if err != nil {
-		glog.Fatalf("Failed to create device tag during initializing disk collector: %v", err)
+		glog.Fatalf("Error initializing metric for disk/io_time: %v", err)
 	}
 
-	if diskConfig.MetricsConfigs["disk/io_time"].DisplayName != "" {
-		dc.mIOTime = metrics.NewInt64Metric(
-			diskConfig.MetricsConfigs["disk/io_time"].DisplayName,
-			"The IO time spent on the disk",
-			"second",
-			view.LastValue(),
-			[]tag.Key{dc.keyDevice})
+	dc.mWeightedIO, err = metrics.NewInt64Metric(
+		diskConfig.MetricsConfigs["disk/weighted_io"].DisplayName,
+		"The weighted IO on the disk",
+		"second",
+		metrics.LastValue,
+		[]string{"device"})
+	if err != nil {
+		glog.Fatalf("Error initializing metric for disk/weighted_io: %v", err)
 	}
 
-	if diskConfig.MetricsConfigs["disk/weighted_io"].DisplayName != "" {
-		dc.mWeightedIO = metrics.NewInt64Metric(
-			diskConfig.MetricsConfigs["disk/weighted_io"].DisplayName,
-			"The weighted IO on the disk",
-			"second",
-			view.LastValue(),
-			[]tag.Key{dc.keyDevice})
-	}
-
-	if diskConfig.MetricsConfigs["disk/avg_queue_len"].DisplayName != "" {
-		dc.mAvgQueueLen = metrics.NewFloat64Metric(
-			diskConfig.MetricsConfigs["disk/avg_queue_len"].DisplayName,
-			"The average queue length on the disk",
-			"second",
-			view.LastValue(),
-			[]tag.Key{dc.keyDevice})
+	dc.mAvgQueueLen, err = metrics.NewFloat64Metric(
+		diskConfig.MetricsConfigs["disk/avg_queue_len"].DisplayName,
+		"The average queue length on the disk",
+		"second",
+		metrics.LastValue,
+		[]string{"device"})
+	if err != nil {
+		glog.Fatalf("Error initializing metric for disk/avg_queue_len: %v", err)
 	}
 
 	dc.historyIOTime = make(map[string]uint64)
@@ -119,20 +113,15 @@ func (dc *diskCollector) collect() {
 		}
 
 		// Attach label {"device": deviceName} to the metrics.
-		deviceCtx, err := tag.New(context.Background(), tag.Upsert(dc.keyDevice, deviceName))
-		if err != nil {
-			glog.Errorf("Failed to create context with device tag: %v", err)
-			deviceCtx = context.Background()
-		}
-
+		tags := map[string]string{"device": deviceName}
 		if dc.mIOTime != nil {
-			stats.Record(deviceCtx, dc.mIOTime.M(int64(ioCountersStat.IoTime)))
+			dc.mIOTime.Record(tags, int64(ioCountersStat.IoTime))
 		}
 		if dc.mWeightedIO != nil {
-			stats.Record(deviceCtx, dc.mWeightedIO.M(int64(ioCountersStat.WeightedIO)))
+			dc.mWeightedIO.Record(tags, int64(ioCountersStat.WeightedIO))
 		}
 		if dc.mAvgQueueLen != nil {
-			stats.Record(deviceCtx, dc.mAvgQueueLen.M(avgQueueLen))
+			dc.mAvgQueueLen.Record(tags, avgQueueLen)
 		}
 	}
 }
