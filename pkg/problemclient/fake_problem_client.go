@@ -21,7 +21,7 @@ import (
 	"reflect"
 	"sync"
 
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 )
 
 // FakeProblemClient is a fake problem client for debug.
@@ -91,4 +91,8 @@ func (f *FakeProblemClient) GetConditions(types []v1.NodeConditionType) ([]*v1.N
 
 // Eventf does nothing now.
 func (f *FakeProblemClient) Eventf(eventType string, source, reason, messageFmt string, args ...interface{}) {
+}
+
+func (f *FakeProblemClient) GetNode() (*v1.Node, error) {
+	return nil, fmt.Errorf("GetNode() not implemented")
 }

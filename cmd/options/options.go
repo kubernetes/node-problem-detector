@@ -20,6 +20,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"time"
 
 	"net/url"
 
@@ -46,6 +47,12 @@ type NodeProblemDetectorOptions struct {
 	ServerPort int
 	// ServerAddress is the address to bind the node problem detector server.
 	ServerAddress string
+	// APIServerWaitTimeout is the timeout on waiting for kube-apiserver to be
+	// ready.
+	APIServerWaitTimeout time.Duration
+	// APIServerWaitInterval is the interval between the checks on the
+	// readiness of kube-apiserver.
+	APIServerWaitInterval time.Duration
 
 	// application options
 
@@ -65,6 +72,8 @@ func (npdo *NodeProblemDetectorOptions) AddFlags(fs *pflag.FlagSet) {
 		[]string{}, "List of paths to custom plugin monitor config files, comma separated.")
 	fs.StringVar(&npdo.ApiServerOverride, "apiserver-override",
 		"", "Custom URI used to connect to Kubernetes ApiServer")
+	fs.DurationVar(&npdo.APIServerWaitTimeout, "apiserver-wait-timeout", time.Duration(5)*time.Minute, "The timeout on waiting for kube-apiserver to be ready. This is ignored if --enable-k8s-exporter is false.")
+	fs.DurationVar(&npdo.APIServerWaitInterval, "apiserver-wait-interval", time.Duration(5)*time.Second, "The interval between the checks on the readiness of kube-apiserver. This is ignored if --enable-k8s-exporter is false.")
 	fs.BoolVar(&npdo.PrintVersion, "version", false, "Print version information and quit")
 	fs.StringVar(&npdo.HostnameOverride, "hostname-override",
 		"", "Custom node name used to override hostname")
