@@ -26,6 +26,7 @@ import (
 	"k8s.io/node-problem-detector/pkg/custompluginmonitor/plugin"
 	cpmtypes "k8s.io/node-problem-detector/pkg/custompluginmonitor/types"
 	"k8s.io/node-problem-detector/pkg/problemdaemon"
+	"k8s.io/node-problem-detector/pkg/problemmetrics"
 	"k8s.io/node-problem-detector/pkg/types"
 	"k8s.io/node-problem-detector/pkg/util"
 	"k8s.io/node-problem-detector/pkg/util/tomb"
@@ -80,7 +81,29 @@ func NewCustomPluginMonitorOrDie(configPath string) types.Monitor {
 	c.plugin = plugin.NewPlugin(c.config)
 	// A 1000 size channel should be big enough.
 	c.statusChan = make(chan *types.Status, 1000)
+
+	if *c.config.EnableMetricsReporting {
+		initializeProblemMetricsOrDie(c.config.Rules)
+	}
 	return c
+}
+
+// initializeProblemMetricsOrDie creates problem metrics for all problems and set the value to 0,
+// panic if error occurs.
+func initializeProblemMetricsOrDie(rules []*cpmtypes.CustomRule) {
+	for _, rule := range rules {
+		if rule.Type == types.Perm {
+			err := problemmetrics.GlobalProblemMetricsManager.SetProblemGauge(rule.Condition, rule.Reason, false)
+			if err != nil {
+				glog.Fatalf("Failed to initialize problem gauge metrics for problem %q, reason %q: %v",
+					rule.Condition, rule.Reason, err)
+			}
+		}
+		err := problemmetrics.GlobalProblemMetricsManager.IncrementProblemCounter(rule.Reason, 0)
+		if err != nil {
+			glog.Fatalf("Failed to initialize problem counter metrics for %q: %v", rule.Reason, err)
+		}
+	}
 }
 
 func (c *customPluginMonitor) Start() (<-chan *types.Status, error) {
@@ -120,11 +143,12 @@ func (c *customPluginMonitor) monitorLoop() {
 // generateStatus generates status from the plugin check result.
 func (c *customPluginMonitor) generateStatus(result cpmtypes.Result) *types.Status {
 	timestamp := time.Now()
-	var events []types.Event
+	var activeProblemEvents []types.Event
+	var inactiveProblemEvents []types.Event
 	if result.Rule.Type == types.Temp {
 		// For temporary error only generate event when exit status is above warning
 		if result.ExitStatus >= cpmtypes.NonOK {
-			events = append(events, types.Event{
+			activeProblemEvents = append(activeProblemEvents, types.Event{
 				Severity:  types.Warn,
 				Timestamp: timestamp,
 				Reason:    result.Rule.Reason,
@@ -151,7 +175,7 @@ func (c *customPluginMonitor) generateStatus(result cpmtypes.Result) *types.Stat
 						}
 					}
 
-					events = append(events, util.GenerateConditionChangeEvent(
+					inactiveProblemEvents = append(inactiveProblemEvents, util.GenerateConditionChangeEvent(
 						condition.Type,
 						status,
 						defaultConditionReason,
@@ -165,7 +189,7 @@ func (c *customPluginMonitor) generateStatus(result cpmtypes.Result) *types.Stat
 					// change 2: Condition status change from False/Unknown to True
 					condition.Transition = timestamp
 					condition.Message = result.Message
-					events = append(events, util.GenerateConditionChangeEvent(
+					activeProblemEvents = append(activeProblemEvents, util.GenerateConditionChangeEvent(
 						condition.Type,
 						status,
 						result.Rule.Reason,
@@ -178,7 +202,7 @@ func (c *customPluginMonitor) generateStatus(result cpmtypes.Result) *types.Stat
 					// change 3: Condition status change from False to Unknown or vice versa
 					condition.Transition = timestamp
 					condition.Message = result.Message
-					events = append(events, util.GenerateConditionChangeEvent(
+					inactiveProblemEvents = append(inactiveProblemEvents, util.GenerateConditionChangeEvent(
 						condition.Type,
 						status,
 						result.Rule.Reason,
@@ -196,22 +220,46 @@ func (c *customPluginMonitor) generateStatus(result cpmtypes.Result) *types.Stat
 					condition.Transition = timestamp
 					condition.Reason = result.Rule.Reason
 					condition.Message = result.Message
-					events = append(events, util.GenerateConditionChangeEvent(
+					updateEvent := util.GenerateConditionChangeEvent(
 						condition.Type,
 						status,
 						condition.Reason,
 						timestamp,
-					))
+					)
+					if condition.Status == types.True {
+						activeProblemEvents = append(activeProblemEvents, updateEvent)
+					} else {
+						inactiveProblemEvents = append(inactiveProblemEvents, updateEvent)
+					}
 				}
 
 				break
 			}
 		}
 	}
+	if *c.config.EnableMetricsReporting {
+		// Increment problem counter only for active problems which just got detected.
+		for _, event := range activeProblemEvents {
+			err := problemmetrics.GlobalProblemMetricsManager.IncrementProblemCounter(
+				event.Reason, 1)
+			if err != nil {
+				glog.Errorf("Failed to update problem counter metrics for %q: %v",
+					event.Reason, err)
+			}
+		}
+		for _, condition := range c.conditions {
+			err := problemmetrics.GlobalProblemMetricsManager.SetProblemGauge(
+				condition.Type, condition.Reason, condition.Status == types.True)
+			if err != nil {
+				glog.Errorf("Failed to update problem gauge metrics for problem %q, reason %q: %v",
+					condition.Type, condition.Reason, err)
+			}
+		}
+	}
 	return &types.Status{
 		Source: c.config.Source,
 		// TODO(random-liu): Aggregate events and conditions and then do periodically report.
-		Events:     events,
+		Events:     append(activeProblemEvents, inactiveProblemEvents...),
 		Conditions: c.conditions,
 	}
 }

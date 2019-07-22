@@ -157,6 +157,7 @@ func (l *logMonitor) generateStatus(logs []*logtypes.Log, rule systemlogtypes.Ru
 	timestamp := logs[0].Timestamp
 	message := generateMessage(logs)
 	var events []types.Event
+	var changedConditions []*types.Condition
 	if rule.Type == types.Temp {
 		// For temporary error only generate event
 		events = append(events, types.Event{
@@ -165,12 +166,6 @@ func (l *logMonitor) generateStatus(logs []*logtypes.Log, rule systemlogtypes.Ru
 			Reason:    rule.Reason,
 			Message:   message,
 		})
-		if *l.config.EnableMetricsReporting {
-			err := problemmetrics.GlobalProblemMetricsManager.IncrementProblemCounter(rule.Reason, 1)
-			if err != nil {
-				glog.Errorf("Failed to update problem counter metrics for %q: %v", rule.Reason, err)
-			}
-		}
 	} else {
 		// For permanent error changes the condition
 		for i := range l.conditions {
@@ -188,22 +183,28 @@ func (l *logMonitor) generateStatus(logs []*logtypes.Log, rule systemlogtypes.Ru
 						rule.Reason,
 						timestamp,
 					))
-
-					if *l.config.EnableMetricsReporting {
-						err := problemmetrics.GlobalProblemMetricsManager.SetProblemGauge(rule.Condition, rule.Reason, true)
-						if err != nil {
-							glog.Errorf("Failed to update problem gauge metrics for problem %q, reason %q: %v",
-								rule.Condition, rule.Reason, err)
-						}
-						err = problemmetrics.GlobalProblemMetricsManager.IncrementProblemCounter(rule.Reason, 1)
-						if err != nil {
-							glog.Errorf("Failed to update problem counter metrics for %q: %v", rule.Reason, err)
-						}
-					}
 				}
 				condition.Status = types.True
 				condition.Reason = rule.Reason
+				changedConditions = append(changedConditions, condition)
 				break
+			}
+		}
+	}
+
+	if *l.config.EnableMetricsReporting {
+		for _, event := range events {
+			err := problemmetrics.GlobalProblemMetricsManager.IncrementProblemCounter(event.Reason, 1)
+			if err != nil {
+				glog.Errorf("Failed to update problem counter metrics for %q: %v", event.Reason, err)
+			}
+		}
+		for _, condition := range changedConditions {
+			err := problemmetrics.GlobalProblemMetricsManager.SetProblemGauge(
+				condition.Type, condition.Reason, condition.Status == types.True)
+			if err != nil {
+				glog.Errorf("Failed to update problem gauge metrics for problem %q, reason %q: %v",
+					condition.Type, condition.Reason, err)
 			}
 		}
 	}

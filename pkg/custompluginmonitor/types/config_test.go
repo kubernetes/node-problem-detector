@@ -30,6 +30,7 @@ func TestCustomPluginConfigApplyConfiguration(t *testing.T) {
 	maxOutputLength := 79
 	concurrency := 2
 	messageChangeBasedConditionUpdate := true
+	disableMetricsReporting := false
 
 	ruleTimeout := 1 * time.Second
 	ruleTimeoutString := ruleTimeout.String()
@@ -60,6 +61,7 @@ func TestCustomPluginConfigApplyConfiguration(t *testing.T) {
 					Concurrency:                             &defaultConcurrency,
 					EnableMessageChangeBasedConditionUpdate: &defaultMessageChangeBasedConditionUpdate,
 				},
+				EnableMetricsReporting: &defaultEnableMetricsReporting,
 				Rules: []*CustomRule{
 					{
 						Path: "../plugin/test-data/ok.sh",
@@ -88,6 +90,7 @@ func TestCustomPluginConfigApplyConfiguration(t *testing.T) {
 					Concurrency:                             &defaultConcurrency,
 					EnableMessageChangeBasedConditionUpdate: &defaultMessageChangeBasedConditionUpdate,
 				},
+				EnableMetricsReporting: &defaultEnableMetricsReporting,
 			},
 		},
 		"custom default timeout": {
@@ -106,6 +109,7 @@ func TestCustomPluginConfigApplyConfiguration(t *testing.T) {
 					Concurrency:                             &defaultConcurrency,
 					EnableMessageChangeBasedConditionUpdate: &defaultMessageChangeBasedConditionUpdate,
 				},
+				EnableMetricsReporting: &defaultEnableMetricsReporting,
 			},
 		},
 		"custom max output length": {
@@ -124,6 +128,7 @@ func TestCustomPluginConfigApplyConfiguration(t *testing.T) {
 					Concurrency:                             &defaultConcurrency,
 					EnableMessageChangeBasedConditionUpdate: &defaultMessageChangeBasedConditionUpdate,
 				},
+				EnableMetricsReporting: &defaultEnableMetricsReporting,
 			},
 		},
 		"custom concurrency": {
@@ -142,6 +147,7 @@ func TestCustomPluginConfigApplyConfiguration(t *testing.T) {
 					Concurrency:                             &concurrency,
 					EnableMessageChangeBasedConditionUpdate: &defaultMessageChangeBasedConditionUpdate,
 				},
+				EnableMetricsReporting: &defaultEnableMetricsReporting,
 			},
 		},
 		"custom message change based condition update": {
@@ -160,6 +166,24 @@ func TestCustomPluginConfigApplyConfiguration(t *testing.T) {
 					Concurrency:                             &defaultConcurrency,
 					EnableMessageChangeBasedConditionUpdate: &messageChangeBasedConditionUpdate,
 				},
+				EnableMetricsReporting: &defaultEnableMetricsReporting,
+			},
+		},
+		"disable metrics reporting": {
+			Orig: CustomPluginConfig{
+				EnableMetricsReporting: &disableMetricsReporting,
+			},
+			Wanted: CustomPluginConfig{
+				PluginGlobalConfig: pluginGlobalConfig{
+					InvokeIntervalString:                    &defaultInvokeIntervalString,
+					InvokeInterval:                          &defaultInvokeInterval,
+					TimeoutString:                           &defaultGlobalTimeoutString,
+					Timeout:                                 &defaultGlobalTimeout,
+					MaxOutputLength:                         &defaultMaxOutputLength,
+					Concurrency:                             &defaultConcurrency,
+					EnableMessageChangeBasedConditionUpdate: &defaultMessageChangeBasedConditionUpdate,
+				},
+				EnableMetricsReporting: &disableMetricsReporting,
 			},
 		},
 	}
