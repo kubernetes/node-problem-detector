@@ -32,6 +32,7 @@ var (
 	defaultMaxOutputLength                   = 80
 	defaultConcurrency                       = 3
 	defaultMessageChangeBasedConditionUpdate = false
+	defaultEnableMetricsReporting            = true
 
 	customPluginName = "custom"
 )
@@ -66,6 +67,8 @@ type CustomPluginConfig struct {
 	DefaultConditions []types.Condition `json:"conditions"`
 	// Rules are the rules custom plugin monitor will follow to parse and invoke plugins.
 	Rules []*CustomRule `json:"rules"`
+	// EnableMetricsReporting describes whether to report problems as metrics or not.
+	EnableMetricsReporting *bool `json:"metricsReporting,omitempty"`
 }
 
 // ApplyConfiguration applies default configurations.
@@ -110,6 +113,10 @@ func (cpc *CustomPluginConfig) ApplyConfiguration() error {
 			}
 			rule.Timeout = &timeout
 		}
+	}
+
+	if cpc.EnableMetricsReporting == nil {
+		cpc.EnableMetricsReporting = &defaultEnableMetricsReporting
 	}
 
 	return nil

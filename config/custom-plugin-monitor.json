@@ -8,6 +8,7 @@
     "enable_message_change_based_condition_update": false
   },
   "source": "ntp-custom-plugin-monitor",
+  "metricsReporting": true,
   "conditions": [
     {
       "type": "NTPProblem",
