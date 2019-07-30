@@ -38,6 +38,7 @@ func init() {
 }
 
 type systemStatsMonitor struct {
+	configPath    string
 	config        ssmtypes.SystemStatsConfig
 	diskCollector *diskCollector
 	hostCollector *hostCollector
@@ -47,7 +48,8 @@ type systemStatsMonitor struct {
 // NewSystemStatsMonitorOrDie creates a system stats monitor.
 func NewSystemStatsMonitorOrDie(configPath string) types.Monitor {
 	ssm := systemStatsMonitor{
-		tomb: tomb.NewTomb(),
+		configPath: configPath,
+		tomb:       tomb.NewTomb(),
 	}
 
 	// Apply configurations.
@@ -67,7 +69,7 @@ func NewSystemStatsMonitorOrDie(configPath string) types.Monitor {
 
 	err = ssm.config.Validate()
 	if err != nil {
-		glog.Fatalf("Failed to validate configuration %+v: %v", ssm.config, err)
+		glog.Fatalf("Failed to validate %s configuration %+v: %v", ssm.configPath, ssm.config, err)
 	}
 
 	if len(ssm.config.DiskConfig.MetricsConfigs) > 0 {
@@ -80,7 +82,7 @@ func NewSystemStatsMonitorOrDie(configPath string) types.Monitor {
 }
 
 func (ssm *systemStatsMonitor) Start() (<-chan *types.Status, error) {
-	glog.Info("Start system stats monitor")
+	glog.Infof("Start system stats monitor %s", ssm.configPath)
 	go ssm.monitorLoop()
 	return nil, nil
 }
@@ -93,7 +95,7 @@ func (ssm *systemStatsMonitor) monitorLoop() {
 
 	select {
 	case <-ssm.tomb.Stopping():
-		glog.Infof("System stats monitor stopped")
+		glog.Infof("System stats monitor stopped: %s", ssm.configPath)
 		return
 	default:
 		ssm.diskCollector.collect()
@@ -106,13 +108,13 @@ func (ssm *systemStatsMonitor) monitorLoop() {
 			ssm.diskCollector.collect()
 			ssm.hostCollector.collect()
 		case <-ssm.tomb.Stopping():
-			glog.Infof("System stats monitor stopped")
+			glog.Infof("System stats monitor stopped: %s", ssm.configPath)
 			return
 		}
 	}
 }
 
 func (ssm *systemStatsMonitor) Stop() {
-	glog.Info("Stop system stats monitor")
+	glog.Infof("Stop system stats monitor %s", ssm.configPath)
 	ssm.tomb.Stop()
 }

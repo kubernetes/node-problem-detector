@@ -43,6 +43,7 @@ func init() {
 }
 
 type customPluginMonitor struct {
+	configPath string
 	config     cpmtypes.CustomPluginConfig
 	conditions []types.Condition
 	plugin     *plugin.Plugin
@@ -54,7 +55,8 @@ type customPluginMonitor struct {
 // NewCustomPluginMonitorOrDie create a new customPluginMonitor, panic if error occurs.
 func NewCustomPluginMonitorOrDie(configPath string) types.Monitor {
 	c := &customPluginMonitor{
-		tomb: tomb.NewTomb(),
+		configPath: configPath,
+		tomb:       tomb.NewTomb(),
 	}
 	f, err := ioutil.ReadFile(configPath)
 	if err != nil {
@@ -76,7 +78,7 @@ func NewCustomPluginMonitorOrDie(configPath string) types.Monitor {
 		glog.Fatalf("Failed to validate custom plugin config %+v: %v", c.config, err)
 	}
 
-	glog.Infof("Finish parsing custom plugin monitor config file: %+v", c.config)
+	glog.Infof("Finish parsing custom plugin monitor config file %s: %+v", c.configPath, c.config)
 
 	c.plugin = plugin.NewPlugin(c.config)
 	// A 1000 size channel should be big enough.
@@ -107,14 +109,14 @@ func initializeProblemMetricsOrDie(rules []*cpmtypes.CustomRule) {
 }
 
 func (c *customPluginMonitor) Start() (<-chan *types.Status, error) {
-	glog.Info("Start custom plugin monitor")
+	glog.Infof("Start custom plugin monitor %s", c.configPath)
 	go c.plugin.Run()
 	go c.monitorLoop()
 	return c.statusChan, nil
 }
 
 func (c *customPluginMonitor) Stop() {
-	glog.Info("Stop custom plugin monitor")
+	glog.Infof("Stop custom plugin monitor %s", c.configPath)
 	c.tomb.Stop()
 }
 
@@ -127,13 +129,13 @@ func (c *customPluginMonitor) monitorLoop() {
 	for {
 		select {
 		case result := <-resultChan:
-			glog.V(3).Infof("Receive new plugin result: %+v", result)
+			glog.V(3).Infof("Receive new plugin result for %s: %+v", c.configPath, result)
 			status := c.generateStatus(result)
 			glog.Infof("New status generated: %+v", status)
 			c.statusChan <- status
 		case <-c.tomb.Stopping():
 			c.plugin.Stop()
-			glog.Infof("Custom plugin monitor stopped")
+			glog.Infof("Custom plugin monitor stopped: %s", c.configPath)
 			c.tomb.Done()
 			break
 		}
