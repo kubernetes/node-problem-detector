@@ -4,7 +4,7 @@
 		"source": "systemd"
 	},
 	"logPath": "/var/log/journal",
-	"lookback": "",
+	"lookback": "5m",
 	"bufferSize": 10,
 	"source": "systemd-monitor",
 	"metricsReporting": true,
