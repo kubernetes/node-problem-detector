@@ -101,13 +101,12 @@ function build-npd-custom-flags() {
   local -r sm_config="${kube_home}/node-problem-detector/config/systemd-monitor.json"
 
   local -r custom_km_config="${kube_home}/node-problem-detector/config/kernel-monitor-counter.json"
-  local -r custom_dm_config="${kube_home}/node-problem-detector/config/docker-monitor-counter.json"
   local -r custom_sm_config="${kube_home}/node-problem-detector/config/systemd-monitor-counter.json"
 
   flags="--v=2"
   flags+=" --logtostderr"
   flags+=" --config.system-log-monitor=${km_config},${dm_config},${sm_config}"
-  flags+=" --config.custom-plugin-monitor=${custom_km_config},${custom_dm_config},${custom_sm_config}"
+  flags+=" --config.custom-plugin-monitor=${custom_km_config},${custom_sm_config}"
   flags+=" --port=20256"
 
   export NODE_PROBLEM_DETECTOR_CUSTOM_FLAGS=${flags}
