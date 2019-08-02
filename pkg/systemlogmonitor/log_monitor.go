@@ -45,6 +45,7 @@ func init() {
 }
 
 type logMonitor struct {
+	configPath string
 	watcher    watchertypes.LogWatcher
 	buffer     LogBuffer
 	config     MonitorConfig
@@ -56,7 +57,10 @@ type logMonitor struct {
 
 // NewLogMonitorOrDie create a new LogMonitor, panic if error occurs.
 func NewLogMonitorOrDie(configPath string) types.Monitor {
-	l := &logMonitor{tomb: tomb.NewTomb()}
+	l := &logMonitor{
+		configPath: configPath,
+		tomb:       tomb.NewTomb(),
+	}
 
 	f, err := ioutil.ReadFile(configPath)
 	if err != nil {
@@ -70,9 +74,9 @@ func NewLogMonitorOrDie(configPath string) types.Monitor {
 	(&l.config).ApplyDefaultConfiguration()
 	err = l.config.ValidateRules()
 	if err != nil {
-		glog.Fatalf("Failed to validate matching rules %+v: %v", l.config.Rules, err)
+		glog.Fatalf("Failed to validate %s matching rules %+v: %v", l.configPath, l.config.Rules, err)
 	}
-	glog.Infof("Finish parsing log monitor config file: %+v", l.config)
+	glog.Infof("Finish parsing log monitor config file %s: %+v", l.configPath, l.config)
 
 	l.watcher = logwatchers.GetLogWatcherOrDie(l.config.WatcherConfig)
 	l.buffer = NewLogBuffer(l.config.BufferSize)
@@ -104,7 +108,7 @@ func initializeProblemMetricsOrDie(rules []systemlogtypes.Rule) {
 }
 
 func (l *logMonitor) Start() (<-chan *types.Status, error) {
-	glog.Info("Start log monitor")
+	glog.Infof("Start log monitor %s", l.configPath)
 	var err error
 	l.logCh, err = l.watcher.Watch()
 	if err != nil {
@@ -115,7 +119,7 @@ func (l *logMonitor) Start() (<-chan *types.Status, error) {
 }
 
 func (l *logMonitor) Stop() {
-	glog.Info("Stop log monitor")
+	glog.Infof("Stop log monitor %s", l.configPath)
 	l.tomb.Stop()
 }
 
@@ -129,7 +133,7 @@ func (l *logMonitor) monitorLoop() {
 			l.parseLog(log)
 		case <-l.tomb.Stopping():
 			l.watcher.Stop()
-			glog.Infof("Log monitor stopped")
+			glog.Infof("Log monitor stopped: %s", l.configPath)
 			return
 		}
 	}
