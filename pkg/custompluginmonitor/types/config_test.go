@@ -20,6 +20,8 @@ import (
 	"reflect"
 	"testing"
 	"time"
+
+	"k8s.io/node-problem-detector/pkg/types"
 )
 
 func TestCustomPluginConfigApplyConfiguration(t *testing.T) {
@@ -274,6 +276,55 @@ func TestCustomPluginConfigValidate(t *testing.T) {
 					{
 						Path:    "../plugin/test-data/ok.sh",
 						Timeout: &exceededRuleTimeout,
+					},
+				},
+			},
+			IsError: true,
+		},
+		"permanent problem has preset default condition": {
+			Conf: CustomPluginConfig{
+				Plugin: customPluginName,
+				PluginGlobalConfig: pluginGlobalConfig{
+					InvokeInterval:  &defaultInvokeInterval,
+					Timeout:         &defaultGlobalTimeout,
+					MaxOutputLength: &defaultMaxOutputLength,
+					Concurrency:     &defaultConcurrency,
+				},
+				DefaultConditions: []types.Condition{
+					{
+						Type:    "TestCondition",
+						Reason:  "TestConditionOK",
+						Message: "Test condition is OK.",
+					},
+				},
+				Rules: []*CustomRule{
+					{
+						Type:      types.Perm,
+						Condition: "TestCondition",
+						Reason:    "TestConditionFail",
+						Path:      "../plugin/test-data/ok.sh",
+						Timeout:   &normalRuleTimeout,
+					},
+				},
+			},
+			IsError: false,
+		},
+		"permanent problem does not have preset default condition": {
+			Conf: CustomPluginConfig{
+				Plugin: customPluginName,
+				PluginGlobalConfig: pluginGlobalConfig{
+					InvokeInterval:  &defaultInvokeInterval,
+					Timeout:         &defaultGlobalTimeout,
+					MaxOutputLength: &defaultMaxOutputLength,
+					Concurrency:     &defaultConcurrency,
+				},
+				Rules: []*CustomRule{
+					{
+						Type:      types.Perm,
+						Condition: "TestCondition",
+						Reason:    "TestConditionFail",
+						Path:      "../plugin/test-data/ok.sh",
+						Timeout:   &normalRuleTimeout,
 					},
 				},
 			},

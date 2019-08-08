@@ -141,5 +141,22 @@ func (cpc CustomPluginConfig) Validate() error {
 		}
 	}
 
+	for _, rule := range cpc.Rules {
+		if rule.Type != types.Perm {
+			continue
+		}
+		conditionType := rule.Condition
+		defaultConditionExists := false
+		for _, cond := range cpc.DefaultConditions {
+			if conditionType == cond.Type {
+				defaultConditionExists = true
+				break
+			}
+		}
+		if !defaultConditionExists {
+			return fmt.Errorf("Permanent problem %s does not have preset default condition.", conditionType)
+		}
+	}
+
 	return nil
 }
