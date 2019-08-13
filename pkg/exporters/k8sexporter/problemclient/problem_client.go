@@ -41,7 +41,7 @@ import (
 
 // Client is the interface of problem client
 type Client interface {
-	// GetConditions get all specifiec conditions of current node.
+	// GetConditions get all specific conditions of current node.
 	GetConditions(conditionTypes []v1.NodeConditionType) ([]*v1.NodeCondition, error)
 	// SetConditions set or update conditions of current node.
 	SetConditions(conditions []v1.NodeCondition) error
