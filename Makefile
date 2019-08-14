@@ -75,7 +75,6 @@ ifneq ($(BUILD_TAGS), "")
 	BUILD_TAGS:=-tags "$(BUILD_TAGS)"
 endif
 
-
 vet:
 	GO111MODULE=on go list -mod vendor $(BUILD_TAGS) ./... | \
 		grep -v "./vendor/*" | \
@@ -107,7 +106,16 @@ Dockerfile: Dockerfile.in
 	sed -e 's|@BASEIMAGE@|$(BASEIMAGE)|g' $< >$@
 
 test: vet fmt
-	GO111MODULE=on go test -mod vendor -timeout=1m -v -race $(BUILD_TAGS) ./...
+	GO111MODULE=on go test -mod vendor -timeout=1m -v -race -short $(BUILD_TAGS) ./...
+
+e2e-test: vet fmt build-tar
+	GO111MODULE=on go test -mod vendor -timeout=10m -v $(BUILD_TAGS) \
+	./test/e2e/metriconly/... \
+	-project=$(PROJECT) -zone=$(ZONE) \
+	-image=$(VM_IMAGE) -image-project=$(IMAGE_PROJECT) \
+	-ssh-user=$(SSH_USER) -ssh-key=$(SSH_KEY) \
+	-npd-build-tar=`pwd`/$(TARBALL) \
+	-artifacts-dir=$(ARTIFACTS)
 
 build-binaries: ./bin/node-problem-detector ./bin/log-counter
 
@@ -115,7 +123,7 @@ build-container: build-binaries Dockerfile
 	docker build -t $(IMAGE) .
 
 build-tar: ./bin/node-problem-detector ./bin/log-counter
-	tar -zcvf $(TARBALL) bin/ config/
+	tar -zcvf $(TARBALL) bin/ config/ test/e2e-install.sh
 	sha1sum $(TARBALL)
 	md5sum $(TARBALL)
 
