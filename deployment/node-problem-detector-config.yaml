@@ -87,4 +87,4 @@ data:
 kind: ConfigMap
 metadata:
   name: node-problem-detector-config
-  namespace: default
+  namespace: kube-system
