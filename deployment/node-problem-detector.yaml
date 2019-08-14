@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   name: node-problem-detector
+  namespace: kube-system
   labels:
     app: node-problem-detector
 spec:
