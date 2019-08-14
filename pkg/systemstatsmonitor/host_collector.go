@@ -27,7 +27,7 @@ import (
 
 type hostCollector struct {
 	tags   map[string]string
-	uptime *metrics.Int64Metric
+	uptime *metrics.Float64Metric
 }
 
 func NewHostCollectorOrDie(hostConfig *ssmtypes.HostStatsConfig) *hostCollector {
@@ -46,7 +46,7 @@ func NewHostCollectorOrDie(hostConfig *ssmtypes.HostStatsConfig) *hostCollector 
 	hc.tags["os_version"] = osVersion
 
 	if hostConfig.MetricsConfigs["host/uptime"].DisplayName != "" {
-		hc.uptime, err = metrics.NewInt64Metric(
+		hc.uptime, err = metrics.NewFloat64Metric(
 			hostConfig.MetricsConfigs["host/uptime"].DisplayName,
 			"The uptime of the operating system",
 			"second",
@@ -72,6 +72,6 @@ func (hc *hostCollector) collect() {
 	}
 
 	if hc.uptime != nil {
-		hc.uptime.Record(hc.tags, int64(uptime))
+		hc.uptime.Record(hc.tags, float64(uptime))
 	}
 }
