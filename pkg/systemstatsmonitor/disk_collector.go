@@ -29,6 +29,8 @@ import (
 	"k8s.io/node-problem-detector/pkg/util/metrics"
 )
 
+const deviceNameLabel = "device_name"
+
 type diskCollector struct {
 	mIOTime      *metrics.Int64Metric
 	mWeightedIO  *metrics.Int64Metric
@@ -44,22 +46,25 @@ func NewDiskCollectorOrDie(diskConfig *ssmtypes.DiskStatsConfig) *diskCollector 
 	dc := diskCollector{config: diskConfig}
 
 	var err error
+
+	// Use metrics.Sum aggregation method to ensure the metric is a counter/cumulative metric.
 	dc.mIOTime, err = metrics.NewInt64Metric(
 		diskConfig.MetricsConfigs["disk/io_time"].DisplayName,
 		"The IO time spent on the disk",
 		"second",
-		metrics.LastValue,
-		[]string{"device"})
+		metrics.Sum,
+		[]string{deviceNameLabel})
 	if err != nil {
 		glog.Fatalf("Error initializing metric for disk/io_time: %v", err)
 	}
 
+	// Use metrics.Sum aggregation method to ensure the metric is a counter/cumulative metric.
 	dc.mWeightedIO, err = metrics.NewInt64Metric(
 		diskConfig.MetricsConfigs["disk/weighted_io"].DisplayName,
 		"The weighted IO on the disk",
 		"second",
-		metrics.LastValue,
-		[]string{"device"})
+		metrics.Sum,
+		[]string{deviceNameLabel})
 	if err != nil {
 		glog.Fatalf("Error initializing metric for disk/weighted_io: %v", err)
 	}
@@ -69,7 +74,7 @@ func NewDiskCollectorOrDie(diskConfig *ssmtypes.DiskStatsConfig) *diskCollector 
 		"The average queue length on the disk",
 		"second",
 		metrics.LastValue,
-		[]string{"device"})
+		[]string{deviceNameLabel})
 	if err != nil {
 		glog.Fatalf("Error initializing metric for disk/avg_queue_len: %v", err)
 	}
@@ -112,13 +117,13 @@ func (dc *diskCollector) collect() {
 			avgQueueLen = float64(ioCountersStat.WeightedIO-lastWeightedIO) / float64(ioCountersStat.IoTime-lastIOTime)
 		}
 
-		// Attach label {"device": deviceName} to the metrics.
-		tags := map[string]string{"device": deviceName}
+		// Attach label {"device_name": deviceName} to the metrics.
+		tags := map[string]string{deviceNameLabel: deviceName}
 		if dc.mIOTime != nil {
-			dc.mIOTime.Record(tags, int64(ioCountersStat.IoTime))
+			dc.mIOTime.Record(tags, int64(ioCountersStat.IoTime-lastIOTime))
 		}
 		if dc.mWeightedIO != nil {
-			dc.mWeightedIO.Record(tags, int64(ioCountersStat.WeightedIO))
+			dc.mWeightedIO.Record(tags, int64(ioCountersStat.WeightedIO-lastWeightedIO))
 		}
 		if dc.mAvgQueueLen != nil {
 			dc.mAvgQueueLen.Record(tags, avgQueueLen)
