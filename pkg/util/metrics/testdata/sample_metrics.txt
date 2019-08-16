@@ -1,0 +1,45 @@
+# HELP disk_avg_queue_len The average queue length on the disk
+# TYPE disk_avg_queue_len gauge
+disk_avg_queue_len{device="sda"} 3.388908266480642
+disk_avg_queue_len{device="sda1"} 6.53953488372093
+disk_avg_queue_len{device="sda8"} 3.404255319148936
+# HELP disk_io_time The IO time spent on the disk
+# TYPE disk_io_time gauge
+disk_io_time{device="sda"} 8601
+disk_io_time{device="sda1"} 430
+disk_io_time{device="sda8"} 47
+# HELP disk_weighted_io The weighted IO on the disk
+# TYPE disk_weighted_io gauge
+disk_weighted_io{device="sda"} 29148
+disk_weighted_io{device="sda1"} 2812
+disk_weighted_io{device="sda8"} 160
+# HELP host_uptime The uptime of the operating system
+# TYPE host_uptime gauge
+host_uptime{kernel_version="4.14.127+",os_version="cos 73-11647.217.0"} 81
+# HELP problem_counter Number of times a specific type of problem have occurred.
+# TYPE problem_counter counter
+problem_counter{reason="AUFSUmountHung"} 0
+problem_counter{reason="ContainerdStart"} 1
+problem_counter{reason="CorruptDockerImage"} 0
+problem_counter{reason="CorruptDockerOverlay2"} 0
+problem_counter{reason="DockerHung"} 0
+problem_counter{reason="DockerStart"} 1
+problem_counter{reason="FilesystemIsReadOnly"} 0
+problem_counter{reason="FrequentContainerdRestart"} 0
+problem_counter{reason="FrequentDockerRestart"} 0
+problem_counter{reason="FrequentKubeletRestart"} 0
+problem_counter{reason="KernelOops"} 0
+problem_counter{reason="KubeletStart"} 0
+problem_counter{reason="OOMKilling"} 0
+problem_counter{reason="TaskHung"} 0
+problem_counter{reason="UnregisterNetDevice"} 0
+# HELP problem_gauge Whether a specific type of problem is affecting the node or not.
+# TYPE problem_gauge gauge
+problem_gauge{reason="AUFSUmountHung",type="KernelDeadlock"} 0
+problem_gauge{reason="CorruptDockerOverlay2",type="CorruptDockerOverlay2"} 0
+problem_gauge{reason="DockerHung",type="KernelDeadlock"} 0
+problem_gauge{reason="FilesystemIsReadOnly",type="ReadonlyFilesystem"} 0
+problem_gauge{reason="FrequentContainerdRestart",type="FrequentContainerdRestart"} 0
+problem_gauge{reason="FrequentDockerRestart",type="FrequentDockerRestart"} 0
+problem_gauge{reason="FrequentKubeletRestart",type="FrequentKubeletRestart"} 0
+problem_gauge{reason="UnregisterNetDevice",type="FrequentUnregisterNetDevice"} 0

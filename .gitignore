@@ -3,3 +3,4 @@
 /*.tar.gz
 ci.env
 pr.env
+junit*.xml
