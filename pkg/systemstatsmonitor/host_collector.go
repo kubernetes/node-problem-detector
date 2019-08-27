@@ -26,12 +26,13 @@ import (
 )
 
 type hostCollector struct {
-	tags   map[string]string
-	uptime *metrics.Int64Metric
+	tags       map[string]string
+	uptime     *metrics.Int64Metric
+	lastUptime int64
 }
 
 func NewHostCollectorOrDie(hostConfig *ssmtypes.HostStatsConfig) *hostCollector {
-	hc := hostCollector{map[string]string{}, nil}
+	hc := hostCollector{map[string]string{}, nil, 0}
 
 	kernelVersion, err := host.KernelVersion()
 	if err != nil {
@@ -45,12 +46,13 @@ func NewHostCollectorOrDie(hostConfig *ssmtypes.HostStatsConfig) *hostCollector 
 	}
 	hc.tags["os_version"] = osVersion
 
+	// Use metrics.Sum aggregation method to ensure the metric is a counter/cumulative metric.
 	if hostConfig.MetricsConfigs["host/uptime"].DisplayName != "" {
 		hc.uptime, err = metrics.NewInt64Metric(
 			hostConfig.MetricsConfigs["host/uptime"].DisplayName,
 			"The uptime of the operating system",
 			"second",
-			metrics.LastValue,
+			metrics.Sum,
 			[]string{"kernel_version", "os_version"})
 		if err != nil {
 			glog.Fatalf("Error initializing metric for host/uptime: %v", err)
@@ -70,8 +72,10 @@ func (hc *hostCollector) collect() {
 		glog.Errorf("Failed to retrieve uptime of the host: %v", err)
 		return
 	}
+	uptimeSeconds := int64(uptime)
 
 	if hc.uptime != nil {
-		hc.uptime.Record(hc.tags, int64(uptime))
+		hc.uptime.Record(hc.tags, uptimeSeconds-hc.lastUptime)
 	}
+	hc.lastUptime = uptimeSeconds
 }

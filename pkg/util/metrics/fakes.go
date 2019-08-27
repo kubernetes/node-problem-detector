@@ -21,17 +21,6 @@ import (
 	"reflect"
 )
 
-// Int64MetricRepresentation represents a snapshot of an int64 metrics.
-// This is used for inspecting fake metrics.
-type Int64MetricRepresentation struct {
-	// Name is the metric name.
-	Name string
-	// Labels contains all metric labels in key-value pair format.
-	Labels map[string]string
-	// Value is the value of the metric.
-	Value int64
-}
-
 // Int64MetricInterface is used to create test double for Int64Metric.
 type Int64MetricInterface interface {
 	// Record records a measurement for the metric, with provided tags as metric labels.
