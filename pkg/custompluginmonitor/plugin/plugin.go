@@ -117,14 +117,25 @@ func (p *Plugin) run(rule cpmtypes.CustomRule) (exitStatus cpmtypes.Status, outp
 	var ctx context.Context
 	var cancel context.CancelFunc
 
+	var timeout *time.Duration
 	if rule.Timeout != nil && *rule.Timeout < *p.config.PluginGlobalConfig.Timeout {
-		ctx, cancel = context.WithTimeout(context.Background(), *rule.Timeout)
+		timeout = rule.Timeout
 	} else {
-		ctx, cancel = context.WithTimeout(context.Background(), *p.config.PluginGlobalConfig.Timeout)
+		timeout = p.config.PluginGlobalConfig.Timeout
 	}
+
+	ctx, cancel = context.WithTimeout(context.Background(), *timeout)
 	defer cancel()
 
 	cmd := exec.CommandContext(ctx, rule.Path, rule.Args...)
+	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
+
+	time.AfterFunc(*timeout, func() {
+		if err := syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL); err != nil {
+			glog.Errorf("Error in killing timeout process: error - %v.", err)
+		}
+	})
+
 	stdout, err := cmd.Output()
 	if err != nil {
 		if _, ok := err.(*exec.ExitError); !ok {
