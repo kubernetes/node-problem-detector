@@ -14,8 +14,8 @@ conntrack_max=$(cat /proc/sys/net/ipv4/netfilter/ip_conntrack_max)
 conntrack_count=$(cat /proc/sys/net/ipv4/netfilter/ip_conntrack_count)
 
 if (( conntrack_count >= conntrack_max )); then
-  echo "Conntrack table full"
-  exit $NONOK
+    echo "Conntrack table full"
+    exit $NONOK
 fi
 
 echo "Conntrack table available"
