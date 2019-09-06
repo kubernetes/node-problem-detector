@@ -52,7 +52,7 @@ Currently, a problem daemon is running as a goroutine in the node-problem-detect
 binary. In the future, we'll separate node-problem-detector and problem daemons into
 different containers, and compose them with pod specification.
 
-Each catagory of problem daemon can be disabled at compilation time by setting
+Each category of problem daemon can be disabled at compilation time by setting
 corresponding build tags. If they are disabled at compilation time, then all their
 build dependencies, global variables and background goroutines will be trimmed out
 of the compiled executable.
@@ -68,7 +68,7 @@ List of supported problem daemons:
 
 # Exporter
 
-An exporter is a component of node-problem-detector. It reports node problems and/or metrics to 
+An exporter is a component of node-problem-detector. It reports node problems and/or metrics to
 certain back end (e.g. Kubernetes API server, or Prometheus scrape endpoint).
 
 # Usage
