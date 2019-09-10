@@ -49,7 +49,8 @@ func NewDiskCollectorOrDie(diskConfig *ssmtypes.DiskStatsConfig) *diskCollector 
 
 	// Use metrics.Sum aggregation method to ensure the metric is a counter/cumulative metric.
 	dc.mIOTime, err = metrics.NewInt64Metric(
-		diskConfig.MetricsConfigs["disk/io_time"].DisplayName,
+		metrics.DiskIOTimeID,
+		diskConfig.MetricsConfigs[string(metrics.DiskIOTimeID)].DisplayName,
 		"The IO time spent on the disk",
 		"second",
 		metrics.Sum,
@@ -60,7 +61,8 @@ func NewDiskCollectorOrDie(diskConfig *ssmtypes.DiskStatsConfig) *diskCollector 
 
 	// Use metrics.Sum aggregation method to ensure the metric is a counter/cumulative metric.
 	dc.mWeightedIO, err = metrics.NewInt64Metric(
-		diskConfig.MetricsConfigs["disk/weighted_io"].DisplayName,
+		metrics.DiskWeightedIOID,
+		diskConfig.MetricsConfigs[string(metrics.DiskWeightedIOID)].DisplayName,
 		"The weighted IO on the disk",
 		"second",
 		metrics.Sum,
@@ -70,7 +72,8 @@ func NewDiskCollectorOrDie(diskConfig *ssmtypes.DiskStatsConfig) *diskCollector 
 	}
 
 	dc.mAvgQueueLen, err = metrics.NewFloat64Metric(
-		diskConfig.MetricsConfigs["disk/avg_queue_len"].DisplayName,
+		metrics.DiskAvgQueueLenID,
+		diskConfig.MetricsConfigs[string(metrics.DiskAvgQueueLenID)].DisplayName,
 		"The average queue length on the disk",
 		"second",
 		metrics.LastValue,

@@ -131,3 +131,19 @@ type ProblemDaemonHandler struct {
 	// CmdOptionDescription explains how to configure the problem daemon from command line arguments.
 	CmdOptionDescription string
 }
+
+// ExporterType is the type of the exporter.
+type ExporterType string
+
+// ExporterConfigPathMap represents configurations on all types of exporters:
+// 1) Each key represents a type of exporter.
+// 2) Each value represents the config file path for the exporter.
+type ExporterConfigPathMap map[ExporterType]*string
+
+// ExporterHandler represents the initialization handler for a type of exporter.
+type ExporterHandler struct {
+	// CreateExporterOrDie initializes an exporter, panic if error occurs.
+	CreateExporterOrDie func(string) Exporter
+	// CmdOptionDescription explains how to configure the exporter from command line arguments.
+	CmdOptionDescription string
+}
