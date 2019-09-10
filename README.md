@@ -69,27 +69,44 @@ List of supported problem daemons:
 # Exporter
 
 An exporter is a component of node-problem-detector. It reports node problems and/or metrics to
-certain back end (e.g. Kubernetes API server, or Prometheus scrape endpoint).
+certain back end. Some of them can be disable at compile time using a build tag. List of supported exporters:
+
+| Exporter |Description | Disabling Build Tag |
+|----------|:-----------|:--------------------|
+| Kubernetes exporter | Kubernetes exporter reports node problems to Kubernetes API server: temporary problems get reported as Events, and permanent problems get reported as Node Conditions. | 
+| Prometheus exporter | Prometheus exporter reports node problems and metrics locally as Prometheus metrics | 
+| [Stackdriver exporter](https://github.com/kubernetes/node-problem-detector/blob/master/config/exporter/stackdriver-exporter.json) | Stackdriver exporter reports node problems and metrics to Stackdriver Monitoring API. | disable_stackdriver_exporter
 
 # Usage
 
 ## Flags
 
 * `--version`: Print current version of node-problem-detector.
-* `--address`: The address to bind the node problem detector server.
-* `--port`: The port to bind the node problem detector server. Use 0 to disable.
+* `--hostname-override`: A customized node name used for node-problem-detector to update conditions and emit events. node-problem-detector gets node name first from `hostname-override`, then `NODE_NAME` environment variable and finally fall back to `os.Hostname`.
+
+#### For System Log Monitor
+
 * `--config.system-log-monitor`: List of paths to system log monitor configuration files, comma separated, e.g.
   [config/kernel-monitor.json](https://github.com/kubernetes/node-problem-detector/blob/master/config/kernel-monitor.json).
   Node problem detector will start a separate log monitor for each configuration. You can
   use different log monitors to monitor different system log.
-* `--config.custom-plugin-monitor`: List of paths to custom plugin monitor config files, comma separated, e.g.
-  [config/custom-plugin-monitor.json](https://github.com/kubernetes/node-problem-detector/blob/master/config/custom-plugin-monitor.json).
-  Node problem detector will start a separate custom plugin monitor for each configuration. You can
-  use different custom plugin monitors to monitor different node problems.
+
+#### For System Stats Monitor
+
 * `--config.system-stats-monitor`: List of paths to system stats monitor config files, comma separated, e.g.
   [config/system-stats-monitor.json](https://github.com/kubernetes/node-problem-detector/blob/master/config/system-stats-monitor.json).
   Node problem detector will start a separate system stats monitor for each configuration. You can
   use different system stats monitors to monitor different problem-related system stats.
+
+#### For Custom Plugin Monitor
+
+* `--config.custom-plugin-monitor`: List of paths to custom plugin monitor config files, comma separated, e.g.
+  [config/custom-plugin-monitor.json](https://github.com/kubernetes/node-problem-detector/blob/master/config/custom-plugin-monitor.json).
+  Node problem detector will start a separate custom plugin monitor for each configuration. You can
+  use different custom plugin monitors to monitor different node problems.
+
+#### For Kubernetes exporter
+
 * `--enable-k8s-exporter`: Enables reporting to Kubernetes API server, default to `true`.
 * `--apiserver-override`: A URI parameter used to customize how node-problem-detector
 connects the apiserver.  This is ignored if `--enable-k8s-exporter` is `false`. The format is same as the
@@ -100,9 +117,17 @@ For example, to run without auth, use the following config:
    http://APISERVER_IP:APISERVER_PORT?inClusterConfig=false
    ```
    Refer [heapster docs](https://github.com/kubernetes/heapster/blob/master/docs/source-configuration.md#kubernetes) for a complete list of available options.
-* `--hostname-override`: A customized node name used for node-problem-detector to update conditions and emit events. node-problem-detector gets node name first from `hostname-override`, then `NODE_NAME` environment variable and finally fall back to `os.Hostname`.
+* `--address`: The address to bind the node problem detector server.
+* `--port`: The port to bind the node problem detector server. Use 0 to disable.
+
+#### For Prometheus exporter
+
 * `--prometheus-address`: The address to bind the Prometheus scrape endpoint, default to `127.0.0.1`.
 * `--prometheus-port`: The port to bind the Prometheus scrape endpoint, default to 20257. Use 0 to disable.
+
+#### For Stackdriver exporter
+
+* `--exporter.stackdriver`: Path to a Stackdriver exporter config file, e.g. [config/exporter/stackdriver-exporter.json](https://github.com/kubernetes/node-problem-detector/blob/master/config/exporter/stackdriver-exporter.json), default to empty string. Set to empty string to disable.
 
 ### Deprecated Flags
 

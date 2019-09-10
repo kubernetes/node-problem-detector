@@ -26,6 +26,7 @@ import (
 
 	"github.com/spf13/pflag"
 
+	"k8s.io/node-problem-detector/pkg/exporters"
 	"k8s.io/node-problem-detector/pkg/problemdaemon"
 	"k8s.io/node-problem-detector/pkg/types"
 )
@@ -86,6 +87,7 @@ type NodeProblemDetectorOptions struct {
 
 func NewNodeProblemDetectorOptions() *NodeProblemDetectorOptions {
 	npdo := &NodeProblemDetectorOptions{MonitorConfigPaths: types.ProblemDaemonConfigPathMap{}}
+
 	for _, problemDaemonName := range problemdaemon.GetProblemDaemonNames() {
 		npdo.MonitorConfigPaths[problemDaemonName] = &[]string{}
 	}
@@ -118,6 +120,10 @@ func (npdo *NodeProblemDetectorOptions) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&npdo.PrometheusServerAddress, "prometheus-address",
 		"127.0.0.1", "The address to bind the Prometheus scrape endpoint.")
 
+	for _, exporterName := range exporters.GetExporterNames() {
+		exporterHandler := exporters.GetExporterHandlerOrDie(exporterName)
+		exporterHandler.Options.SetFlags(fs)
+	}
 	for _, problemDaemonName := range problemdaemon.GetProblemDaemonNames() {
 		fs.StringSliceVar(
 			npdo.MonitorConfigPaths[problemDaemonName],
