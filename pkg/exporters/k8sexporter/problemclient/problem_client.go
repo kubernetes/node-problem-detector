@@ -60,6 +60,35 @@ type nodeProblemClient struct {
 	nodeRef   *v1.ObjectReference
 }
 
+func (c *nodeProblemClient) setNodeNameOrDie(npdo *options.NodeProblemDetectorOptions) {
+	// Check hostname override first for customized node name.
+	if npdo.HostnameOverride != "" {
+		c.nodeName = npdo.HostnameOverride
+		return
+	}
+
+	// Get node name from environment variable NODE_NAME
+	// By default, assume that the NODE_NAME env should have been set with
+	// downward api or user defined exported environment variable. We prefer it because sometimes
+	// the hostname returned by os.Hostname is not right because:
+	// 1. User may override the hostname.
+	// 2. For some cloud providers, os.Hostname is different from the real hostname.
+	c.nodeName = os.Getenv("NODE_NAME")
+	if c.nodeName != "" {
+		return
+	}
+
+	// For backward compatibility. If the env is not set, get the hostname
+	// from os.Hostname(). This may not work for all configurations and
+	// environments.
+	var err error
+	c.nodeName, err = os.Hostname()
+	if err != nil {
+		glog.Fatalf("Failed to get host name: %v", err)
+	}
+	return
+}
+
 // NewClientOrDie creates a new problem client, panics if error occurs.
 func NewClientOrDie(npdo *options.NodeProblemDetectorOptions) Client {
 	c := &nodeProblemClient{clock: clock.RealClock{}}
@@ -75,7 +104,7 @@ func NewClientOrDie(npdo *options.NodeProblemDetectorOptions) Client {
 	cfg.UserAgent = fmt.Sprintf("%s/%s", filepath.Base(os.Args[0]), version.Version())
 	// TODO(random-liu): Set QPS Limit
 	c.client = clientset.NewForConfigOrDie(cfg).CoreV1()
-	c.nodeName = npdo.NodeName
+	c.setNodeNameOrDie(npdo)
 	c.nodeRef = getNodeRef(c.nodeName)
 	c.recorders = make(map[string]record.EventRecorder)
 	return c

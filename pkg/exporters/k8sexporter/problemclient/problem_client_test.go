@@ -19,6 +19,7 @@ package problemclient
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 	"testing"
 	"time"
 
@@ -28,6 +29,8 @@ import (
 	"k8s.io/client-go/tools/record"
 
 	"github.com/stretchr/testify/assert"
+
+	"k8s.io/node-problem-detector/cmd/options"
 )
 
 const (
@@ -84,5 +87,65 @@ func TestEvent(t *testing.T) {
 	got := <-fakeRecorder.Events
 	if expected != got {
 		t.Errorf("expected event %q, got %q", expected, got)
+	}
+}
+
+// TestSetNodeNameOrDie tests for permutations of nodename, hostname and hostnameoverride.
+func TestSetNodeNameOrDie(t *testing.T) {
+	hostName, err := os.Hostname()
+	if err != nil {
+		t.Errorf("Query hostname error: %v", err)
+	}
+
+	testCases := []struct {
+		name             string
+		wantedNodeName   string
+		nodeNameEnv      string
+		hostNameOverride string
+	}{
+		{
+			name:             "Check hostname override only",
+			wantedNodeName:   "hostname-override",
+			nodeNameEnv:      "node-name-env",
+			hostNameOverride: "hostname-override",
+		},
+		{
+			name:             "Check hostname override and NODE_NAME env",
+			wantedNodeName:   "node-name-env",
+			nodeNameEnv:      "node-name-env",
+			hostNameOverride: "",
+		},
+		{
+			name:             "Check hostname override, NODE_NAME env and hostname",
+			wantedNodeName:   hostName,
+			nodeNameEnv:      "",
+			hostNameOverride: "",
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.name, func(t *testing.T) {
+			err := os.Unsetenv("NODE_NAME")
+			if err != nil {
+				t.Errorf("Unset NODE_NAME env error: %v", err)
+			}
+
+			if test.nodeNameEnv != "" {
+				err := os.Setenv("NODE_NAME", test.nodeNameEnv)
+				if err != nil {
+					t.Errorf("Set NODE_NAME env error: %v", err)
+				}
+			}
+
+			npdOpts := options.NewNodeProblemDetectorOptions()
+			npdOpts.HostnameOverride = test.hostNameOverride
+
+			client := nodeProblemClient{}
+			client.setNodeNameOrDie(npdOpts)
+
+			if client.nodeName != test.wantedNodeName {
+				t.Errorf("Set node name error. Wanted: %v. Got: %v", test.wantedNodeName, client.nodeName)
+			}
+		})
 	}
 }

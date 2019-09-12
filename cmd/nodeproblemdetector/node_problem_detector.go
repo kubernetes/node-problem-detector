@@ -45,7 +45,6 @@ func main() {
 		os.Exit(0)
 	}
 
-	npdo.SetNodeNameOrDie()
 	npdo.SetConfigFromDeprecatedOptionsOrDie()
 	npdo.ValidOrDie()
 

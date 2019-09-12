@@ -19,7 +19,6 @@ package options
 import (
 	"flag"
 	"fmt"
-	"os"
 	"time"
 
 	"net/url"
@@ -80,11 +79,6 @@ type NodeProblemDetectorOptions struct {
 	CustomPluginMonitorConfigPaths []string
 	// MonitorConfigPaths specifies the list of paths to configuration files for each monitor.
 	MonitorConfigPaths types.ProblemDaemonConfigPathMap
-
-	// application options
-
-	// NodeName is the node name used to communicate with Kubernetes ApiServer.
-	NodeName string
 }
 
 func NewNodeProblemDetectorOptions() *NodeProblemDetectorOptions {
@@ -206,36 +200,6 @@ func (npdo *NodeProblemDetectorOptions) SetConfigFromDeprecatedOptionsOrDie() {
 			npdo.CustomPluginMonitorConfigPaths...)
 		npdo.CustomPluginMonitorConfigPaths = []string{}
 	}
-}
-
-// SetNodeNameOrDie sets `NodeName` field with valid value.
-func (npdo *NodeProblemDetectorOptions) SetNodeNameOrDie() {
-	// Check hostname override first for customized node name.
-	if npdo.HostnameOverride != "" {
-		npdo.NodeName = npdo.HostnameOverride
-		return
-	}
-
-	// Get node name from environment variable NODE_NAME
-	// By default, assume that the NODE_NAME env should have been set with
-	// downward api or user defined exported environment variable. We prefer it because sometimes
-	// the hostname returned by os.Hostname is not right because:
-	// 1. User may override the hostname.
-	// 2. For some cloud providers, os.Hostname is different from the real hostname.
-	npdo.NodeName = os.Getenv("NODE_NAME")
-	if npdo.NodeName != "" {
-		return
-	}
-
-	// For backward compatibility. If the env is not set, get the hostname
-	// from os.Hostname(). This may not work for all configurations and
-	// environments.
-	nodeName, err := os.Hostname()
-	if err != nil {
-		panic(fmt.Sprintf("Failed to get host name: %v", err))
-	}
-
-	npdo.NodeName = nodeName
 }
 
 func init() {
