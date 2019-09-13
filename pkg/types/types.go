@@ -121,17 +121,12 @@ type Exporter interface {
 // One type of problem daemon may be used to initialize multiple problem daemon instances.
 type ProblemDaemonType string
 
-// ProblemDaemonConfigPathMap represents configurations on all types of problem daemons:
-// 1) Each key represents a type of problem daemon.
-// 2) Each value represents the config file paths to that type of problem daemon.
-type ProblemDaemonConfigPathMap map[ProblemDaemonType]*[]string
-
 // ProblemDaemonHandler represents the initialization handler for a type problem daemon.
 type ProblemDaemonHandler struct {
-	// CreateProblemDaemonOrDie initializes a problem daemon, panic if error occurs.
-	CreateProblemDaemonOrDie func(string) Monitor
-	// CmdOptionDescription explains how to configure the problem daemon from command line arguments.
-	CmdOptionDescription string
+	// CreateProblemDaemonOrDie initializes problem daemons from command line options, panic if error occurs.
+	CreateProblemDaemonOrDie func(CommandLineOptions) []Monitor
+	// Options specifies the command line options for this problem daemon.
+	Options CommandLineOptions
 }
 
 // ExporterType is the type of the exporter.
@@ -141,7 +136,7 @@ type ExporterType string
 type ExporterHandler struct {
 	// CreateExporterOrDie initializes an exporter, panic if error occurs.
 	CreateExporterOrDie func(CommandLineOptions) Exporter
-	// CmdOptionDescription explains how to configure the exporter from command line arguments.
+	// Options specifies the command line options for this exporter.
 	Options CommandLineOptions
 }
 

@@ -19,6 +19,7 @@ package systemlogmonitor
 import (
 	"encoding/json"
 	"io/ioutil"
+	"reflect"
 	"time"
 
 	"github.com/golang/glog"
@@ -37,11 +38,30 @@ import (
 const SystemLogMonitorName = "system-log-monitor"
 
 func init() {
+	clo := commandLineOptions{}
 	problemdaemon.Register(
 		SystemLogMonitorName,
 		types.ProblemDaemonHandler{
-			CreateProblemDaemonOrDie: NewLogMonitorOrDie,
-			CmdOptionDescription:     "Set to config file paths."})
+			CreateProblemDaemonOrDie: NewLogMonitorsOrDie,
+			Options:                  &clo})
+}
+
+func NewLogMonitorsOrDie(clo types.CommandLineOptions) []types.Monitor {
+	lmOptions, ok := clo.(*commandLineOptions)
+	if !ok {
+		glog.Fatalf("Wrong type for the command line options of Log Monitors: %s.", reflect.TypeOf(clo))
+	}
+
+	if len(lmOptions.SystemLogMonitorConfigPaths) != 0 && len(lmOptions.DeprecatedSystemLogMonitorConfigPaths) != 0 {
+		glog.Fatalf("Option --system-log-monitors is deprecated in favor of --config.system-log-monitor. They cannot be set at the same time.")
+	}
+	lmOptions.SystemLogMonitorConfigPaths = append(lmOptions.SystemLogMonitorConfigPaths, lmOptions.DeprecatedSystemLogMonitorConfigPaths...)
+
+	var monitors []types.Monitor
+	for _, configPath := range lmOptions.SystemLogMonitorConfigPaths {
+		monitors = append(monitors, NewLogMonitorOrDie(configPath))
+	}
+	return monitors
 }
 
 type logMonitor struct {

@@ -19,6 +19,7 @@ package systemstatsmonitor
 import (
 	"encoding/json"
 	"io/ioutil"
+	"reflect"
 	"time"
 
 	"github.com/golang/glog"
@@ -32,9 +33,23 @@ import (
 const SystemStatsMonitorName = "system-stats-monitor"
 
 func init() {
+	clo := ssmtypes.CommandLineOptions{}
 	problemdaemon.Register(SystemStatsMonitorName, types.ProblemDaemonHandler{
-		CreateProblemDaemonOrDie: NewSystemStatsMonitorOrDie,
-		CmdOptionDescription:     "Set to config file paths."})
+		CreateProblemDaemonOrDie: NewSystemStatsMonitorsOrDie,
+		Options:                  &clo})
+}
+
+func NewSystemStatsMonitorsOrDie(clo types.CommandLineOptions) []types.Monitor {
+	ssmOptions, ok := clo.(*ssmtypes.CommandLineOptions)
+	if !ok {
+		glog.Fatalf("Wrong type for the command line options of System Stats Monitors: %s.", reflect.TypeOf(clo))
+	}
+
+	var monitors []types.Monitor
+	for _, configPath := range ssmOptions.SystemStatsMonitorConfigPaths {
+		monitors = append(monitors, NewSystemStatsMonitorOrDie(configPath))
+	}
+	return monitors
 }
 
 type systemStatsMonitor struct {

@@ -19,6 +19,7 @@ package custompluginmonitor
 import (
 	"encoding/json"
 	"io/ioutil"
+	"reflect"
 	"time"
 
 	"github.com/golang/glog"
@@ -35,11 +36,30 @@ import (
 const CustomPluginMonitorName = "custom-plugin-monitor"
 
 func init() {
+	clo := cpmtypes.CommandLineOptions{}
 	problemdaemon.Register(
 		CustomPluginMonitorName,
 		types.ProblemDaemonHandler{
-			CreateProblemDaemonOrDie: NewCustomPluginMonitorOrDie,
-			CmdOptionDescription:     "Set to config file paths."})
+			CreateProblemDaemonOrDie: NewCustomPluginMonitorsOrDie,
+			Options:                  &clo})
+}
+
+func NewCustomPluginMonitorsOrDie(clo types.CommandLineOptions) []types.Monitor {
+	cpmOptions, ok := clo.(*cpmtypes.CommandLineOptions)
+	if !ok {
+		glog.Fatalf("Wrong type for the command line options of Custom Plugin Monitors: %s.", reflect.TypeOf(clo))
+	}
+
+	if len(cpmOptions.CustomPluginMonitorConfigPaths) != 0 && len(cpmOptions.DeprecatedCustomPluginMonitorConfigPaths) != 0 {
+		glog.Fatalf("Option --custom-plugin-monitors is deprecated in favor of --config.custom-plugin-monitor. They cannot be set at the same time.")
+	}
+	cpmOptions.CustomPluginMonitorConfigPaths = append(cpmOptions.CustomPluginMonitorConfigPaths, cpmOptions.DeprecatedCustomPluginMonitorConfigPaths...)
+
+	var monitors []types.Monitor
+	for _, configPath := range cpmOptions.CustomPluginMonitorConfigPaths {
+		monitors = append(monitors, NewCustomPluginMonitorOrDie(configPath))
+	}
+	return monitors
 }
 
 type customPluginMonitor struct {

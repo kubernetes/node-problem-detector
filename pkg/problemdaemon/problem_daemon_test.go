@@ -25,20 +25,20 @@ import (
 )
 
 func TestRegistration(t *testing.T) {
-	fooMonitorFactory := func(configPath string) types.Monitor {
-		return nil
+	fooMonitorFactory := func(types.CommandLineOptions) []types.Monitor {
+		return []types.Monitor{}
 	}
 	fooMonitorHandler := types.ProblemDaemonHandler{
 		CreateProblemDaemonOrDie: fooMonitorFactory,
-		CmdOptionDescription:     "foo option",
+		Options:                  nil,
 	}
 
-	barMonitorFactory := func(configPath string) types.Monitor {
-		return nil
+	barMonitorFactory := func(types.CommandLineOptions) []types.Monitor {
+		return []types.Monitor{}
 	}
 	barMonitorHandler := types.ProblemDaemonHandler{
 		CreateProblemDaemonOrDie: barMonitorFactory,
-		CmdOptionDescription:     "bar option",
+		Options:                  nil,
 	}
 
 	Register("foo", fooMonitorHandler)
@@ -46,21 +46,18 @@ func TestRegistration(t *testing.T) {
 
 	expectedProblemDaemonNames := []types.ProblemDaemonType{"foo", "bar"}
 	problemDaemonNames := GetProblemDaemonNames()
-
 	assert.ElementsMatch(t, expectedProblemDaemonNames, problemDaemonNames)
-	assert.Equal(t, "foo option", GetProblemDaemonHandlerOrDie("foo").CmdOptionDescription)
-	assert.Equal(t, "bar option", GetProblemDaemonHandlerOrDie("bar").CmdOptionDescription)
 
 	handlers = make(map[types.ProblemDaemonType]types.ProblemDaemonHandler)
 }
 
 func TestGetProblemDaemonHandlerOrDie(t *testing.T) {
-	fooMonitorFactory := func(configPath string) types.Monitor {
-		return nil
+	fooMonitorFactory := func(types.CommandLineOptions) []types.Monitor {
+		return []types.Monitor{}
 	}
 	fooMonitorHandler := types.ProblemDaemonHandler{
 		CreateProblemDaemonOrDie: fooMonitorFactory,
-		CmdOptionDescription:     "foo option",
+		Options:                  nil,
 	}
 
 	Register("foo", fooMonitorHandler)

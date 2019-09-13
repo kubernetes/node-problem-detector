@@ -35,7 +35,7 @@ import (
 )
 
 func main() {
-	npdo := options.NewNodeProblemDetectorOptions()
+	npdo := &options.NodeProblemDetectorOptions{}
 	npdo.AddFlags(pflag.CommandLine)
 
 	pflag.Parse()
@@ -46,11 +46,10 @@ func main() {
 	}
 
 	npdo.SetNodeNameOrDie()
-	npdo.SetConfigFromDeprecatedOptionsOrDie()
 	npdo.ValidOrDie()
 
 	// Initialize problem daemons.
-	problemDaemons := problemdaemon.NewProblemDaemons(npdo.MonitorConfigPaths)
+	problemDaemons := problemdaemon.NewProblemDaemons()
 	if len(problemDaemons) == 0 {
 		glog.Fatalf("No problem daemon is configured")
 	}

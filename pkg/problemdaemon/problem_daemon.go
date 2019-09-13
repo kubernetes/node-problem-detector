@@ -19,8 +19,6 @@ package problemdaemon
 import (
 	"fmt"
 
-	"github.com/golang/glog"
-
 	"k8s.io/node-problem-detector/pkg/types"
 )
 
@@ -52,22 +50,11 @@ func GetProblemDaemonHandlerOrDie(problemDaemonType types.ProblemDaemonType) typ
 }
 
 // NewProblemDaemons creates all problem daemons based on the configurations provided.
-func NewProblemDaemons(monitorConfigPaths types.ProblemDaemonConfigPathMap) []types.Monitor {
-	problemDaemonMap := make(map[string]types.Monitor)
-	for problemDaemonType, configs := range monitorConfigPaths {
-		for _, config := range *configs {
-			if _, ok := problemDaemonMap[config]; ok {
-				// Skip the config if it's duplicated.
-				glog.Warningf("Duplicated problem daemon configuration %q", config)
-				continue
-			}
-			problemDaemonMap[config] = handlers[problemDaemonType].CreateProblemDaemonOrDie(config)
-		}
-	}
+func NewProblemDaemons() []types.Monitor {
+	var problemDaemons []types.Monitor
 
-	problemDaemons := []types.Monitor{}
-	for _, problemDaemon := range problemDaemonMap {
-		problemDaemons = append(problemDaemons, problemDaemon)
+	for _, handler := range handlers {
+		problemDaemons = append(problemDaemons, handler.CreateProblemDaemonOrDie(handler.Options)...)
 	}
 	return problemDaemons
 }
