@@ -29,3 +29,7 @@ script:
  - BUILD_TAGS="disable_system_stats_monitor" make test
  - make clean && BUILD_TAGS="disable_stackdriver_exporter" make
  - BUILD_TAGS="disable_stackdriver_exporter" make test
+ - make clean && BUILD_TAGS="disable_k8s_exporter" make
+ - BUILD_TAGS="disable_k8s_exporter" make test
+ - make clean && BUILD_TAGS="disable_prometheus_exporter" make
+ - BUILD_TAGS="disable_prometheus_exporter" make test

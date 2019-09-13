@@ -19,25 +19,41 @@ package prometheusexporter
 import (
 	"net"
 	"net/http"
+	"reflect"
 	"strconv"
 
 	"contrib.go.opencensus.io/exporter/prometheus"
 	"github.com/golang/glog"
+	"github.com/spf13/pflag"
 	"go.opencensus.io/stats/view"
 
-	"k8s.io/node-problem-detector/cmd/options"
+	"k8s.io/node-problem-detector/pkg/exporters"
 	"k8s.io/node-problem-detector/pkg/types"
 )
+
+func init() {
+	clo := commandLineOptions{}
+	exporters.Register(exporterName, types.ExporterHandler{
+		CreateExporterOrDie: NewExporterOrDie,
+		Options:             &clo})
+}
+
+const exporterName = "prometheus"
 
 type prometheusExporter struct{}
 
 // NewExporterOrDie creates an exporter to export metrics to Prometheus, panics if error occurs.
-func NewExporterOrDie(npdo *options.NodeProblemDetectorOptions) types.Exporter {
-	if npdo.PrometheusServerPort <= 0 {
+func NewExporterOrDie(clo types.CommandLineOptions) types.Exporter {
+	po, ok := clo.(*commandLineOptions)
+	if !ok {
+		glog.Fatalf("Wrong type for the command line options of Prometheus Exporter: %s.", reflect.TypeOf(clo))
+	}
+
+	if po.PrometheusServerPort <= 0 {
 		return nil
 	}
 
-	addr := net.JoinHostPort(npdo.PrometheusServerAddress, strconv.Itoa(npdo.PrometheusServerPort))
+	addr := net.JoinHostPort(po.PrometheusServerAddress, strconv.Itoa(po.PrometheusServerPort))
 	pe, err := prometheus.NewExporter(prometheus.Options{})
 	if err != nil {
 		glog.Fatalf("Failed to create Prometheus exporter: %v", err)
@@ -57,4 +73,18 @@ func NewExporterOrDie(npdo *options.NodeProblemDetectorOptions) types.Exporter {
 // Prometheus exporter only exports metrics.
 func (pe *prometheusExporter) ExportProblems(status *types.Status) {
 	return
+}
+
+type commandLineOptions struct {
+	// PrometheusServerPort is the port to bind the Prometheus scrape endpoint. Use 0 to disable.
+	PrometheusServerPort int
+	// PrometheusServerAddress is the address to bind the Prometheus scrape endpoint.
+	PrometheusServerAddress string
+}
+
+func (clo *commandLineOptions) SetFlags(fs *pflag.FlagSet) {
+	fs.IntVar(&clo.PrometheusServerPort, "prometheus-port",
+		20257, "The port to bind the Prometheus scrape endpoint. Prometheus exporter is enabled by default at port 20257. Use 0 to disable.")
+	fs.StringVar(&clo.PrometheusServerAddress, "prometheus-address",
+		"127.0.0.1", "The address to bind the Prometheus scrape endpoint.")
 }

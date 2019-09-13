@@ -35,7 +35,7 @@ import (
 
 	"github.com/golang/glog"
 	"k8s.io/heapster/common/kubernetes"
-	"k8s.io/node-problem-detector/cmd/options"
+	"k8s.io/node-problem-detector/pkg/exporters/k8sexporter/options"
 	"k8s.io/node-problem-detector/pkg/version"
 )
 
@@ -60,10 +60,10 @@ type nodeProblemClient struct {
 	nodeRef   *v1.ObjectReference
 }
 
-func (c *nodeProblemClient) setNodeNameOrDie(npdo *options.NodeProblemDetectorOptions) {
+func (c *nodeProblemClient) setNodeNameOrDie(k8sOptions *options.CommandLineOptions) {
 	// Check hostname override first for customized node name.
-	if npdo.HostnameOverride != "" {
-		c.nodeName = npdo.HostnameOverride
+	if k8sOptions.HostnameOverride != "" {
+		c.nodeName = k8sOptions.HostnameOverride
 		return
 	}
 
@@ -90,11 +90,14 @@ func (c *nodeProblemClient) setNodeNameOrDie(npdo *options.NodeProblemDetectorOp
 }
 
 // NewClientOrDie creates a new problem client, panics if error occurs.
-func NewClientOrDie(npdo *options.NodeProblemDetectorOptions) Client {
+func NewClientOrDie(k8sOptions *options.CommandLineOptions) Client {
 	c := &nodeProblemClient{clock: clock.RealClock{}}
 
-	// we have checked it is a valid URI after command line argument is parsed.:)
-	uri, _ := url.Parse(npdo.ApiServerOverride)
+	uri, err := url.Parse(k8sOptions.ApiServerOverride)
+	if err != nil {
+		panic(fmt.Sprintf("apiserver-override %q is not a valid HTTP URI: %v",
+			k8sOptions.ApiServerOverride, err))
+	}
 
 	cfg, err := kubernetes.GetKubeClientConfig(uri)
 	if err != nil {
@@ -104,7 +107,7 @@ func NewClientOrDie(npdo *options.NodeProblemDetectorOptions) Client {
 	cfg.UserAgent = fmt.Sprintf("%s/%s", filepath.Base(os.Args[0]), version.Version())
 	// TODO(random-liu): Set QPS Limit
 	c.client = clientset.NewForConfigOrDie(cfg).CoreV1()
-	c.setNodeNameOrDie(npdo)
+	c.setNodeNameOrDie(k8sOptions)
 	c.nodeRef = getNodeRef(c.nodeName)
 	c.recorders = make(map[string]record.EventRecorder)
 	return c

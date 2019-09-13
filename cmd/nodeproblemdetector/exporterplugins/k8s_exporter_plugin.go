@@ -1,3 +1,5 @@
+// +build !disable_k8s_exporter
+
 /*
 Copyright 2019 The Kubernetes Authors All rights reserved.
 
@@ -16,5 +18,8 @@ limitations under the License.
 
 package exporterplugins
 
-// This file is necessary to make sure the exporterplugins package non-empty
-// under any build tags.
+import (
+	_ "k8s.io/node-problem-detector/pkg/exporters/k8sexporter"
+)
+
+// The stackdriver plugin takes about 6MB in the NPD binary.

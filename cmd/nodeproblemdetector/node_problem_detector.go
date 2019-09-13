@@ -26,11 +26,8 @@ import (
 	_ "k8s.io/node-problem-detector/cmd/nodeproblemdetector/problemdaemonplugins"
 	"k8s.io/node-problem-detector/cmd/options"
 	"k8s.io/node-problem-detector/pkg/exporters"
-	"k8s.io/node-problem-detector/pkg/exporters/k8sexporter"
-	"k8s.io/node-problem-detector/pkg/exporters/prometheusexporter"
 	"k8s.io/node-problem-detector/pkg/problemdaemon"
 	"k8s.io/node-problem-detector/pkg/problemdetector"
-	"k8s.io/node-problem-detector/pkg/types"
 	"k8s.io/node-problem-detector/pkg/version"
 )
 
@@ -55,22 +52,7 @@ func main() {
 	}
 
 	// Initialize exporters.
-	defaultExporters := []types.Exporter{}
-	if ke := k8sexporter.NewExporterOrDie(npdo); ke != nil {
-		defaultExporters = append(defaultExporters, ke)
-		glog.Info("K8s exporter started.")
-	}
-	if pe := prometheusexporter.NewExporterOrDie(npdo); pe != nil {
-		defaultExporters = append(defaultExporters, pe)
-		glog.Info("Prometheus exporter started.")
-	}
-
-	plugableExporters := exporters.NewExporters()
-
-	npdExporters := []types.Exporter{}
-	npdExporters = append(npdExporters, defaultExporters...)
-	npdExporters = append(npdExporters, plugableExporters...)
-
+	npdExporters := exporters.NewExporters()
 	if len(npdExporters) == 0 {
 		glog.Fatalf("No exporter is successfully setup")
 	}

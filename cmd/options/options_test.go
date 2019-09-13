@@ -68,40 +68,6 @@ func TestValidOrDie(t *testing.T) {
 		expectPanic bool
 	}{
 		{
-			name: "default k8s exporter config",
-			npdo: NodeProblemDetectorOptions{
-				MonitorConfigPaths: fooMonitorConfigMap,
-			},
-			expectPanic: false,
-		},
-		{
-			name: "enables k8s exporter config",
-			npdo: NodeProblemDetectorOptions{
-				ApiServerOverride:  "",
-				EnableK8sExporter:  true,
-				MonitorConfigPaths: fooMonitorConfigMap,
-			},
-			expectPanic: false,
-		},
-		{
-			name: "k8s exporter config with valid ApiServerOverride",
-			npdo: NodeProblemDetectorOptions{
-				ApiServerOverride:  "127.0.0.1",
-				EnableK8sExporter:  true,
-				MonitorConfigPaths: fooMonitorConfigMap,
-			},
-			expectPanic: false,
-		},
-		{
-			name: "k8s exporter config with invalid ApiServerOverride",
-			npdo: NodeProblemDetectorOptions{
-				ApiServerOverride:  ":foo",
-				EnableK8sExporter:  true,
-				MonitorConfigPaths: fooMonitorConfigMap,
-			},
-			expectPanic: true,
-		},
-		{
 			name: "non-empty MonitorConfigPaths",
 			npdo: NodeProblemDetectorOptions{
 				MonitorConfigPaths: fooMonitorConfigMap,

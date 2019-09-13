@@ -73,8 +73,8 @@ certain back end. Some of them can be disable at compile time using a build tag.
 
 | Exporter |Description | Disabling Build Tag |
 |----------|:-----------|:--------------------|
-| Kubernetes exporter | Kubernetes exporter reports node problems to Kubernetes API server: temporary problems get reported as Events, and permanent problems get reported as Node Conditions. | 
-| Prometheus exporter | Prometheus exporter reports node problems and metrics locally as Prometheus metrics | 
+| Kubernetes exporter | Kubernetes exporter reports node problems to Kubernetes API server: temporary problems get reported as Events, and permanent problems get reported as Node Conditions. | disable_k8s_exporter
+| Prometheus exporter | Prometheus exporter reports node problems and metrics locally as Prometheus metrics | disable_prometheus_exporter
 | [Stackdriver exporter](https://github.com/kubernetes/node-problem-detector/blob/master/config/exporter/stackdriver-exporter.json) | Stackdriver exporter reports node problems and metrics to Stackdriver Monitoring API. | disable_stackdriver_exporter
 
 # Usage

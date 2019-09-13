@@ -20,6 +20,7 @@ import (
 	"net"
 	"net/http"
 	_ "net/http/pprof"
+	"reflect"
 	"strconv"
 
 	"github.com/golang/glog"
@@ -27,12 +28,22 @@ import (
 	"k8s.io/apimachinery/pkg/util/clock"
 	"k8s.io/apimachinery/pkg/util/wait"
 
-	"k8s.io/node-problem-detector/cmd/options"
+	"k8s.io/node-problem-detector/pkg/exporters"
 	"k8s.io/node-problem-detector/pkg/exporters/k8sexporter/condition"
+	"k8s.io/node-problem-detector/pkg/exporters/k8sexporter/options"
 	"k8s.io/node-problem-detector/pkg/exporters/k8sexporter/problemclient"
 	"k8s.io/node-problem-detector/pkg/types"
 	"k8s.io/node-problem-detector/pkg/util"
 )
+
+func init() {
+	clo := options.CommandLineOptions{}
+	exporters.Register(exporterName, types.ExporterHandler{
+		CreateExporterOrDie: NewExporterOrDie,
+		Options:             &clo})
+}
+
+const exporterName = "kubernetes"
 
 type k8sExporter struct {
 	client           problemclient.Client
@@ -44,24 +55,29 @@ type k8sExporter struct {
 //
 // Note that this function may be blocked (until a timeout occurs) before
 // kube-apiserver becomes ready.
-func NewExporterOrDie(npdo *options.NodeProblemDetectorOptions) types.Exporter {
-	if !npdo.EnableK8sExporter {
+func NewExporterOrDie(clo types.CommandLineOptions) types.Exporter {
+	k8sOptions, ok := clo.(*options.CommandLineOptions)
+	if !ok {
+		glog.Fatalf("Wrong type for the command line options of Kubernetes Exporter: %s.", reflect.TypeOf(clo))
+	}
+
+	if !k8sOptions.EnableK8sExporter {
 		return nil
 	}
 
-	c := problemclient.NewClientOrDie(npdo)
+	c := problemclient.NewClientOrDie(k8sOptions)
 
-	glog.Infof("Waiting for kube-apiserver to be ready (timeout %v)...", npdo.APIServerWaitTimeout)
-	if err := waitForAPIServerReadyWithTimeout(c, npdo); err != nil {
+	glog.Infof("Waiting for kube-apiserver to be ready (timeout %v)...", k8sOptions.APIServerWaitTimeout)
+	if err := waitForAPIServerReadyWithTimeout(c, k8sOptions); err != nil {
 		glog.Warningf("kube-apiserver did not become ready: timed out on waiting for kube-apiserver to return the node object: %v", err)
 	}
 
 	ke := k8sExporter{
 		client:           c,
-		conditionManager: condition.NewConditionManager(c, clock.RealClock{}, npdo.K8sExporterHeartbeatPeriod),
+		conditionManager: condition.NewConditionManager(c, clock.RealClock{}, k8sOptions.K8sExporterHeartbeatPeriod),
 	}
 
-	ke.startHTTPReporting(npdo)
+	ke.startHTTPReporting(k8sOptions)
 	ke.conditionManager.Start()
 
 	return &ke
@@ -76,8 +92,8 @@ func (ke *k8sExporter) ExportProblems(status *types.Status) {
 	}
 }
 
-func (ke *k8sExporter) startHTTPReporting(npdo *options.NodeProblemDetectorOptions) {
-	if npdo.ServerPort <= 0 {
+func (ke *k8sExporter) startHTTPReporting(k8sOptions *options.CommandLineOptions) {
+	if k8sOptions.ServerPort <= 0 {
 		return
 	}
 	mux := http.NewServeMux()
@@ -94,7 +110,7 @@ func (ke *k8sExporter) startHTTPReporting(npdo *options.NodeProblemDetectorOptio
 		util.ReturnHTTPJson(w, ke.conditionManager.GetConditions())
 	})
 
-	addr := net.JoinHostPort(npdo.ServerAddress, strconv.Itoa(npdo.ServerPort))
+	addr := net.JoinHostPort(k8sOptions.ServerAddress, strconv.Itoa(k8sOptions.ServerPort))
 	go func() {
 		err := http.ListenAndServe(addr, mux)
 		if err != nil {
@@ -103,8 +119,8 @@ func (ke *k8sExporter) startHTTPReporting(npdo *options.NodeProblemDetectorOptio
 	}()
 }
 
-func waitForAPIServerReadyWithTimeout(c problemclient.Client, npdo *options.NodeProblemDetectorOptions) error {
-	return wait.PollImmediate(npdo.APIServerWaitInterval, npdo.APIServerWaitTimeout, func() (done bool, err error) {
+func waitForAPIServerReadyWithTimeout(c problemclient.Client, k8sOptions *options.CommandLineOptions) error {
+	return wait.PollImmediate(k8sOptions.APIServerWaitInterval, k8sOptions.APIServerWaitTimeout, func() (done bool, err error) {
 		// If NPD can get the node object from kube-apiserver, the server is
 		// ready and the RBAC permission is set correctly.
 		if _, err := c.GetNode(); err == nil {

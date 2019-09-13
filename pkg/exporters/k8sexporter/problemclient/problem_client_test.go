@@ -30,7 +30,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"k8s.io/node-problem-detector/cmd/options"
+	"k8s.io/node-problem-detector/pkg/exporters/k8sexporter/options"
 )
 
 const (
@@ -137,11 +137,10 @@ func TestSetNodeNameOrDie(t *testing.T) {
 				}
 			}
 
-			npdOpts := options.NewNodeProblemDetectorOptions()
-			npdOpts.HostnameOverride = test.hostNameOverride
+			k8sOptions := options.CommandLineOptions{HostnameOverride: test.hostNameOverride}
 
 			client := nodeProblemClient{}
-			client.setNodeNameOrDie(npdOpts)
+			client.setNodeNameOrDie(&k8sOptions)
 
 			if client.nodeName != test.wantedNodeName {
 				t.Errorf("Set node name error. Wanted: %v. Got: %v", test.wantedNodeName, client.nodeName)
