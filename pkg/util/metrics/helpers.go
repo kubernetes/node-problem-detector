@@ -16,15 +16,12 @@ limitations under the License.
 package metrics
 
 import (
-	"context"
 	"fmt"
 	"strings"
 	"sync"
 
 	pcm "github.com/prometheus/client_model/go"
 	"github.com/prometheus/common/expfmt"
-	"go.opencensus.io/stats"
-	"go.opencensus.io/stats/view"
 	"go.opencensus.io/tag"
 )
 
@@ -46,152 +43,6 @@ const (
 	// Sum means last measurement will be added onto previous measurements (counter metric).
 	Sum Aggregation = "Sum"
 )
-
-// Int64MetricRepresentation represents a snapshot of an int64 metrics.
-// This is used for inspecting metric internals.
-type Int64MetricRepresentation struct {
-	// Name is the metric name.
-	Name string
-	// Labels contains all metric labels in key-value pair format.
-	Labels map[string]string
-	// Value is the value of the metric.
-	Value int64
-}
-
-// Int64Metric represents an int64 metric.
-type Int64Metric struct {
-	name    string
-	measure *stats.Int64Measure
-}
-
-// NewInt64Metric create a Int64Metric metric, returns nil when name is empty.
-func NewInt64Metric(name string, description string, unit string, aggregation Aggregation, tagNames []string) (*Int64Metric, error) {
-	if name == "" {
-		return nil, nil
-	}
-
-	tagKeys, err := getTagKeysFromNames(tagNames)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create metric %q because of tag creation failure: %v", name, err)
-	}
-
-	var aggregationMethod *view.Aggregation
-	switch aggregation {
-	case LastValue:
-		aggregationMethod = view.LastValue()
-	case Sum:
-		aggregationMethod = view.Sum()
-	default:
-		return nil, fmt.Errorf("unknown aggregation option %q", aggregation)
-	}
-
-	measure := stats.Int64(name, description, unit)
-	newView := &view.View{
-		Name:        name,
-		Measure:     measure,
-		Description: description,
-		Aggregation: aggregationMethod,
-		TagKeys:     tagKeys,
-	}
-	view.Register(newView)
-
-	metric := Int64Metric{name, measure}
-	return &metric, nil
-}
-
-// Record records a measurement for the metric, with provided tags as metric labels.
-func (metric *Int64Metric) Record(tags map[string]string, measurement int64) error {
-	var mutators []tag.Mutator
-
-	tagMapMutex.RLock()
-	defer tagMapMutex.RUnlock()
-
-	for tagName, tagValue := range tags {
-		tagKey, ok := tagMap[tagName]
-		if !ok {
-			return fmt.Errorf("referencing none existing tag %q in metric %q", tagName, metric.name)
-		}
-		mutators = append(mutators, tag.Upsert(tagKey, tagValue))
-	}
-
-	return stats.RecordWithTags(
-		context.Background(),
-		mutators,
-		metric.measure.M(measurement))
-}
-
-// Float64MetricRepresentation represents a snapshot of a float64 metrics.
-// This is used for inspecting metric internals.
-type Float64MetricRepresentation struct {
-	// Name is the metric name.
-	Name string
-	// Labels contains all metric labels in key-value pair format.
-	Labels map[string]string
-	// Value is the value of the metric.
-	Value float64
-}
-
-// Float64Metric represents an float64 metric.
-type Float64Metric struct {
-	name    string
-	measure *stats.Float64Measure
-}
-
-// NewFloat64Metric create a Float64Metric metrics, returns nil when name is empty.
-func NewFloat64Metric(name string, description string, unit string, aggregation Aggregation, tagNames []string) (*Float64Metric, error) {
-	if name == "" {
-		return nil, nil
-	}
-
-	tagKeys, err := getTagKeysFromNames(tagNames)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create metric %q because of tag creation failure: %v", name, err)
-	}
-
-	var aggregationMethod *view.Aggregation
-	switch aggregation {
-	case LastValue:
-		aggregationMethod = view.LastValue()
-	case Sum:
-		aggregationMethod = view.Sum()
-	default:
-		return nil, fmt.Errorf("unknown aggregation option %q", aggregation)
-	}
-
-	measure := stats.Float64(name, description, unit)
-	newView := &view.View{
-		Name:        name,
-		Measure:     measure,
-		Description: description,
-		Aggregation: aggregationMethod,
-		TagKeys:     tagKeys,
-	}
-	view.Register(newView)
-
-	metric := Float64Metric{name, measure}
-	return &metric, nil
-}
-
-// Record records a measurement for the metric, with provided tags as metric labels.
-func (metric *Float64Metric) Record(tags map[string]string, measurement float64) error {
-	var mutators []tag.Mutator
-
-	tagMapMutex.RLock()
-	defer tagMapMutex.RUnlock()
-
-	for tagName, tagValue := range tags {
-		tagKey, ok := tagMap[tagName]
-		if !ok {
-			return fmt.Errorf("referencing none existing tag %q in metric %q", tagName, metric.name)
-		}
-		mutators = append(mutators, tag.Upsert(tagKey, tagValue))
-	}
-
-	return stats.RecordWithTags(
-		context.Background(),
-		mutators,
-		metric.measure.M(measurement))
-}
 
 func getTagKeysFromNames(tagNames []string) ([]tag.Key, error) {
 	tagMapMutex.Lock()

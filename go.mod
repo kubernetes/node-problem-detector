@@ -5,6 +5,7 @@ go 1.11
 require (
 	code.cloudfoundry.org/clock v0.0.0-20180518195852-02e53af36e6c
 	contrib.go.opencensus.io/exporter/prometheus v0.0.0-20190427222117-f6cda26f80a3
+	contrib.go.opencensus.io/exporter/stackdriver v0.12.5
 	github.com/PuerkitoBio/purell v1.0.0 // indirect
 	github.com/PuerkitoBio/urlesc v0.0.0-20160726150825-5bd2802263f2 // indirect
 	github.com/StackExchange/wmi v0.0.0-20181212234831-e0a55b97c705 // indirect
@@ -23,7 +24,6 @@ require (
 	github.com/go-openapi/swag v0.0.0-20160704191624-1d0bd113de87 // indirect
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
 	github.com/golang/groupcache v0.0.0-20150125180832-604ed5785183 // indirect
-	github.com/google/btree v1.0.0 // indirect
 	github.com/google/cadvisor v0.33.0
 	github.com/google/gofuzz v0.0.0-20161122191042-44d81051d367 // indirect
 	github.com/googleapis/gnostic v0.1.0 // indirect
@@ -47,8 +47,7 @@ require (
 	github.com/spf13/pflag v1.0.3
 	github.com/stretchr/testify v1.3.0
 	github.com/tedsuo/ifrit v0.0.0-20180802180643-bea94bb476cc // indirect
-	go.opencensus.io v0.21.0
-	golang.org/x/net v0.0.0-20190603091049-60506f45cf65 // indirect
+	go.opencensus.io v0.22.0
 	golang.org/x/oauth2 v0.0.0-20190604053449-0f29369cfe45
 	google.golang.org/api v0.7.0
 	gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127 // indirect

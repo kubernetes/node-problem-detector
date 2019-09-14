@@ -27,3 +27,5 @@ script:
  - BUILD_TAGS="disable_system_log_monitor" make test
  - make clean && BUILD_TAGS="disable_system_stats_monitor" make
  - BUILD_TAGS="disable_system_stats_monitor" make test
+ - make clean && BUILD_TAGS="disable_stackdriver_exporter" make
+ - BUILD_TAGS="disable_stackdriver_exporter" make test

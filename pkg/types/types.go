@@ -18,6 +18,8 @@ package types
 
 import (
 	"time"
+
+	"github.com/spf13/pflag"
 )
 
 // The following types are used internally in problem detector. In the future this could be the
@@ -130,4 +132,19 @@ type ProblemDaemonHandler struct {
 	CreateProblemDaemonOrDie func(string) Monitor
 	// CmdOptionDescription explains how to configure the problem daemon from command line arguments.
 	CmdOptionDescription string
+}
+
+// ExporterType is the type of the exporter.
+type ExporterType string
+
+// ExporterHandler represents the initialization handler for a type of exporter.
+type ExporterHandler struct {
+	// CreateExporterOrDie initializes an exporter, panic if error occurs.
+	CreateExporterOrDie func(CommandLineOptions) Exporter
+	// CmdOptionDescription explains how to configure the exporter from command line arguments.
+	Options CommandLineOptions
+}
+
+type CommandLineOptions interface {
+	SetFlags(*pflag.FlagSet)
 }

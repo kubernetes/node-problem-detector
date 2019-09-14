@@ -49,7 +49,8 @@ func NewProblemMetricsManagerOrDie() *ProblemMetricsManager {
 
 	var err error
 	pmm.problemCounter, err = metrics.NewInt64Metric(
-		"problem_counter",
+		metrics.ProblemCounterID,
+		string(metrics.ProblemCounterID),
 		"Number of times a specific type of problem have occurred.",
 		"1",
 		metrics.Sum,
@@ -59,7 +60,8 @@ func NewProblemMetricsManagerOrDie() *ProblemMetricsManager {
 	}
 
 	pmm.problemGauge, err = metrics.NewInt64Metric(
-		"problem_gauge",
+		metrics.ProblemGaugeID,
+		string(metrics.ProblemGaugeID),
 		"Whether a specific type of problem is affecting the node or not.",
 		"1",
 		metrics.LastValue,

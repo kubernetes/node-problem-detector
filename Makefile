@@ -41,7 +41,7 @@ PKG:=k8s.io/node-problem-detector
 PKG_SOURCES:=$(shell find pkg cmd -name '*.go')
 
 # TARBALL is the name of release tar. Include binary version by default.
-TARBALL:=node-problem-detector-$(VERSION).tar.gz
+TARBALL?=node-problem-detector-$(VERSION).tar.gz
 
 # IMAGE is the image name of the node problem detector container image.
 IMAGE:=$(REGISTRY)/node-problem-detector:$(TAG)
