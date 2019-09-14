@@ -115,6 +115,7 @@ e2e-test: vet fmt build-tar
 	-image=$(VM_IMAGE) -image-project=$(IMAGE_PROJECT) \
 	-ssh-user=$(SSH_USER) -ssh-key=$(SSH_KEY) \
 	-npd-build-tar=`pwd`/$(TARBALL) \
+	-boskos-project-type=$(BOSKOS_PROJECT_TYPE) -job-name=$(JOB_NAME) \
 	-artifacts-dir=$(ARTIFACTS)
 
 build-binaries: ./bin/node-problem-detector ./bin/log-counter
