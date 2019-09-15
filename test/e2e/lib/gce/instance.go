@@ -144,7 +144,7 @@ func (ins *Instance) RunCommand(cmd string) ssh.Result {
 	return ssh.Run(cmd, ins.ExternalIP, ins.SshUser, ins.SshKey)
 }
 
-// PushFile pushs a local file to a GCE instance.
+// PushFile pushes a local file to a GCE instance.
 func (ins *Instance) PushFile(srcPath, destPath string) error {
 	if ins.ExternalIP == "" {
 		ins.populateExternalIP()
