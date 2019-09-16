@@ -110,10 +110,11 @@ func (c *conditionManager) GetConditions() []types.Condition {
 }
 
 func (c *conditionManager) syncLoop() {
-	updateCh := c.clock.Tick(updatePeriod)
+	ticker := c.clock.NewTicker(updatePeriod)
+	defer ticker.Stop()
 	for {
 		select {
-		case <-updateCh:
+		case <-ticker.C():
 			if c.needUpdates() || c.needResync() || c.needHeartbeat() {
 				c.sync()
 			}
