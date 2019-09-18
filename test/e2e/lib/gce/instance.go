@@ -96,7 +96,8 @@ func CreateInstance(instance Instance, imageName string, imageProject string) (I
 	}
 
 	instanceRunning := false
-	for i := 0; i < 30 && !instanceRunning; i++ {
+	// Waiting for the instance to be SSH-able by retrying SSH with timeout of 5 min (15*20sec)
+	for i := 0; i < 15 && !instanceRunning; i++ {
 		if i > 0 {
 			time.Sleep(time.Second * 20)
 		}
