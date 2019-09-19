@@ -37,6 +37,15 @@ var _ = ginkgo.Describe("NPD should export Prometheus metrics.", func() {
 		var err error
 		// TODO(xueweiz): Creating instance for each test case is slow. We should either reuse the instance
 		// between tests, or have a way to run these tests in parallel.
+		if *imageFamily != "" && *image == "" {
+			gceImage, err := computeService.Images.GetFromFamily(*imageProject, *imageFamily).Do()
+			if err != nil {
+				ginkgo.Fail(fmt.Sprintf("Unable to get image from family %s at project %s: %v",
+					*imageFamily, *imageProject, err))
+			}
+			*image = gceImage.Name
+			fmt.Printf("Using image %s from image family %s at project %s\n", *image, *imageFamily, *imageProject)
+		}
 		instance, err = gce.CreateInstance(
 			gce.Instance{
 				Name:           "npd-metrics-" + *image + "-" + uuid.NewUUID().String()[:8],

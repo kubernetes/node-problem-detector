@@ -112,7 +112,7 @@ e2e-test: vet fmt build-tar
 	GO111MODULE=on go test -mod vendor -timeout=10m -v $(BUILD_TAGS) \
 	./test/e2e/metriconly/... \
 	-project=$(PROJECT) -zone=$(ZONE) \
-	-image=$(VM_IMAGE) -image-project=$(IMAGE_PROJECT) \
+	-image=$(VM_IMAGE) -image-family=$(IMAGE_FAMILY) -image-project=$(IMAGE_PROJECT) \
 	-ssh-user=$(SSH_USER) -ssh-key=$(SSH_KEY) \
 	-npd-build-tar=`pwd`/$(TARBALL) \
 	-boskos-project-type=$(BOSKOS_PROJECT_TYPE) -job-name=$(JOB_NAME) \

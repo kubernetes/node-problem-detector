@@ -38,6 +38,7 @@ const junitFileName = "junit.xml"
 var zone = flag.String("zone", "", "gce zone the hosts live in")
 var project = flag.String("project", "", "gce project the hosts live in")
 var image = flag.String("image", "", "image to test")
+var imageFamily = flag.String("image-family", "", "image family to pick up the test image. Ignored when -image is set.")
 var imageProject = flag.String("image-project", "", "gce project of the OS image")
 var jobName = flag.String("job-name", "", "name of the Prow job running the test")
 var sshKey = flag.String("ssh-key", "", "path to ssh private key.")
