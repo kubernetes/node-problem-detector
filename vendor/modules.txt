@@ -131,8 +131,8 @@ github.com/modern-go/concurrent
 github.com/modern-go/reflect2
 # github.com/onsi/ginkgo v1.8.0
 github.com/onsi/ginkgo
-github.com/onsi/ginkgo/reporters
 github.com/onsi/ginkgo/config
+github.com/onsi/ginkgo/reporters
 github.com/onsi/ginkgo/internal/codelocation
 github.com/onsi/ginkgo/internal/failer
 github.com/onsi/ginkgo/internal/remote
@@ -148,6 +148,19 @@ github.com/onsi/ginkgo/internal/leafnodes
 github.com/onsi/ginkgo/internal/spec
 github.com/onsi/ginkgo/internal/specrunner
 github.com/onsi/ginkgo/reporters/stenographer/support/go-isatty
+# github.com/onsi/gomega v1.7.0
+github.com/onsi/gomega
+github.com/onsi/gomega/internal/assertion
+github.com/onsi/gomega/internal/asyncassertion
+github.com/onsi/gomega/internal/testingtsupport
+github.com/onsi/gomega/matchers
+github.com/onsi/gomega/types
+github.com/onsi/gomega/internal/oraclematcher
+github.com/onsi/gomega/format
+github.com/onsi/gomega/matchers/support/goraph/bipartitegraph
+github.com/onsi/gomega/matchers/support/goraph/edge
+github.com/onsi/gomega/matchers/support/goraph/node
+github.com/onsi/gomega/matchers/support/goraph/util
 # github.com/pborman/uuid v1.2.0
 github.com/pborman/uuid
 # github.com/pmezard/go-difflib v1.0.0
@@ -223,6 +236,9 @@ golang.org/x/net/http/httpguts
 golang.org/x/net/http2/hpack
 golang.org/x/net/idna
 golang.org/x/net/internal/timeseries
+golang.org/x/net/html/charset
+golang.org/x/net/html
+golang.org/x/net/html/atom
 # golang.org/x/oauth2 v0.0.0-20190604053449-0f29369cfe45
 golang.org/x/oauth2
 golang.org/x/oauth2/google
@@ -239,7 +255,23 @@ golang.org/x/sys/cpu
 golang.org/x/text/secure/bidirule
 golang.org/x/text/unicode/bidi
 golang.org/x/text/unicode/norm
+golang.org/x/text/encoding
+golang.org/x/text/encoding/charmap
+golang.org/x/text/encoding/htmlindex
 golang.org/x/text/transform
+golang.org/x/text/encoding/internal/identifier
+golang.org/x/text/encoding/internal
+golang.org/x/text/encoding/japanese
+golang.org/x/text/encoding/korean
+golang.org/x/text/encoding/simplifiedchinese
+golang.org/x/text/encoding/traditionalchinese
+golang.org/x/text/encoding/unicode
+golang.org/x/text/language
+golang.org/x/text/internal/utf8internal
+golang.org/x/text/runes
+golang.org/x/text/internal/language
+golang.org/x/text/internal/language/compact
+golang.org/x/text/internal/tag
 # golang.org/x/time v0.0.0-20190308202827-9d24e82272b4
 golang.org/x/time/rate
 # google.golang.org/api v0.7.0
