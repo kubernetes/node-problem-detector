@@ -29,11 +29,11 @@ import (
 	"k8s.io/test-infra/boskos/client"
 
 	"github.com/onsi/ginkgo"
+	"github.com/onsi/ginkgo/config"
 	"github.com/onsi/ginkgo/reporters"
+	. "github.com/onsi/gomega"
 	compute "google.golang.org/api/compute/v1"
 )
-
-const junitFileName = "junit.xml"
 
 var zone = flag.String("zone", "", "gce zone the hosts live in")
 var project = flag.String("project", "", "gce project the hosts live in")
@@ -80,7 +80,7 @@ func TestNPD(t *testing.T) {
 	}
 
 	// The junit formatted result output is for showing test results on testgrid.
-	junitReporter := reporters.NewJUnitReporter(path.Join(*artifactsDir, junitFileName))
+	junitReporter := reporters.NewJUnitReporter(path.Join(*artifactsDir, fmt.Sprintf("junit-%02d.xml", config.GinkgoConfig.ParallelNode)))
 	ginkgo.RunSpecsWithDefaultAndCustomReporters(t, "NPD Metric-only Suite", []ginkgo.Reporter{junitReporter})
 }
 
@@ -89,9 +89,8 @@ func acquireProjectOrDie(boskosClient *client.Client) string {
 	ctx, cancel := context.WithTimeout(context.Background(), *boskosWaitDuration)
 	defer cancel()
 	p, err := boskosClient.AcquireWait(ctx, *boskosProjectType, "free", "busy")
-	if err != nil {
-		panic(fmt.Sprintf("Unable to rent project from Boskos: %v\n", err))
-	}
+	Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("Unable to rent project from Boskos: %v\n", err))
+
 	fmt.Printf("Rented project %s from Boskos", p.Name)
 
 	go func(boskosClient *client.Client, projectName string) {
@@ -110,12 +109,11 @@ func releaseProjectOrDie(boskosClient *client.Client) {
 		return
 	}
 	err := boskosClient.ReleaseAll("dirty")
-	if err != nil {
-		panic(fmt.Sprintf("Failed to release project to Boskos: %v", err))
-	}
+	Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("Failed to release project to Boskos: %v", err))
 }
 
 func TestMain(m *testing.M) {
+	RegisterFailHandler(ginkgo.Fail)
 	flag.Parse()
 
 	os.Exit(m.Run())

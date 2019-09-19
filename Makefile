@@ -40,6 +40,9 @@ PKG:=k8s.io/node-problem-detector
 # PKG_SOURCES are all the go source code.
 PKG_SOURCES:=$(shell find pkg cmd -name '*.go')
 
+# PARALLEL specifies the number of parallel test nodes to run for e2e tests.
+PARALLEL?=3
+
 # TARBALL is the name of release tar. Include binary version by default.
 TARBALL?=node-problem-detector-$(VERSION).tar.gz
 
@@ -122,8 +125,8 @@ test: vet fmt
 	GO111MODULE=on go test -mod vendor -timeout=1m -v -race -short -tags "$(BUILD_TAGS)" ./...
 
 e2e-test: vet fmt build-tar
-	GO111MODULE=on go test -mod vendor -timeout=10m -v -tags "$(BUILD_TAGS)" \
-	./test/e2e/metriconly/... \
+	GO111MODULE=on ginkgo -nodes=$(PARALLEL) -mod vendor -timeout=10m -v -tags "$(BUILD_TAGS)" \
+	./test/e2e/metriconly/... -- \
 	-project=$(PROJECT) -zone=$(ZONE) \
 	-image=$(VM_IMAGE) -image-family=$(IMAGE_FAMILY) -image-project=$(IMAGE_PROJECT) \
 	-ssh-user=$(SSH_USER) -ssh-key=$(SSH_KEY) \
