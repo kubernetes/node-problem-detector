@@ -58,7 +58,7 @@ func NewExporterOrDie(npdo *options.NodeProblemDetectorOptions) types.Exporter {
 
 	ke := k8sExporter{
 		client:           c,
-		conditionManager: condition.NewConditionManager(c, clock.RealClock{}),
+		conditionManager: condition.NewConditionManager(c, clock.RealClock{}, npdo.K8sExporterHeartbeatPeriod),
 	}
 
 	ke.startHTTPReporting(npdo)

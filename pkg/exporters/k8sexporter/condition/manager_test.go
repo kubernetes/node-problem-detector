@@ -31,10 +31,12 @@ import (
 	"k8s.io/apimachinery/pkg/util/clock"
 )
 
+const heartbeatPeriod = 1 * time.Minute
+
 func newTestManager() (*conditionManager, *problemclient.FakeProblemClient, *clock.FakeClock) {
 	fakeClient := problemclient.NewFakeProblemClient()
 	fakeClock := clock.NewFakeClock(time.Now())
-	manager := NewConditionManager(fakeClient, fakeClock)
+	manager := NewConditionManager(fakeClient, fakeClock, heartbeatPeriod)
 	return manager.(*conditionManager), fakeClient, fakeClock
 }
 
