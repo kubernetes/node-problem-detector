@@ -145,7 +145,7 @@ func listRootBlockDevices(timeout time.Duration) []string {
 	cmd := exec.CommandContext(ctx, "lsblk", "-d", "-n", "-o", "NAME")
 	stdout, err := cmd.Output()
 	if err != nil {
-		glog.Errorf("Error calling lsblk")
+		glog.Errorf("Error calling lsblk: %v", err)
 	}
 	return strings.Split(strings.TrimSpace(string(stdout)), "\n")
 }
