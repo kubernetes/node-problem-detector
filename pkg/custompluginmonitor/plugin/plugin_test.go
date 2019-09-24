@@ -93,7 +93,7 @@ func TestNewPluginRun(t *testing.T) {
 	(&conf).ApplyConfiguration()
 	p := Plugin{config: conf}
 	for desp, utMeta := range utMetas {
-		gotExitStatus, gotOutput := p.run(utMeta.Rule)
+		gotExitStatus, gotOutput := p.run(&utMeta.Rule)
 		// cut at position max_output_length if expected output is longer than max_output_length bytes
 		if len(utMeta.Output) > *p.config.PluginGlobalConfig.MaxOutputLength {
 			utMeta.Output = utMeta.Output[:*p.config.PluginGlobalConfig.MaxOutputLength]

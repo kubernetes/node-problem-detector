@@ -58,13 +58,16 @@ func (p *Plugin) Run() {
 		p.tomb.Done()
 	}()
 
-	runTicker := time.NewTicker(*p.config.PluginGlobalConfig.InvokeInterval)
+	runTicker := time.NewTicker(calculateIntervalsGcd(p.config))
 	defer runTicker.Stop()
 
 	runner := func() {
+		overdueRules := getOverdueRules(p.config.Rules)
+		if len(overdueRules) == 0 {
+			return
+		}
 		glog.Info("Start to run custom plugins")
-
-		for _, rule := range p.config.Rules {
+		for _, rule := range overdueRules {
 			p.syncChan <- struct{}{}
 			p.Add(1)
 
@@ -75,7 +78,7 @@ func (p *Plugin) Run() {
 				}()
 
 				start := time.Now()
-				exitStatus, message := p.run(*rule)
+				exitStatus, message := p.run(rule)
 				end := time.Now()
 
 				glog.V(3).Infof("Rule: %+v. Start time: %v. End time: %v. Duration: %v", rule, start, end, end.Sub(start))
@@ -113,7 +116,46 @@ func (p *Plugin) Run() {
 	}
 }
 
-func (p *Plugin) run(rule cpmtypes.CustomRule) (exitStatus cpmtypes.Status, output string) {
+func getOverdueRules(rules []*cpmtypes.CustomRule) []*cpmtypes.CustomRule {
+	overdue := make([]*cpmtypes.CustomRule, 0)
+	now := time.Now()
+	for _, r := range rules {
+		if r.LastCompleteTime.Add(*r.InvokeInterval).Before(now) {
+			overdue = append(overdue, r)
+		}
+	}
+	return overdue
+}
+
+func calculateIntervalsGcd(config cpmtypes.CustomPluginConfig) time.Duration {
+	intervals := make([]time.Duration, len(config.Rules))
+
+	for idx, rule := range config.Rules {
+		intervals[idx] = *rule.InvokeInterval
+	}
+
+	return gcd(*config.PluginGlobalConfig.InvokeInterval, intervals)
+}
+
+func gcd(i0 time.Duration, is []time.Duration) time.Duration {
+	if len(is) == 0 {
+		return i0
+	} else {
+		i1 := is[0]
+		for i0%i1 != 0 {
+			t := i0 % i1
+			i0 = i1
+			i1 = t
+		}
+		return gcd(i1, is[1:])
+	}
+}
+
+func (p *Plugin) run(rule *cpmtypes.CustomRule) (exitStatus cpmtypes.Status, output string) {
+	defer func() {
+		rule.LastCompleteTime = time.Now()
+		glog.Infof("Finish invoking %s rule %s/%s", rule.Type, rule.Condition, rule.Reason)
+	}()
 	var ctx context.Context
 	var cancel context.CancelFunc
 

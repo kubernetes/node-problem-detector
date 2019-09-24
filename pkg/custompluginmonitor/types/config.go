@@ -113,6 +113,15 @@ func (cpc *CustomPluginConfig) ApplyConfiguration() error {
 			}
 			rule.Timeout = &timeout
 		}
+		if rule.InvokeIntervalString != nil {
+			interval, err := time.ParseDuration(*rule.InvokeIntervalString)
+			if err != nil {
+				return fmt.Errorf("error in parsing rule invocation interval %+v: %v", rule, err)
+			}
+			rule.InvokeInterval = &interval
+		} else {
+			rule.InvokeInterval = cpc.PluginGlobalConfig.InvokeInterval
+		}
 	}
 
 	if cpc.EnableMetricsReporting == nil {
