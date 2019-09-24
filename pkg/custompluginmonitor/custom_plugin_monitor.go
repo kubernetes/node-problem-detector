@@ -137,7 +137,7 @@ func (c *customPluginMonitor) monitorLoop() {
 			c.plugin.Stop()
 			glog.Infof("Custom plugin monitor stopped: %s", c.configPath)
 			c.tomb.Done()
-			break
+			return
 		}
 	}
 }
