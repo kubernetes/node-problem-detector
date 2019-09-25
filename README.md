@@ -180,7 +180,7 @@ helm install stable/node-problem-detector
 
 Or alternatively, to install node-problem-detector manually:
 
-1. Edit [node-problem-detector.yaml](deployment/node-problem-detector.yaml) to fit your environment. Set `log` volume to your system log directory (used by SystemLogMonitor). You can use a ConfigMap to overwrite the `config` directory inside the pod. For Kubernetes versions older than 1.9, use [node-problem-detector-old.yaml](deployment/node-problem-detector-old.yaml).
+1. Edit [node-problem-detector.yaml](deployment/node-problem-detector.yaml) to fit your environment. Set `log` volume to your system log directory (used by SystemLogMonitor). You can use a ConfigMap to overwrite the `config` directory inside the pod.
 
 2. Edit [node-problem-detector-config.yaml](deployment/node-problem-detector-config.yaml) to configure node-problem-detector.
 
