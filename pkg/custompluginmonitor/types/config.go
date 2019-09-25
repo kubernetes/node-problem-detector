@@ -119,8 +119,6 @@ func (cpc *CustomPluginConfig) ApplyConfiguration() error {
 				return fmt.Errorf("error in parsing rule invocation interval %+v: %v", rule, err)
 			}
 			rule.InvokeInterval = &interval
-		} else {
-			rule.InvokeInterval = cpc.PluginGlobalConfig.InvokeInterval
 		}
 	}
 
