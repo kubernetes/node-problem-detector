@@ -58,11 +58,12 @@ func (p *Plugin) Run() {
 		p.tomb.Done()
 	}()
 
-	runTicker := time.NewTicker(calculateIntervalsGcd(p.config))
+	//  1/10 of the gcd of invoke intervals of all rules should be frequent enough
+	runTicker := time.NewTicker(calculateIntervalsGcd(&p.config) / 10)
 	defer runTicker.Stop()
 
 	runner := func() {
-		overdueRules := getOverdueRules(p.config.Rules)
+		overdueRules := getOverdueRules(&p.config)
 		if len(overdueRules) == 0 {
 			return
 		}
@@ -116,22 +117,30 @@ func (p *Plugin) Run() {
 	}
 }
 
-func getOverdueRules(rules []*cpmtypes.CustomRule) []*cpmtypes.CustomRule {
+func getOverdueRules(config *cpmtypes.CustomPluginConfig) []*cpmtypes.CustomRule {
 	overdue := make([]*cpmtypes.CustomRule, 0)
-	now := time.Now()
-	for _, r := range rules {
-		if r.LastCompleteTime.Add(*r.InvokeInterval).Before(now) {
-			overdue = append(overdue, r)
+	rules := config.Rules
+	for _, rule := range rules {
+		interval := rule.InvokeInterval
+		if interval == nil {
+			interval = config.PluginGlobalConfig.InvokeInterval
+		}
+		if rule.LastCompleteTime.Add(*interval).Before(time.Now()) {
+			overdue = append(overdue, rule)
 		}
 	}
 	return overdue
 }
 
-func calculateIntervalsGcd(config cpmtypes.CustomPluginConfig) time.Duration {
+func calculateIntervalsGcd(config *cpmtypes.CustomPluginConfig) time.Duration {
 	intervals := make([]time.Duration, len(config.Rules))
 
 	for idx, rule := range config.Rules {
-		intervals[idx] = *rule.InvokeInterval
+		interval := rule.InvokeInterval
+		if interval == nil {
+			interval = config.PluginGlobalConfig.InvokeInterval
+		}
+		intervals[idx] = *interval
 	}
 
 	return gcd(*config.PluginGlobalConfig.InvokeInterval, intervals)
