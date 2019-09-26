@@ -36,8 +36,6 @@ const (
 	updatePeriod = 1 * time.Second
 	// resyncPeriod is the period at which condition manager does resync, only updates when needed.
 	resyncPeriod = 10 * time.Second
-	// heartbeatPeriod is the period at which condition manager does forcibly sync with apiserver.
-	heartbeatPeriod = 1 * time.Minute
 )
 
 // ConditionManager synchronizes node conditions with the apiserver with problem client.
@@ -75,15 +73,18 @@ type conditionManager struct {
 	client       problemclient.Client
 	updates      map[string]types.Condition
 	conditions   map[string]types.Condition
+	// heartbeatPeriod is the period at which condition manager does forcibly sync with apiserver.
+	heartbeatPeriod time.Duration
 }
 
 // NewConditionManager creates a condition manager.
-func NewConditionManager(client problemclient.Client, clock clock.Clock) ConditionManager {
+func NewConditionManager(client problemclient.Client, clock clock.Clock, heartbeatPeriod time.Duration) ConditionManager {
 	return &conditionManager{
-		client:     client,
-		clock:      clock,
-		updates:    make(map[string]types.Condition),
-		conditions: make(map[string]types.Condition),
+		client:          client,
+		clock:           clock,
+		updates:         make(map[string]types.Condition),
+		conditions:      make(map[string]types.Condition),
+		heartbeatPeriod: heartbeatPeriod,
 	}
 }
 
@@ -145,7 +146,7 @@ func (c *conditionManager) needResync() bool {
 
 // needHeartbeat checks whether a forcible heartbeat is needed.
 func (c *conditionManager) needHeartbeat() bool {
-	return c.clock.Now().Sub(c.latestTry) >= heartbeatPeriod
+	return c.clock.Now().Sub(c.latestTry) >= c.heartbeatPeriod
 }
 
 // sync synchronizes node conditions with the apiserver.
