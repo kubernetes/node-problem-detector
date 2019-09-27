@@ -49,6 +49,7 @@ const exporterName = "stackdriver"
 var NPDMetricToSDMetric = map[metrics.MetricID]string{
 	metrics.HostUptimeID:      "compute.googleapis.com/guest/system/uptime",
 	metrics.ProblemCounterID:  "compute.googleapis.com/guest/system/problem_count",
+	metrics.ProblemGaugeID:    "compute.googleapis.com/guest/system/problem_state",
 	metrics.DiskAvgQueueLenID: "compute.googleapis.com/guest/disk/queue_length",
 	metrics.DiskIOTimeID:      "compute.googleapis.com/guest/disk/io_time",
 	metrics.DiskWeightedIOID:  "compute.googleapis.com/guest/disk/weighted_io_time",
