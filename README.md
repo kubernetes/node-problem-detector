@@ -14,10 +14,10 @@ enabled by default in the GCE cluster.
 
 # Background
 
-There are tons of node problems could possibly affect the pods running on the
-node such as:
+There are tons of node problems that could possibly affect the pods running on the
+node, such as:
 * Infrastructure daemon issues: ntp service down;
-* Hardware issues: Bad cpu, memory or disk, ntp service down;
+* Hardware issues: Bad cpu, memory or disk;
 * Kernel issues: Kernel deadlock, corrupted file system;
 * Container runtime issues: Unresponsive runtime daemon;
 * ...
