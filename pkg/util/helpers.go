@@ -83,7 +83,7 @@ func GetOSVersion() (string, error) {
 		return "", err
 	}
 	switch osReleaseMap["ID"] {
-	case "cos":
+	case "centos":
 		return getCOSVersion(osReleaseMap), nil
 	case "debian":
 		return getDebianVersion(osReleaseMap), nil
