@@ -109,7 +109,7 @@ func (npdo *NodeProblemDetectorOptions) AddFlags(fs *pflag.FlagSet) {
 		"", "Custom URI used to connect to Kubernetes ApiServer. This is ignored if --enable-k8s-exporter is false.")
 	fs.DurationVar(&npdo.APIServerWaitTimeout, "apiserver-wait-timeout", time.Duration(5)*time.Minute, "The timeout on waiting for kube-apiserver to be ready. This is ignored if --enable-k8s-exporter is false.")
 	fs.DurationVar(&npdo.APIServerWaitInterval, "apiserver-wait-interval", time.Duration(5)*time.Second, "The interval between the checks on the readiness of kube-apiserver. This is ignored if --enable-k8s-exporter is false.")
-	fs.DurationVar(&npdo.K8sExporterHeartbeatPeriod, "k8s-exporter-heartbeat-period", 1*time.Minute, "The period at which k8s-exporter does forcibly sync with apiserver.")
+	fs.DurationVar(&npdo.K8sExporterHeartbeatPeriod, "k8s-exporter-heartbeat-period", 5*time.Minute, "The period at which k8s-exporter does forcibly sync with apiserver.")
 	fs.BoolVar(&npdo.PrintVersion, "version", false, "Print version information and quit")
 	fs.StringVar(&npdo.HostnameOverride, "hostname-override",
 		"", "Custom node name used to override hostname")
