@@ -18,7 +18,7 @@
     {
       "type": "KubeletProblem",
       "reason": "KubeletDown",
-      "message": "Kubelet service is down"
+      "message": "Kubelet service is running"
     }
   ],
   "rules": [
@@ -30,7 +30,8 @@
     },
     {
       "type": "permanent",
-      "reason": "KubeletProblem",
+      "condition": "KubeletProblem",
+      "reason": "KubeletDown",
       "path": "./config/plugin/check_kubelet.sh",
       "timeout": "3s"
     },

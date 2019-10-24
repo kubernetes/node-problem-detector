@@ -16,8 +16,8 @@ fi
 systemctl status kubelet.service | grep 'Active:' | grep -q running
 if [ $? -ne 0 ]; then
     echo "kubelet service is not running"
-    exit $OK
+    exit $NONOK
 fi
 
 echo "kubelet service is running"
-exit NONOK
+exit $OK
