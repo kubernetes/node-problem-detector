@@ -14,6 +14,11 @@
       "type": "NTPProblem",
       "reason": "NTPIsUp",
       "message": "ntp service is up"
+    },
+    {
+      "type": "KubeletProblem",
+      "reason": "KubeletDown",
+      "message": "Kubelet service is down"
     }
   ],
   "rules": [
@@ -21,6 +26,12 @@
       "type": "temporary",
       "reason": "NTPIsDown",
       "path": "./config/plugin/check_ntp.sh",
+      "timeout": "3s"
+    },
+    {
+      "type": "permanent",
+      "reason": "KubeletProblem",
+      "path": "./config/plugin/check_kubelet.sh",
       "timeout": "3s"
     },
     {
