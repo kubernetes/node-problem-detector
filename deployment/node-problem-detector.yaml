@@ -20,7 +20,7 @@ spec:
         - /node-problem-detector
         - --logtostderr
         - --system-log-monitors=/config/kernel-monitor.json,/config/docker-monitor.json
-        image: k8s.gcr.io/node-problem-detector:v0.6.3
+        image: k8s.gcr.io/node-problem-detector:v0.7.1
         resources:
           limits:
             cpu: 10m
