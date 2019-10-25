@@ -129,7 +129,11 @@ func (l *logMonitor) monitorLoop() {
 	l.initializeStatus()
 	for {
 		select {
-		case log := <-l.logCh:
+		case log, ok := <-l.logCh:
+			if !ok {
+				glog.Errorf("Log channel closed")
+				return
+			}
 			l.parseLog(log)
 		case <-l.tomb.Stopping():
 			l.watcher.Stop()
