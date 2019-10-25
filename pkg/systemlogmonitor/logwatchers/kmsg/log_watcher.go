@@ -86,21 +86,25 @@ func (k *kernelLogWatcher) Stop() {
 
 // watchLoop is the main watch loop of kernel log watcher.
 func (k *kernelLogWatcher) watchLoop() {
+	kmsgs := k.kmsgParser.Parse()
 	defer func() {
+		if err := k.kmsgParser.Close(); err != nil {
+			glog.Errorf("Failed to close kmsg parser: %v", err)
+		}
 		close(k.logCh)
 		k.tomb.Done()
 	}()
-	kmsgs := k.kmsgParser.Parse()
 
 	for {
 		select {
 		case <-k.tomb.Stopping():
 			glog.Infof("Stop watching kernel log")
-			if err := k.kmsgParser.Close(); err != nil {
-				glog.Errorf("Failed to close kmsg parser: %v", err)
-			}
 			return
-		case msg := <-kmsgs:
+		case msg, ok := <-kmsgs:
+			if !ok {
+				glog.Error("Kmsg channel closed")
+				return
+			}
 			glog.V(5).Infof("got kernel message: %+v", msg)
 			if msg.Message == "" {
 				continue

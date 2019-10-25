@@ -44,7 +44,11 @@ func main() {
 		fmt.Print(err)
 		os.Exit(int(types.Unknown))
 	}
-	actual := counter.Count()
+	actual, err := counter.Count()
+	if err != nil {
+		fmt.Print(err)
+		os.Exit(int(types.Unknown))
+	}
 	if actual >= fedo.Count {
 		fmt.Printf("Found %d matching logs, which meets the threshold of %d\n", actual, fedo.Count)
 		os.Exit(int(types.NonOK))

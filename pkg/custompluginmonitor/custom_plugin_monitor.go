@@ -128,7 +128,11 @@ func (c *customPluginMonitor) monitorLoop() {
 
 	for {
 		select {
-		case result := <-resultChan:
+		case result, ok := <-resultChan:
+			if !ok {
+				glog.Errorf("Result channel closed: %s", c.configPath)
+				return
+			}
 			glog.V(3).Infof("Receive new plugin result for %s: %+v", c.configPath, result)
 			status := c.generateStatus(result)
 			glog.Infof("New status generated: %+v", status)

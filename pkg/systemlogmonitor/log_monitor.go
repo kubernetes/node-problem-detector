@@ -125,13 +125,16 @@ func (l *logMonitor) Stop() {
 
 // monitorLoop is the main loop of log monitor.
 func (l *logMonitor) monitorLoop() {
-	defer l.tomb.Done()
+	defer func() {
+		close(l.output)
+		l.tomb.Done()
+	}()
 	l.initializeStatus()
 	for {
 		select {
 		case log, ok := <-l.logCh:
 			if !ok {
-				glog.Errorf("Log channel closed")
+				glog.Errorf("Log channel closed: %s", l.configPath)
 				return
 			}
 			l.parseLog(log)
