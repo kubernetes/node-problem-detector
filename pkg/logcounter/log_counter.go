@@ -63,11 +63,15 @@ func NewJournaldLogCounter(options *options.LogCounterOptions) (types.LogCounter
 	}, nil
 }
 
-func (e *logCounter) Count() (count int) {
+func (e *logCounter) Count() (count int, err error) {
 	start := e.clock.Now()
 	for {
 		select {
-		case log := <-e.logCh:
+		case log, ok := <-e.logCh:
+			if !ok {
+				err = fmt.Errorf("log channel closed unexpectedly")
+				return
+			}
 			// We only want to count events up until the time at which we started.
 			// Otherwise we would run forever
 			if start.Before(log.Timestamp) {

@@ -120,7 +120,10 @@ func TestCount(t *testing.T) {
 					fakeClock.Step(2 * timeout)
 				}
 			}(tc.logs, logCh)
-			actualCount := counter.Count()
+			actualCount, err := counter.Count()
+			if err != nil {
+				t.Errorf("unexpected error %v", err)
+			}
 			if actualCount != tc.expectedCount {
 				t.Errorf("got %d; expected %d", actualCount, tc.expectedCount)
 			}

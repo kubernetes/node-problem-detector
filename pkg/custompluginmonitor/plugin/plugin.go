@@ -55,6 +55,7 @@ func (p *Plugin) GetResultChan() <-chan cpmtypes.Result {
 func (p *Plugin) Run() {
 	defer func() {
 		glog.Info("Stopping plugin execution")
+		close(p.resultChan)
 		p.tomb.Done()
 	}()
 

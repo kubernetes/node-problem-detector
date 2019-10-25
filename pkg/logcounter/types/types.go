@@ -17,5 +17,5 @@ limitations under the License.
 package types
 
 type LogCounter interface {
-	Count() int
+	Count() (int, error)
 }

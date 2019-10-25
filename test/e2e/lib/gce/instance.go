@@ -46,7 +46,7 @@ func CreateInstance(instance Instance, imageName string, imageProject string) (I
 
 	p, err := instance.ComputeService.Projects.Get(instance.Project).Do()
 	if err != nil {
-		return instance, fmt.Errorf("failed to get project info %q", instance.Project)
+		return instance, fmt.Errorf("failed to get project info %q: %v", instance.Project, err)
 	}
 
 	i := &compute.Instance{
