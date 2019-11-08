@@ -161,7 +161,7 @@ to see how to disable each problem daemon during compilation time.
 
 **Note**:
 By default node-problem-detector will be built with systemd support with `make` command. This requires systemd develop files.
-You should download the systemd develop files first. For Ubuntu, `libsystemd-journal-dev` package should
+You should download the systemd develop files first. For Ubuntu, [`libsystemd-journal-dev`](https://www.ubuntuupdates.org/package/core/trusty/main/updates/libsystemd-journal-dev) package should
 be installed. For Debian, `libsystemd-dev` package should be installed.
 
 ## Push Image
