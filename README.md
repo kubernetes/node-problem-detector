@@ -202,7 +202,7 @@ For more scenarios, see [here](https://github.com/kubernetes/heapster/blob/maste
 
 ## Try It Out
 
-You can try node-problem-detector in a running cluster by injecting messages to the logs that node-problem-detector is watching. For example, Let's assume node-problem-detector is using [KernelMonitor](https://github.com/kubernetes/node-problem-detector/blob/master/config/kernel-monitor.json). On your workstation, run ```kubectl get events -w```. On the node, run ```sudo sh -c "echo 'kernel: BUG: unable to handle kernel NULL pointer dereference at TESTING' >> /dev/kmsg"```. Then you should see the ```KernelOops``` event.
+You can try node-problem-detector in a running cluster by injecting messages to the logs that node-problem-detector is watching. For example, Let's assume node-problem-detector is using [KernelMonitor](https://github.com/kubernetes/node-problem-detector/blob/master/config/kernel-monitor.json). On your workstation, run ```kubectl get events -w```. On the node, run ```sudo sh -c "echo '2019-11-13T19:28:16.288365+00:00 kernel: [TESTING] BUG: unable to handle kernel NULL pointer dereference at TESTING' >> /dev/kmsg"```. Then you should see the ```KernelOops``` event.
 
 When adding new rules or developing node-problem-detector, it is probably easier to test it on the local workstation in the standalone mode. For the API server, an easy way is to use ```kubectl proxy``` to make a running cluster's API server available locally. You will get some errors because your local workstation is not recognized by the API server. But you should still be able to test your new rules regardless.
 
