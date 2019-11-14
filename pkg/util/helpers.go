@@ -89,6 +89,8 @@ func GetOSVersion() (string, error) {
 		return getDebianVersion(osReleaseMap), nil
 	case "ubuntu":
 		return getDebianVersion(osReleaseMap), nil
+	case "centos":
+		return getDebianVersion(osReleaseMap), nil
 	default:
 		return "", fmt.Errorf("Unsupported ID in /etc/os-release: %q", osReleaseMap["ID"])
 	}

@@ -162,6 +162,12 @@ func TestGetOSVersion(t *testing.T) {
 			expectErr:         false,
 		},
 		{
+			name:              "centos",
+			fakeOSReleasePath: "testdata/os-release-centos",
+			expectedOSVersion: "centos 7 (Core)",
+			expectErr:         false,
+		},
+		{
 			name:              "Unknown",
 			fakeOSReleasePath: "testdata/os-release-unknown",
 			expectedOSVersion: "",
