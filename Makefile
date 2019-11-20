@@ -103,6 +103,13 @@ endif
 		-tags "$(BUILD_TAGS)" \
 		./cmd/nodeproblemdetector
 
+./test/bin/problem-maker: $(PKG_SOURCES)
+	CGO_ENABLED=$(CGO_ENABLED) GOOS=linux GO111MODULE=on go build \
+		-mod vendor \
+		-o test/bin/problem-maker \
+		-tags "$(BUILD_TAGS)" \
+		./test/e2e/problemmaker/problem_maker.go
+
 Dockerfile: Dockerfile.in
 	sed -e 's|@BASEIMAGE@|$(BASEIMAGE)|g' $< >$@
 ifneq ($(ENABLE_JOURNALD), 1)
@@ -129,8 +136,8 @@ build-binaries: ./bin/node-problem-detector ./bin/log-counter
 build-container: build-binaries Dockerfile
 	docker build -t $(IMAGE) .
 
-build-tar: ./bin/node-problem-detector ./bin/log-counter
-	tar -zcvf $(TARBALL) bin/ config/ test/e2e-install.sh
+build-tar: ./bin/node-problem-detector ./bin/log-counter ./test/bin/problem-maker
+	tar -zcvf $(TARBALL) bin/ config/ test/e2e-install.sh test/bin/problem-maker
 	sha1sum $(TARBALL)
 	md5sum $(TARBALL)
 
@@ -156,4 +163,5 @@ push: push-container push-tar
 clean:
 	rm -f bin/log-counter
 	rm -f bin/node-problem-detector
+	rm -f test/bin/problem-maker
 	rm -f node-problem-detector-*.tar.gz

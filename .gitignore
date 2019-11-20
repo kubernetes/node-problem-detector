@@ -1,5 +1,6 @@
 /bin/
 /Dockerfile
+/test/bin/
 /*.tar.gz
 ci.env
 pr.env
