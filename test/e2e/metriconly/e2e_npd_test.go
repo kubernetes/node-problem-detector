@@ -49,7 +49,7 @@ var boskosProjectType = flag.String("boskos-project-type", "gce-project",
 	"specifies which project type to select from Boskos.")
 var boskosServerURL = flag.String("boskos-server-url", "http://boskos.test-pods.svc.cluster.local",
 	"specifies Boskos server URL.")
-var boskosWaitDuration = flag.Duration("boskos-wait-duration", 5*time.Minute,
+var boskosWaitDuration = flag.Duration("boskos-wait-duration", 2*time.Minute,
 	"Duration to wait before quitting getting Boskos resource.")
 
 var computeService *compute.Service
