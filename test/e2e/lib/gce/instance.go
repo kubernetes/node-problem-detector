@@ -159,9 +159,13 @@ func (ins *Instance) PushFile(srcPath, destPath string) error {
 	if ins.ExternalIP == "" {
 		ins.populateExternalIP()
 	}
-	return exec.Command("scp", "-o", "StrictHostKeyChecking no",
+	output, err := exec.Command("scp", "-o", "StrictHostKeyChecking no",
 		"-i", ins.SshKey,
-		srcPath, fmt.Sprintf("%s@%s:%s", ins.SshUser, ins.ExternalIP, destPath)).Run()
+		srcPath, fmt.Sprintf("%s@%s:%s", ins.SshUser, ins.ExternalIP, destPath)).CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("Error running scp: %v.\nHere is the output for the command: %v", err, string(output))
+	}
+	return nil
 }
 
 // DeleteInstance deletes a GCE instance.
