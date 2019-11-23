@@ -140,7 +140,6 @@ For example, to run without auth, use the following config:
 * `go get` or `git clone` node-problem-detector repo into `$GOPATH/src/k8s.io` or `$GOROOT/src/k8s.io`
 with one of the below directions:
   * `cd $GOPATH/src/k8s.io && git clone git@github.com:kubernetes/node-problem-detector.git`
-  * `cd $GOROOT/src/k8s.io && git clone git@github.com:kubernetes/node-problem-detector.git`
   * `cd $GOPATH/src/k8s.io && go get k8s.io/node-problem-detector`
 
 * run `make` in the top directory. It will:
