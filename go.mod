@@ -11,17 +11,13 @@ require (
 	github.com/avast/retry-go v2.4.1+incompatible
 	github.com/cobaugh/osrelease v0.0.0-20181218015638-a93a0a55a249
 	github.com/coreos/go-systemd v0.0.0-20190321100706-95778dfbb74e
-	github.com/emicklei/go-restful v0.0.0-20170410110728-ff4f55a20633 // indirect
 	github.com/euank/go-kmsg-parser v2.0.1+incompatible
 	github.com/go-ole/go-ole v1.2.4 // indirect
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
 	github.com/google/cadvisor v0.33.0
-	github.com/howeyc/gopass v0.0.0-20160826175423-3ca23474a7c7 // indirect
-	github.com/juju/ratelimit v0.0.0-20170523012141-5b9ff8664717 // indirect
 	github.com/onsi/ginkgo v1.8.0
 	github.com/onsi/gomega v1.5.0 // indirect
 	github.com/pborman/uuid v1.2.0
-	github.com/peterbourgon/diskv v2.0.1+incompatible // indirect
 	github.com/prometheus/client_model v0.0.0-20190129233127-fd36f4220a90
 	github.com/prometheus/common v0.4.1
 	github.com/shirou/gopsutil v2.18.12+incompatible
@@ -33,7 +29,6 @@ require (
 	go.opencensus.io v0.22.0
 	golang.org/x/oauth2 v0.0.0-20190604053449-0f29369cfe45
 	google.golang.org/api v0.7.0
-	gopkg.in/yaml.v1 v1.0.0-20140924161607-9f9df34309c0 // indirect
 	k8s.io/api v0.0.0-20190816222004-e3a6b8045b0b
 	k8s.io/apimachinery v0.0.0-20190816221834-a9f1d8a9c101
 	k8s.io/client-go v11.0.1-0.20190805182717-6502b5e7b1b5+incompatible
