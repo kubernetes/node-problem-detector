@@ -60,7 +60,7 @@ BASEIMAGE:=k8s.gcr.io/debian-base-amd64:v1.0.0
 CGO_ENABLED:=0
 
 # Construct the "-tags" parameter used by "go build".
-BUILD_TAGS?=""
+BUILD_TAGS?=
 ifeq ($(ENABLE_JOURNALD), 1)
 	# Enable journald build tag.
 	BUILD_TAGS:=$(BUILD_TAGS) journald
@@ -71,14 +71,11 @@ ifeq ($(ENABLE_JOURNALD), 1)
 	# statically linked application.
 	CGO_ENABLED:=1
 endif
-ifneq ($(BUILD_TAGS), "")
-	BUILD_TAGS:=-tags "$(BUILD_TAGS)"
-endif
 
 vet:
-	GO111MODULE=on go list -mod vendor $(BUILD_TAGS) ./... | \
+	GO111MODULE=on go list -mod vendor -tags "$(BUILD_TAGS)" ./... | \
 		grep -v "./vendor/*" | \
-		GO111MODULE=on xargs go vet -mod vendor $(BUILD_TAGS)
+		GO111MODULE=on xargs go vet -mod vendor -tags "$(BUILD_TAGS)"
 
 fmt:
 	find . -type f -name "*.go" | grep -v "./vendor/*" | xargs gofmt -s -w -l
@@ -91,7 +88,7 @@ version:
 		-mod vendor \
 		-o bin/log-counter \
 		-ldflags '-X $(PKG)/pkg/version.version=$(VERSION)' \
-		$(BUILD_TAGS) \
+		-tags "$(BUILD_TAGS)" \
 		cmd/logcounter/log_counter.go
 
 ./bin/node-problem-detector: $(PKG_SOURCES)
@@ -99,17 +96,17 @@ version:
 		-mod vendor \
 		-o bin/node-problem-detector \
 		-ldflags '-X $(PKG)/pkg/version.version=$(VERSION)' \
-		$(BUILD_TAGS) \
+		-tags "$(BUILD_TAGS)" \
 		./cmd/nodeproblemdetector
 
 Dockerfile: Dockerfile.in
 	sed -e 's|@BASEIMAGE@|$(BASEIMAGE)|g' $< >$@
 
 test: vet fmt
-	GO111MODULE=on go test -mod vendor -timeout=1m -v -race -short $(BUILD_TAGS) ./...
+	GO111MODULE=on go test -mod vendor -timeout=1m -v -race -short -tags "$(BUILD_TAGS)" ./...
 
 e2e-test: vet fmt build-tar
-	GO111MODULE=on go test -mod vendor -timeout=10m -v $(BUILD_TAGS) \
+	GO111MODULE=on go test -mod vendor -timeout=10m -v -tags "$(BUILD_TAGS)" \
 	./test/e2e/metriconly/... \
 	-project=$(PROJECT) -zone=$(ZONE) \
 	-image=$(VM_IMAGE) -image-family=$(IMAGE_FAMILY) -image-project=$(IMAGE_PROJECT) \
