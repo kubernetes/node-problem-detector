@@ -84,12 +84,16 @@ version:
 	@echo $(VERSION)
 
 ./bin/log-counter: $(PKG_SOURCES)
+ifeq ($(ENABLE_JOURNALD), 1)
 	CGO_ENABLED=$(CGO_ENABLED) GOOS=linux GO111MODULE=on go build \
 		-mod vendor \
 		-o bin/log-counter \
 		-ldflags '-X $(PKG)/pkg/version.version=$(VERSION)' \
 		-tags "$(BUILD_TAGS)" \
 		cmd/logcounter/log_counter.go
+else
+	echo "Warning: log-counter requires journald, skipping."
+endif
 
 ./bin/node-problem-detector: $(PKG_SOURCES)
 	CGO_ENABLED=$(CGO_ENABLED) GOOS=linux GO111MODULE=on go build \
@@ -101,6 +105,11 @@ version:
 
 Dockerfile: Dockerfile.in
 	sed -e 's|@BASEIMAGE@|$(BASEIMAGE)|g' $< >$@
+ifneq ($(ENABLE_JOURNALD), 1)
+	sed -i '/Below command depends on ENABLE_JOURNAL=1/,+2d' $@
+	echo "Warning: log-counter requires journald, skipping."
+endif
+
 
 test: vet fmt
 	GO111MODULE=on go test -mod vendor -timeout=1m -v -race -short -tags "$(BUILD_TAGS)" ./...
