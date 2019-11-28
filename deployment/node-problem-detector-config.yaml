@@ -15,8 +15,8 @@ data:
             },
             {
                 "type": "ReadonlyFilesystem",
-                "reason": "FilesystemIsReadOnly",
-                "message": "Filesystem is read-only"
+                "reason": "FilesystemIsNotReadOnly",
+                "message": "Filesystem is not read-only"
             }
         ],
         "rules": [
