@@ -59,6 +59,12 @@ func TestNPD(t *testing.T) {
 		t.Skip("skipping test in short mode.")
 	}
 
+	var err error
+	computeService, err = gce.GetComputeClient()
+	if err != nil {
+		panic(fmt.Sprintf("Unable to create gcloud compute service using defaults. Make sure you are authenticated. %v", err))
+	}
+
 	if *project == "" {
 		boskosClient := client.NewClient(*jobName, *boskosServerURL)
 		*project = acquireProjectOrDie(boskosClient)
@@ -111,12 +117,6 @@ func releaseProjectOrDie(boskosClient *client.Client) {
 
 func TestMain(m *testing.M) {
 	flag.Parse()
-
-	var err error
-	computeService, err = gce.GetComputeClient()
-	if err != nil {
-		panic(fmt.Sprintf("Unable to create gcloud compute service using defaults. Make sure you are authenticated. %v", err))
-	}
 
 	os.Exit(m.Run())
 }
