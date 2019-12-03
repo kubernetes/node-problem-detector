@@ -69,7 +69,7 @@ func NewSyslogWatcherOrDie(cfg types.WatcherConfig) types.LogWatcher {
 	}
 }
 
-// Make sure NewSyslogWathcer is types.WatcherCreateFunc.
+// Make sure NewSyslogWatcher is types.WatcherCreateFunc.
 var _ types.WatcherCreateFunc = NewSyslogWatcherOrDie
 
 // Watch starts the filelog watcher.
