@@ -96,9 +96,8 @@ func (p *Plugin) runRules() {
 
 			start := time.Now()
 			exitStatus, message := p.run(*rule)
-			end := time.Now()
 
-			glog.V(3).Infof("Rule: %+v. Start time: %v. End time: %v. Duration: %v", rule, start, end, end.Sub(start))
+			glog.V(3).Infof("Rule: %+v. Start time: %v. End time: %v. Duration: %v", rule, start, time.Now(), time.Since(start))
 
 			result := cpmtypes.Result{
 				Rule:       rule,
