@@ -249,6 +249,26 @@ Kubernetes cluster to a healthy state. The following remedy systems exist:
   [this issue](https://github.com/kubernetes/node-problem-detector/issues/199)
   for an example production use case for Draino.
 
+# Testing
+
+NPD is tested via unit tests, [NPD e2e tests](https://github.com/kubernetes/node-problem-detector/blob/master/test/e2e/README.md), Kubernetes e2e tests and Kubernetes nodes e2e tests. Prow handles the [pre-submit tests](https://github.com/kubernetes/test-infra/blob/master/config/jobs/kubernetes/node-problem-detector/node-problem-detector-presubmits.yaml) and [CI tests](https://github.com/kubernetes/test-infra/blob/master/config/jobs/kubernetes/node-problem-detector/node-problem-detector-ci.yaml).
+
+CI test results can be found at below:
+1. [Unit tests](https://k8s-testgrid.appspot.com/sig-node-node-problem-detector#ci-npd-test)
+2. [NPD e2e tests](https://k8s-testgrid.appspot.com/sig-node-node-problem-detector#ci-npd-e2e-test)
+3. [Kubernetes e2e tests](https://k8s-testgrid.appspot.com/sig-node-node-problem-detector#ci-npd-e2e-kubernetes-gce-gci)
+4. [Kubernetes nodes e2e tests](https://k8s-testgrid.appspot.com/sig-node-node-problem-detector#ci-npd-e2e-node)
+
+## Running tests
+
+Unit test is ran via `make test`.
+
+See [NPD e2e test documentation](https://github.com/kubernetes/node-problem-detector/blob/master/test/e2e/README.md) for how to setup and run NPD e2e tests.
+
+## Problem Maker
+
+[Problem maker](https://github.com/kubernetes/node-problem-detector/blob/master/test/e2e/problemmaker/README.md) is a program used in NPD e2e tests to generate/simulate node problems. It is ONLY indented to be used by NPD e2e tests. Please do NOT run it on your workstation, as it could cause real node problems.
+
 # Docs
 
 * [Custom plugin monitor](docs/custom_plugin_monitor.md)

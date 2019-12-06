@@ -44,6 +44,16 @@
 			"pattern": "divide error: 0000 \\[#\\d+\\] SMP"
 		},
 		{
+			"type": "temporary",
+			"reason": "Ext4Error",
+			"pattern": "EXT4-fs error .*"
+		},
+		{
+			"type": "temporary",
+			"reason": "Ext4Warning",
+			"pattern": "EXT4-fs warning .*"
+		},
+		{
 			"type": "permanent",
 			"condition": "KernelDeadlock",
 			"reason": "AUFSUmountHung",

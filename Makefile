@@ -40,6 +40,9 @@ PKG:=k8s.io/node-problem-detector
 # PKG_SOURCES are all the go source code.
 PKG_SOURCES:=$(shell find pkg cmd -name '*.go')
 
+# PARALLEL specifies the number of parallel test nodes to run for e2e tests.
+PARALLEL?=3
+
 # TARBALL is the name of release tar. Include binary version by default.
 TARBALL?=node-problem-detector-$(VERSION).tar.gz
 
@@ -103,6 +106,13 @@ endif
 		-tags "$(BUILD_TAGS)" \
 		./cmd/nodeproblemdetector
 
+./test/bin/problem-maker: $(PKG_SOURCES)
+	CGO_ENABLED=$(CGO_ENABLED) GOOS=linux GO111MODULE=on go build \
+		-mod vendor \
+		-o test/bin/problem-maker \
+		-tags "$(BUILD_TAGS)" \
+		./test/e2e/problemmaker/problem_maker.go
+
 Dockerfile: Dockerfile.in
 	sed -e 's|@BASEIMAGE@|$(BASEIMAGE)|g' $< >$@
 ifneq ($(ENABLE_JOURNALD), 1)
@@ -115,8 +125,8 @@ test: vet fmt
 	GO111MODULE=on go test -mod vendor -timeout=1m -v -race -short -tags "$(BUILD_TAGS)" ./...
 
 e2e-test: vet fmt build-tar
-	GO111MODULE=on go test -mod vendor -timeout=10m -v -tags "$(BUILD_TAGS)" \
-	./test/e2e/metriconly/... \
+	GO111MODULE=on ginkgo -nodes=$(PARALLEL) -mod vendor -timeout=10m -v -tags "$(BUILD_TAGS)" \
+	./test/e2e/metriconly/... -- \
 	-project=$(PROJECT) -zone=$(ZONE) \
 	-image=$(VM_IMAGE) -image-family=$(IMAGE_FAMILY) -image-project=$(IMAGE_PROJECT) \
 	-ssh-user=$(SSH_USER) -ssh-key=$(SSH_KEY) \
@@ -129,8 +139,8 @@ build-binaries: ./bin/node-problem-detector ./bin/log-counter
 build-container: build-binaries Dockerfile
 	docker build -t $(IMAGE) .
 
-build-tar: ./bin/node-problem-detector ./bin/log-counter
-	tar -zcvf $(TARBALL) bin/ config/ test/e2e-install.sh
+build-tar: ./bin/node-problem-detector ./bin/log-counter ./test/bin/problem-maker
+	tar -zcvf $(TARBALL) bin/ config/ test/e2e-install.sh test/bin/problem-maker
 	sha1sum $(TARBALL)
 	md5sum $(TARBALL)
 
@@ -156,4 +166,5 @@ push: push-container push-tar
 clean:
 	rm -f bin/log-counter
 	rm -f bin/node-problem-detector
+	rm -f test/bin/problem-maker
 	rm -f node-problem-detector-*.tar.gz

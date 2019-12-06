@@ -23,6 +23,7 @@ import (
 
 	"k8s.io/node-problem-detector/test/e2e/lib/ssh"
 
+	. "github.com/onsi/gomega"
 	compute "google.golang.org/api/compute/v1"
 )
 
@@ -145,14 +146,26 @@ func (ins *Instance) RunCommand(cmd string) ssh.Result {
 	return ssh.Run(cmd, ins.ExternalIP, ins.SshUser, ins.SshKey)
 }
 
+// RunCommand runs a command on the GCE instance and returns the command result, and fails the test when the command failed.
+func (ins *Instance) RunCommandOrFail(cmd string) ssh.Result {
+	result := ins.RunCommand(cmd)
+	Expect(result.SSHError).ToNot(HaveOccurred(), "SSH-ing to the instance failed: %v\n", result)
+	Expect(result.Code).To(Equal(0), "Running command failed: %v\n", result)
+	return result
+}
+
 // PushFile pushes a local file to a GCE instance.
 func (ins *Instance) PushFile(srcPath, destPath string) error {
 	if ins.ExternalIP == "" {
 		ins.populateExternalIP()
 	}
-	return exec.Command("scp", "-o", "StrictHostKeyChecking no",
+	output, err := exec.Command("scp", "-o", "StrictHostKeyChecking no",
 		"-i", ins.SshKey,
-		srcPath, fmt.Sprintf("%s@%s:%s", ins.SshUser, ins.ExternalIP, destPath)).Run()
+		srcPath, fmt.Sprintf("%s@%s:%s", ins.SshUser, ins.ExternalIP, destPath)).CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("Error running scp: %v.\nHere is the output for the command: %v", err, string(output))
+	}
+	return nil
 }
 
 // DeleteInstance deletes a GCE instance.

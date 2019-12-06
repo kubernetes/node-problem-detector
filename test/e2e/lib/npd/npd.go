@@ -29,9 +29,6 @@ import (
 	"github.com/avast/retry-go"
 )
 
-const npdMetricsFilename = "node-problem-detector-metrics.txt"
-const npdLogsFilename = "node-problem-detector.log"
-
 // SetupNPD installs NPD from the test tarball onto the provided GCE instance.
 //
 // Here is how it works:
@@ -91,6 +88,20 @@ func FetchNPDMetrics(ins gce.Instance) ([]metrics.Float64MetricRepresentation, e
 	return npdMetrics, nil
 }
 
+// FetchNPDMetric fetches and parses a specific metric reported by NPD on the provided GCE instance.
+func FetchNPDMetric(ins gce.Instance, metricName string, labels map[string]string) (float64, error) {
+	gotMetrics, err := FetchNPDMetrics(ins)
+	if err != nil {
+		return 0.0, err
+	}
+	metric, err := metrics.GetFloat64Metric(gotMetrics, metricName, labels, true)
+	if err != nil {
+		return 0.0, fmt.Errorf("Failed to find %s metric with label %v: %v.\nHere is all NPD exported metrics: %v",
+			metricName, labels, err, gotMetrics)
+	}
+	return metric.Value, nil
+}
+
 // WaitForNPD waits for NPD to become ready by waiting for expected metrics.
 func WaitForNPD(ins gce.Instance, metricNames []string, timeoutSeconds uint) error {
 	verifyMetricExist := func() error {
@@ -116,30 +127,33 @@ func WaitForNPD(ins gce.Instance, metricNames []string, timeoutSeconds uint) err
 }
 
 // SaveTestArtifacts saves debugging data from NPD.
-func SaveTestArtifacts(ins gce.Instance, directory string) []error {
+func SaveTestArtifacts(ins gce.Instance, artifactDirectory string, testID int) []error {
 	var errs []error
 
-	npdMetrics := ins.RunCommand("curl http://localhost:20257/metrics")
-	if npdMetrics.SSHError != nil || npdMetrics.Code != 0 {
-		errs = append(errs, fmt.Errorf("Error fetching NPD metrics: %v\n", npdMetrics))
-	} else {
-		npdMetricsPath := path.Join(directory, npdMetricsFilename)
-		err := ioutil.WriteFile(npdMetricsPath, []byte(npdMetrics.Stdout), 0644)
-		if err != nil {
-			errs = append(errs, fmt.Errorf("Error writing to %s: %v", npdMetricsPath, err))
-		}
+	if err := saveCommandResultAsArtifact(ins, artifactDirectory, testID,
+		"curl http://localhost:20257/metrics", "node-problem-detector-metrics"); err != nil {
+		errs = append(errs, err)
 	}
-
-	npdLog := ins.RunCommand("sudo journalctl -u node-problem-detector.service")
-	if npdLog.SSHError != nil || npdLog.Code != 0 {
-		errs = append(errs, fmt.Errorf("Error fetching NPD logs: %v\n", npdLog))
-	} else {
-		npdLogsPath := path.Join(directory, npdLogsFilename)
-		err := ioutil.WriteFile(npdLogsPath, []byte(npdLog.Stdout), 0644)
-		if err != nil {
-			errs = append(errs, fmt.Errorf("Error writing to %s: %v", npdLogsPath, err))
-		}
+	if err := saveCommandResultAsArtifact(ins, artifactDirectory, testID,
+		"sudo journalctl -u node-problem-detector.service", "node-problem-detector"); err != nil {
+		errs = append(errs, err)
+	}
+	if err := saveCommandResultAsArtifact(ins, artifactDirectory, testID,
+		"sudo journalctl -k", "kernel-logs"); err != nil {
+		errs = append(errs, err)
 	}
 
 	return errs
+}
+
+func saveCommandResultAsArtifact(ins gce.Instance, artifactDirectory string, testID int, command string, artifactPrefix string) error {
+	artifactPath := path.Join(artifactDirectory, fmt.Sprintf("%v-%02d.txt", artifactPrefix, testID))
+	result := ins.RunCommand(command)
+	if result.SSHError != nil || result.Code != 0 {
+		return fmt.Errorf("Error running command: %v\n", result)
+	}
+	if err := ioutil.WriteFile(artifactPath, []byte(result.Stdout), 0644); err != nil {
+		return fmt.Errorf("Error writing artifact to %v: %v\n", artifactPath, err)
+	}
+	return nil
 }

@@ -16,7 +16,7 @@ require (
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
 	github.com/google/cadvisor v0.33.0
 	github.com/onsi/ginkgo v1.8.0
-	github.com/onsi/gomega v1.5.0 // indirect
+	github.com/onsi/gomega v1.7.0
 	github.com/pborman/uuid v1.2.0
 	github.com/prometheus/client_model v0.0.0-20190129233127-fd36f4220a90
 	github.com/prometheus/common v0.4.1

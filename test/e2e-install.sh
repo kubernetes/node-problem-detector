@@ -67,6 +67,9 @@ function install-npd() {
   echo "Installing NPD systemd service."
   cp "${workdir}"/config/systemd/node-problem-detector-metric-only.service /etc/systemd/system/node-problem-detector.service
 
+  echo "Installing problem maker binary, used only for e2e testing."
+  cp "${workdir}"/test/bin/problem-maker "${BIN_DIR}"
+
   rm -rf "${workdir}"
 
   # Start systemd service.
