@@ -141,12 +141,12 @@ func (c *conditionManager) needUpdates() bool {
 // needResync checks whether a resync is needed.
 func (c *conditionManager) needResync() bool {
 	// Only update when resync is needed.
-	return c.clock.Now().Sub(c.latestTry) >= resyncPeriod && c.resyncNeeded
+	return c.clock.Since(c.latestTry) >= resyncPeriod && c.resyncNeeded
 }
 
 // needHeartbeat checks whether a forcible heartbeat is needed.
 func (c *conditionManager) needHeartbeat() bool {
-	return c.clock.Now().Sub(c.latestTry) >= c.heartbeatPeriod
+	return c.clock.Since(c.latestTry) >= c.heartbeatPeriod
 }
 
 // sync synchronizes node conditions with the apiserver.
