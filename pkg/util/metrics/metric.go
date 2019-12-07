@@ -22,8 +22,8 @@ import (
 const (
 	CPURunnableTaskCountID  MetricID = "cpu/runnable_task_count"
 	CPUUsageTimeID          MetricID = "cpu/usage_time"
-	ProblemCounterID        MetricID = "problem_counter"
-	ProblemGaugeID          MetricID = "problem_gauge"
+	ProblemCounterID        MetricID = "problem_count_total"
+	ProblemGaugeID          MetricID = "problem_state"
 	DiskIOTimeID            MetricID = "disk/io_time"
 	DiskWeightedIOID        MetricID = "disk/weighted_io"
 	DiskAvgQueueLenID       MetricID = "disk/avg_queue_len"

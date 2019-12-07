@@ -175,7 +175,7 @@ func TestGenerateStatusForMetrics(t *testing.T) {
 			},
 			expectedMetrics: []metrics.Int64MetricRepresentation{
 				{
-					Name:   "problem_counter",
+					Name:   "problem_count_total",
 					Labels: map[string]string{"reason": "problem reason foo"},
 					Value:  1,
 				},
@@ -196,7 +196,7 @@ func TestGenerateStatusForMetrics(t *testing.T) {
 			},
 			expectedMetrics: []metrics.Int64MetricRepresentation{
 				{
-					Name:   "problem_counter",
+					Name:   "problem_count_total",
 					Labels: map[string]string{"reason": "problem reason foo"},
 					Value:  2,
 				},
@@ -217,12 +217,12 @@ func TestGenerateStatusForMetrics(t *testing.T) {
 			},
 			expectedMetrics: []metrics.Int64MetricRepresentation{
 				{
-					Name:   "problem_counter",
+					Name:   "problem_count_total",
 					Labels: map[string]string{"reason": "problem reason foo"},
 					Value:  1,
 				},
 				{
-					Name:   "problem_counter",
+					Name:   "problem_count_total",
 					Labels: map[string]string{"reason": "problem reason bar"},
 					Value:  1,
 				},
@@ -245,12 +245,12 @@ func TestGenerateStatusForMetrics(t *testing.T) {
 			},
 			expectedMetrics: []metrics.Int64MetricRepresentation{
 				{
-					Name:   "problem_gauge",
+					Name:   "problem_state",
 					Labels: map[string]string{"type": "ConditionA", "reason": "problem reason foo"},
 					Value:  1,
 				},
 				{
-					Name:   "problem_counter",
+					Name:   "problem_count_total",
 					Labels: map[string]string{"reason": "problem reason foo"},
 					Value:  1,
 				},
@@ -278,12 +278,12 @@ func TestGenerateStatusForMetrics(t *testing.T) {
 			},
 			expectedMetrics: []metrics.Int64MetricRepresentation{
 				{
-					Name:   "problem_gauge",
+					Name:   "problem_state",
 					Labels: map[string]string{"type": "ConditionA", "reason": "problem reason foo"},
 					Value:  1,
 				},
 				{
-					Name:   "problem_counter",
+					Name:   "problem_count_total",
 					Labels: map[string]string{"reason": "problem reason foo"},
 					Value:  1,
 				},
@@ -311,22 +311,22 @@ func TestGenerateStatusForMetrics(t *testing.T) {
 			},
 			expectedMetrics: []metrics.Int64MetricRepresentation{
 				{
-					Name:   "problem_gauge",
+					Name:   "problem_state",
 					Labels: map[string]string{"type": "ConditionA", "reason": "problem reason foo"},
 					Value:  0,
 				},
 				{
-					Name:   "problem_gauge",
+					Name:   "problem_state",
 					Labels: map[string]string{"type": "ConditionA", "reason": "problem reason bar"},
 					Value:  1,
 				},
 				{
-					Name:   "problem_counter",
+					Name:   "problem_count_total",
 					Labels: map[string]string{"reason": "problem reason foo"},
 					Value:  1,
 				},
 				{
-					Name:   "problem_counter",
+					Name:   "problem_count_total",
 					Labels: map[string]string{"reason": "problem reason bar"},
 					Value:  1,
 				},
@@ -358,22 +358,22 @@ func TestGenerateStatusForMetrics(t *testing.T) {
 			},
 			expectedMetrics: []metrics.Int64MetricRepresentation{
 				{
-					Name:   "problem_gauge",
+					Name:   "problem_state",
 					Labels: map[string]string{"type": "ConditionA", "reason": "problem reason foo"},
 					Value:  1,
 				},
 				{
-					Name:   "problem_gauge",
+					Name:   "problem_state",
 					Labels: map[string]string{"type": "ConditionB", "reason": "problem reason bar"},
 					Value:  1,
 				},
 				{
-					Name:   "problem_counter",
+					Name:   "problem_count_total",
 					Labels: map[string]string{"reason": "problem reason foo"},
 					Value:  1,
 				},
 				{
-					Name:   "problem_counter",
+					Name:   "problem_count_total",
 					Labels: map[string]string{"reason": "problem reason bar"},
 					Value:  1,
 				},
@@ -427,7 +427,7 @@ func TestInitializeProblemMetricsOrDie(t *testing.T) {
 			},
 			expectedMetrics: []metrics.Int64MetricRepresentation{
 				{
-					Name:   "problem_counter",
+					Name:   "problem_count_total",
 					Labels: map[string]string{"reason": "problem reason foo"},
 					Value:  0,
 				},
@@ -444,12 +444,12 @@ func TestInitializeProblemMetricsOrDie(t *testing.T) {
 			},
 			expectedMetrics: []metrics.Int64MetricRepresentation{
 				{
-					Name:   "problem_gauge",
+					Name:   "problem_state",
 					Labels: map[string]string{"type": "ConditionA", "reason": "problem reason foo"},
 					Value:  0,
 				},
 				{
-					Name:   "problem_counter",
+					Name:   "problem_count_total",
 					Labels: map[string]string{"reason": "problem reason foo"},
 					Value:  0,
 				},
@@ -469,7 +469,7 @@ func TestInitializeProblemMetricsOrDie(t *testing.T) {
 			},
 			expectedMetrics: []metrics.Int64MetricRepresentation{
 				{
-					Name:   "problem_counter",
+					Name:   "problem_count_total",
 					Labels: map[string]string{"reason": "problem reason foo"},
 					Value:  0,
 				},
@@ -489,12 +489,12 @@ func TestInitializeProblemMetricsOrDie(t *testing.T) {
 			},
 			expectedMetrics: []metrics.Int64MetricRepresentation{
 				{
-					Name:   "problem_counter",
+					Name:   "problem_count_total",
 					Labels: map[string]string{"reason": "problem reason foo"},
 					Value:  0,
 				},
 				{
-					Name:   "problem_counter",
+					Name:   "problem_count_total",
 					Labels: map[string]string{"reason": "problem reason bar"},
 					Value:  0,
 				},
@@ -516,22 +516,22 @@ func TestInitializeProblemMetricsOrDie(t *testing.T) {
 			},
 			expectedMetrics: []metrics.Int64MetricRepresentation{
 				{
-					Name:   "problem_gauge",
+					Name:   "problem_state",
 					Labels: map[string]string{"type": "ConditionA", "reason": "problem reason foo"},
 					Value:  0,
 				},
 				{
-					Name:   "problem_gauge",
+					Name:   "problem_state",
 					Labels: map[string]string{"type": "ConditionA", "reason": "problem reason bar"},
 					Value:  0,
 				},
 				{
-					Name:   "problem_counter",
+					Name:   "problem_count_total",
 					Labels: map[string]string{"reason": "problem reason foo"},
 					Value:  0,
 				},
 				{
-					Name:   "problem_counter",
+					Name:   "problem_count_total",
 					Labels: map[string]string{"reason": "problem reason bar"},
 					Value:  0,
 				},
@@ -553,22 +553,22 @@ func TestInitializeProblemMetricsOrDie(t *testing.T) {
 			},
 			expectedMetrics: []metrics.Int64MetricRepresentation{
 				{
-					Name:   "problem_gauge",
+					Name:   "problem_state",
 					Labels: map[string]string{"type": "ConditionA", "reason": "problem reason foo"},
 					Value:  0,
 				},
 				{
-					Name:   "problem_gauge",
+					Name:   "problem_state",
 					Labels: map[string]string{"type": "ConditionB", "reason": "problem reason bar"},
 					Value:  0,
 				},
 				{
-					Name:   "problem_counter",
+					Name:   "problem_count_total",
 					Labels: map[string]string{"reason": "problem reason foo"},
 					Value:  0,
 				},
 				{
-					Name:   "problem_counter",
+					Name:   "problem_count_total",
 					Labels: map[string]string{"reason": "problem reason bar"},
 					Value:  0,
 				},
@@ -590,12 +590,12 @@ func TestInitializeProblemMetricsOrDie(t *testing.T) {
 			},
 			expectedMetrics: []metrics.Int64MetricRepresentation{
 				{
-					Name:   "problem_gauge",
+					Name:   "problem_state",
 					Labels: map[string]string{"type": "ConditionA", "reason": "problem reason foo"},
 					Value:  0,
 				},
 				{
-					Name:   "problem_counter",
+					Name:   "problem_count_total",
 					Labels: map[string]string{"reason": "problem reason foo"},
 					Value:  0,
 				},
@@ -639,37 +639,37 @@ func TestInitializeProblemMetricsOrDie(t *testing.T) {
 			},
 			expectedMetrics: []metrics.Int64MetricRepresentation{
 				{
-					Name:   "problem_gauge",
+					Name:   "problem_state",
 					Labels: map[string]string{"type": "ConditionA", "reason": "problem reason hello"},
 					Value:  0,
 				},
 				{
-					Name:   "problem_gauge",
+					Name:   "problem_state",
 					Labels: map[string]string{"type": "ConditionA", "reason": "problem reason foo"},
 					Value:  0,
 				},
 				{
-					Name:   "problem_gauge",
+					Name:   "problem_state",
 					Labels: map[string]string{"type": "ConditionB", "reason": "problem reason foo"},
 					Value:  0,
 				},
 				{
-					Name:   "problem_gauge",
+					Name:   "problem_state",
 					Labels: map[string]string{"type": "ConditionB", "reason": "problem reason bar"},
 					Value:  0,
 				},
 				{
-					Name:   "problem_counter",
+					Name:   "problem_count_total",
 					Labels: map[string]string{"reason": "problem reason hello"},
 					Value:  0,
 				},
 				{
-					Name:   "problem_counter",
+					Name:   "problem_count_total",
 					Labels: map[string]string{"reason": "problem reason foo"},
 					Value:  0,
 				},
 				{
-					Name:   "problem_counter",
+					Name:   "problem_count_total",
 					Labels: map[string]string{"reason": "problem reason bar"},
 					Value:  0,
 				},

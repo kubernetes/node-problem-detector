@@ -93,23 +93,23 @@ var _ = ginkgo.Describe("NPD should export Prometheus metrics.", func() {
 		})
 
 		ginkgo.It("NPD should not report any problem", func() {
-			err := npd.WaitForNPD(instance, []string{"problem_gauge"}, 120)
+			err := npd.WaitForNPD(instance, []string{"problem_state"}, 120)
 			Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("Expect NPD to become ready in 120s, but hit error: %v", err))
 
 			assertMetricValueInBound(instance,
-				"problem_gauge", map[string]string{"reason": "DockerHung", "type": "KernelDeadlock"},
+				"problem_state", map[string]string{"reason": "DockerHung", "type": "KernelDeadlock"},
 				0.0, 0.0)
 			assertMetricValueInBound(instance,
-				"problem_counter", map[string]string{"reason": "DockerHung"},
+				"problem_count_total", map[string]string{"reason": "DockerHung"},
 				0.0, 0.0)
 			assertMetricValueInBound(instance,
-				"problem_counter", map[string]string{"reason": "FilesystemIsReadOnly"},
+				"problem_count_total", map[string]string{"reason": "FilesystemIsReadOnly"},
 				0.0, 0.0)
 			assertMetricValueInBound(instance,
-				"problem_counter", map[string]string{"reason": "KernelOops"},
+				"problem_count_total", map[string]string{"reason": "KernelOops"},
 				0.0, 0.0)
 			assertMetricValueInBound(instance,
-				"problem_counter", map[string]string{"reason": "OOMKilling"},
+				"problem_count_total", map[string]string{"reason": "OOMKilling"},
 				0.0, 0.0)
 		})
 	})
@@ -117,19 +117,19 @@ var _ = ginkgo.Describe("NPD should export Prometheus metrics.", func() {
 	ginkgo.Context("When ext4 filesystem error happens", func() {
 
 		ginkgo.BeforeEach(func() {
-			err := npd.WaitForNPD(instance, []string{"problem_gauge"}, 120)
+			err := npd.WaitForNPD(instance, []string{"problem_state"}, 120)
 			Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("Expect NPD to become ready in 120s, but hit error: %v", err))
 			// This will trigger a ext4 error on the boot disk, causing the boot disk mounted as read-only and systemd-journald crashing.
 			instance.RunCommandOrFail("sudo /home/kubernetes/bin/problem-maker --problem Ext4FilesystemError")
 		})
 
-		ginkgo.It("NPD should update problem_counter{reason:Ext4Error} and problem_gauge{type:ReadonlyFilesystem}", func() {
+		ginkgo.It("NPD should update problem_count_total{reason:Ext4Error} and problem_state{type:ReadonlyFilesystem}", func() {
 			time.Sleep(5 * time.Second)
 			assertMetricValueInBound(instance,
-				"problem_counter", map[string]string{"reason": "Ext4Error"},
+				"problem_count_total", map[string]string{"reason": "Ext4Error"},
 				1.0, 2.0)
 			assertMetricValueInBound(instance,
-				"problem_gauge", map[string]string{"reason": "FilesystemIsReadOnly", "type": "ReadonlyFilesystem"},
+				"problem_state", map[string]string{"reason": "FilesystemIsReadOnly", "type": "ReadonlyFilesystem"},
 				1.0, 1.0)
 		})
 
@@ -143,25 +143,25 @@ var _ = ginkgo.Describe("NPD should export Prometheus metrics.", func() {
 	ginkgo.Context("When OOM kills and docker hung happen", func() {
 
 		ginkgo.BeforeEach(func() {
-			err := npd.WaitForNPD(instance, []string{"problem_gauge"}, 120)
+			err := npd.WaitForNPD(instance, []string{"problem_state"}, 120)
 			Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("Expect NPD to become ready in 120s, but hit error: %v", err))
 			instance.RunCommandOrFail("sudo /home/kubernetes/bin/problem-maker --problem OOMKill")
 			instance.RunCommandOrFail("sudo /home/kubernetes/bin/problem-maker --problem DockerHung")
 		})
 
-		ginkgo.It("NPD should update problem_counter and problem_gauge", func() {
+		ginkgo.It("NPD should update problem_count_total and problem_state", func() {
 			time.Sleep(5 * time.Second)
 			assertMetricValueInBound(instance,
-				"problem_counter", map[string]string{"reason": "DockerHung"},
+				"problem_count_total", map[string]string{"reason": "DockerHung"},
 				1.0, 1.0)
 			assertMetricValueInBound(instance,
-				"problem_counter", map[string]string{"reason": "TaskHung"},
+				"problem_count_total", map[string]string{"reason": "TaskHung"},
 				1.0, 1.0)
 			assertMetricValueInBound(instance,
-				"problem_gauge", map[string]string{"reason": "DockerHung", "type": "KernelDeadlock"},
+				"problem_state", map[string]string{"reason": "DockerHung", "type": "KernelDeadlock"},
 				1.0, 1.0)
 			assertMetricValueInBound(instance,
-				"problem_counter", map[string]string{"reason": "OOMKilling"},
+				"problem_count_total", map[string]string{"reason": "OOMKilling"},
 				1.0, 1.0)
 		})
 	})
