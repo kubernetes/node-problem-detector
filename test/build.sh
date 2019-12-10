@@ -43,7 +43,7 @@ function print-help() {
   echo "  pr             Build node-problem-detector for presubmit jobs and push to staging. Flag -p is required."
   echo "  ci             Build node-problem-detector for CI jobs and push to staging."
   echo "  get-ci-env     Download environment variable file from staging for CI job."
-  echo "  install-lib    Install the libraries needed."
+  echo "  install-lib    Install the required libraries and tools for presubmit and CI jobs."
   echo
   echo "Examples:"
   echo "  build.sh help"
@@ -66,6 +66,9 @@ function get-version() {
 function install-lib() {
   apt-get update
   apt-get install -y libsystemd-dev
+  # Turn off go modules here, because we are not trying to install
+  # ginkgo library/module. We are trying to install the ginkgo executable.
+  GO111MODULE=off go get -v github.com/onsi/ginkgo/ginkgo
 }
 
 function write-env-file() {
