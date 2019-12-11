@@ -109,12 +109,16 @@ func (dc *diskCollector) collect() {
 
 	for deviceName, ioCountersStat := range ioCountersStats {
 		// Calculate average IO queue length since last measurement.
-		lastIOTime := dc.historyIOTime[deviceName]
+		lastIOTime, historyExist := dc.historyIOTime[deviceName]
 		lastWeightedIO := dc.historyWeightedIO[deviceName]
 
 		dc.historyIOTime[deviceName] = ioCountersStat.IoTime
 		dc.historyWeightedIO[deviceName] = ioCountersStat.WeightedIO
 
+		if !historyExist {
+			// Ignore first collected stats.
+			return
+		}
 		avgQueueLen := float64(0.0)
 		if lastIOTime != ioCountersStat.IoTime {
 			avgQueueLen = float64(ioCountersStat.WeightedIO-lastWeightedIO) / float64(ioCountersStat.IoTime-lastIOTime)
