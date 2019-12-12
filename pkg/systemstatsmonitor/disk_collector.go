@@ -115,15 +115,6 @@ func (dc *diskCollector) collect() {
 		dc.historyIOTime[deviceName] = ioCountersStat.IoTime
 		dc.historyWeightedIO[deviceName] = ioCountersStat.WeightedIO
 
-		if !historyExist {
-			// Ignore first collected stats.
-			return
-		}
-		avgQueueLen := float64(0.0)
-		if lastIOTime != ioCountersStat.IoTime {
-			avgQueueLen = float64(ioCountersStat.WeightedIO-lastWeightedIO) / float64(ioCountersStat.IoTime-lastIOTime)
-		}
-
 		// Attach label {"device_name": deviceName} to the metrics.
 		tags := map[string]string{deviceNameLabel: deviceName}
 		if dc.mIOTime != nil {
@@ -132,8 +123,14 @@ func (dc *diskCollector) collect() {
 		if dc.mWeightedIO != nil {
 			dc.mWeightedIO.Record(tags, int64(ioCountersStat.WeightedIO-lastWeightedIO))
 		}
-		if dc.mAvgQueueLen != nil {
-			dc.mAvgQueueLen.Record(tags, avgQueueLen)
+		if historyExist {
+			avgQueueLen := float64(0.0)
+			if lastIOTime != ioCountersStat.IoTime {
+				avgQueueLen = float64(ioCountersStat.WeightedIO-lastWeightedIO) / float64(ioCountersStat.IoTime-lastIOTime)
+			}
+			if dc.mAvgQueueLen != nil {
+				dc.mAvgQueueLen.Record(tags, avgQueueLen)
+			}
 		}
 	}
 }
