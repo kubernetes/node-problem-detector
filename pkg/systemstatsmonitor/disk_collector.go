@@ -109,16 +109,11 @@ func (dc *diskCollector) collect() {
 
 	for deviceName, ioCountersStat := range ioCountersStats {
 		// Calculate average IO queue length since last measurement.
-		lastIOTime := dc.historyIOTime[deviceName]
+		lastIOTime, historyExist := dc.historyIOTime[deviceName]
 		lastWeightedIO := dc.historyWeightedIO[deviceName]
 
 		dc.historyIOTime[deviceName] = ioCountersStat.IoTime
 		dc.historyWeightedIO[deviceName] = ioCountersStat.WeightedIO
-
-		avgQueueLen := float64(0.0)
-		if lastIOTime != ioCountersStat.IoTime {
-			avgQueueLen = float64(ioCountersStat.WeightedIO-lastWeightedIO) / float64(ioCountersStat.IoTime-lastIOTime)
-		}
 
 		// Attach label {"device_name": deviceName} to the metrics.
 		tags := map[string]string{deviceNameLabel: deviceName}
@@ -128,8 +123,14 @@ func (dc *diskCollector) collect() {
 		if dc.mWeightedIO != nil {
 			dc.mWeightedIO.Record(tags, int64(ioCountersStat.WeightedIO-lastWeightedIO))
 		}
-		if dc.mAvgQueueLen != nil {
-			dc.mAvgQueueLen.Record(tags, avgQueueLen)
+		if historyExist {
+			avgQueueLen := float64(0.0)
+			if lastIOTime != ioCountersStat.IoTime {
+				avgQueueLen = float64(ioCountersStat.WeightedIO-lastWeightedIO) / float64(ioCountersStat.IoTime-lastIOTime)
+			}
+			if dc.mAvgQueueLen != nil {
+				dc.mAvgQueueLen.Record(tags, avgQueueLen)
+			}
 		}
 	}
 }
