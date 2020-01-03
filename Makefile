@@ -125,7 +125,7 @@ test: vet fmt
 	GO111MODULE=on go test -mod vendor -timeout=1m -v -race -short -tags "$(BUILD_TAGS)" ./...
 
 e2e-test: vet fmt build-tar
-	GO111MODULE=on ginkgo -nodes=$(PARALLEL) -mod vendor -timeout=10m -v -tags "$(BUILD_TAGS)" \
+	GO111MODULE=on ginkgo -nodes=$(PARALLEL) -mod vendor -timeout=10m -v -tags "$(BUILD_TAGS)" -stream \
 	./test/e2e/metriconly/... -- \
 	-project=$(PROJECT) -zone=$(ZONE) \
 	-image=$(VM_IMAGE) -image-family=$(IMAGE_FAMILY) -image-project=$(IMAGE_PROJECT) \
