@@ -40,6 +40,7 @@ type diskCollector struct {
 
 	historyIOTime     map[string]uint64
 	historyWeightedIO map[string]uint64
+	lastSampleTime    time.Time
 }
 
 func NewDiskCollectorOrDie(diskConfig *ssmtypes.DiskStatsConfig) *diskCollector {
@@ -52,7 +53,7 @@ func NewDiskCollectorOrDie(diskConfig *ssmtypes.DiskStatsConfig) *diskCollector 
 		metrics.DiskIOTimeID,
 		diskConfig.MetricsConfigs[string(metrics.DiskIOTimeID)].DisplayName,
 		"The IO time spent on the disk",
-		"second",
+		"ms",
 		metrics.Sum,
 		[]string{deviceNameLabel})
 	if err != nil {
@@ -64,7 +65,7 @@ func NewDiskCollectorOrDie(diskConfig *ssmtypes.DiskStatsConfig) *diskCollector 
 		metrics.DiskWeightedIOID,
 		diskConfig.MetricsConfigs[string(metrics.DiskWeightedIOID)].DisplayName,
 		"The weighted IO on the disk",
-		"second",
+		"ms",
 		metrics.Sum,
 		[]string{deviceNameLabel})
 	if err != nil {
@@ -75,7 +76,7 @@ func NewDiskCollectorOrDie(diskConfig *ssmtypes.DiskStatsConfig) *diskCollector 
 		metrics.DiskAvgQueueLenID,
 		diskConfig.MetricsConfigs[string(metrics.DiskAvgQueueLenID)].DisplayName,
 		"The average queue length on the disk",
-		"second",
+		"1",
 		metrics.LastValue,
 		[]string{deviceNameLabel})
 	if err != nil {
@@ -107,13 +108,17 @@ func (dc *diskCollector) collect() {
 		return
 	}
 
+	sampleTime := time.Now()
+
 	for deviceName, ioCountersStat := range ioCountersStats {
 		// Calculate average IO queue length since last measurement.
 		lastIOTime, historyExist := dc.historyIOTime[deviceName]
 		lastWeightedIO := dc.historyWeightedIO[deviceName]
+		lastSampleTime := dc.lastSampleTime
 
 		dc.historyIOTime[deviceName] = ioCountersStat.IoTime
 		dc.historyWeightedIO[deviceName] = ioCountersStat.WeightedIO
+		dc.lastSampleTime = sampleTime
 
 		// Attach label {"device_name": deviceName} to the metrics.
 		tags := map[string]string{deviceNameLabel: deviceName}
@@ -125,8 +130,9 @@ func (dc *diskCollector) collect() {
 		}
 		if historyExist {
 			avgQueueLen := float64(0.0)
-			if lastIOTime != ioCountersStat.IoTime {
-				avgQueueLen = float64(ioCountersStat.WeightedIO-lastWeightedIO) / float64(ioCountersStat.IoTime-lastIOTime)
+			if lastWeightedIO != ioCountersStat.WeightedIO {
+				diffSampleTimeMs := sampleTime.Sub(lastSampleTime).Seconds() * 1000
+				avgQueueLen = float64(ioCountersStat.WeightedIO-lastWeightedIO) / diffSampleTimeMs
 			}
 			if dc.mAvgQueueLen != nil {
 				dc.mAvgQueueLen.Record(tags, avgQueueLen)
