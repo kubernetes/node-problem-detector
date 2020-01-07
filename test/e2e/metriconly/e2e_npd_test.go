@@ -25,6 +25,7 @@ import (
 	"testing"
 	"time"
 
+	"k8s.io/node-problem-detector/pkg/util/tomb"
 	"k8s.io/node-problem-detector/test/e2e/lib/gce"
 	"k8s.io/test-infra/boskos/client"
 
@@ -54,6 +55,16 @@ var boskosWaitDuration = flag.Duration("boskos-wait-duration", 2*time.Minute,
 
 var computeService *compute.Service
 
+// boskosClient helps renting project from Boskos, and is only initialized on Ginkgo node 1.
+var boskosClient *client.Client
+
+// boskosRenewingTomb stops the goroutine keep renewing the Boskos resources.
+var boskosRenewingTomb *tomb.Tomb
+
+// SynchronizedBeforeSuite and SynchronizedAfterSuite help manages singleton resource (a Boskos project) across Ginkgo nodes.
+var _ = ginkgo.SynchronizedBeforeSuite(rentBoskosProjectIfNeededOnNode1, acceptBoskosProjectIfNeededFromNode1)
+var _ = ginkgo.SynchronizedAfterSuite(func() {}, releaseBoskosResourcesOnNode1)
+
 func TestNPD(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping test in short mode.")
@@ -63,13 +74,6 @@ func TestNPD(t *testing.T) {
 	computeService, err = gce.GetComputeClient()
 	if err != nil {
 		panic(fmt.Sprintf("Unable to create gcloud compute service using defaults. Make sure you are authenticated. %v", err))
-	}
-
-	if *project == "" {
-		boskosClient := client.NewClient(*jobName, *boskosServerURL)
-		*project = acquireProjectOrDie(boskosClient)
-
-		defer releaseProjectOrDie(boskosClient)
 	}
 
 	if *artifactsDir != "" {
@@ -84,30 +88,72 @@ func TestNPD(t *testing.T) {
 	ginkgo.RunSpecsWithDefaultAndCustomReporters(t, "NPD Metric-only Suite", []ginkgo.Reporter{junitReporter})
 }
 
-func acquireProjectOrDie(boskosClient *client.Client) string {
+// rentBoskosProjectIfNeededOnNode1 rents a GCP project from Boskos if no GCP project is specified.
+//
+// rentBoskosProjectIfNeededOnNode1 returns a byte slice containing the project name.
+// rentBoskosProjectIfNeededOnNode1 also initializes boskosClient if necessary.
+// When the tests run in parallel mode in Ginkgo, this rentBoskosProjectIfNeededOnNode1 runs only on
+// Ginkgo node 1. The output should be shared with all other Gingko nodes so that they all use the same
+// GCP project.
+func rentBoskosProjectIfNeededOnNode1() []byte {
+	if *project != "" {
+		return []byte{}
+	}
+
 	fmt.Printf("Renting project from Boskos\n")
+	boskosClient = client.NewClient(*jobName, *boskosServerURL)
+	boskosRenewingTomb = tomb.NewTomb()
+
 	ctx, cancel := context.WithTimeout(context.Background(), *boskosWaitDuration)
 	defer cancel()
 	p, err := boskosClient.AcquireWait(ctx, *boskosProjectType, "free", "busy")
 	Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("Unable to rent project from Boskos: %v\n", err))
+	fmt.Printf("Rented project %q from Boskos\n", p.Name)
 
-	fmt.Printf("Rented project %s from Boskos", p.Name)
+	go renewBoskosProject(boskosClient, p.Name, boskosRenewingTomb)
 
-	go func(boskosClient *client.Client, projectName string) {
-		for range time.Tick(5 * time.Minute) {
-			if err := boskosClient.UpdateOne(projectName, "busy", nil); err != nil {
-				fmt.Printf("Failed to update status for project %s with Boskos: %v\n", projectName, err)
-			}
-		}
-	}(boskosClient, p.Name)
-
-	return p.Name
+	return []byte(p.Name)
 }
 
-func releaseProjectOrDie(boskosClient *client.Client) {
+// acceptBoskosProjectIfNeededFromNode1 accepts a GCP project rented from Boskos by Ginkgo node 1.
+//
+// acceptBoskosProjectIfNeededFromNode1 takes the output of rentBoskosProjectIfNeededOnNode1.
+// When the tests run in parallel mode in Ginkgo, this function runs on all Ginkgo nodes.
+func acceptBoskosProjectIfNeededFromNode1(data []byte) {
+	if *project != "" {
+		return
+	}
+
+	boskosProject := string(data)
+	fmt.Printf("Received Boskos project %q from Ginkgo node 1.\n", boskosProject)
+	*project = boskosProject
+}
+
+func renewBoskosProject(boskosClient *client.Client, projectName string, boskosRenewingTomb *tomb.Tomb) {
+	defer boskosRenewingTomb.Done()
+	for {
+		select {
+		case <-time.Tick(5 * time.Minute):
+			fmt.Printf("Renewing boskosProject %q\n", projectName)
+			if err := boskosClient.UpdateOne(projectName, "busy", nil); err != nil {
+				fmt.Printf("Failed to update status for project %q with Boskos: %v\n", projectName, err)
+			}
+		case <-boskosRenewingTomb.Stopping():
+			return
+		}
+	}
+}
+
+// releaseBoskosResourcesOnNode1 releases all rented Boskos resources if there is any.
+func releaseBoskosResourcesOnNode1() {
+	if boskosClient == nil {
+		return
+	}
+	boskosRenewingTomb.Stop()
 	if !boskosClient.HasResource() {
 		return
 	}
+	fmt.Printf("Releasing all Boskos resources.\n")
 	err := boskosClient.ReleaseAll("dirty")
 	Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("Failed to release project to Boskos: %v", err))
 }
