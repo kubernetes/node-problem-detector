@@ -47,12 +47,24 @@ func init() {
 const exporterName = "stackdriver"
 
 var NPDMetricToSDMetric = map[metrics.MetricID]string{
-	metrics.HostUptimeID:      "compute.googleapis.com/guest/system/uptime",
-	metrics.ProblemCounterID:  "compute.googleapis.com/guest/system/problem_count",
-	metrics.ProblemGaugeID:    "compute.googleapis.com/guest/system/problem_state",
-	metrics.DiskAvgQueueLenID: "compute.googleapis.com/guest/disk/queue_length",
-	metrics.DiskIOTimeID:      "compute.googleapis.com/guest/disk/io_time",
-	metrics.DiskWeightedIOID:  "compute.googleapis.com/guest/disk/weighted_io_time",
+	metrics.CPURunnableTaskCountID:  "compute.googleapis.com/guest/cpu/runnable_task_count",
+	metrics.CPUUsageTimeID:          "compute.googleapis.com/guest/cpu/usage_time",
+	metrics.DiskAvgQueueLenID:       "compute.googleapis.com/guest/disk/queue_length",
+	metrics.DiskBytesUsedID:         "compute.googleapis.com/guest/disk/bytes_used",
+	metrics.DiskIOTimeID:            "compute.googleapis.com/guest/disk/io_time",
+	metrics.DiskMergedOpsCountID:    "compute.googleapis.com/guest/disk/merged_operation_count",
+	metrics.DiskOpsBytesID:          "compute.googleapis.com/guest/disk/operation_bytes_count",
+	metrics.DiskOpsCountID:          "compute.googleapis.com/guest/disk/operation_count",
+	metrics.DiskOpsTimeID:           "compute.googleapis.com/guest/disk/operation_time",
+	metrics.DiskWeightedIOID:        "compute.googleapis.com/guest/disk/weighted_io_time",
+	metrics.HostUptimeID:            "compute.googleapis.com/guest/system/uptime",
+	metrics.MemoryAnonymousUsedID:   "compute.googleapis.com/guest/memory/anonymous_used",
+	metrics.MemoryBytesUsedID:       "compute.googleapis.com/guest/memory/bytes_used",
+	metrics.MemoryDirtyUsedID:       "compute.googleapis.com/guest/memory/dirty_used",
+	metrics.MemoryPageCacheUsedID:   "compute.googleapis.com/guest/memory/page_cache_used",
+	metrics.MemoryUnevictableUsedID: "compute.googleapis.com/guest/memory/unevictable_used",
+	metrics.ProblemCounterID:        "compute.googleapis.com/guest/system/problem_count",
+	metrics.ProblemGaugeID:          "compute.googleapis.com/guest/system/problem_state",
 }
 
 func getMetricTypeConversionFunction(customMetricPrefix string) func(*view.View) string {

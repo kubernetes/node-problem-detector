@@ -30,6 +30,10 @@ type MetricConfig struct {
 	DisplayName string `json:"displayName"`
 }
 
+type CPUStatsConfig struct {
+	MetricsConfigs map[string]MetricConfig `json:"metricsConfigs"`
+}
+
 type DiskStatsConfig struct {
 	MetricsConfigs        map[string]MetricConfig `json:"metricsConfigs"`
 	IncludeRootBlk        bool                    `json:"includeRootBlk"`
@@ -42,11 +46,17 @@ type HostStatsConfig struct {
 	MetricsConfigs map[string]MetricConfig `json:"metricsConfigs"`
 }
 
+type MemoryStatsConfig struct {
+	MetricsConfigs map[string]MetricConfig `json:"metricsConfigs"`
+}
+
 type SystemStatsConfig struct {
-	DiskConfig           DiskStatsConfig `json:"disk"`
-	HostConfig           HostStatsConfig `json:"host"`
-	InvokeIntervalString string          `json:"invokeInterval"`
-	InvokeInterval       time.Duration   `json:"-"`
+	CPUConfig            CPUStatsConfig    `json:"cpu"`
+	DiskConfig           DiskStatsConfig   `json:"disk"`
+	HostConfig           HostStatsConfig   `json:"host"`
+	MemoryConfig         MemoryStatsConfig `json:"memory"`
+	InvokeIntervalString string            `json:"invokeInterval"`
+	InvokeInterval       time.Duration     `json:"-"`
 }
 
 // ApplyConfiguration applies default configurations.
