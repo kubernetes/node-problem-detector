@@ -179,16 +179,15 @@ github.com/prometheus/common/model
 github.com/prometheus/procfs
 github.com/prometheus/procfs/internal/fs
 github.com/prometheus/procfs/internal/util
-# github.com/shirou/gopsutil v2.18.12+incompatible
+# github.com/shirou/gopsutil v2.19.12+incompatible
+github.com/shirou/gopsutil/cpu
 github.com/shirou/gopsutil/disk
 github.com/shirou/gopsutil/host
+github.com/shirou/gopsutil/load
+github.com/shirou/gopsutil/mem
 github.com/shirou/gopsutil/internal/common
 github.com/shirou/gopsutil/process
-github.com/shirou/gopsutil/cpu
-github.com/shirou/gopsutil/mem
 github.com/shirou/gopsutil/net
-# github.com/shirou/w32 v0.0.0-20160930032740-bb4de0191aa4
-github.com/shirou/w32
 # github.com/sigma/go-inotify v0.0.0-20181102212354-c87b6cf5033d
 github.com/sigma/go-inotify
 # github.com/sirupsen/logrus v1.4.2
@@ -230,13 +229,13 @@ golang.org/x/crypto/internal/subtle
 # golang.org/x/net v0.0.0-20190724013045-ca1201d0de80
 golang.org/x/net/http2
 golang.org/x/net/trace
+golang.org/x/net/html/charset
 golang.org/x/net/context/ctxhttp
 golang.org/x/net/context
 golang.org/x/net/http/httpguts
 golang.org/x/net/http2/hpack
 golang.org/x/net/idna
 golang.org/x/net/internal/timeseries
-golang.org/x/net/html/charset
 golang.org/x/net/html
 golang.org/x/net/html/atom
 # golang.org/x/oauth2 v0.0.0-20190604053449-0f29369cfe45
@@ -252,13 +251,13 @@ golang.org/x/sys/unix
 golang.org/x/sys/windows
 golang.org/x/sys/cpu
 # golang.org/x/text v0.3.2
-golang.org/x/text/secure/bidirule
-golang.org/x/text/unicode/bidi
-golang.org/x/text/unicode/norm
 golang.org/x/text/encoding
 golang.org/x/text/encoding/charmap
 golang.org/x/text/encoding/htmlindex
 golang.org/x/text/transform
+golang.org/x/text/secure/bidirule
+golang.org/x/text/unicode/bidi
+golang.org/x/text/unicode/norm
 golang.org/x/text/encoding/internal/identifier
 golang.org/x/text/encoding/internal
 golang.org/x/text/encoding/japanese
