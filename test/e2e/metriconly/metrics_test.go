@@ -68,15 +68,28 @@ var _ = ginkgo.Describe("NPD should export Prometheus metrics.", func() {
 
 	ginkgo.Context("On a clean node", func() {
 
-		ginkgo.It("NPD should export host_uptime metric", func() {
+		ginkgo.It("NPD should export cpu/disk/host/memory metric", func() {
 			err := npd.WaitForNPD(instance, []string{"host_uptime"}, 120)
 			Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("Expect NPD to become ready in 120s, but hit error: %v", err))
 
 			gotMetrics, err := npd.FetchNPDMetrics(instance)
 			Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("Error fetching NPD metrics: %v", err))
 
-			_, err = metrics.GetFloat64Metric(gotMetrics, "host_uptime", map[string]string{}, false)
-			Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("Failed to find uptime metric: %v.\nHere is all NPD exported metrics: %v", err, gotMetrics))
+			assertMetricExist(gotMetrics, "cpu_runnable_task_count", map[string]string{}, true)
+			assertMetricExist(gotMetrics, "cpu_usage_time", map[string]string{}, false)
+			assertMetricExist(gotMetrics, "disk_operation_count", map[string]string{}, false)
+			assertMetricExist(gotMetrics, "disk_merged_operation_count", map[string]string{}, false)
+			assertMetricExist(gotMetrics, "disk_operation_bytes_count", map[string]string{}, false)
+			assertMetricExist(gotMetrics, "disk_operation_time", map[string]string{}, false)
+			assertMetricExist(gotMetrics, "disk_bytes_used", map[string]string{}, false)
+			assertMetricExist(gotMetrics, "disk_io_time", map[string]string{}, false)
+			assertMetricExist(gotMetrics, "disk_weighted_io", map[string]string{}, false)
+			assertMetricExist(gotMetrics, "memory_bytes_used", map[string]string{}, false)
+			assertMetricExist(gotMetrics, "memory_anonymous_used", map[string]string{}, false)
+			assertMetricExist(gotMetrics, "memory_page_cache_used", map[string]string{}, false)
+			assertMetricExist(gotMetrics, "memory_unevictable_used", map[string]string{}, true)
+			assertMetricExist(gotMetrics, "memory_dirty_used", map[string]string{}, false)
+			assertMetricExist(gotMetrics, "host_uptime", map[string]string{}, false)
 		})
 
 		ginkgo.It("NPD should not report any problem", func() {
@@ -179,6 +192,11 @@ var _ = ginkgo.Describe("NPD should export Prometheus metrics.", func() {
 		}
 	})
 })
+
+func assertMetricExist(metricList []metrics.Float64MetricRepresentation, metricName string, labels map[string]string, strictLabelMatching bool) {
+	_, err := metrics.GetFloat64Metric(metricList, metricName, labels, strictLabelMatching)
+	Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("Failed to find metric %q: %v.\nHere is all NPD exported metrics: %v", metricName, err, metricList))
+}
 
 func assertMetricValueInBound(instance gce.Instance, metricName string, labels map[string]string, lowBound float64, highBound float64) {
 	value, err := npd.FetchNPDMetric(instance, metricName, labels)
