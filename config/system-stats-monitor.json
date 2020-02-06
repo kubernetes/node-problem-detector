@@ -1,4 +1,14 @@
 {
+	"cpu": {
+		"metricsConfigs": {
+			"cpu/runnable_task_count": {
+				"displayName": "cpu/runnable_task_count"
+			},
+			"cpu/usage_time": {
+				"displayName": "cpu/usage_time"
+			}
+		}
+	},
 	"disk": {
 		"metricsConfigs": {
 			"disk/io_time": {
@@ -9,6 +19,21 @@
 			},
 			"disk/avg_queue_len": {
 				"displayName": "disk/avg_queue_len"
+			},
+			"disk/operation_count": {
+				"displayName": "disk/operation_count"
+			},
+			"disk/merged_operation_count": {
+				"displayName": "disk/merged_operation_count"
+			},
+			"disk/operation_bytes_count": {
+				"displayName": "disk/operation_bytes_count"
+			},
+			"disk/operation_time": {
+				"displayName": "disk/operation_time"
+			},
+			"disk/bytes_used": {
+				"displayName": "disk/bytes_used"
 			}
 		},
 		"includeRootBlk": true,
@@ -19,6 +44,25 @@
 		"metricsConfigs": {
 			"host/uptime": {
 				"displayName": "host/uptime"
+			}
+		}
+	},
+	"memory": {
+		"metricsConfigs": {
+			"memory/bytes_used": {
+				"displayName": "memory/bytes_used"
+			},
+			"memory/anonymous_used": {
+				"displayName": "memory/anonymous_used"
+			},
+			"memory/page_cache_used": {
+				"displayName": "memory/page_cache_used"
+			},
+			"memory/unevictable_used": {
+				"displayName": "memory/unevictable_used"
+			},
+			"memory/dirty_used": {
+				"displayName": "memory/dirty_used"
 			}
 		}
 	},

@@ -20,12 +20,24 @@ import (
 )
 
 const (
-	ProblemCounterID  MetricID = "problem_counter"
-	ProblemGaugeID    MetricID = "problem_gauge"
-	DiskIOTimeID      MetricID = "disk/io_time"
-	DiskWeightedIOID  MetricID = "disk/weighted_io"
-	DiskAvgQueueLenID MetricID = "disk/avg_queue_len"
-	HostUptimeID      MetricID = "host/uptime"
+	CPURunnableTaskCountID  MetricID = "cpu/runnable_task_count"
+	CPUUsageTimeID          MetricID = "cpu/usage_time"
+	ProblemCounterID        MetricID = "problem_counter"
+	ProblemGaugeID          MetricID = "problem_gauge"
+	DiskIOTimeID            MetricID = "disk/io_time"
+	DiskWeightedIOID        MetricID = "disk/weighted_io"
+	DiskAvgQueueLenID       MetricID = "disk/avg_queue_len"
+	DiskOpsCountID          MetricID = "disk/operation_count"
+	DiskMergedOpsCountID    MetricID = "disk/merged_operation_count"
+	DiskOpsBytesID          MetricID = "disk/operation_bytes_count"
+	DiskOpsTimeID           MetricID = "disk/operation_time"
+	DiskBytesUsedID         MetricID = "disk/bytes_used"
+	HostUptimeID            MetricID = "host/uptime"
+	MemoryBytesUsedID       MetricID = "memory/bytes_used"
+	MemoryAnonymousUsedID   MetricID = "memory/anonymous_used"
+	MemoryPageCacheUsedID   MetricID = "memory/page_cache_used"
+	MemoryUnevictableUsedID MetricID = "memory/unevictable_used"
+	MemoryDirtyUsedID       MetricID = "memory/dirty_used"
 )
 
 var MetricMap MetricMapping
