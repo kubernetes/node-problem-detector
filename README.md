@@ -267,7 +267,7 @@ See [NPD e2e test documentation](https://github.com/kubernetes/node-problem-dete
 
 ## Problem Maker
 
-[Problem maker](https://github.com/kubernetes/node-problem-detector/blob/master/test/e2e/problemmaker/README.md) is a program used in NPD e2e tests to generate/simulate node problems. It is ONLY indented to be used by NPD e2e tests. Please do NOT run it on your workstation, as it could cause real node problems.
+[Problem maker](https://github.com/kubernetes/node-problem-detector/blob/master/test/e2e/problemmaker/README.md) is a program used in NPD e2e tests to generate/simulate node problems. It is ONLY intended to be used by NPD e2e tests. Please do NOT run it on your workstation, as it could cause real node problems.
 
 # Docs
 
