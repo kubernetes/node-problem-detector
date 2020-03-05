@@ -26,6 +26,9 @@ VERSION?=$(shell if [ -d .git ]; then echo `git describe --tags --dirty`; else e
 # TAG is the tag of the container image, default to binary version.
 TAG?=$(VERSION)
 
+# GO points to the target go compiler, allowing cross-compilation.
+GO?=go
+
 # REGISTRY is the container registry to push into.
 REGISTRY?=staging-k8s.gcr.io
 
@@ -76,9 +79,9 @@ ifeq ($(ENABLE_JOURNALD), 1)
 endif
 
 vet:
-	GO111MODULE=on go list -mod vendor -tags "$(BUILD_TAGS)" ./... | \
+	GO111MODULE=on $(GO) list -mod vendor -tags "$(BUILD_TAGS)" ./... | \
 		grep -v "./vendor/*" | \
-		GO111MODULE=on xargs go vet -mod vendor -tags "$(BUILD_TAGS)"
+		GO111MODULE=on xargs $(GO) vet -mod vendor -tags "$(BUILD_TAGS)"
 
 fmt:
 	find . -type f -name "*.go" | grep -v "./vendor/*" | xargs gofmt -s -w -l
@@ -88,7 +91,7 @@ version:
 
 ./bin/log-counter: $(PKG_SOURCES)
 ifeq ($(ENABLE_JOURNALD), 1)
-	CGO_ENABLED=$(CGO_ENABLED) GOOS=linux GO111MODULE=on go build \
+	CGO_ENABLED=$(CGO_ENABLED) GOOS=linux GO111MODULE=on $(GO) build \
 		-mod vendor \
 		-o bin/log-counter \
 		-ldflags '-X $(PKG)/pkg/version.version=$(VERSION)' \
@@ -99,7 +102,7 @@ else
 endif
 
 ./bin/node-problem-detector: $(PKG_SOURCES)
-	CGO_ENABLED=$(CGO_ENABLED) GOOS=linux GO111MODULE=on go build \
+	CGO_ENABLED=$(CGO_ENABLED) GOOS=linux GO111MODULE=on $(GO) build \
 		-mod vendor \
 		-o bin/node-problem-detector \
 		-ldflags '-X $(PKG)/pkg/version.version=$(VERSION)' \
@@ -107,7 +110,7 @@ endif
 		./cmd/nodeproblemdetector
 
 ./test/bin/problem-maker: $(PKG_SOURCES)
-	CGO_ENABLED=$(CGO_ENABLED) GOOS=linux GO111MODULE=on go build \
+	CGO_ENABLED=$(CGO_ENABLED) GOOS=linux GO111MODULE=on $(GO) build \
 		-mod vendor \
 		-o test/bin/problem-maker \
 		-tags "$(BUILD_TAGS)" \
@@ -122,7 +125,7 @@ endif
 
 
 test: vet fmt
-	GO111MODULE=on go test -mod vendor -timeout=1m -v -race -short -tags "$(BUILD_TAGS)" ./...
+	GO111MODULE=on $(GO) test -mod vendor -timeout=1m -v -race -short -tags "$(BUILD_TAGS)" ./...
 
 e2e-test: vet fmt build-tar
 	GO111MODULE=on ginkgo -nodes=$(PARALLEL) -mod vendor -timeout=10m -v -tags "$(BUILD_TAGS)" -stream \
