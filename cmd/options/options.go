@@ -49,6 +49,8 @@ type NodeProblemDetectorOptions struct {
 	// k8sExporter options
 	// EnableK8sExporter is the flag determining whether to report to Kubernetes.
 	EnableK8sExporter bool
+	// EventNamespace is the namespace events are written to
+	EventNamespace string
 	// ApiServerOverride is the custom URI used to connect to Kubernetes ApiServer.
 	ApiServerOverride string
 	// APIServerWaitTimeout is the timeout on waiting for kube-apiserver to be
@@ -105,6 +107,7 @@ func (npdo *NodeProblemDetectorOptions) AddFlags(fs *pflag.FlagSet) {
 		[]string{}, "List of paths to custom plugin monitor config files, comma separated.")
 	fs.MarkDeprecated("custom-plugin-monitors", "replaced by --config.custom-plugin-monitor. NPD will panic if both --custom-plugin-monitors and --config.custom-plugin-monitor are set.")
 	fs.BoolVar(&npdo.EnableK8sExporter, "enable-k8s-exporter", true, "Enables reporting to Kubernetes API server.")
+	fs.StringVar(&npdo.EventNamespace, "event-namespace", "", "Namespace for recorded Kubernetes events.")
 	fs.StringVar(&npdo.ApiServerOverride, "apiserver-override",
 		"", "Custom URI used to connect to Kubernetes ApiServer. This is ignored if --enable-k8s-exporter is false.")
 	fs.DurationVar(&npdo.APIServerWaitTimeout, "apiserver-wait-timeout", time.Duration(5)*time.Minute, "The timeout on waiting for kube-apiserver to be ready. This is ignored if --enable-k8s-exporter is false.")

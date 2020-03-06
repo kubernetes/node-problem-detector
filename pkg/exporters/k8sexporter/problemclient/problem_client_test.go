@@ -42,7 +42,7 @@ func newFakeProblemClient() *nodeProblemClient {
 		// TODO(random-liu): Add test for SetConditions when we have good fake for *client.Client
 		clock:     &clock.FakeClock{},
 		recorders: make(map[string]record.EventRecorder),
-		nodeRef:   getNodeRef(testNode),
+		nodeRef:   getNodeRef("", testNode),
 	}
 }
 
