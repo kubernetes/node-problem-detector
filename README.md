@@ -248,6 +248,10 @@ Kubernetes cluster to a healthy state. The following remedy systems exist:
   to automatically terminate drained nodes. Refer to
   [this issue](https://github.com/kubernetes/node-problem-detector/issues/199)
   for an example production use case for Draino.
+* [**Descheduler**](https://github.com/kubernetes-sigs/descheduler) strategy RemovePodsViolatingNodeTaints
+  evicts pods violating NoSchedule taints on nodes. The k8s scheduler's TaintNodesByCondition feature must
+  be enabled. The [Cluster Autoscaler](https://github.com/kubernetes/autoscaler/tree/master/cluster-autoscaler)
+  can be used to automatically terminate drained nodes.
 
 # Testing
 
