@@ -168,6 +168,12 @@ func TestGetOSVersion(t *testing.T) {
 			expectErr:         false,
 		},
 		{
+			name:              "rhel",
+			fakeOSReleasePath: "testdata/os-release-rhel",
+			expectedOSVersion: "rhel 7.7 (Maipo)",
+			expectErr:         false,
+		},
+		{
 			name:              "Unknown",
 			fakeOSReleasePath: "testdata/os-release-unknown",
 			expectedOSVersion: "",
