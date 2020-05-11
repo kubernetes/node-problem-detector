@@ -113,6 +113,14 @@ endif
 		-tags "$(BUILD_TAGS)" \
 		./test/e2e/problemmaker/problem_maker.go
 
+./bin/health-checker: $(PKG_SOURCES)
+	CGO_ENABLED=$(CGO_ENABLED) GOOS=linux GO111MODULE=on go build \
+		-mod vendor \
+		-o bin/health-checker \
+		-ldflags '-X $(PKG)/pkg/version.version=$(VERSION)' \
+		-tags "$(BUILD_TAGS)" \
+		cmd/healthchecker/health_checker.go
+
 Dockerfile: Dockerfile.in
 	sed -e 's|@BASEIMAGE@|$(BASEIMAGE)|g' $< >$@
 ifneq ($(ENABLE_JOURNALD), 1)
@@ -134,12 +142,12 @@ e2e-test: vet fmt build-tar
 	-boskos-project-type=$(BOSKOS_PROJECT_TYPE) -job-name=$(JOB_NAME) \
 	-artifacts-dir=$(ARTIFACTS)
 
-build-binaries: ./bin/node-problem-detector ./bin/log-counter
+build-binaries: ./bin/node-problem-detector ./bin/log-counter ./bin/health-checker
 
 build-container: build-binaries Dockerfile
 	docker build -t $(IMAGE) .
 
-build-tar: ./bin/node-problem-detector ./bin/log-counter ./test/bin/problem-maker
+build-tar: ./bin/node-problem-detector ./bin/log-counter ./bin/health-checker ./test/bin/problem-maker
 	tar -zcvf $(TARBALL) bin/ config/ test/e2e-install.sh test/bin/problem-maker
 	sha1sum $(TARBALL)
 	md5sum $(TARBALL)
@@ -164,6 +172,7 @@ push-tar: build-tar
 push: push-container push-tar
 
 clean:
+	rm -f bin/health-checker
 	rm -f bin/log-counter
 	rm -f bin/node-problem-detector
 	rm -f test/bin/problem-maker

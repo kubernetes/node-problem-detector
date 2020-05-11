@@ -1,0 +1,33 @@
+{
+  "plugin": "custom",
+  "pluginConfig": {
+    "invoke_interval": "10s",
+    "timeout": "3m",
+    "max_output_length": 80,
+    "concurrency": 1
+  },
+  "source": "health-checker",
+  "metricsReporting": true,
+  "conditions": [
+    {
+      "type": "KubeletUnhealthy",
+      "reason": "KubeletIsHealthy",
+      "message": "kubelet on the node is functioning properly"
+    }
+  ],
+  "rules": [
+    {
+      "type": "permanent",
+      "condition": "KubeletUnhealthy",
+      "reason": "KubeletUnhealthy",
+      "path": "/home/kubernetes/bin/health-checker",
+      "args": [
+        "--component=kubelet",
+        "--enable-repair=false",
+        "--cooldown-time=1m",
+        "--health-check-timeout=10s"
+      ],
+      "timeout": "3m"
+    }
+  ]
+}
