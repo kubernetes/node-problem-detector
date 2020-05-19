@@ -286,11 +286,20 @@ func toConditionStatus(s cpmtypes.Status) types.ConditionStatus {
 func (c *customPluginMonitor) initializeStatus() {
 	// Initialize the default node conditions
 	c.conditions = initialConditions(c.config.DefaultConditions)
-	glog.Infof("Initialize condition generated: %+v", c.conditions)
+
+	// Initialize all conditions to their default state
+	initializedConditions := []types.Condition{}
+	for _, cond := range c.conditions {
+		if !cond.Uninitialized {
+			initializedConditions = append(initializedConditions, cond)
+		}
+	}
+	glog.Infof("Initialize condition generated: %+v", initializedConditions)
+
 	// Update the initial status
 	c.statusChan <- &types.Status{
 		Source:     c.config.Source,
-		Conditions: c.conditions,
+		Conditions: initializedConditions,
 	}
 }
 
