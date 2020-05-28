@@ -1,0 +1,33 @@
+{
+  "plugin": "custom",
+  "pluginConfig": {
+    "invoke_interval": "10s",
+    "timeout": "3m",
+    "max_output_length": 80,
+    "concurrency": 1
+  },
+  "source": "health-checker",
+  "metricsReporting": true,
+  "conditions": [
+    {
+      "type": "ContainerRuntimeUnhealthy",
+      "reason": "ContainerRuntimeIsHealthy",
+      "message": "Container runtime on the node is functioning properly"
+    }
+  ],
+  "rules": [
+    {
+      "type": "permanent",
+      "condition": "ContainerRuntimeUnhealthy",
+      "reason": "DockerUnhealthy",
+      "path": "/home/kubernetes/bin/health-checker",
+      "args": [
+        "--component=docker",
+        "--enable-repair=false",
+        "--cooldown-time=2m",
+        "--health-check-timeout=60s"
+      ],
+      "timeout": "3m"
+    }
+  ]
+}
