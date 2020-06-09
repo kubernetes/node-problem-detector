@@ -21,6 +21,7 @@ RUN clean-install util-linux libsystemd0 bash
 RUN test -h /etc/localtime && rm -f /etc/localtime && cp /usr/share/zoneinfo/UTC /etc/localtime || true
 
 ADD ./bin/node-problem-detector /node-problem-detector
+ADD ./bin/health-checker /home/kubernetes/bin/health-checker
 
 # Below command depends on ENABLE_JOURNAL=1.
 ADD ./bin/log-counter /home/kubernetes/bin/log-counter
