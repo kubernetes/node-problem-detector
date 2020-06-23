@@ -34,6 +34,7 @@ func TestIsValid(t *testing.T) {
 			name: "valid component",
 			hco: HealthCheckerOptions{
 				Component: types.KubeletComponent,
+				KubeletHealthzPath: types.DefaultKubeletHealthCheckEndpoint,
 			},
 			expectError: false,
 		},
@@ -41,6 +42,14 @@ func TestIsValid(t *testing.T) {
 			name: "invalid component",
 			hco: HealthCheckerOptions{
 				Component: "wrongComponent",
+			},
+			expectError: true,
+		},
+		{
+			name: "empty kubelet-healthz-path with kubelet",
+			hco: HealthCheckerOptions{
+				Component:          types.KubeletComponent,
+				KubeletHealthzPath: "",
 			},
 			expectError: true,
 		},

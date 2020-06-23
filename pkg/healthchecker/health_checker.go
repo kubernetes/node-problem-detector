@@ -99,7 +99,7 @@ func getHealthCheckFunc(hco *options.HealthCheckerOptions) func() bool {
 	case types.KubeletComponent:
 		return func() bool {
 			httpClient := http.Client{Timeout: hco.HealthCheckTimeout}
-			response, err := httpClient.Get(types.KubeletHealthCheckEndpoint)
+			response, err := httpClient.Get(hco.KubeletHealthzPath)
 			if err != nil || response.StatusCode != http.StatusOK {
 				return false
 			}

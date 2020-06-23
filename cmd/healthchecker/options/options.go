@@ -38,6 +38,7 @@ type HealthCheckerOptions struct {
 	EnableRepair       bool
 	CriCtlPath         string
 	CriSocketPath      string
+	KubeletHealthzPath string
 	CoolDownTime       time.Duration
 	HealthCheckTimeout time.Duration
 }
@@ -53,6 +54,8 @@ func (hco *HealthCheckerOptions) AddFlags(fs *pflag.FlagSet) {
 		"The path to the crictl binary. This is used to check health of cri component.")
 	fs.StringVar(&hco.CriSocketPath, "cri-socket-path", types.DefaultCriSocketPath,
 		"The path to the cri socket. Used with crictl to specify the socket path.")
+	fs.StringVar(&hco.KubeletHealthzPath, "kubelet-healthz-path", types.DefaultKubeletHealthCheckEndpoint,
+		"The path to the kubelet healthz endpoint. Used with kubelet health check.")
 	fs.DurationVar(&hco.CoolDownTime, "cooldown-time", types.DefaultCoolDownTime,
 		"The duration to wait for the service to be up before attempting repair.")
 	fs.DurationVar(&hco.HealthCheckTimeout, "health-check-timeout", types.DefaultHealthCheckTimeout,
@@ -69,6 +72,10 @@ func (hco *HealthCheckerOptions) IsValid() error {
 	// Make sure the systemd service is specified if repair is enabled.
 	if hco.EnableRepair && hco.SystemdService == "" {
 		return fmt.Errorf("systemd-service cannot be empty when repair is enabled")
+	}
+	// Make sure the kubelet healthz path is not empty for kubelet component.
+	if hco.Component == types.KubeletComponent && hco.KubeletHealthzPath == "" {
+		return fmt.Errorf("the kubelet-healthz-path cannot be empty for kubelet component")
 	}
 	// Skip checking further if the component is not cri.
 	if hco.Component != types.CRIComponent {

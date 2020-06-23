@@ -19,17 +19,17 @@ package types
 import "time"
 
 const (
-	DefaultCoolDownTime        = 2 * time.Minute
-	DefaultHealthCheckTimeout  = 10 * time.Second
-	CmdTimeout                 = 10 * time.Second
-	DefaultCriCtl              = "/usr/bin/crictl"
-	DefaultCriSocketPath       = "unix:///var/run/containerd/containerd.sock"
-	KubeletComponent           = "kubelet"
-	CRIComponent               = "cri"
-	DockerComponent            = "docker"
-	ContainerdService          = "containerd"
-	KubeletHealthCheckEndpoint = "http://127.0.0.1:10248/healthz"
-	UptimeTimeLayout           = "Mon 2006-01-02 15:04:05 UTC"
+	DefaultCoolDownTime               = 2 * time.Minute
+	DefaultHealthCheckTimeout         = 10 * time.Second
+	CmdTimeout                        = 10 * time.Second
+	DefaultCriCtl                     = "/usr/bin/crictl"
+	DefaultCriSocketPath              = "unix:///var/run/containerd/containerd.sock"
+	KubeletComponent                  = "kubelet"
+	CRIComponent                      = "cri"
+	DockerComponent                   = "docker"
+	ContainerdService                 = "containerd"
+	DefaultKubeletHealthCheckEndpoint = "http://127.0.0.1:10248/healthz"
+	UptimeTimeLayout                  = "Mon 2006-01-02 15:04:05 UTC"
 )
 
 type HealthChecker interface {
