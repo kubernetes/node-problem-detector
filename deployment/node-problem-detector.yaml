@@ -14,6 +14,7 @@ spec:
       labels:
         app: node-problem-detector
     spec:
+      serviceAccountName: node-problem-detector
       containers:
       - name: node-problem-detector
         command:
