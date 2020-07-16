@@ -23,7 +23,7 @@
       "path": "/home/kubernetes/bin/health-checker",
       "args": [
         "--component=kubelet",
-        "--enable-repair=false",
+        "--enable-repair=true",
         "--cooldown-time=1m",
         "--health-check-timeout=10s"
       ],
