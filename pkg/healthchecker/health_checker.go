@@ -59,7 +59,13 @@ func NewHealthChecker(hco *options.HealthCheckerOptions) (types.HealthChecker, e
 // getUptimeFunc returns the time for which the given service has been running.
 func getUptimeFunc(service string) func() (time.Duration, error) {
 	return func() (time.Duration, error) {
-		out, err := execCommand(types.CmdTimeout, "systemctl", "show", service, "--property=ActiveEnterTimestamp")
+		// Using InactiveExitTimestamp to capture the exact time when systemd tried starting the service. The service will
+		// transition from inactive -> activating and the timestamp is captured.
+		// Source : https://www.freedesktop.org/wiki/Software/systemd/dbus/
+		// Using ActiveEnterTimestamp resulted in race condition where the service was repeatedly killed by plugin when
+		// RestartSec of systemd and invoke interval of plugin got in sync. The service was repeatedly killed in
+		// activating state and hence ActiveEnterTimestamp was never updated.
+		out, err := execCommand(types.CmdTimeout, "systemctl", "show", service, "--property=InactiveExitTimestamp")
 		if err != nil {
 			return time.Duration(0), err
 		}
