@@ -145,7 +145,7 @@ func NewDiskCollectorOrDie(diskConfig *ssmtypes.DiskStatsConfig) *diskCollector 
 		"Disk bytes used, in Bytes",
 		"Byte",
 		metrics.LastValue,
-		[]string{deviceNameLabel, stateLabel})
+		[]string{deviceNameLabel, fsttypeLabel, mountPointLabel, stateLabel})
 	if err != nil {
 		glog.Fatalf("Error initializing metric for %q: %v", metrics.DiskBytesUsedID, err)
 	}
@@ -270,14 +270,16 @@ func (dc *diskCollector) collect() {
 		return
 	}
 	for _, partition := range partitions {
-		usageStat, err := disk.Usage(partition.Mountpoint)
+		mountpoint := partition.Mountpoint
+		usageStat, err := disk.Usage(mountpoint)
 		if err != nil {
 			glog.Errorf("Failed to retrieve disk usage for %q: %v", partition.Mountpoint, err)
 			continue
 		}
 		deviceName := strings.TrimPrefix(partition.Device, "/dev/")
-		dc.mBytesUsed.Record(map[string]string{deviceNameLabel: deviceName, stateLabel: "free"}, int64(usageStat.Free))
-		dc.mBytesUsed.Record(map[string]string{deviceNameLabel: deviceName, stateLabel: "used"}, int64(usageStat.Used))
+		fstype := partition.Fstype
+		dc.mBytesUsed.Record(map[string]string{deviceNameLabel: deviceName, fsttypeLabel:fstype, mountPointLabel:mountpoint, stateLabel: "free"}, int64(usageStat.Free))
+		dc.mBytesUsed.Record(map[string]string{deviceNameLabel: deviceName, fsttypeLabel:fstype, mountPointLabel:mountpoint, stateLabel: "used"}, int64(usageStat.Used))
 	}
 
 }
