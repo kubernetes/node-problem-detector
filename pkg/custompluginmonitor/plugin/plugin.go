@@ -107,7 +107,9 @@ func (p *Plugin) runRules() {
 
 			p.resultChan <- result
 
-			glog.Infof("Add check result %+v for rule %+v", result, rule)
+			// Let the result be logged at a higher verbosity level. If there is a change in status it is logged later.
+			glog.V(3).Infof("Add check result %+v for rule %+v", result, rule)
+			glog.Infof("Ran rule %+v", rule)
 		}(rule)
 	}
 

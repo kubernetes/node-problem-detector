@@ -135,7 +135,7 @@ func (c *customPluginMonitor) monitorLoop() {
 			}
 			glog.V(3).Infof("Receive new plugin result for %s: %+v", c.configPath, result)
 			status := c.generateStatus(result)
-			glog.Infof("New status generated: %+v", status)
+			glog.V(3).Infof("New status generated: %+v", status)
 			c.statusChan <- status
 		case <-c.tomb.Stopping():
 			c.plugin.Stop()
@@ -263,12 +263,17 @@ func (c *customPluginMonitor) generateStatus(result cpmtypes.Result) *types.Stat
 			}
 		}
 	}
-	return &types.Status{
+	status := &types.Status{
 		Source: c.config.Source,
 		// TODO(random-liu): Aggregate events and conditions and then do periodically report.
 		Events:     append(activeProblemEvents, inactiveProblemEvents...),
 		Conditions: c.conditions,
 	}
+	// Log only if condition has changed
+	if len(activeProblemEvents) != 0 || len(inactiveProblemEvents) != 0 {
+		glog.Infof("New status generated: %+v", status)
+	}
+	return status
 }
 
 func toConditionStatus(s cpmtypes.Status) types.ConditionStatus {
