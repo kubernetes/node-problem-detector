@@ -61,7 +61,7 @@ func TestNewPluginRun(t *testing.T) {
 				Timeout: &ruleTimeout,
 			},
 			ExitStatus: cpmtypes.Unknown,
-			Output:     "Error in running plugin. Please check the error log",
+			Output:     "Error in starting plugin. Please check the error log",
 		},
 		"longer than 80 stdout with ok exit status": {
 			Rule: cpmtypes.CustomRule{

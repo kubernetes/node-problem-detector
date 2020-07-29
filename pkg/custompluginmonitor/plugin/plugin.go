@@ -19,6 +19,8 @@ package plugin
 import (
 	"context"
 	"fmt"
+	"io"
+	"io/ioutil"
 	"os/exec"
 	"strings"
 	"sync"
@@ -29,6 +31,10 @@ import (
 	cpmtypes "k8s.io/node-problem-detector/pkg/custompluginmonitor/types"
 	"k8s.io/node-problem-detector/pkg/util/tomb"
 )
+
+// maxCustomPluginBufferBytes is the max bytes that a custom plugin is allowed to
+// send to stdout/stderr. Any bytes exceeding this value will be truncated.
+const maxCustomPluginBufferBytes = 1024 * 4
 
 type Plugin struct {
 	config     cpmtypes.CustomPluginConfig
@@ -117,6 +123,20 @@ func (p *Plugin) runRules() {
 	glog.Info("Finish running custom plugins")
 }
 
+// readFromReader reads the maxBytes from the reader and drains the rest.
+func readFromReader(reader io.ReadCloser, maxBytes int64) ([]byte, error) {
+	limitReader := io.LimitReader(reader, maxBytes)
+	data, err := ioutil.ReadAll(limitReader)
+	if err != nil {
+		return []byte{}, err
+	}
+	// Drain the reader
+	if _, err := io.Copy(ioutil.Discard, reader); err != nil {
+		return []byte{}, err
+	}
+	return data, nil
+}
+
 func (p *Plugin) run(rule cpmtypes.CustomRule) (exitStatus cpmtypes.Status, output string) {
 	var ctx context.Context
 	var cancel context.CancelFunc
@@ -129,12 +149,64 @@ func (p *Plugin) run(rule cpmtypes.CustomRule) (exitStatus cpmtypes.Status, outp
 	defer cancel()
 
 	cmd := exec.CommandContext(ctx, rule.Path, rule.Args...)
-	stdout, err := cmd.Output()
+
+	stdoutPipe, err := cmd.StdoutPipe()
 	if err != nil {
+		glog.Errorf("Error creating stdout pipe for plugin %q: error - %v", rule.Path, err)
+		return cpmtypes.Unknown, "Error creating stdout pipe for plugin. Please check the error log"
+	}
+	stderrPipe, err := cmd.StderrPipe()
+	if err != nil {
+		glog.Errorf("Error creating stderr pipe for plugin %q: error - %v", rule.Path, err)
+		return cpmtypes.Unknown, "Error creating stderr pipe for plugin. Please check the error log"
+	}
+	if err := cmd.Start(); err != nil {
+		glog.Errorf("Error in starting plugin %q: error - %v", rule.Path, err)
+		return cpmtypes.Unknown, "Error in starting plugin. Please check the error log"
+	}
+
+	var (
+		wg        sync.WaitGroup
+		stdout    []byte
+		stderr    []byte
+		stdoutErr error
+		stderrErr error
+	)
+
+	wg.Add(2)
+	go func() {
+		stdout, stdoutErr = readFromReader(stdoutPipe, maxCustomPluginBufferBytes)
+		wg.Done()
+	}()
+	go func() {
+		stderr, stderrErr = readFromReader(stderrPipe, maxCustomPluginBufferBytes)
+		wg.Done()
+	}()
+	// This will wait for the reads to complete. If the execution times out, the pipes
+	// will be closed and the wait group unblocks.
+	wg.Wait()
+
+	if stdoutErr != nil {
+		glog.Errorf("Error reading stdout for plugin %q: error - %v", rule.Path, err)
+		return cpmtypes.Unknown, "Error reading stdout for plugin. Please check the error log"
+	}
+
+	if stderrErr != nil {
+		glog.Errorf("Error reading stderr for plugin %q: error - %v", rule.Path, err)
+		return cpmtypes.Unknown, "Error reading stderr for plugin. Please check the error log"
+	}
+
+	if err := cmd.Wait(); err != nil {
 		if _, ok := err.(*exec.ExitError); !ok {
-			glog.Errorf("Error in running plugin %q: error - %v. output - %q", rule.Path, err, string(stdout))
-			return cpmtypes.Unknown, "Error in running plugin. Please check the error log"
+			glog.Errorf("Error in waiting for plugin %q: error - %v. output - %q", rule.Path, err, string(stdout))
+			return cpmtypes.Unknown, "Error in waiting for plugin. Please check the error log"
 		}
+	}
+
+	// log the stderr from the plugin
+	if len(stderr) != 0 {
+		glog.Infof("Start logs from plugin %q \n %s", rule.Path, string(stderr))
+		glog.Infof("End logs from plugin %q", rule.Path)
 	}
 
 	// trim suffix useless bytes
