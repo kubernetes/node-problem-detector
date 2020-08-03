@@ -120,7 +120,7 @@ func (c *customPluginMonitor) Stop() {
 	c.tomb.Stop()
 }
 
-// monitorLoop is the main loop of log monitor.
+// monitorLoop is the main loop of customPluginMonitor.
 func (c *customPluginMonitor) monitorLoop() {
 	c.initializeStatus()
 
