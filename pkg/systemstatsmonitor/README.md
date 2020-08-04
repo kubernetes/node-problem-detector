@@ -40,6 +40,7 @@ Below metrics are collected from `disk` component:
 * `disk_operation_bytes_count`: # of Bytes used for reads/writes on this device
 * `disk_operation_time`: [# of milliseconds spent reading/writing][iostat doc]
 * `disk_bytes_used`: Disk usage in Bytes. The usage state is reported under the `state` metric label (e.g. `used`, `free`). Summing values of all states yields the disk size.
+FSType and MountOptions are also reported as additional information.
 
 The name of the disk block device is reported in the `device_name` metric label (e.g. `sda`).
 
