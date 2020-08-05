@@ -145,7 +145,7 @@ func NewDiskCollectorOrDie(diskConfig *ssmtypes.DiskStatsConfig) *diskCollector 
 		"Disk bytes used, in Bytes",
 		"Byte",
 		metrics.LastValue,
-		[]string{deviceNameLabel, stateLabel})
+		[]string{deviceNameLabel, fstypeLabel, mountOptionLabel, stateLabel})
 	if err != nil {
 		glog.Fatalf("Error initializing metric for %q: %v", metrics.DiskBytesUsedID, err)
 	}
@@ -276,8 +276,10 @@ func (dc *diskCollector) collect() {
 			continue
 		}
 		deviceName := strings.TrimPrefix(partition.Device, "/dev/")
-		dc.mBytesUsed.Record(map[string]string{deviceNameLabel: deviceName, stateLabel: "free"}, int64(usageStat.Free))
-		dc.mBytesUsed.Record(map[string]string{deviceNameLabel: deviceName, stateLabel: "used"}, int64(usageStat.Used))
+		fstype := partition.Fstype
+		opttypes := partition.Opts
+		dc.mBytesUsed.Record(map[string]string{deviceNameLabel: deviceName, fstypeLabel: fstype, mountOptionLabel: opttypes, stateLabel: "free"}, int64(usageStat.Free))
+		dc.mBytesUsed.Record(map[string]string{deviceNameLabel: deviceName, fstypeLabel: fstype, mountOptionLabel: opttypes, stateLabel: "used"}, int64(usageStat.Used))
 	}
 
 }
