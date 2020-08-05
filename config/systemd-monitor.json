@@ -24,6 +24,11 @@
 			"type": "temporary",
 			"reason": "ContainerdStart",
 			"pattern": "Starting containerd container runtime..."
+		},
+		{
+			"type": "temporary",
+			"reason": "ResizeStatefulPartitionStartFailure",
+			"pattern": "Failed to start Resize stateful partition."
 		}
 	]
 }
