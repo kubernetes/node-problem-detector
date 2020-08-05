@@ -1,0 +1,34 @@
+{
+  "plugin": "custom",
+  "pluginConfig": {
+    "invoke_interval": "30m",
+    "timeout": "5s",
+    "max_output_length": 80,
+    "concurrency": 3,
+    "enable_message_change_based_condition_update": false
+  },
+  "source": "disk-problem-monitor",
+  "metricsReporting": true,
+  "conditions": [
+    {
+      "type": "DiskSizeCheckFailure",
+      "reason": "DiskSizeCheckSucess",
+      "message": "disk size check is successful"
+    }
+  ],
+  "rules": [
+    {
+      "type": "temporary",
+      "reason": "DiskSizeCheckFailure",
+      "path": "./config/plugin/check_boot_size_failure.sh",
+      "timeout": "3s"
+    },
+    {
+      "type": "permanent",
+      "condition": "DiskSizeCheckFailure",
+      "reason": "DiskSizeCheckFailure",
+      "path": "./config/plugin/check_boot_size_failure.sh",
+      "timeout": "3s"
+    }
+  ]
+}
