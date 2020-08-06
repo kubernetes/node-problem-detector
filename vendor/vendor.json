@@ -1,0 +1,13 @@
+{
+	"comment": "",
+	"ignore": "",
+	"package": [
+		{
+			"checksumSHA1": "S8nmFA68O9YBwmldDZeoayrZrsY=",
+			"path": "go.uber.org/automaxprocs",
+			"revision": "b685be8c1c23d79153564b8c82b804c5fd5e8257",
+			"revisionTime": "2020-04-15T07:30:07Z"
+		}
+	],
+	"rootPath": "k8s.io/node-problem-detector"
+}
