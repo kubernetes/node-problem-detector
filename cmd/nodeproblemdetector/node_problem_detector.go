@@ -21,6 +21,7 @@ import (
 
 	"github.com/golang/glog"
 	"github.com/spf13/pflag"
+	_ "go.uber.org/automaxprocs"
 
 	_ "k8s.io/node-problem-detector/cmd/nodeproblemdetector/exporterplugins"
 	_ "k8s.io/node-problem-detector/cmd/nodeproblemdetector/problemdaemonplugins"
