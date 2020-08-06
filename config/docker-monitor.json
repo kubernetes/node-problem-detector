@@ -15,8 +15,8 @@
 			"message": "docker overlay2 is functioning properly"
 		},
 		{
-			"type": "DockerStartupFailure",
-			"reason": "DockerStartUpSucess",
+			"type": "DockerContainerStartupFailure",
+			"reason": "NoDockerContainerStartupFailure",
 			"message": "Successfully started docker container"
 		}
 	],
@@ -34,9 +34,9 @@
 		},
 		{
 			"type": "permanent",
-			"condition": "DockerStartupFailure",
-			"reason": "DockerStartupFailure",
-			"pattern": "OCI runtime start failed: container process is already dead: unknown$"
+			"condition": "DockerContainerStartupFailure",
+			"reason": "DockerContainerStartupFailure",
+			"pattern": "OCI runtime start failed: container process is already dead: unknown"
 		}
 	]
 }
