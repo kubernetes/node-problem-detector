@@ -13,7 +13,7 @@
 			"type": "CorruptDockerOverlay2",
 			"reason": "NoCorruptDockerOverlay2",
 			"message": "docker overlay2 is functioning properly"
-		},
+		}
 	],
 	"rules": [
 		{
