@@ -14,11 +14,6 @@
 			"reason": "NoCorruptDockerOverlay2",
 			"message": "docker overlay2 is functioning properly"
 		},
-		{
-			"type": "DockerContainerStartupFailure",
-			"reason": "NoDockerContainerStartupFailure",
-			"message": "Successfully started docker container"
-		}
 	],
 	"rules": [
 		{
@@ -33,8 +28,7 @@
 			"pattern": "returned error: readlink /var/lib/docker/overlay2.*: invalid argument.*"
 		},
 		{
-			"type": "permanent",
-			"condition": "DockerContainerStartupFailure",
+			"type": "temporary",
 			"reason": "DockerContainerStartupFailure",
 			"pattern": "OCI runtime start failed: container process is already dead: unknown"
 		}
