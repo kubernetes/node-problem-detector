@@ -89,7 +89,7 @@ func (p *Plugin) Run() {
 
 // run each rule in parallel and wait for them to complete
 func (p *Plugin) runRules() {
-	glog.Info("Start to run custom plugins")
+	glog.V(3).Info("Start to run custom plugins")
 
 	for _, rule := range p.config.Rules {
 		p.syncChan <- struct{}{}
@@ -120,7 +120,7 @@ func (p *Plugin) runRules() {
 	}
 
 	p.Wait()
-	glog.Info("Finish running custom plugins")
+	glog.V(3).Info("Finish running custom plugins")
 }
 
 // readFromReader reads the maxBytes from the reader and drains the rest.
@@ -203,12 +203,6 @@ func (p *Plugin) run(rule cpmtypes.CustomRule) (exitStatus cpmtypes.Status, outp
 		}
 	}
 
-	// log the stderr from the plugin
-	if len(stderr) != 0 {
-		glog.Infof("Start logs from plugin %q \n %s", rule.Path, string(stderr))
-		glog.Infof("End logs from plugin %q", rule.Path)
-	}
-
 	// trim suffix useless bytes
 	output = string(stdout)
 	output = strings.TrimSpace(output)
@@ -227,8 +221,10 @@ func (p *Plugin) run(rule cpmtypes.CustomRule) (exitStatus cpmtypes.Status, outp
 	case 0:
 		return cpmtypes.OK, output
 	case 1:
+		logPluginStderr(rule.Path, string(stderr))
 		return cpmtypes.NonOK, output
 	default:
+		logPluginStderr(rule.Path, string(stderr))
 		return cpmtypes.Unknown, output
 	}
 }
@@ -236,4 +232,11 @@ func (p *Plugin) run(rule cpmtypes.CustomRule) (exitStatus cpmtypes.Status, outp
 func (p *Plugin) Stop() {
 	p.tomb.Stop()
 	glog.Info("Stop plugin execution")
+}
+
+func logPluginStderr(path, logs string) {
+	if len(logs) != 0 {
+		glog.Infof("Start logs from plugin %q \n %s", path, string(logs))
+		glog.Infof("End logs from plugin %q", path)
+	}
 }
