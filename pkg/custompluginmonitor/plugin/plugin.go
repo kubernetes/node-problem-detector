@@ -115,7 +115,6 @@ func (p *Plugin) runRules() {
 
 			// Let the result be logged at a higher verbosity level. If there is a change in status it is logged later.
 			glog.V(3).Infof("Add check result %+v for rule %+v", result, rule)
-			glog.Infof("Ran rule %+v", rule)
 		}(rule)
 	}
 
@@ -219,12 +218,13 @@ func (p *Plugin) run(rule cpmtypes.CustomRule) (exitStatus cpmtypes.Status, outp
 	exitCode := cmd.ProcessState.Sys().(syscall.WaitStatus).ExitStatus()
 	switch exitCode {
 	case 0:
+		logPluginStderr(rule, string(stderr), 3)
 		return cpmtypes.OK, output
 	case 1:
-		logPluginStderr(rule.Path, string(stderr))
+		logPluginStderr(rule, string(stderr), 0)
 		return cpmtypes.NonOK, output
 	default:
-		logPluginStderr(rule.Path, string(stderr))
+		logPluginStderr(rule, string(stderr), 0)
 		return cpmtypes.Unknown, output
 	}
 }
@@ -234,9 +234,9 @@ func (p *Plugin) Stop() {
 	glog.Info("Stop plugin execution")
 }
 
-func logPluginStderr(path, logs string) {
+func logPluginStderr(rule cpmtypes.CustomRule, logs string, logLevel glog.Level) {
 	if len(logs) != 0 {
-		glog.Infof("Start logs from plugin %q \n %s", path, string(logs))
-		glog.Infof("End logs from plugin %q", path)
+		glog.V(logLevel).Infof("Start logs from plugin %+v \n %s", rule, logs)
+		glog.V(logLevel).Infof("End logs from plugin %+v", rule)
 	}
 }
