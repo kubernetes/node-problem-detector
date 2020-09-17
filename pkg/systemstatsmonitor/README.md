@@ -40,6 +40,7 @@ Below metrics are collected from `disk` component:
 * `disk_operation_bytes_count`: # of Bytes used for reads/writes on this device
 * `disk_operation_time`: [# of milliseconds spent reading/writing][iostat doc]
 * `disk_bytes_used`: Disk usage in Bytes. The usage state is reported under the `state` metric label (e.g. `used`, `free`). Summing values of all states yields the disk size.
+* `disk_quota`: Total disk space in Bytes. Additional information such as fstypes and mountoptions is also reported.
 
 The name of the disk block device is reported in the `device_name` metric label (e.g. `sda`).
 
@@ -68,3 +69,4 @@ Below metrics are collected from `memory` component:
 * `memory_page_cache_used`: Page cache memory usage, in Bytes. Memory usage state is reported under the `state` metric label (e.g. `active`, `inactive`). `active` means the memory has been used more recently and usually not reclaimed until needed. Summing values of all states yields the total page cache memory used.
 * `memory_unevictable_used`: [Unevictable memory][/proc doc] usage, in Bytes.
 * `memory_dirty_used`: Dirty pages usage, in Bytes. Memory usage state is reported under the `state` metric label (e.g. `dirty`, `writeback`). `dirty` means the memory is waiting to be written back to disk, and `writeback` means the memory is actively being written back to disk.
+

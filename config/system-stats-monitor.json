@@ -34,6 +34,9 @@
 			},
 			"disk/bytes_used": {
 				"displayName": "disk/bytes_used"
+			},
+			"disk/quota": {
+				"displayName": "disk/quota"
 			}
 		},
 		"includeRootBlk": true,
@@ -68,3 +71,4 @@
 	},
 	"invokeInterval": "60s"
 }
+

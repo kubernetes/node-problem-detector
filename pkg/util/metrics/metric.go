@@ -32,6 +32,7 @@ const (
 	DiskOpsBytesID          MetricID = "disk/operation_bytes_count"
 	DiskOpsTimeID           MetricID = "disk/operation_time"
 	DiskBytesUsedID         MetricID = "disk/bytes_used"
+	DiskQuotaID							MetricID = "disk/quota"
 	HostUptimeID            MetricID = "host/uptime"
 	MemoryBytesUsedID       MetricID = "memory/bytes_used"
 	MemoryAnonymousUsedID   MetricID = "memory/anonymous_used"
@@ -70,3 +71,4 @@ func (mm *MetricMapping) ViewNameToMetricID(viewName string) (MetricID, bool) {
 	id, ok := mm.viewNameToMetricIDMap[viewName]
 	return id, ok
 }
+
