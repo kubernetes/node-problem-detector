@@ -209,4 +209,3 @@ func assertMetricValueInBound(instance gce.Instance, metricName string, labels m
 	Expect(value).Should(BeNumerically("<=", highBound),
 		"Got value for metric %s with label %v: %v, expect at most %v.", metricName, labels, value, highBound)
 }
-

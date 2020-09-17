@@ -71,4 +71,3 @@ func (mm *MetricMapping) ViewNameToMetricID(viewName string) (MetricID, bool) {
 	id, ok := mm.viewNameToMetricIDMap[viewName]
 	return id, ok
 }
-

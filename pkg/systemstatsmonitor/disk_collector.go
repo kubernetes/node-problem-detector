@@ -331,4 +331,3 @@ func listAttachedBlockDevices() []string {
 	}
 	return blks
 }
-
