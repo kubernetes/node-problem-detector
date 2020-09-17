@@ -38,6 +38,7 @@ type diskCollector struct {
 	mOpsBytes       *metrics.Int64Metric
 	mOpsTime        *metrics.Int64Metric
 	mBytesUsed      *metrics.Int64Metric
+	mQuota	 				*metrics.Int64Metric
 
 	config *ssmtypes.DiskStatsConfig
 
@@ -145,9 +146,20 @@ func NewDiskCollectorOrDie(diskConfig *ssmtypes.DiskStatsConfig) *diskCollector 
 		"Disk bytes used, in Bytes",
 		"Byte",
 		metrics.LastValue,
-		[]string{deviceNameLabel, fsTypeLabel, mountOptionLabel, stateLabel})
+		[]string{deviceNameLabel, stateLabel})
 	if err != nil {
 		glog.Fatalf("Error initializing metric for %q: %v", metrics.DiskBytesUsedID, err)
+	}
+
+	dc.mQuota, err = metrics.NewInt64Metric(
+		metrics.DiskQuotaID,
+		diskConfig.MetricsConfigs[string(metrics.DiskQuotaID)].DisplayName,
+		"Disk Quota, in Bytes",
+		"Byte",
+		metrics.LastValue,
+		[]string{deviceNameLabel, fsTypeLabel, mountOptionLabel})
+	if err != nil {
+		glog.Fatalf("Error initializing metric for %q: %v", metrics.DiskQuotaID, err)
 	}
 
 	dc.lastIOTime = make(map[string]uint64)
@@ -269,6 +281,9 @@ func (dc *diskCollector) collect() {
 	if dc.mBytesUsed == nil {
 		return
 	}
+	if dc.mQuota == nil {
+		return
+	}
 	for _, partition := range partitions {
 		usageStat, err := disk.Usage(partition.Mountpoint)
 		if err != nil {
@@ -278,8 +293,9 @@ func (dc *diskCollector) collect() {
 		deviceName := strings.TrimPrefix(partition.Device, "/dev/")
 		fstype := partition.Fstype
 		opttypes := partition.Opts
-		dc.mBytesUsed.Record(map[string]string{deviceNameLabel: deviceName, fsTypeLabel: fstype, mountOptionLabel: opttypes, stateLabel: "free"}, int64(usageStat.Free))
-		dc.mBytesUsed.Record(map[string]string{deviceNameLabel: deviceName, fsTypeLabel: fstype, mountOptionLabel: opttypes, stateLabel: "used"}, int64(usageStat.Used))
+		dc.mQuota.Record(map[string]string{deviceNameLabel: deviceName, fsTypeLabel: fstype, mountOptionLabel: opttypes}, int64(usageStat.Free + usageStat.Used))
+		dc.mBytesUsed.Record(map[string]string{deviceNameLabel: deviceName, stateLabel: "free"}, int64(usageStat.Free))
+		dc.mBytesUsed.Record(map[string]string{deviceNameLabel: deviceName, stateLabel: "used"}, int64(usageStat.Used))
 	}
 
 }
