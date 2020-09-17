@@ -38,7 +38,7 @@ type diskCollector struct {
 	mOpsBytes       *metrics.Int64Metric
 	mOpsTime        *metrics.Int64Metric
 	mBytesUsed      *metrics.Int64Metric
-	mQuota	 				*metrics.Int64Metric
+	mQuota	 	*metrics.Int64Metric
 
 	config *ssmtypes.DiskStatsConfig
 
