@@ -31,6 +31,7 @@ import (
 )
 
 type healthChecker struct {
+	component       string
 	enableRepair    bool
 	healthCheckFunc func() bool
 	// The repair is "best-effort" and ignores the error from the underlying actions.
@@ -45,6 +46,7 @@ type healthChecker struct {
 // NewHealthChecker returns a new health checker configured with the given options.
 func NewHealthChecker(hco *options.HealthCheckerOptions) (types.HealthChecker, error) {
 	hc := &healthChecker{
+		component:          hco.Component,
 		enableRepair:       hco.EnableRepair,
 		crictlPath:         hco.CriCtlPath,
 		healthCheckTimeout: hco.HealthCheckTimeout,
@@ -139,14 +141,14 @@ func (hc *healthChecker) CheckHealth() bool {
 	// The service is unhealthy.
 	// Attempt repair based on flag.
 	if hc.enableRepair {
-		glog.Infof("health-checker: component is unhealthy, proceeding to repair")
 		// repair if the service has been up for the cool down period.
 		uptime, err := hc.uptimeFunc()
 		if err != nil {
-			glog.Infof("health-checker: %v\n", err.Error())
+			glog.Infof("error in getting uptime for %v: %v\n", hc.component, err)
 		}
-		glog.Infof("health-checker: component uptime: %v\n", uptime)
+		glog.Infof("%v is unhealthy, component uptime: %v\n", hc.component, uptime)
 		if uptime > hc.coolDownTime {
+			glog.Infof("%v cooldown period of %v exceeded, repairing", hc.component, hc.coolDownTime)
 			hc.repairFunc()
 		}
 	}
@@ -159,10 +161,9 @@ func execCommand(timeout time.Duration, command string, args ...string) (string,
 	defer cancel()
 
 	cmd := exec.CommandContext(ctx, command, args...)
-	glog.Infof("health-checker: executing command : %v\n", cmd)
 	out, err := cmd.Output()
 	if err != nil {
-		glog.Infof("health-checker: command failed : %v, %v\n", err.Error(), out)
+		glog.Infof("command %v failed: %v, %v\n", cmd, err, out)
 		return "", err
 	}
 	return strings.TrimSuffix(string(out), "\n"), nil

@@ -271,7 +271,7 @@ func (c *customPluginMonitor) generateStatus(result cpmtypes.Result) *types.Stat
 	}
 	// Log only if condition has changed
 	if len(activeProblemEvents) != 0 || len(inactiveProblemEvents) != 0 {
-		glog.Infof("New status generated: %+v", status)
+		glog.V(0).Infof("New status generated: %+v", status)
 	}
 	return status
 }

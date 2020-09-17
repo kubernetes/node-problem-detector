@@ -89,7 +89,7 @@ func (p *Plugin) Run() {
 
 // run each rule in parallel and wait for them to complete
 func (p *Plugin) runRules() {
-	glog.Info("Start to run custom plugins")
+	glog.V(3).Info("Start to run custom plugins")
 
 	for _, rule := range p.config.Rules {
 		p.syncChan <- struct{}{}
@@ -115,12 +115,11 @@ func (p *Plugin) runRules() {
 
 			// Let the result be logged at a higher verbosity level. If there is a change in status it is logged later.
 			glog.V(3).Infof("Add check result %+v for rule %+v", result, rule)
-			glog.Infof("Ran rule %+v", rule)
 		}(rule)
 	}
 
 	p.Wait()
-	glog.Info("Finish running custom plugins")
+	glog.V(3).Info("Finish running custom plugins")
 }
 
 // readFromReader reads the maxBytes from the reader and drains the rest.
@@ -203,12 +202,6 @@ func (p *Plugin) run(rule cpmtypes.CustomRule) (exitStatus cpmtypes.Status, outp
 		}
 	}
 
-	// log the stderr from the plugin
-	if len(stderr) != 0 {
-		glog.Infof("Start logs from plugin %q \n %s", rule.Path, string(stderr))
-		glog.Infof("End logs from plugin %q", rule.Path)
-	}
-
 	// trim suffix useless bytes
 	output = string(stdout)
 	output = strings.TrimSpace(output)
@@ -225,10 +218,13 @@ func (p *Plugin) run(rule cpmtypes.CustomRule) (exitStatus cpmtypes.Status, outp
 	exitCode := cmd.ProcessState.Sys().(syscall.WaitStatus).ExitStatus()
 	switch exitCode {
 	case 0:
+		logPluginStderr(rule, string(stderr), 3)
 		return cpmtypes.OK, output
 	case 1:
+		logPluginStderr(rule, string(stderr), 0)
 		return cpmtypes.NonOK, output
 	default:
+		logPluginStderr(rule, string(stderr), 0)
 		return cpmtypes.Unknown, output
 	}
 }
@@ -236,4 +232,11 @@ func (p *Plugin) run(rule cpmtypes.CustomRule) (exitStatus cpmtypes.Status, outp
 func (p *Plugin) Stop() {
 	p.tomb.Stop()
 	glog.Info("Stop plugin execution")
+}
+
+func logPluginStderr(rule cpmtypes.CustomRule, logs string, logLevel glog.Level) {
+	if len(logs) != 0 {
+		glog.V(logLevel).Infof("Start logs from plugin %+v \n %s", rule, logs)
+		glog.V(logLevel).Infof("End logs from plugin %+v", rule)
+	}
 }

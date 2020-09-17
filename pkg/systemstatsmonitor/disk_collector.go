@@ -146,7 +146,7 @@ func NewDiskCollectorOrDie(diskConfig *ssmtypes.DiskStatsConfig) *diskCollector 
 		"Disk bytes used, in Bytes",
 		"Byte",
 		metrics.LastValue,
-		[]string{deviceNameLabel, stateLabel})
+		[]string{deviceNameLabel, fsTypeLabel, mountOptionLabel, stateLabel})
 	if err != nil {
 		glog.Fatalf("Error initializing metric for %q: %v", metrics.DiskBytesUsedID, err)
 	}
