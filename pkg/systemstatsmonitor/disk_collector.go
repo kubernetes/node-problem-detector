@@ -154,7 +154,7 @@ func NewDiskCollectorOrDie(diskConfig *ssmtypes.DiskStatsConfig) *diskCollector 
 	dc.mBytesTotal, err = metrics.NewInt64Metric(
 		metrics.DiskBytesTotalID,
 		diskConfig.MetricsConfigs[string(metrics.DiskBytesTotalID)].DisplayName,
-		"Disk bytes used, in Bytes",
+		"Total disk size, in Bytes",
 		"Byte",
 		metrics.LastValue,
 		[]string{deviceNameLabel, fsTypeLabel, mountOptionLabel})
