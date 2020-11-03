@@ -22,6 +22,9 @@ import (
 const (
 	CPURunnableTaskCountID  MetricID = "cpu/runnable_task_count"
 	CPUUsageTimeID          MetricID = "cpu/usage_time"
+	CPULoad1m               MetricID = "cpu/load_1m"
+	CPULoad5m               MetricID = "cpu/load_5m"
+	CPULoad15m              MetricID = "cpu/load_15m"
 	ProblemCounterID        MetricID = "problem_counter"
 	ProblemGaugeID          MetricID = "problem_gauge"
 	DiskIOTimeID            MetricID = "disk/io_time"

@@ -25,6 +25,9 @@ Below metrics are collected from `cpu` component:
 
 * `cpu_runnable_task_count`: The average number of runnable tasks in the run-queue during the last minute. Collected from [`/proc/loadavg`][/proc doc].
 * `cpu_usage_time`: CPU usage, in seconds. The [CPU state][/proc doc] for the corresponding usage is reported under the `state` metric label (e.g. `user`, `nice`, `system`...).
+* `cpu_load_1m`: CPU load average over the last 1 minute. Collected from [`/proc/loadavg`][/proc doc].
+* `cpu_load_5m`: CPU load average over the last 5 minutes. Collected from [`/proc/loadavg`][/proc doc].
+* `cpu_load_15m`: CPU load average over the last 15 minutes. Collected from [`/proc/loadavg`][/proc doc].
 
 [/proc doc]: http://man7.org/linux/man-pages/man5/proc.5.html
 
