@@ -73,8 +73,8 @@ certain back end. Some of them can be disable at compile time using a build tag.
 
 | Exporter |Description | Disabling Build Tag |
 |----------|:-----------|:--------------------|
-| Kubernetes exporter | Kubernetes exporter reports node problems to Kubernetes API server: temporary problems get reported as Events, and permanent problems get reported as Node Conditions. | 
-| Prometheus exporter | Prometheus exporter reports node problems and metrics locally as Prometheus metrics | 
+| Kubernetes exporter | Kubernetes exporter reports node problems to Kubernetes API server: temporary problems get reported as Events, and permanent problems get reported as Node Conditions. |
+| Prometheus exporter | Prometheus exporter reports node problems and metrics locally as Prometheus metrics |
 | [Stackdriver exporter](https://github.com/kubernetes/node-problem-detector/blob/master/config/exporter/stackdriver-exporter.json) | Stackdriver exporter reports node problems and metrics to Stackdriver Monitoring API. | disable_stackdriver_exporter
 
 # Usage
@@ -171,10 +171,11 @@ to another registry.
 
 ## Installation
 
-The easiest way to install node-problem-detector into your cluster is to use the [Helm](https://helm.sh/) [chart](https://github.com/helm/charts/tree/master/stable/node-problem-detector):
+The easiest way to install node-problem-detector into your cluster is to use the [Helm](https://helm.sh/) [chart](https://github.com/deliveryhero/helm-charts/tree/master/stable/node-problem-detector):
 
 ```
-helm install stable/node-problem-detector
+helm repo add deliveryhero https://charts.deliveryhero.io/
+helm install deliveryhero/node-problem-detector
 ```
 
 Or alternatively, to install node-problem-detector manually:
