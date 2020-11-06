@@ -25,7 +25,7 @@ import (
 
 var repairCalled bool
 
-func NewTestHealthChecker(repairFunc func(), healthCheckFunc func() bool, uptimeFunc func() (time.Duration, error), enableRepair bool) types.HealthChecker {
+func NewTestHealthChecker(repairFunc func(), healthCheckFunc func() (bool, error), uptimeFunc func() (time.Duration, error), enableRepair bool) types.HealthChecker {
 	repairCalled = false
 	return &healthChecker{
 		enableRepair:       enableRepair,
@@ -37,12 +37,12 @@ func NewTestHealthChecker(repairFunc func(), healthCheckFunc func() bool, uptime
 	}
 }
 
-func healthyFunc() bool {
-	return true
+func healthyFunc() (bool, error) {
+	return true, nil
 }
 
-func unhealthyFunc() bool {
-	return false
+func unhealthyFunc() (bool, error) {
+	return false, nil
 }
 
 func repairFunc() {
@@ -62,7 +62,7 @@ func TestHealthCheck(t *testing.T) {
 		description     string
 		enableRepair    bool
 		healthy         bool
-		healthCheckFunc func() bool
+		healthCheckFunc func() (bool, error)
 		uptimeFunc      func() (time.Duration, error)
 		repairFunc      func()
 		repairCalled    bool
@@ -106,7 +106,10 @@ func TestHealthCheck(t *testing.T) {
 	} {
 		t.Run(tc.description, func(t *testing.T) {
 			hc := NewTestHealthChecker(tc.repairFunc, tc.healthCheckFunc, tc.uptimeFunc, tc.enableRepair)
-			healthy := hc.CheckHealth()
+			healthy, err := hc.CheckHealth()
+			if err != nil {
+				t.Errorf("unexpected error occurred got %v; expected nil", err)
+			}
 			if healthy != tc.healthy {
 				t.Errorf("incorrect health returned got %t; expected %t", healthy, tc.healthy)
 			}
