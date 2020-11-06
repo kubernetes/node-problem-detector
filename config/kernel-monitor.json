@@ -54,6 +54,11 @@
 			"pattern": "EXT4-fs warning .*"
 		},
 		{
+			"type": "temporary",
+			"reason": "IOError",
+			"pattern": "Buffer I/O error .*"
+		},
+		{
 			"type": "permanent",
 			"condition": "KernelDeadlock",
 			"reason": "AUFSUmountHung",
