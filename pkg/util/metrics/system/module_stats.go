@@ -1,11 +1,10 @@
-package kernel
+package system
 
 import (
-	"bufio"
 	"os"
 	"strconv"
 	"strings"
-	)
+)
 
 type ModuleStat struct {
 	ModuleName				string  `json:"moduleName"`
@@ -51,24 +50,6 @@ func Modules() ([]ModuleStat, error) {
 			Unsigned: 		isUnsigned,
 		}
 		result = append(result, stats)
-	}
-	return result, nil
-}
-
-func ReadFile(filename string) ([]string, error) {
-	file, err := os.Open(filename)
-	if err != nil {
-		return nil, err
-	}
-	defer file.Close()
-
-	var result []string
-	s := bufio.NewScanner(file)
-	for s.Scan() {
-		result = append(result, s.Text())
-	}
-	if s.Err() != nil {
-		return nil, err
 	}
 	return result, nil
 }
