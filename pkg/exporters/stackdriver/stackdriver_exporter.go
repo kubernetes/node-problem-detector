@@ -49,6 +49,9 @@ const exporterName = "stackdriver"
 var NPDMetricToSDMetric = map[metrics.MetricID]string{
 	metrics.CPURunnableTaskCountID:  "compute.googleapis.com/guest/cpu/runnable_task_count",
 	metrics.CPUUsageTimeID:          "compute.googleapis.com/guest/cpu/usage_time",
+	metrics.CPULoad1m:               "compute.googleapis.com/guest/cpu/load_1m",
+	metrics.CPULoad5m:               "compute.googleapis.com/guest/cpu/load_5m",
+	metrics.CPULoad15m:              "compute.googleapis.com/guest/cpu/load_15m",
 	metrics.DiskAvgQueueLenID:       "compute.googleapis.com/guest/disk/queue_length",
 	metrics.DiskBytesUsedID:         "compute.googleapis.com/guest/disk/bytes_used",
 	metrics.DiskIOTimeID:            "compute.googleapis.com/guest/disk/io_time",

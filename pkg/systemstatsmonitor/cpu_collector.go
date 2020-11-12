@@ -38,6 +38,9 @@ const clockTick float64 = 100.0
 type cpuCollector struct {
 	mRunnableTaskCount *metrics.Float64Metric
 	mUsageTime         *metrics.Float64Metric
+	mCpuLoad1m         *metrics.Float64Metric
+	mCpuLoad5m         *metrics.Float64Metric
+	mCpuLoad15m        *metrics.Float64Metric
 
 	config *ssmtypes.CPUStatsConfig
 
@@ -71,6 +74,39 @@ func NewCPUCollectorOrDie(cpuConfig *ssmtypes.CPUStatsConfig) *cpuCollector {
 		glog.Fatalf("Error initializing metric for %q: %v", metrics.CPUUsageTimeID, err)
 	}
 
+	cc.mCpuLoad1m, err = metrics.NewFloat64Metric(
+		metrics.CPULoad1m,
+		cpuConfig.MetricsConfigs[string(metrics.CPULoad1m)].DisplayName,
+		"CPU average load (1m)",
+		"1",
+		metrics.LastValue,
+		[]string{})
+	if err != nil {
+		glog.Fatalf("Error initializing metric for %q: %v", metrics.CPULoad1m, err)
+	}
+
+	cc.mCpuLoad5m, err = metrics.NewFloat64Metric(
+		metrics.CPULoad5m,
+		cpuConfig.MetricsConfigs[string(metrics.CPULoad5m)].DisplayName,
+		"CPU average load (5m)",
+		"1",
+		metrics.LastValue,
+		[]string{})
+	if err != nil {
+		glog.Fatalf("Error initializing metric for %q: %v", metrics.CPULoad5m, err)
+	}
+
+	cc.mCpuLoad15m, err = metrics.NewFloat64Metric(
+		metrics.CPULoad15m,
+		cpuConfig.MetricsConfigs[string(metrics.CPULoad15m)].DisplayName,
+		"CPU average load (15m)",
+		"1",
+		metrics.LastValue,
+		[]string{})
+	if err != nil {
+		glog.Fatalf("Error initializing metric for %q: %v", metrics.CPULoad15m, err)
+	}
+
 	cc.lastUsageTime = make(map[string]float64)
 
 	return &cc
@@ -88,6 +124,10 @@ func (cc *cpuCollector) recordLoad() {
 	}
 
 	cc.mRunnableTaskCount.Record(map[string]string{}, loadAvg.Load1)
+
+	cc.mCpuLoad1m.Record(map[string]string{}, loadAvg.Load1)
+	cc.mCpuLoad5m.Record(map[string]string{}, loadAvg.Load5)
+	cc.mCpuLoad15m.Record(map[string]string{}, loadAvg.Load15)
 }
 
 func (cc *cpuCollector) recordUsage() {

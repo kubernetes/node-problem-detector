@@ -6,6 +6,15 @@
 			},
 			"cpu/usage_time": {
 				"displayName": "cpu/usage_time"
+      },
+      "cpu/load_1m": {
+				"displayName": "cpu/load_1m"
+      },
+      "cpu/load_5m": {
+				"displayName": "cpu/load_5m"
+      },
+      "cpu/load_15m": {
+				"displayName": "cpu/load_15m"
 			}
 		}
 	},
