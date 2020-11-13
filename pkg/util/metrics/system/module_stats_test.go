@@ -27,7 +27,7 @@ func TestModules(t *testing.T) {
 		t.Errorf("error %v", err)
 	}
 	if modules == nil {
-		t.Errorf("Could not get up time %v", v)
+		t.Error("Could not retrieve modules")
 	}
 }
 

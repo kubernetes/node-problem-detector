@@ -70,11 +70,11 @@ func Modules() ([]ModuleStat, error) {
 			isUnsigned = strings.Contains(fields[6], "E")
 		}
 		var stats = ModuleStat{
-			ModuleName:  moduleName,
-			Instances:   numberOfInstances,
-			Proprietary: isProprietary,
-			OutOfTree:   isOutofTree,
-			Unsigned:    isUnsigned,
+			ModuleName:		moduleName,
+			Instances: 		numberOfInstances,
+			Proprietary:  isProprietary,
+			OutOfTree:    isOutofTree,
+			Unsigned: 		isUnsigned,
 		}
 		result = append(result, stats)
 	}
