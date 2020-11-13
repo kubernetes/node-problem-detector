@@ -17,32 +17,42 @@ limitations under the License.
 package system
 
 import (
-	"os"
 	"strconv"
 	"strings"
+
+	"github.com/pkg/errors"
 )
 
 type ModuleStat struct {
-	ModuleName				string  `json:"moduleName"`
-	Instances         uint64  `json:"instances"`
-	Proprietary       bool    `json:"proprietary"`
-	OutOfTree         bool    `json:"outOfTree"`
-	Unsigned          bool    `json:"unsigned"`
+	ModuleName  string `json:"moduleName"`
+	Instances   uint64 `json:"instances"`
+	Proprietary bool   `json:"proprietary"`
+	OutOfTree   bool   `json:"outOfTree"`
+	Unsigned    bool   `json:"unsigned"`
 }
 
 // Module returns all the kernel modules and their
 // usage. It is read from cat /proc/modules.
 func Modules() ([]ModuleStat, error) {
 	filename := "/proc/modules"
-	if _, err := os.Stat(filename); err != nil {
-		return nil, err
+	lines, err := ReadFile(filename)
+	if err != nil {
+		return nil, errors.Wrapf(err, "Error while reading the contents of %s", filename)
 	}
-	lines, _ := ReadFile(filename)
 	var result = make([]ModuleStat, 0, len(lines))
 
-	// a line of /proc/modules has the following structure
-	// nf_nat 61440 2 xt_MASQUERADE,iptable_nat, Live 0x0000000000000000  (O)
-	// (1)		(2)  (3)    (4)										 (5)	 	(6)								(7)
+	/* a line of /proc/modules has the following structure
+	  nf_nat 61440 2 xt_MASQUERADE,iptable_nat, Live 0x0000000000000000  (O)
+	  (1)		(2)  (3)    (4)										 (5)	 	(6)								(7)
+
+		(1)  name of the module
+		(2)	 memory size of the module, in bytes
+		(3)  instances of the module are currently loaded
+		(4)  module dependencies
+		(5)  load state of the module: live, loading or unloading
+		(6)  memory offset for the loaded module.
+		(7)  return a string to represent the kernel taint state. (used here: "P" - Proprietary, "O" - out of tree kernel module, "E" - unsigned module
+	*/
 	for _, line := range lines {
 		fields := strings.Fields(line)
 		moduleName := fields[0]
@@ -53,17 +63,18 @@ func Modules() ([]ModuleStat, error) {
 		var isProprietary = false
 		var isOutofTree = false
 		var isUnsigned = false
+		// if the len of the fields is greater than 6, then the kernel taint state is available.
 		if len(fields) > 6 {
 			isProprietary = strings.Contains(fields[6], "P")
 			isOutofTree = strings.Contains(fields[6], "O")
 			isUnsigned = strings.Contains(fields[6], "E")
 		}
 		var stats = ModuleStat{
-			ModuleName:		moduleName,
-			Instances: 		numberOfInstances,
-			Proprietary:  isProprietary,
-			OutOfTree:    isOutofTree,
-			Unsigned: 		isUnsigned,
+			ModuleName:  moduleName,
+			Instances:   numberOfInstances,
+			Proprietary: isProprietary,
+			OutOfTree:   isOutofTree,
+			Unsigned:    isUnsigned,
 		}
 		result = append(result, stats)
 	}
