@@ -20,6 +20,7 @@ import (
 )
 
 const (
+	BootDiskSizeID          MetricID = "boot_disk_size"
 	CPURunnableTaskCountID  MetricID = "cpu/runnable_task_count"
 	CPUUsageTimeID          MetricID = "cpu/usage_time"
 	CPULoad1m               MetricID = "cpu/load_1m"

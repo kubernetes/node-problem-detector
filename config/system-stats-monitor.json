@@ -20,6 +20,9 @@
 	},
 	"disk": {
 		"metricsConfigs": {
+			"boot_disk_size": {
+				"displayName": "boot_disk_size"
+			},
 			"disk/io_time": {
 				"displayName": "disk/io_time"
 			},

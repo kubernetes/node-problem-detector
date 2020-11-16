@@ -19,6 +19,7 @@ package systemstatsmonitor
 import (
 	"context"
 	"os/exec"
+	"strconv"
 	"strings"
 	"time"
 
@@ -38,6 +39,7 @@ type diskCollector struct {
 	mOpsBytes       *metrics.Int64Metric
 	mOpsTime        *metrics.Int64Metric
 	mBytesUsed      *metrics.Int64Metric
+	mBootDiskSize   *metrics.Int64Metric
 
 	config *ssmtypes.DiskStatsConfig
 
@@ -148,6 +150,17 @@ func NewDiskCollectorOrDie(diskConfig *ssmtypes.DiskStatsConfig) *diskCollector 
 		[]string{deviceNameLabel, fsTypeLabel, mountOptionLabel, stateLabel})
 	if err != nil {
 		glog.Fatalf("Error initializing metric for %q: %v", metrics.DiskBytesUsedID, err)
+	}
+
+	dc.mBootDiskSize, err = metrics.NewInt64Metric(
+		metrics.BootDiskSizeID,
+		diskConfig.MetricsConfigs[string(metrics.BootDiskSizeID)].DisplayName,
+		"Boot disk size in Bytes",
+		"Byte",
+		metrics.LastValue,
+		[]string{deviceNameLabel})
+	if err != nil {
+		glog.Fatalf("Error initializing metric for %q: %v", metrics.BootDiskSizeID, err)
 	}
 
 	dc.lastIOTime = make(map[string]uint64)
@@ -290,7 +303,10 @@ func (dc *diskCollector) collect() {
 		dc.mBytesUsed.Record(map[string]string{deviceNameLabel: deviceName, fsTypeLabel: fstype, mountOptionLabel: opttypes, stateLabel: "free"}, int64(usageStat.Free))
 		dc.mBytesUsed.Record(map[string]string{deviceNameLabel: deviceName, fsTypeLabel: fstype, mountOptionLabel: opttypes, stateLabel: "used"}, int64(usageStat.Used))
 	}
-
+	if dc.mBootDiskSize == nil {
+		return
+	}
+	dc.recordBootDiskSize(dc.config.LsblkTimeout)
 }
 
 // listRootBlockDevices lists all block devices that's not a slave or holder.
@@ -307,6 +323,34 @@ func listRootBlockDevices(timeout time.Duration) []string {
 		glog.Errorf("Error calling lsblk")
 	}
 	return strings.Split(strings.TrimSpace(string(stdout)), "\n")
+}
+
+// recordBootDiskSize records the disk block devices that are not a slave or holder.
+func (dc *diskCollector) recordBootDiskSize(timeout time.Duration) {
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+
+	// "-d" prevents printing slave or holder devices. i.e. /dev/sda1, /dev/sda2...
+	// "-b" display the size in bytes.
+	// "-n" prevents printing the headings.
+	// "-p NAME" specifies to only print the device name.
+	cmd := exec.CommandContext(ctx, "lsblk", "-d", "-nb", "-o", "NAME,SIZE")
+	stdout, err := cmd.Output()
+	if err != nil {
+		glog.Errorf("Error calling lsblk")
+	}
+	lines := strings.Split(strings.TrimSpace(string(stdout)), "\n")
+	for _, line := range lines {
+		fields := strings.Fields(line)
+		// fields[0] = deviceName
+		// field[1] = size
+		device_name := fields[0]
+		device_size, err := strconv.ParseUint(fields[1], 10, 64)
+		if err != nil {
+			glog.Errorf("Failed to parse the device size: %v", err)
+		}
+		dc.mBootDiskSize.Record(map[string]string{deviceNameLabel: device_name}, int64(device_size))
+	}
 }
 
 // listAttachedBlockDevices lists all currently attached block devices.
