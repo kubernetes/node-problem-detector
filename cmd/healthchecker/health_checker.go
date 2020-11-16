@@ -49,7 +49,12 @@ func main() {
 		fmt.Println(err)
 		os.Exit(int(types.Unknown))
 	}
-	if !hc.CheckHealth() {
+	healthy, err := hc.CheckHealth()
+	if err != nil {
+		fmt.Printf("error checking %v health: %v\n", hco.Component, err)
+		os.Exit(int(types.Unknown))
+	}
+	if !healthy {
 		fmt.Printf("%v:%v was found unhealthy; repair flag : %v\n", hco.Component, hco.SystemdService, hco.EnableRepair)
 		os.Exit(int(types.NonOK))
 	}
