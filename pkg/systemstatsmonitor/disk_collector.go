@@ -269,7 +269,16 @@ func (dc *diskCollector) collect() {
 	if dc.mBytesUsed == nil {
 		return
 	}
+
+	// to make sure that the rows are not duplicated
+	// we display only the only one row even if there are
+	// mutiple rows for the same disk.
+	seen := make(map[string]bool)
 	for _, partition := range partitions {
+		if seen[partition.Device] {
+			continue
+		}
+		seen[partition.Device] = true
 		usageStat, err := disk.Usage(partition.Mountpoint)
 		if err != nil {
 			glog.Errorf("Failed to retrieve disk usage for %q: %v", partition.Mountpoint, err)
