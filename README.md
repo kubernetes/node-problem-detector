@@ -3,8 +3,8 @@
 [![Build Status](https://travis-ci.org/kubernetes/node-problem-detector.svg?branch=master)](https://travis-ci.org/kubernetes/node-problem-detector)  [![Go Report Card](https://goreportcard.com/badge/github.com/kubernetes/node-problem-detector)](https://goreportcard.com/report/github.com/kubernetes/node-problem-detector)
 
 node-problem-detector aims to make various node problems visible to the upstream
-layers in cluster management stack.
-It is a daemon which runs on each node, detects node
+layers in the cluster management stack.
+It is a daemon that runs on each node, detects node
 problems and reports them to apiserver.
 node-problem-detector can either run as a
 [DaemonSet](http://kubernetes.io/docs/admin/daemons/) or run standalone.
@@ -17,17 +17,17 @@ enabled by default in the GCE cluster.
 There are tons of node problems that could possibly affect the pods running on the
 node, such as:
 * Infrastructure daemon issues: ntp service down;
-* Hardware issues: Bad cpu, memory or disk;
+* Hardware issues: Bad CPU, memory or disk;
 * Kernel issues: Kernel deadlock, corrupted file system;
 * Container runtime issues: Unresponsive runtime daemon;
 * ...
 
-Currently these problems are invisible to the upstream layers in cluster management
+Currently, these problems are invisible to the upstream layers in the cluster management
 stack, so Kubernetes will continue scheduling pods to the bad nodes.
 
 To solve this problem, we introduced this new daemon **node-problem-detector** to
 collect node problems from various daemons and make them visible to the upstream
-layers. Once upstream layers have the visibility to those problems, we can discuss the
+layers. Once upstream layers have visibility to those problems, we can discuss the
 [remedy system](#remedy-systems).
 
 # Problem API
@@ -45,7 +45,7 @@ A problem daemon is a sub-daemon of node-problem-detector. It monitors a specifi
 kind of node problems and reports them to node-problem-detector.
 
 A problem daemon could be:
-* A tiny daemon designed for dedicated usecase of Kubernetes.
+* A tiny daemon designed for dedicated Kubernetes use-cases.
 * An existing node health monitoring daemon integrated with node-problem-detector.
 
 Currently, a problem daemon is running as a goroutine in the node-problem-detector
@@ -62,14 +62,14 @@ List of supported problem daemons:
 | Problem Daemon |  NodeCondition  | Description | Disabling Build Tag |
 |----------------|:---------------:|:------------|:--------------------|
 | [KernelMonitor](https://github.com/kubernetes/node-problem-detector/blob/master/config/kernel-monitor.json) | KernelDeadlock | A system log monitor monitors kernel log and reports problems and metrics according to predefined rules. | disable_system_log_monitor
-| [AbrtAdaptor](https://github.com/kubernetes/node-problem-detector/blob/master/config/abrt-adaptor.json) | None | Monitor ABRT log messages and report them further. ABRT (Automatic Bug Report Tool) is health monitoring daemon able to catch kernel problems as well as application crashes of various kinds occurred on the host. For more information visit the [link](https://github.com/abrt). | disable_system_log_monitor
-| [CustomPluginMonitor](https://github.com/kubernetes/node-problem-detector/blob/master/config/custom-plugin-monitor.json) | On-demand(According to users configuration) | A custom plugin monitor for node-problem-detector to invoke and check various node problems with user defined check scripts. See proposal [here](https://docs.google.com/document/d/1jK_5YloSYtboj-DtfjmYKxfNnUxCAvohLnsH5aGCAYQ/edit#). | disable_custom_plugin_monitor
-| [SystemStatsMonitor](https://github.com/kubernetes/node-problem-detector/blob/master/config/system-stats-monitor.json) | None(Could be added in the future) | A system stats monitor for node-problem-detector to collect various health-related system stats as metrics. See proposal [here](https://docs.google.com/document/d/1SeaUz6kBavI283Dq8GBpoEUDrHA2a795xtw0OvjM568/edit). | disable_system_stats_monitor
+| [AbrtAdaptor](https://github.com/kubernetes/node-problem-detector/blob/master/config/abrt-adaptor.json) | None | Monitor ABRT log messages and report them further. ABRT (Automatic Bug Report Tool) is a health monitoring daemon able to catch kernel problems as well as application crashes of various kinds that occur on the host. For more information visit the [link](https://github.com/abrt). | disable_system_log_monitor
+| [CustomPluginMonitor](https://github.com/kubernetes/node-problem-detector/blob/master/config/custom-plugin-monitor.json) | On-demand(According to users configuration) | A custom plugin monitor for node-problem-detector to invoke and check various node problems with user-defined check scripts. See the proposal [here](https://docs.google.com/document/d/1jK_5YloSYtboj-DtfjmYKxfNnUxCAvohLnsH5aGCAYQ/edit#). | disable_custom_plugin_monitor
+| [SystemStatsMonitor](https://github.com/kubernetes/node-problem-detector/blob/master/config/system-stats-monitor.json) | None(Could be added in the future) | A system stats monitor for node-problem-detector to collect various health-related system stats as metrics. See the proposal [here](https://docs.google.com/document/d/1SeaUz6kBavI283Dq8GBpoEUDrHA2a795xtw0OvjM568/edit). | disable_system_stats_monitor
 
 # Exporter
 
 An exporter is a component of node-problem-detector. It reports node problems and/or metrics to
-certain back end. Some of them can be disable at compile time using a build tag. List of supported exporters:
+certain backends. Some of them can be disabled at compile-time using a build tag. List of supported exporters:
 
 | Exporter |Description | Disabling Build Tag |
 |----------|:-----------|:--------------------|
@@ -86,21 +86,21 @@ certain back end. Some of them can be disable at compile time using a build tag.
 
 #### For System Log Monitor
 
-* `--config.system-log-monitor`: List of paths to system log monitor configuration files, comma separated, e.g.
+* `--config.system-log-monitor`: List of paths to system log monitor configuration files, comma-separated, e.g.
   [config/kernel-monitor.json](https://github.com/kubernetes/node-problem-detector/blob/master/config/kernel-monitor.json).
   Node problem detector will start a separate log monitor for each configuration. You can
-  use different log monitors to monitor different system log.
+  use different log monitors to monitor different system logs.
 
 #### For System Stats Monitor
 
-* `--config.system-stats-monitor`: List of paths to system stats monitor config files, comma separated, e.g.
+* `--config.system-stats-monitor`: List of paths to system stats monitor config files, comma-separated, e.g.
   [config/system-stats-monitor.json](https://github.com/kubernetes/node-problem-detector/blob/master/config/system-stats-monitor.json).
   Node problem detector will start a separate system stats monitor for each configuration. You can
   use different system stats monitors to monitor different problem-related system stats.
 
 #### For Custom Plugin Monitor
 
-* `--config.custom-plugin-monitor`: List of paths to custom plugin monitor config files, comma separated, e.g.
+* `--config.custom-plugin-monitor`: List of paths to custom plugin monitor config files, comma-separated, e.g.
   [config/custom-plugin-monitor.json](https://github.com/kubernetes/node-problem-detector/blob/master/config/custom-plugin-monitor.json).
   Node problem detector will start a separate custom plugin monitor for each configuration. You can
   use different custom plugin monitors to monitor different node problems.
@@ -109,14 +109,14 @@ certain back end. Some of them can be disable at compile time using a build tag.
 
 * `--enable-k8s-exporter`: Enables reporting to Kubernetes API server, default to `true`.
 * `--apiserver-override`: A URI parameter used to customize how node-problem-detector
-connects the apiserver.  This is ignored if `--enable-k8s-exporter` is `false`. The format is same as the
+connects the apiserver.  This is ignored if `--enable-k8s-exporter` is `false`. The format is the same as the
 [`source`](https://github.com/kubernetes/heapster/blob/master/docs/source-configuration.md#kubernetes)
 flag of [Heapster](https://github.com/kubernetes/heapster).
 For example, to run without auth, use the following config:
    ```
    http://APISERVER_IP:APISERVER_PORT?inClusterConfig=false
    ```
-   Refer [heapster docs](https://github.com/kubernetes/heapster/blob/master/docs/source-configuration.md#kubernetes) for a complete list of available options.
+   Refer to [heapster docs](https://github.com/kubernetes/heapster/blob/master/docs/source-configuration.md#kubernetes) for a complete list of available options.
 * `--address`: The address to bind the node problem detector server.
 * `--port`: The port to bind the node problem detector server. Use 0 to disable.
 
@@ -127,13 +127,13 @@ For example, to run without auth, use the following config:
 
 #### For Stackdriver exporter
 
-* `--exporter.stackdriver`: Path to a Stackdriver exporter config file, e.g. [config/exporter/stackdriver-exporter.json](https://github.com/kubernetes/node-problem-detector/blob/master/config/exporter/stackdriver-exporter.json), default to empty string. Set to empty string to disable.
+* `--exporter.stackdriver`: Path to a Stackdriver exporter config file, e.g. [config/exporter/stackdriver-exporter.json](https://github.com/kubernetes/node-problem-detector/blob/master/config/exporter/stackdriver-exporter.json), defaults to empty string. Set to empty string to disable.
 
 ### Deprecated Flags
 
-* `--system-log-monitors`: List of paths to system log monitor config files, comma separated. This option is deprecated, replaced by `--config.system-log-monitor`, and will be removed. NPD will panic if both `--system-log-monitors` and `--config.system-log-monitor` are set.
+* `--system-log-monitors`: List of paths to system log monitor config files, comma-separated. This option is deprecated, replaced by `--config.system-log-monitor`, and will be removed. NPD will panic if both `--system-log-monitors` and `--config.system-log-monitor` are set.
 
-* `--custom-plugin-monitors`: List of paths to custom plugin monitor config files, comma separated. This option is deprecated, replaced by `--config.custom-plugin-monitor`, and will be removed. NPD will panic if both `--custom-plugin-monitors` and `--config.custom-plugin-monitor` are set.
+* `--custom-plugin-monitors`: List of paths to custom plugin monitor config files, comma-separated. This option is deprecated, replaced by `--config.custom-plugin-monitor`, and will be removed. NPD will panic if both `--custom-plugin-monitors` and `--config.custom-plugin-monitor` are set.
 
 ## Build Image
 
@@ -153,19 +153,19 @@ before running `make`. For example:
 
 `BUILD_TAGS="disable_custom_plugin_monitor disable_system_stats_monitor" make`
 
-Above command will compile the node-problem-detector without [Custom Plugin Monitor](https://github.com/kubernetes/node-problem-detector/tree/master/pkg/custompluginmonitor)
+The above command will compile the node-problem-detector without [Custom Plugin Monitor](https://github.com/kubernetes/node-problem-detector/tree/master/pkg/custompluginmonitor)
 and [System Stats Monitor](https://github.com/kubernetes/node-problem-detector/tree/master/pkg/systemstatsmonitor).
 Check out the [Problem Daemon](https://github.com/kubernetes/node-problem-detector#problem-daemon) section
 to see how to disable each problem daemon during compilation time.
 
 **Note**:
-By default node-problem-detector will be built with systemd support with `make` command. This requires systemd develop files.
-You should download the systemd develop files first. For Ubuntu, `libsystemd-journal-dev` package should
-be installed. For Debian, `libsystemd-dev` package should be installed.
+By default, node-problem-detector will be built with systemd support with the `make` command. This requires systemd develop files.
+You should download the systemd develop files first. For Ubuntu, the `libsystemd-journal-dev` package should
+be installed. For Debian, the `libsystemd-dev` package should be installed.
 
 ## Push Image
 
-`make push` uploads the docker image to registry. By default, the image will be uploaded to
+`make push` uploads the docker image to a registry. By default, the image will be uploaded to
 `staging-k8s.gcr.io`. It's easy to modify the `Makefile` to push the image
 to another registry.
 
@@ -178,7 +178,7 @@ helm repo add deliveryhero https://charts.deliveryhero.io/
 helm install deliveryhero/node-problem-detector
 ```
 
-Or alternatively, to install node-problem-detector manually:
+Alternatively, to install node-problem-detector manually:
 
 1. Edit [node-problem-detector.yaml](deployment/node-problem-detector.yaml) to fit your environment. Set `log` volume to your system log directory (used by SystemLogMonitor). You can use a ConfigMap to overwrite the `config` directory inside the pod.
 
@@ -216,7 +216,7 @@ For example, to test [KernelMonitor](https://github.com/kubernetes/node-problem-
 6. ```sudo sh -c "echo 'kernel: INFO: task docker:20744 blocked for more than 120 seconds.' >> /dev/kmsg"```
 7. You can see ```DockerHung``` event and condition in the node-problem-detector log.
 8. You can see ```DockerHung``` condition at [http://127.0.0.1:20256/conditions](http://127.0.0.1:20256/conditions).
-9. You can see disk related system metrics in Prometheus format at [http://127.0.0.1:20257/metrics](http://127.0.0.1:20257/metrics).
+9. You can see disk-related system metrics in Prometheus format at [http://127.0.0.1:20257/metrics](http://127.0.0.1:20257/metrics).
 
 **Note**:
 - You can see more rule examples under [test/kernel_log_generator/problems](https://github.com/kubernetes/node-problem-detector/tree/master/test/kernel_log_generator/problems).
@@ -258,7 +258,7 @@ Kubernetes cluster to a healthy state. The following remedy systems exist:
 
 NPD is tested via unit tests, [NPD e2e tests](https://github.com/kubernetes/node-problem-detector/blob/master/test/e2e/README.md), Kubernetes e2e tests and Kubernetes nodes e2e tests. Prow handles the [pre-submit tests](https://github.com/kubernetes/test-infra/blob/master/config/jobs/kubernetes/node-problem-detector/node-problem-detector-presubmits.yaml) and [CI tests](https://github.com/kubernetes/test-infra/blob/master/config/jobs/kubernetes/node-problem-detector/node-problem-detector-ci.yaml).
 
-CI test results can be found at below:
+CI test results can be found below:
 1. [Unit tests](https://k8s-testgrid.appspot.com/sig-node-node-problem-detector#ci-npd-test)
 2. [NPD e2e tests](https://k8s-testgrid.appspot.com/sig-node-node-problem-detector#ci-npd-e2e-test)
 3. [Kubernetes e2e tests](https://k8s-testgrid.appspot.com/sig-node-node-problem-detector#ci-npd-e2e-kubernetes-gce-gci)
@@ -266,9 +266,9 @@ CI test results can be found at below:
 
 ## Running tests
 
-Unit test is ran via `make test`.
+Unit tests are run via `make test`.
 
-See [NPD e2e test documentation](https://github.com/kubernetes/node-problem-detector/blob/master/test/e2e/README.md) for how to setup and run NPD e2e tests.
+See [NPD e2e test documentation](https://github.com/kubernetes/node-problem-detector/blob/master/test/e2e/README.md) for how to set up and run NPD e2e tests.
 
 ## Problem Maker
 
