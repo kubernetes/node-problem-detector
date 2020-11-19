@@ -20,7 +20,9 @@ import (
 	"strings"
 )
 
-type ModuleStat struct {
+var modulesFilePath = "/proc/modules"
+
+type Module struct {
 	ModuleName  string `json:"moduleName"`
 	Instances   uint64 `json:"instances"`
 	Proprietary bool   `json:"proprietary"`
@@ -28,20 +30,19 @@ type ModuleStat struct {
 	Unsigned    bool   `json:"unsigned"`
 }
 
-func (d ModuleStat) String() string {
+func (d Module) String() string {
 	s, _ := json.Marshal(d)
 	return string(s)
 }
 
 // Module returns all the kernel modules and their
 // usage. It is read from cat /proc/modules.
-func Modules() ([]ModuleStat, error) {
-	filename := "/proc/modules"
-	lines, err := ReadFile(filename)
+func Modules() ([]Module, error) {
+	lines, err := ReadFileIntoLines(modulesFilePath)
 	if err != nil {
-		return nil, fmt.Errorf("Error reading the contents of %s: %s", filename, err)
+		return nil, fmt.Errorf("error reading the contents of %s: %s", modulesFilePath, err)
 	}
-	var result = make([]ModuleStat, 0, len(lines))
+	var result = make([]Module, 0, len(lines))
 
 	/* a line of /proc/modules has the following structure
 	  nf_nat 61440 2 xt_MASQUERADE,iptable_nat, Live 0x0000000000000000  (O)
@@ -58,28 +59,23 @@ func Modules() ([]ModuleStat, error) {
 		fields := strings.Fields(line)
 		moduleName := fields[0] // name of the module
 		numberOfInstances, err :=
-			strconv.ParseUint((fields[1]), 10, 64) // instances of the module are currently loaded
+			strconv.ParseUint((fields[2]), 10, 64) // instances of the module are currently loaded
 		if err != nil {
-			return nil, err
+			numberOfInstances = 0
 		}
 
-		var isProprietary = false
-		var isOutofTree = false
-		var isUnsigned = false
+		var module = Module{
+			ModuleName: moduleName,
+			Instances:  numberOfInstances,
+		}
 		// if the len of the fields is greater than 6, then the kernel taint state is available.
 		if len(fields) > 6 {
-			isProprietary = strings.Contains(fields[6], "P")
-			isOutofTree = strings.Contains(fields[6], "O")
-			isUnsigned = strings.Contains(fields[6], "E")
+			module.Proprietary = strings.Contains(fields[6], "P")
+			module.OutOfTree = strings.Contains(fields[6], "O")
+			module.Unsigned = strings.Contains(fields[6], "E")
 		}
-		var stats = ModuleStat{
-			ModuleName:  moduleName,
-			Instances:   numberOfInstances,
-			Proprietary: isProprietary,
-			OutOfTree:   isOutofTree,
-			Unsigned:    isUnsigned,
-		}
-		result = append(result, stats)
+
+		result = append(result, module)
 	}
 	return result, nil
 }

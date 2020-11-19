@@ -19,7 +19,7 @@ import (
 )
 
 // ReadFile reads contents from a file and returns lines.
-func ReadFile(filename string) ([]string, error) {
+func ReadFileIntoLines(filename string) ([]string, error) {
 	file, err := os.Open(filename)
 	if err != nil {
 		return nil, err

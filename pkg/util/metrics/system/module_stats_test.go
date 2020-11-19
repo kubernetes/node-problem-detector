@@ -21,17 +21,99 @@ import (
 )
 
 func TestModules(t *testing.T) {
-	modules, err := Modules()
-	if err != nil {
-		t.Errorf("error %v", err)
+	testcases := []struct {
+		name               string
+		fakeModuleFilePath string
+		expectedModules    []Module
+	}{
+		{
+			name:               "default_cos",
+			fakeModuleFilePath: "testdata/modules_cos.txt",
+			expectedModules: []Module{
+				{
+					ModuleName:  "crypto_simd",
+					Instances:   0x1,
+					Proprietary: false,
+					OutOfTree:   false,
+					Unsigned:    false,
+				},
+				{
+					ModuleName:  "virtio_balloon",
+					Instances:   0x0,
+					Proprietary: false,
+					OutOfTree:   false,
+					Unsigned:    false,
+				},
+				{
+					ModuleName:  "cryptd",
+					Instances:   0x1,
+					Proprietary: false,
+					OutOfTree:   false,
+					Unsigned:    false,
+				},
+				{
+					ModuleName:  "loadpin_trigger",
+					Instances:   0x0,
+					Proprietary: false,
+					OutOfTree:   true,
+					Unsigned:    false,
+				},
+			},
+		},
+		{
+			name:               "default_ubuntu",
+			fakeModuleFilePath: "testdata/modules_ubuntu.txt",
+			expectedModules: []Module{
+				{
+					ModuleName:  "drm",
+					Instances:   0x0,
+					Proprietary: false,
+					OutOfTree:   false,
+					Unsigned:    false,
+				},
+				{
+					ModuleName:  "virtio_rng",
+					Instances:   0x0,
+					Proprietary: false,
+					OutOfTree:   false,
+					Unsigned:    false,
+				},
+				{
+					ModuleName:  "x_tables",
+					Instances:   0x1,
+					Proprietary: false,
+					OutOfTree:   false,
+					Unsigned:    false,
+				},
+				{
+					ModuleName:  "autofs4",
+					Instances:   0x2,
+					Proprietary: false,
+					OutOfTree:   false,
+					Unsigned:    false,
+				},
+			},
+		},
 	}
-	if modules == nil {
-		t.Error("Error retrieving modules")
+	for _, test := range testcases {
+		t.Run(test.name, func(t *testing.T) {
+			originalModuleFilePath := modulesFilePath
+			defer func() {
+				modulesFilePath = originalModuleFilePath
+			}()
+
+			modulesFilePath = test.fakeModuleFilePath
+			modules, err := Modules()
+			if err != nil {
+				t.Errorf("Unexpected error retrieving modules: %v\nModulesFilePath: %s\n", err, modulesFilePath)
+			}
+			assert.Equal(t, modules, test.expectedModules, "unpected modules retrieved: %v, expected: %v", modules, test.expectedModules)
+		})
 	}
 }
 
 func TestModuleStat_String(t *testing.T) {
-	v := ModuleStat{
+	v := Module{
 		ModuleName: "test",
 		Instances:  2,
 		OutOfTree:  false,
@@ -39,6 +121,6 @@ func TestModuleStat_String(t *testing.T) {
 	}
 	e := `{"moduleName":"test","instances":2,"proprietary":false,"outOfTree":false,"unsigned":false}`
 	assert.Equal(t,
-		e, fmt.Sprintf("%v", v), "ModuleStat string is invalid: %v", v)
+		e, fmt.Sprintf("%v", v), "Module string is invalid: %v", v)
 
 }
