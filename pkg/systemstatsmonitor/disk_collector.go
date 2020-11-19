@@ -321,11 +321,12 @@ func listRootBlockDevices(timeout time.Duration) map[string]int64 {
 	// "-d" prevents printing slave or holder devices. i.e. /dev/sda1, /dev/sda2...
 	// "-n" prevents printing the headings.
 	// "-p NAME" specifies to only print the device name.
-	cmd := exec.CommandContext(ctx, "lsblk", "-d", "-n", "-o", "NAME,SIZE")
+	cmd := exec.CommandContext(ctx, "lsblk", "-d", "-nb", "-o", "NAME,SIZE")
 	stdout, err := cmd.Output()
 	if err != nil {
 		glog.Errorf("Error calling lsblk")
 	}
+
 	lines := strings.Split(strings.TrimSpace(string(stdout)), "\n")
 	result := make(map[string]int64)
 	for _, line := range lines {
