@@ -252,10 +252,18 @@ func (dc *diskCollector) collect() {
 		return
 	}
 
+	// Record boot disk size
+	root_device_stats := listRootBlockDevices(dc.config.LsblkTimeout)
+	root_devices := make([]string, 0, len(root_device_stats))
+	for device_name, device_size := range root_device_stats {
+		root_devices = append(root_devices, device_name)
+		dc.mBootDiskSize.Record(map[string]string{deviceNameLabel: device_name}, device_size)
+	}
+
 	// List available devices.
 	devices := []string{}
 	if dc.config.IncludeRootBlk {
-		devices = append(devices, listRootBlockDevices(dc.config.LsblkTimeout)...)
+		devices = append(devices, root_devices...)
 	}
 	if dc.config.IncludeAllAttachedBlk {
 		devices = append(devices, listAttachedBlockDevices()...)
@@ -303,43 +311,23 @@ func (dc *diskCollector) collect() {
 		dc.mBytesUsed.Record(map[string]string{deviceNameLabel: deviceName, fsTypeLabel: fstype, mountOptionLabel: opttypes, stateLabel: "free"}, int64(usageStat.Free))
 		dc.mBytesUsed.Record(map[string]string{deviceNameLabel: deviceName, fsTypeLabel: fstype, mountOptionLabel: opttypes, stateLabel: "used"}, int64(usageStat.Used))
 	}
-	if dc.mBootDiskSize == nil {
-		return
-	}
-	dc.recordBootDiskSize(dc.config.LsblkTimeout)
 }
 
-// listRootBlockDevices lists all block devices that's not a slave or holder.
-func listRootBlockDevices(timeout time.Duration) []string {
+// listRootBlockDevices lists all block devices that's not a secondary or follower with its size.
+func listRootBlockDevices(timeout time.Duration) map[string]int64 {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
 	// "-d" prevents printing slave or holder devices. i.e. /dev/sda1, /dev/sda2...
 	// "-n" prevents printing the headings.
 	// "-p NAME" specifies to only print the device name.
-	cmd := exec.CommandContext(ctx, "lsblk", "-d", "-n", "-o", "NAME")
-	stdout, err := cmd.Output()
-	if err != nil {
-		glog.Errorf("Error calling lsblk")
-	}
-	return strings.Split(strings.TrimSpace(string(stdout)), "\n")
-}
-
-// recordBootDiskSize records the disk block devices that are not a slave or holder.
-func (dc *diskCollector) recordBootDiskSize(timeout time.Duration) {
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-
-	// "-d" prevents printing slave or holder devices. i.e. /dev/sda1, /dev/sda2...
-	// "-b" display the size in bytes.
-	// "-n" prevents printing the headings.
-	// "-p NAME" specifies to only print the device name.
-	cmd := exec.CommandContext(ctx, "lsblk", "-d", "-nb", "-o", "NAME,SIZE")
+	cmd := exec.CommandContext(ctx, "lsblk", "-d", "-n", "-o", "NAME,SIZE")
 	stdout, err := cmd.Output()
 	if err != nil {
 		glog.Errorf("Error calling lsblk")
 	}
 	lines := strings.Split(strings.TrimSpace(string(stdout)), "\n")
+	result := make(map[string]int64)
 	for _, line := range lines {
 		fields := strings.Fields(line)
 		// fields[0] = deviceName
@@ -349,8 +337,10 @@ func (dc *diskCollector) recordBootDiskSize(timeout time.Duration) {
 		if err != nil {
 			glog.Errorf("Failed to parse the device size: %v", err)
 		}
-		dc.mBootDiskSize.Record(map[string]string{deviceNameLabel: device_name}, int64(device_size))
+		result[device_name] = int64(device_size)
 	}
+
+	return result
 }
 
 // listAttachedBlockDevices lists all currently attached block devices.
