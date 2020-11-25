@@ -188,9 +188,10 @@ func (c *customPluginMonitor) generateStatus(result cpmtypes.Result) *types.Stat
 				if condition.Status == types.True && status != types.True {
 					// Scenario 1: Condition status changes from True to False/Unknown
 					newReason = defaultConditionReason
-					if newMessage == "" {
+					if status == types.False {
 						newMessage = defaultConditionMessage
 					} else {
+						// When status unknown, the result's message is important for debug
 						newMessage = result.Message
 					}
 				} else if condition.Status != types.True && status == types.True {
@@ -200,9 +201,10 @@ func (c *customPluginMonitor) generateStatus(result cpmtypes.Result) *types.Stat
 				} else if condition.Status != status {
 					// Scenario 3: Condition status changes from False to Unknown or vice versa
 					newReason = defaultConditionReason
-					if newMessage == "" {
+					if status == types.False {
 						newMessage = defaultConditionMessage
 					} else {
+						// When status unknown, the result's message is important for debug
 						newMessage = result.Message
 					}
 				} else if condition.Status == types.True && status == types.True &&
