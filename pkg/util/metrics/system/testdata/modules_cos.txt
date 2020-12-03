@@ -1,0 +1,4 @@
+crypto_simd 16384 1 aesni_intel, Live 0x0000000000000000
+virtio_balloon 24576 0 - Live 0x0000000000000000
+cryptd 24576 1 crypto_simd, Live 0x0000000000000000
+loadpin_trigger 12288 0 [permanent], Live 0x0000000000000000 (O)
