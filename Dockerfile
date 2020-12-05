@@ -12,7 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM @BASEIMAGE@
+ARG BASEIMAGE
+FROM ${BASEIMAGE}
+
 MAINTAINER Random Liu <lantaol@google.com>
 
 RUN clean-install util-linux libsystemd0 bash
@@ -20,11 +22,10 @@ RUN clean-install util-linux libsystemd0 bash
 # Avoid symlink of /etc/localtime.
 RUN test -h /etc/localtime && rm -f /etc/localtime && cp /usr/share/zoneinfo/UTC /etc/localtime || true
 
-ADD ./bin/node-problem-detector /node-problem-detector
-ADD ./bin/health-checker /home/kubernetes/bin/health-checker
+COPY ./bin/node-problem-detector /node-problem-detector
 
-# Below command depends on ENABLE_JOURNAL=1.
-ADD ./bin/log-counter /home/kubernetes/bin/log-counter
+ARG LOGCOUNTER
+COPY ./bin/health-checker ${LOGCOUNTER} /home/kubernetes/bin/
 
-ADD config /config
-ENTRYPOINT ["/node-problem-detector", "--system-log-monitors=/config/kernel-monitor.json"]
+COPY config /config
+ENTRYPOINT ["/node-problem-detector", "--config.system-log-monitor=/config/kernel-monitor.json"]

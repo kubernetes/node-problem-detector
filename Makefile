@@ -64,6 +64,7 @@ CGO_ENABLED:=0
 
 # Construct the "-tags" parameter used by "go build".
 BUILD_TAGS?=
+
 ifeq ($(ENABLE_JOURNALD), 1)
 	# Enable journald build tag.
 	BUILD_TAGS:=$(BUILD_TAGS) journald
@@ -73,6 +74,11 @@ ifeq ($(ENABLE_JOURNALD), 1)
 	# here, because go-systemd uses dlopen, and dlopen will not work properly in a
 	# statically linked application.
 	CGO_ENABLED:=1
+	LOGCOUNTER=./bin/log-counter
+else
+	# Hack: Don't copy over log-counter, use a wildcard path that shouldnt match
+	# anything in COPY command.
+	LOGCOUNTER=*dont-include-log-counter
 endif
 
 vet:
@@ -175,14 +181,6 @@ endif
 		-tags "$(BUILD_TAGS)" \
 		cmd/healthchecker/health_checker.go
 
-Dockerfile: Dockerfile.in
-	sed -e 's|@BASEIMAGE@|$(BASEIMAGE)|g' $< >$@
-ifneq ($(ENABLE_JOURNALD), 1)
-	sed -i '/Below command depends on ENABLE_JOURNAL=1/,+2d' $@
-	echo "Warning: log-counter requires journald, skipping."
-endif
-
-
 test: vet fmt
 	GO111MODULE=on go test -mod vendor -timeout=1m -v -race -short -tags "$(BUILD_TAGS)" ./...
 
@@ -199,7 +197,7 @@ e2e-test: vet fmt build-tar
 build-binaries: ./bin/node-problem-detector ./bin/log-counter ./bin/health-checker
 
 build-container: build-binaries Dockerfile
-	docker build -t $(IMAGE) .
+	docker build -t $(IMAGE) --build-arg BASEIMAGE=$(BASEIMAGE) --build-arg LOGCOUNTER=$(LOGCOUNTER) .
 
 build-tar: ./bin/node-problem-detector ./bin/log-counter ./bin/health-checker ./test/bin/problem-maker
 	tar -zcvf $(TARBALL) bin/ config/ test/e2e-install.sh test/bin/problem-maker
