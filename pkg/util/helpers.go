@@ -17,7 +17,6 @@ package util
 
 import (
 	"fmt"
-	"syscall"
 	"time"
 
 	"github.com/cobaugh/osrelease"
@@ -35,14 +34,6 @@ func GenerateConditionChangeEvent(t string, status types.ConditionStatus, reason
 		Reason:    reason,
 		Message:   fmt.Sprintf("Node condition %s is now: %s, reason: %s", t, status, reason),
 	}
-}
-
-func GetUptimeDuration() (time.Duration, error) {
-	var info syscall.Sysinfo_t
-	if err := syscall.Sysinfo(&info); err != nil {
-		return 0, fmt.Errorf("failed to get system info: %v", err)
-	}
-	return time.Duration(info.Uptime) * time.Second, nil
 }
 
 func GetStartTime(now time.Time, uptimeDuration time.Duration, lookbackStr string, delayStr string) (time.Time, error) {

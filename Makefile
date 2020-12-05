@@ -86,6 +86,60 @@ fmt:
 version:
 	@echo $(VERSION)
 
+WINDOWS_AMD64_BINARIES = bin/windows_amd64/node-problem-detector.exe bin/windows_amd64/health-checker.exe
+WINDOWS_AMD64_TEST_BINARIES = test/bin/windows_amd64/problem-maker.exe
+LINUX_AMD64_BINARIES = bin/linux_amd64/node-problem-detector bin/linux_amd64/health-checker
+LINUX_AMD64_TEST_BINARIES = test/bin/linux_amd64/problem-maker
+ifeq ($(ENABLE_JOURNALD), 1)
+	LINUX_AMD64_BINARIES += bin/linux_amd64/log-counter
+endif
+
+windows-binaries: $(WINDOWS_AMD64_BINARIES) $(WINDOWS_AMD64_TEST_BINARIES)
+
+bin/windows_amd64/%.exe: $(PKG_SOURCES)
+ifeq ($(ENABLE_JOURNALD), 1)
+	echo "Journald on Windows is not supported, use make ENABLE_JOURNALD=0 [TARGET]"
+endif
+	GOOS=windows GOARCH=amd64 CGO_ENABLED=$(CGO_ENABLED) GO111MODULE=on go build \
+		-mod vendor \
+		-o $@ \
+		-ldflags '-X $(PKG)/pkg/version.version=$(VERSION)' \
+		-tags "$(BUILD_TAGS)" \
+		./cmd/$(subst -,,$*)/$(subst -,_,$*).go
+	touch $@
+
+./test/bin/windows_amd64/%.exe: $(PKG_SOURCES)
+ifeq ($(ENABLE_JOURNALD), 1)
+	echo "Journald on Windows is not supported, use make ENABLE_JOURNALD=0 [TARGET]"
+endif
+	GOOS=windows GOARCH=amd64 CGO_ENABLED=$(CGO_ENABLED) GO111MODULE=on go build \
+		-mod vendor \
+		-o $@ \
+		-tags "$(BUILD_TAGS)" \
+		./test/e2e/$(subst -,,$*)/$(subst -,_,$*).go
+
+bin/linux_amd64/%: $(PKG_SOURCES)
+	GOOS=linux GOARCH=amd64 CGO_ENABLED=$(CGO_ENABLED) GO111MODULE=on go build \
+		-mod vendor \
+		-o $@ \
+		-ldflags '-X $(PKG)/pkg/version.version=$(VERSION)' \
+		-tags "$(BUILD_TAGS)" \
+		./cmd/$(subst -,,$*)/$(subst -,_,$*).go
+	touch $@
+
+./test/bin/linux_amd64/%: $(PKG_SOURCES)
+	GOOS=linux GOARCH=amd64 CGO_ENABLED=$(CGO_ENABLED) GO111MODULE=on go build \
+		-mod vendor \
+		-o $@ \
+		-tags "$(BUILD_TAGS)" \
+		./test/e2e/$(subst -,,$*)/$(subst -,_,$*).go
+
+ifneq ($(ENABLE_JOURNALD), 1)
+bin/linux_amd64/log-counter:
+	echo "Warning: log-counter requires journald, skipping."
+endif
+
+# In the future these targets should be deprecated.
 ./bin/log-counter: $(PKG_SOURCES)
 ifeq ($(ENABLE_JOURNALD), 1)
 	CGO_ENABLED=$(CGO_ENABLED) GOOS=linux GO111MODULE=on go build \
@@ -175,5 +229,6 @@ clean:
 	rm -f bin/health-checker
 	rm -f bin/log-counter
 	rm -f bin/node-problem-detector
+	rm -f $(WINDOWS_AMD64_BINARIES) $(LINUX_AMD64_BINARIES)
 	rm -f test/bin/problem-maker
 	rm -f node-problem-detector-*.tar.gz
