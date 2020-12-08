@@ -19,15 +19,12 @@ package filelog
 import (
 	"bufio"
 	"bytes"
-	"fmt"
 	"io"
-	"os"
 	"strings"
 	"time"
 
 	utilclock "code.cloudfoundry.org/clock"
 	"github.com/golang/glog"
-	"github.com/google/cadvisor/utils/tail"
 
 	"k8s.io/node-problem-detector/pkg/systemlogmonitor/logwatchers/types"
 	logtypes "k8s.io/node-problem-detector/pkg/systemlogmonitor/types"
@@ -134,27 +131,4 @@ func (s *filelogWatcher) watchLoop() {
 		}
 		s.logCh <- log
 	}
-}
-
-// getLogReader returns log reader for filelog log. Note that getLogReader doesn't look back
-// to the rolled out logs.
-func getLogReader(path string) (io.ReadCloser, error) {
-	if path == "" {
-		return nil, fmt.Errorf("unexpected empty log path")
-	}
-	// To handle log rotation, tail will not report error immediately if
-	// the file doesn't exist. So we check file existence first.
-	// This could go wrong during mid-rotation. It should recover after
-	// several restart when the log file is created again. The chance
-	// is slim but we should still fix this in the future.
-	// TODO(random-liu): Handle log missing during rotation.
-	_, err := os.Stat(path)
-	if err != nil {
-		return nil, fmt.Errorf("failed to stat the file %q: %v", path, err)
-	}
-	tail, err := tail.NewTail(path)
-	if err != nil {
-		return nil, fmt.Errorf("failed to tail the file %q: %v", path, err)
-	}
-	return tail, nil
 }
