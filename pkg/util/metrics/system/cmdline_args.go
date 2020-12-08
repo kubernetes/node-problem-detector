@@ -55,7 +55,7 @@ func splitAfterSpace(inputChar rune) bool {
 func CmdlineArgs() ([]CmdlineArg, error) {
 	lines, err := ReadFileIntoLines(cmdlineFilePath)
 	if err != nil {
-		return nil, fmt.Errorf("error reading the file %v, %v", cmdlineFilePath, err)
+		return nil, fmt.Errorf("error reading the file %s, %v", cmdlineFilePath, err)
 	}
 	if len(lines) < 1 {
 		return nil, fmt.Errorf("no lines are retured")
@@ -68,17 +68,17 @@ func CmdlineArgs() ([]CmdlineArg, error) {
 		if strings.Index(words, "\"") == 0 {
 			continue
 		}
-		splitsWords := strings.Split(words, "=")
-		if len(splitsWords) < 2 {
+		tokens := strings.Split(words, "=")
+		if len(tokens) < 2 {
 			var stats = CmdlineArg{
-				Key: splitsWords[0],
+				Key: tokens[0],
 			}
 			result = append(result, stats)
 		} else {
 			//remove quotes in the values
-			trimmedValue := strings.Trim(splitsWords[1], "\"'")
+			trimmedValue := strings.Trim(tokens[1], "\"'")
 			var stats = CmdlineArg{
-				Key:   splitsWords[0],
+				Key:   tokens[0],
 				Value: trimmedValue,
 			}
 			result = append(result, stats)
