@@ -18,7 +18,7 @@ import (
 	"os"
 )
 
-// ReadFile reads contents from a file and returns lines.
+// ReadFileIntoLines reads contents from a file and returns lines.
 func ReadFileIntoLines(filename string) ([]string, error) {
 	file, err := os.Open(filename)
 	if err != nil {
