@@ -25,8 +25,8 @@ const directionLabel = "direction"
 // stateLabel labels the state of disk/memory/cpu usage, e.g.: "free", "used".
 const stateLabel = "state"
 
-// fsTypeLabel labels the fst type of the disk, e.g.: "ext4", "ext2", "vfat"
-const fsTypeLabel = "fstype"
+// fsTypeLabel labels the fs type of the disk, e.g.: "ext4", "ext2", "vfat"
+const fsTypeLabel = "fs_type"
 
-// mountPointLabel labels the mountpoint of the monitored disk device
-const mountOptionLabel = "mountoption"
+// mountOptionLabel labels the mount_options of the monitored disk device
+const mountOptionLabel = "mount_option"
