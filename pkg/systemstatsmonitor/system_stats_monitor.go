@@ -38,13 +38,14 @@ func init() {
 }
 
 type systemStatsMonitor struct {
-	configPath      string
-	config          ssmtypes.SystemStatsConfig
-	cpuCollector    *cpuCollector
-	diskCollector   *diskCollector
-	hostCollector   *hostCollector
-	memoryCollector *memoryCollector
-	tomb            *tomb.Tomb
+	configPath         string
+	config             ssmtypes.SystemStatsConfig
+	cpuCollector       *cpuCollector
+	diskCollector      *diskCollector
+	hostCollector      *hostCollector
+	memoryCollector    *memoryCollector
+	osFeatureCollector *osFeatureCollector
+	tomb               *tomb.Tomb
 }
 
 // NewSystemStatsMonitorOrDie creates a system stats monitor.
@@ -69,6 +70,8 @@ func NewSystemStatsMonitorOrDie(configPath string) types.Monitor {
 		glog.Fatalf("Failed to apply configuration for %q: %v", configPath, err)
 	}
 
+	glog.Infof("Error: %v", ssm.config)
+
 	err = ssm.config.Validate()
 	if err != nil {
 		glog.Fatalf("Failed to validate %s configuration %+v: %v", ssm.configPath, ssm.config, err)
@@ -85,6 +88,9 @@ func NewSystemStatsMonitorOrDie(configPath string) types.Monitor {
 	}
 	if len(ssm.config.MemoryConfig.MetricsConfigs) > 0 {
 		ssm.memoryCollector = NewMemoryCollectorOrDie(&ssm.config.MemoryConfig)
+	}
+	if len(ssm.config.OsFeatureConfig.MetricsConfigs) > 0 {
+		ssm.osFeatureCollector = NewOsFeatureCollectorOrDie(&ssm.config.OsFeatureConfig)
 	}
 	return &ssm
 }
@@ -110,6 +116,7 @@ func (ssm *systemStatsMonitor) monitorLoop() {
 		ssm.diskCollector.collect()
 		ssm.hostCollector.collect()
 		ssm.memoryCollector.collect()
+		ssm.osFeatureCollector.collect()
 	}
 
 	for {
@@ -119,6 +126,7 @@ func (ssm *systemStatsMonitor) monitorLoop() {
 			ssm.diskCollector.collect()
 			ssm.hostCollector.collect()
 			ssm.memoryCollector.collect()
+			ssm.osFeatureCollector.collect()
 		case <-ssm.tomb.Stopping():
 			glog.Infof("System stats monitor stopped: %s", ssm.configPath)
 			return

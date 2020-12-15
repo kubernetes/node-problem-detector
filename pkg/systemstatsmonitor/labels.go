@@ -30,3 +30,9 @@ const fsTypeLabel = "fs_type"
 
 // mountOptionLabel labels the mount_options of the monitored disk device
 const mountOptionLabel = "mount_option"
+
+// featureLabel labels the features of the guest os system
+const featureLabel = "os_feature"
+
+// valueLabel labels the value for the features of the guest os system if required
+const valueLabel = "value"

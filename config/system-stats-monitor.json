@@ -75,5 +75,13 @@
 			}
 		}
 	},
+	"osFeature": {
+		"metricsConfigs": {
+			"system/os_feature": {
+				"displayName": "system/os_feature"
+			}
+		},
+		"KnownModulesConfigPath": "config/guestosconfig/known-modules.json"
+	},
 	"invokeInterval": "60s"
 }

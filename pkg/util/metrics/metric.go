@@ -41,6 +41,7 @@ const (
 	MemoryPageCacheUsedID   MetricID = "memory/page_cache_used"
 	MemoryUnevictableUsedID MetricID = "memory/unevictable_used"
 	MemoryDirtyUsedID       MetricID = "memory/dirty_used"
+	OSFeatureID             MetricID = "system/os_feature"
 )
 
 var MetricMap MetricMapping
