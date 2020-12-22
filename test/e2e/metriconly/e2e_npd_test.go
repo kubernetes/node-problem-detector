@@ -73,7 +73,7 @@ func TestNPD(t *testing.T) {
 	var err error
 	computeService, err = gce.GetComputeClient()
 	if err != nil {
-		panic(fmt.Sprintf("Unable to create gcloud compute service using defaults. Make sure you are authenticated. %v", err))
+		t.Fatalf("Unable to create gcloud compute service using defaults. Make sure you are authenticated. %v", err)
 	}
 
 	if *artifactsDir != "" {
