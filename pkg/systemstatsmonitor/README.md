@@ -77,9 +77,9 @@ Below metrics are collected from `memory` component:
 * `memory_unevictable_used`: [Unevictable memory][/proc doc] usage, in Bytes.
 * `memory_dirty_used`: Dirty pages usage, in Bytes. Memory usage state is reported under the `state` metric label (e.g. `dirty`, `writeback`). `dirty` means the memory is waiting to be written back to disk, and `writeback` means the memory is actively being written back to disk.
 
-### OS features 
+### OS features
 
-The guest OS features such as KTD kernel, GPU support are collected. Below are the OS 
+The guest OS features such as KTD kernel, GPU support are collected. Below are the OS
 features collected:
 
 * `KTD`: Enabled, if KTD feature is enabled on OS
@@ -87,8 +87,31 @@ features collected:
 * `KernelModuleIntegrity`: Enabled, if load pin security is enabled and modules are signed.
 * `GPUSupport`: Enabled, if OS has GPU drivers installed like nvidia.
 * `UnknownModules`: Enabled, if the OS has third party kernel modules installed.
-UnknownModules are derived from the /proc/modules compared with the known-modules.json. 
+UnknownModules are derived from the /proc/modules compared with the known-modules.json.
 
 And an option:
-`knownModulesConfigPath`: The path to the file that contains the known modules(default 
+`knownModulesConfigPath`: The path to the file that contains the known modules(default
 modules) can be set. By default, the path is set to `known-modules.json`
+
+### IP Stats (Net Dev)
+
+Below metrics are collected from `net` component:
+
+* `net/rx_bytes`: Cumulative count of bytes received.
+* `net/rx_packets`: Cumulative count of packets received.
+* `net/rx_errors`: Cumulative count of receive errors encountered.
+* `net/rx_dropped`: Cumulative count of packets dropped while receiving.
+* `net/rx_fifo`: Cumulative count of FIFO buffer errors.
+* `net/rx_frame`: Cumulative count of packet framing errors.
+* `net/rx_compressed`: Cumulative count of compressed packets received by the device driver.
+* `net/rx_multicast`: Cumulative count of multicast frames received by the device driver.
+* `net/tx_bytes`: Cumulative count of bytes transmitted.
+* `net/tx_packets`: Cumulative count of packets transmitted.
+* `net/tx_errors`: Cumulative count of transmit errors encountered.
+* `net/tx_dropped`: Cumulative count of packets dropped while transmitting.
+* `net/tx_fifo`: Cumulative count of FIFO buffer errors.
+* `net/tx_collisions`: Cumulative count of collisions detected on the interface.
+* `net/tx_carrier`: Cumulative count of carrier losses detected by the device driver.
+* `net/tx_compressed`: Cumulative count of compressed packets transmitted by the device driver.
+
+All of the above have `interface_name` label for the net interface.

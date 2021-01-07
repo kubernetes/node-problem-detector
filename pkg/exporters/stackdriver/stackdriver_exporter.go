@@ -73,6 +73,22 @@ var NPDMetricToSDMetric = map[metrics.MetricID]string{
 	metrics.SystemProcsRunning:      "kubernetes.io/internal/node/guest/system/procs_running",
 	metrics.SystemProcsBlocked:      "kubernetes.io/internal/node/guest/system/procs_blocked",
 	metrics.SystemInterruptsTotal:   "kubernetes.io/internal/node/guest/system/interrupts_total",
+	metrics.NetDevRxBytes:           "kubernetes.io/internal/node/guest/net/rx_bytes",
+	metrics.NetDevRxPackets:         "kubernetes.io/internal/node/guest/net/rx_packets",
+	metrics.NetDevRxErrors:          "kubernetes.io/internal/node/guest/net/rx_errors",
+	metrics.NetDevRxDropped:         "kubernetes.io/internal/node/guest/net/rx_dropped",
+	metrics.NetDevRxFifo:            "kubernetes.io/internal/node/guest/net/rx_fifo",
+	metrics.NetDevRxFrame:           "kubernetes.io/internal/node/guest/net/rx_frame",
+	metrics.NetDevRxCompressed:      "kubernetes.io/internal/node/guest/net/rx_compressed",
+	metrics.NetDevRxMulticast:       "kubernetes.io/internal/node/guest/net/rx_multicast",
+	metrics.NetDevTxBytes:           "kubernetes.io/internal/node/guest/net/tx_bytes",
+	metrics.NetDevTxPackets:         "kubernetes.io/internal/node/guest/net/tx_packets",
+	metrics.NetDevTxErrors:          "kubernetes.io/internal/node/guest/net/tx_errors",
+	metrics.NetDevTxDropped:         "kubernetes.io/internal/node/guest/net/tx_dropped",
+	metrics.NetDevTxFifo:            "kubernetes.io/internal/node/guest/net/tx_fifo",
+	metrics.NetDevTxCollisions:      "kubernetes.io/internal/node/guest/net/tx_collisions",
+	metrics.NetDevTxCarrier:         "kubernetes.io/internal/node/guest/net/tx_carrier",
+	metrics.NetDevTxCompressed:      "kubernetes.io/internal/node/guest/net/tx_compressed",
 }
 
 func getMetricTypeConversionFunction(customMetricPrefix string) func(*view.View) string {

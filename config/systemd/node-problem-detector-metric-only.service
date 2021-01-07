@@ -10,7 +10,7 @@ ExecStart=/home/kubernetes/bin/node-problem-detector --v=2 --logtostderr --enabl
           --exporter.stackdriver=/home/kubernetes/node-problem-detector/config/exporter/stackdriver-exporter.json \
           --config.system-log-monitor=/home/kubernetes/node-problem-detector/config/kernel-monitor.json,/home/kubernetes/node-problem-detector/config/docker-monitor.json,/home/kubernetes/node-problem-detector/config/systemd-monitor.json \
           --config.custom-plugin-monitor=/home/kubernetes/node-problem-detector/config/kernel-monitor-counter.json,/home/kubernetes/node-problem-detector/config/systemd-monitor-counter.json \
-          --config.system-stats-monitor=/home/kubernetes/node-problem-detector/config/system-stats-monitor.json          
+          --config.system-stats-monitor=/home/kubernetes/node-problem-detector/config/system-stats-monitor.json,/home/kubernetes/node-problem-detector/config/net-cgroup-system-stats-monitor.json
 
 [Install]
 WantedBy=multi-user.target

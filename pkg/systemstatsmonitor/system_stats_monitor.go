@@ -44,6 +44,7 @@ type systemStatsMonitor struct {
 	diskCollector      *diskCollector
 	hostCollector      *hostCollector
 	memoryCollector    *memoryCollector
+	netCollector       *netCollector
 	osFeatureCollector *osFeatureCollector
 	tomb               *tomb.Tomb
 }
@@ -90,6 +91,9 @@ func NewSystemStatsMonitorOrDie(configPath string) types.Monitor {
 	if len(ssm.config.OsFeatureConfig.MetricsConfigs) > 0 {
 		ssm.osFeatureCollector = NewOsFeatureCollectorOrDie(&ssm.config.OsFeatureConfig)
 	}
+	if len(ssm.config.NetConfig.MetricsConfigs) > 0 {
+		ssm.netCollector = NewNetCollectorOrDie(&ssm.config.NetConfig)
+	}
 	return &ssm
 }
 
@@ -115,6 +119,7 @@ func (ssm *systemStatsMonitor) monitorLoop() {
 		ssm.hostCollector.collect()
 		ssm.memoryCollector.collect()
 		ssm.osFeatureCollector.collect()
+		ssm.netCollector.collect()
 	}
 
 	for {
@@ -125,6 +130,7 @@ func (ssm *systemStatsMonitor) monitorLoop() {
 			ssm.hostCollector.collect()
 			ssm.memoryCollector.collect()
 			ssm.osFeatureCollector.collect()
+			ssm.netCollector.collect()
 		case <-ssm.tomb.Stopping():
 			glog.Infof("System stats monitor stopped: %s", ssm.configPath)
 			return
