@@ -36,3 +36,9 @@ const featureLabel = "os_feature"
 
 // valueLabel labels the value for the features of the guest os system if required
 const valueLabel = "value"
+
+// osVersionLabel labels the OS
+const osVersionLabel = "os_version"
+
+// osVersionLabel labels the kernel version
+const kernelVersionLabel = "kernel_version"

@@ -69,6 +69,10 @@ var NPDMetricToSDMetric = map[metrics.MetricID]string{
 	metrics.ProblemCounterID:        "compute.googleapis.com/guest/system/problem_count",
 	metrics.ProblemGaugeID:          "compute.googleapis.com/guest/system/problem_state",
 	metrics.OSFeatureID:             "compute.googleapis.com/guest/system/os_feature_enabled",
+	metrics.SystemProcessesTotal:    "kubernetes.io/internal/node/guest/system/processes_total",
+	metrics.SystemProcsRunning:      "kubernetes.io/internal/node/guest/system/procs_running",
+	metrics.SystemProcsBlocked:      "kubernetes.io/internal/node/guest/system/procs_blocked",
+	metrics.SystemInterruptsTotal:   "kubernetes.io/internal/node/guest/system/interrupts_total",
 }
 
 func getMetricTypeConversionFunction(customMetricPrefix string) func(*view.View) string {

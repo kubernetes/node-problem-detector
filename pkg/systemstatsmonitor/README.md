@@ -28,6 +28,10 @@ Below metrics are collected from `cpu` component:
 * `cpu_load_1m`: CPU load average over the last 1 minute. Collected from [`/proc/loadavg`][/proc doc].
 * `cpu_load_5m`: CPU load average over the last 5 minutes. Collected from [`/proc/loadavg`][/proc doc].
 * `cpu_load_15m`: CPU load average over the last 15 minutes. Collected from [`/proc/loadavg`][/proc doc].
+* `system/processes_total`: Number of forks since boot.
+* `system/procs_running`: Number of processes currently running.
+* `system/procs_blocked`: Number of processes currently blocked.
+* `system/interrupts_total`: Total number of interrupts serviced (cumulative).
 
 [/proc doc]: http://man7.org/linux/man-pages/man5/proc.5.html
 

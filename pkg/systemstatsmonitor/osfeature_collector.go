@@ -142,6 +142,9 @@ func (ofc *osFeatureCollector) recordFeaturesFromModules(modules []system.Module
 }
 
 func (ofc *osFeatureCollector) collect() {
+	if ofc.osFeature == nil {
+		return
+	}
 	cmdlineArgs, err := system.CmdlineArgs()
 	if err != nil {
 		glog.Fatalf("Error retrieving cmdline args: %v", err)

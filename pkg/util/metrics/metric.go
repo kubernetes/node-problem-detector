@@ -42,6 +42,10 @@ const (
 	MemoryUnevictableUsedID MetricID = "memory/unevictable_used"
 	MemoryDirtyUsedID       MetricID = "memory/dirty_used"
 	OSFeatureID             MetricID = "system/os_feature"
+	SystemProcessesTotal    MetricID = "system/processes_total"
+	SystemProcsRunning      MetricID = "system/procs_running"
+	SystemProcsBlocked      MetricID = "system/procs_blocked"
+	SystemInterruptsTotal   MetricID = "system/interrupts_total"
 )
 
 var MetricMap MetricMapping
