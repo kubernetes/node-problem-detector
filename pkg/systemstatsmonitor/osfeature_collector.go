@@ -89,7 +89,7 @@ func (ofc *osFeatureCollector) recordFeaturesFromCmdline(cmdlineArgs []system.Cm
 	}
 }
 
-// recordFeaturesFromCmdline records the guest OS features that can be derived
+// recordFeaturesFromModules records the guest OS features that can be derived
 // from the /proc/modules
 // The following features are recorded:
 // 1. GPUSupport based on the presence of nvidia module
