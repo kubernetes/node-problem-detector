@@ -36,3 +36,12 @@ func ReadFileIntoLines(filename string) ([]string, error) {
 	}
 	return result, nil
 }
+
+func ContainsModule(key string, values []Module) bool {
+	for _, val := range values {
+		if val.ModuleName == key {
+			return true
+		}
+	}
+	return false
+}

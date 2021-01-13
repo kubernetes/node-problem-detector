@@ -72,3 +72,19 @@ Below metrics are collected from `memory` component:
 * `memory_page_cache_used`: Page cache memory usage, in Bytes. Memory usage state is reported under the `state` metric label (e.g. `active`, `inactive`). `active` means the memory has been used more recently and usually not reclaimed until needed. Summing values of all states yields the total page cache memory used.
 * `memory_unevictable_used`: [Unevictable memory][/proc doc] usage, in Bytes.
 * `memory_dirty_used`: Dirty pages usage, in Bytes. Memory usage state is reported under the `state` metric label (e.g. `dirty`, `writeback`). `dirty` means the memory is waiting to be written back to disk, and `writeback` means the memory is actively being written back to disk.
+
+### OS features 
+
+The guest OS features such as KTD kernel, GPU support are collected. Below are the OS 
+features collected:
+
+* `KTD`: Enabled, if KTD feature is enabled on OS
+* `UnifiedCgroupHierarchy`: Enabled, if Unified hierarchy is enabled on OS.
+* `KernelModuleIntegrity`: Enabled, if load pin security is enabled and modules are signed.
+* `GPUSupport`: Enabled, if OS has GPU drivers installed like nvidia.
+* `UnknownModules`: Enabled, if the OS has third party kernel modules installed.
+UnknownModules are derived from the /proc/modules compared with the known-modules.json. 
+
+And an option:
+`knownModulesConfigPath`: The path to the file that contains the known modules(default 
+modules) can be set. By default, the path is set to `known-modules.json`

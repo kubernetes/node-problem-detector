@@ -22,8 +22,9 @@ import (
 )
 
 var (
-	defaultInvokeIntervalString = (60 * time.Second).String()
-	defaultlsblkTimeoutString   = (5 * time.Second).String()
+	defaultInvokeIntervalString   = (60 * time.Second).String()
+	defaultlsblkTimeoutString     = (5 * time.Second).String()
+	defaultKnownModulesConfigPath = "config/guestosconfig/known-modules.json"
 )
 
 type MetricConfig struct {
@@ -50,13 +51,19 @@ type MemoryStatsConfig struct {
 	MetricsConfigs map[string]MetricConfig `json:"metricsConfigs"`
 }
 
+type OSFeatureStatsConfig struct {
+	MetricsConfigs         map[string]MetricConfig `json:"metricsConfigs"`
+	KnownModulesConfigPath string                  `json:"knownModulesConfigPath"`
+}
+
 type SystemStatsConfig struct {
-	CPUConfig            CPUStatsConfig    `json:"cpu"`
-	DiskConfig           DiskStatsConfig   `json:"disk"`
-	HostConfig           HostStatsConfig   `json:"host"`
-	MemoryConfig         MemoryStatsConfig `json:"memory"`
-	InvokeIntervalString string            `json:"invokeInterval"`
-	InvokeInterval       time.Duration     `json:"-"`
+	CPUConfig            CPUStatsConfig       `json:"cpu"`
+	DiskConfig           DiskStatsConfig      `json:"disk"`
+	HostConfig           HostStatsConfig      `json:"host"`
+	MemoryConfig         MemoryStatsConfig    `json:"memory"`
+	OsFeatureConfig      OSFeatureStatsConfig `json:"osFeature"`
+	InvokeIntervalString string               `json:"invokeInterval"`
+	InvokeInterval       time.Duration        `json:"-"`
 }
 
 // ApplyConfiguration applies default configurations.
@@ -66,6 +73,9 @@ func (ssc *SystemStatsConfig) ApplyConfiguration() error {
 	}
 	if ssc.DiskConfig.LsblkTimeoutString == "" {
 		ssc.DiskConfig.LsblkTimeoutString = defaultlsblkTimeoutString
+	}
+	if ssc.OsFeatureConfig.KnownModulesConfigPath == "" {
+		ssc.OsFeatureConfig.KnownModulesConfigPath = defaultKnownModulesConfigPath
 	}
 
 	var err error

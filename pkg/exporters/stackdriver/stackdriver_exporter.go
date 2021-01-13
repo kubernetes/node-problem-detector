@@ -68,6 +68,7 @@ var NPDMetricToSDMetric = map[metrics.MetricID]string{
 	metrics.MemoryUnevictableUsedID: "compute.googleapis.com/guest/memory/unevictable_used",
 	metrics.ProblemCounterID:        "compute.googleapis.com/guest/system/problem_count",
 	metrics.ProblemGaugeID:          "compute.googleapis.com/guest/system/problem_state",
+	metrics.OSFeatureID:             "compute.googleapis.com/guest/system/os_feature_enabled",
 }
 
 func getMetricTypeConversionFunction(customMetricPrefix string) func(*view.View) string {
