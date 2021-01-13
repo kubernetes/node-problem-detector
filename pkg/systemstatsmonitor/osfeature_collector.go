@@ -142,7 +142,7 @@ func (ofc *osFeatureCollector) recordFeaturesFromModules(modules []system.Module
 }
 
 func (ofc *osFeatureCollector) collect() {
-	if ofc.osFeature == nil {
+	if ofc == nil || ofc.osFeature == nil {
 		return
 	}
 	cmdlineArgs, err := system.CmdlineArgs()
