@@ -70,8 +70,6 @@ func NewSystemStatsMonitorOrDie(configPath string) types.Monitor {
 		glog.Fatalf("Failed to apply configuration for %q: %v", configPath, err)
 	}
 
-	glog.Infof("Error: %v", ssm.config)
-
 	err = ssm.config.Validate()
 	if err != nil {
 		glog.Fatalf("Failed to validate %s configuration %+v: %v", ssm.configPath, ssm.config, err)
