@@ -65,9 +65,12 @@ CGO_ENABLED:=0
 # Construct the "-tags" parameter used by "go build".
 BUILD_TAGS?=
 
+LINUX_BUILD_TAGS = $(BUILD_TAGS)
+WINDOWS_BUILD_TAGS = $(BUILD_TAGS)
+
 ifeq ($(ENABLE_JOURNALD), 1)
 	# Enable journald build tag.
-	BUILD_TAGS:=$(BUILD_TAGS) journald
+	LINUX_BUILD_TAGS := $(BUILD_TAGS) journald
 	# Enable cgo because sdjournal needs cgo to compile. The binary will be
 	# dynamically linked if CGO_ENABLED is enabled. This is fine because fedora
 	# already has necessary dynamic library. We can not use `-extldflags "-static"`
@@ -82,9 +85,9 @@ else
 endif
 
 vet:
-	GO111MODULE=on go list -mod vendor -tags "$(BUILD_TAGS)" ./... | \
+	GO111MODULE=on go list -mod vendor -tags "$(LINUX_BUILD_TAGS)" ./... | \
 		grep -v "./vendor/*" | \
-		GO111MODULE=on xargs go vet -mod vendor -tags "$(BUILD_TAGS)"
+		GO111MODULE=on xargs go vet -mod vendor -tags "$(LINUX_BUILD_TAGS)"
 
 fmt:
 	find . -type f -name "*.go" | grep -v "./vendor/*" | xargs gofmt -s -w -l
@@ -110,8 +113,8 @@ endif
 		-mod vendor \
 		-o $@ \
 		-ldflags '-X $(PKG)/pkg/version.version=$(VERSION)' \
-		-tags "$(BUILD_TAGS)" \
-		./cmd/$(subst -,,$*)/$(subst -,_,$*).go
+		-tags "$(WINDOWS_BUILD_TAGS)" \
+		./cmd/$(subst -,,$*)
 	touch $@
 
 ./test/bin/windows_amd64/%.exe: $(PKG_SOURCES)
@@ -121,24 +124,24 @@ endif
 	GOOS=windows GOARCH=amd64 CGO_ENABLED=$(CGO_ENABLED) GO111MODULE=on go build \
 		-mod vendor \
 		-o $@ \
-		-tags "$(BUILD_TAGS)" \
-		./test/e2e/$(subst -,,$*)/$(subst -,_,$*).go
+		-tags "$(WINDOWS_BUILD_TAGS)" \
+		./test/e2e/$(subst -,,$*)
 
 bin/linux_amd64/%: $(PKG_SOURCES)
 	GOOS=linux GOARCH=amd64 CGO_ENABLED=$(CGO_ENABLED) GO111MODULE=on go build \
 		-mod vendor \
 		-o $@ \
 		-ldflags '-X $(PKG)/pkg/version.version=$(VERSION)' \
-		-tags "$(BUILD_TAGS)" \
-		./cmd/$(subst -,,$*)/$(subst -,_,$*).go
+		-tags "$(LINUX_BUILD_TAGS)" \
+		./cmd/$(subst -,,$*)
 	touch $@
 
 ./test/bin/linux_amd64/%: $(PKG_SOURCES)
 	GOOS=linux GOARCH=amd64 CGO_ENABLED=$(CGO_ENABLED) GO111MODULE=on go build \
 		-mod vendor \
 		-o $@ \
-		-tags "$(BUILD_TAGS)" \
-		./test/e2e/$(subst -,,$*)/$(subst -,_,$*).go
+		-tags "$(LINUX_BUILD_TAGS)" \
+		./test/e2e/$(subst -,,$*)
 
 ifneq ($(ENABLE_JOURNALD), 1)
 bin/linux_amd64/log-counter:
@@ -152,7 +155,7 @@ ifeq ($(ENABLE_JOURNALD), 1)
 		-mod vendor \
 		-o bin/log-counter \
 		-ldflags '-X $(PKG)/pkg/version.version=$(VERSION)' \
-		-tags "$(BUILD_TAGS)" \
+		-tags "$(LINUX_BUILD_TAGS)" \
 		cmd/logcounter/log_counter.go
 else
 	echo "Warning: log-counter requires journald, skipping."
@@ -163,14 +166,14 @@ endif
 		-mod vendor \
 		-o bin/node-problem-detector \
 		-ldflags '-X $(PKG)/pkg/version.version=$(VERSION)' \
-		-tags "$(BUILD_TAGS)" \
+		-tags "$(LINUX_BUILD_TAGS)" \
 		./cmd/nodeproblemdetector
 
 ./test/bin/problem-maker: $(PKG_SOURCES)
 	CGO_ENABLED=$(CGO_ENABLED) GOOS=linux GO111MODULE=on go build \
 		-mod vendor \
 		-o test/bin/problem-maker \
-		-tags "$(BUILD_TAGS)" \
+		-tags "$(LINUX_BUILD_TAGS)" \
 		./test/e2e/problemmaker/problem_maker.go
 
 ./bin/health-checker: $(PKG_SOURCES)
@@ -178,14 +181,14 @@ endif
 		-mod vendor \
 		-o bin/health-checker \
 		-ldflags '-X $(PKG)/pkg/version.version=$(VERSION)' \
-		-tags "$(BUILD_TAGS)" \
+		-tags "$(LINUX_BUILD_TAGS)" \
 		cmd/healthchecker/health_checker.go
 
 test: vet fmt
-	GO111MODULE=on go test -mod vendor -timeout=1m -v -race -short -tags "$(BUILD_TAGS)" ./...
+	GO111MODULE=on go test -mod vendor -timeout=1m -v -race -short -tags "$(LINUX_BUILD_TAGS)" ./...
 
 e2e-test: vet fmt build-tar
-	GO111MODULE=on ginkgo -nodes=$(PARALLEL) -mod vendor -timeout=10m -v -tags "$(BUILD_TAGS)" -stream \
+	GO111MODULE=on ginkgo -nodes=$(PARALLEL) -mod vendor -timeout=10m -v -tags "$(LINUX_BUILD_TAGS)" -stream \
 	./test/e2e/metriconly/... -- \
 	-project=$(PROJECT) -zone=$(ZONE) \
 	-image=$(VM_IMAGE) -image-family=$(IMAGE_FAMILY) -image-project=$(IMAGE_PROJECT) \

@@ -17,13 +17,13 @@ limitations under the License.
 package filelog
 
 import (
-	"fmt"
 	"io"
+
+	"github.com/hpcloud/tail"
 )
 
 // getLogReader returns log reader for filelog log. Note that getLogReader doesn't look back
 // to the rolled out logs.
 func getLogReader(path string) (io.ReadCloser, error) {
-	// TODO: Support this on windows.
-	return nil, fmt.Errorf("not supported on windows.")
+	return tail.OpenFile(path)
 }
