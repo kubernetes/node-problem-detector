@@ -1,0 +1,55 @@
+{
+  "net": {
+    "metricsConfigs": {
+      "net/rx_bytes": {
+        "displayName": "net/rx_bytes"
+      },
+      "net/rx_packets": {
+        "displayName": "net/rx_packets"
+      },
+      "net/rx_errors": {
+        "displayName": "net/rx_errors"
+      },
+      "net/rx_dropped": {
+        "displayName": "net/rx_dropped"
+      },
+      "net/rx_fifo": {
+        "displayName": "net/rx_fifo"
+      },
+      "net/rx_frame": {
+        "displayName": "net/rx_frame"
+      },
+      "net/rx_compressed": {
+        "displayName": "net/rx_compressed"
+      },
+      "net/rx_multicast": {
+        "displayName": "net/rx_multicast"
+      },
+      "net/tx_bytes": {
+        "displayName": "net/tx_bytes"
+      },
+      "net/tx_packets": {
+        "displayName": "net/tx_packets"
+      },
+      "net/tx_errors": {
+        "displayName": "net/tx_errors"
+      },
+      "net/tx_dropped": {
+        "displayName": "net/tx_dropped"
+      },
+      "net/tx_fifo": {
+        "displayName": "net/tx_fifo"
+      },
+      "net/tx_collisions": {
+        "displayName": "net/tx_collisions"
+      },
+      "net/tx_carrier": {
+        "displayName": "net/tx_carrier"
+      },
+      "net/tx_compressed": {
+        "displayName": "net/tx_compressed"
+      }
+    }
+  },
+  "invokeInterval": "120s"
+}

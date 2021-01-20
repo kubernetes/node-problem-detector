@@ -42,3 +42,6 @@ const osVersionLabel = "os_version"
 
 // osVersionLabel labels the kernel version
 const kernelVersionLabel = "kernel_version"
+
+// interfaceNameLabel labels the network interface name
+const interfaceNameLabel = "interface_name"

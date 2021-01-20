@@ -46,6 +46,22 @@ const (
 	SystemProcsRunning      MetricID = "system/procs_running"
 	SystemProcsBlocked      MetricID = "system/procs_blocked"
 	SystemInterruptsTotal   MetricID = "system/interrupts_total"
+	NetDevRxBytes           MetricID = "net/rx_bytes"
+	NetDevRxPackets         MetricID = "net/rx_packets"
+	NetDevRxErrors          MetricID = "net/rx_errors"
+	NetDevRxDropped         MetricID = "net/rx_dropped"
+	NetDevRxFifo            MetricID = "net/rx_fifo"
+	NetDevRxFrame           MetricID = "net/rx_frame"
+	NetDevRxCompressed      MetricID = "net/rx_compressed"
+	NetDevRxMulticast       MetricID = "net/rx_multicast"
+	NetDevTxBytes           MetricID = "net/tx_bytes"
+	NetDevTxPackets         MetricID = "net/tx_packets"
+	NetDevTxErrors          MetricID = "net/tx_errors"
+	NetDevTxDropped         MetricID = "net/tx_dropped"
+	NetDevTxFifo            MetricID = "net/tx_fifo"
+	NetDevTxCollisions      MetricID = "net/tx_collisions"
+	NetDevTxCarrier         MetricID = "net/tx_carrier"
+	NetDevTxCompressed      MetricID = "net/tx_compressed"
 )
 
 var MetricMap MetricMapping
