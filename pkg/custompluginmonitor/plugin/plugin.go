@@ -147,7 +147,12 @@ func (p *Plugin) run(rule cpmtypes.CustomRule) (exitStatus cpmtypes.Status, outp
 	}
 	defer cancel()
 
-	cmd := exec.CommandContext(ctx, rule.Path, rule.Args...)
+	// create a process group
+	sysProcAttr := &syscall.SysProcAttr{
+		Setpgid: true,
+	}
+	cmd := exec.Command(rule.Path, rule.Args...)
+	cmd.SysProcAttr = sysProcAttr
 
 	stdoutPipe, err := cmd.StdoutPipe()
 	if err != nil {
@@ -163,6 +168,26 @@ func (p *Plugin) run(rule cpmtypes.CustomRule) (exitStatus cpmtypes.Status, outp
 		glog.Errorf("Error in starting plugin %q: error - %v", rule.Path, err)
 		return cpmtypes.Unknown, "Error in starting plugin. Please check the error log"
 	}
+
+	waitChan := make(chan struct{})
+	defer close(waitChan)
+
+	go func() {
+		select {
+		case <-ctx.Done():
+			glog.Errorf("Error in running plugin timeout %q", rule.Path)
+			if cmd.Process == nil || cmd.Process.Pid == 0 {
+				glog.Errorf("Error in cmd.Process check %q", rule.Path)
+				break
+			}
+			err := syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
+			if err != nil {
+				glog.Errorf("Error in kill process %d, %v", cmd.Process.Pid, err)
+			}
+		case <-waitChan:
+			return
+		}
+	}()
 
 	var (
 		wg        sync.WaitGroup
