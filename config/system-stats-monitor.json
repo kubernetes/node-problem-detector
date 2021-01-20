@@ -15,7 +15,19 @@
       },
       "cpu/load_15m": {
 				"displayName": "cpu/load_15m"
-			}
+      },
+      "system/processes_total": {
+        "displayName": "system/processes_total"
+      },
+      "system/procs_running": {
+        "displayName": "system/procs_running"
+      },
+      "system/procs_blocked": {
+        "displayName": "system/procs_blocked"
+      },
+      "system/interrupts_total": {
+        "displayName": "system/interrupts_total"
+      }
 		}
 	},
 	"disk": {

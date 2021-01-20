@@ -18,10 +18,13 @@ package systemstatsmonitor
 
 import (
 	"github.com/golang/glog"
+	"github.com/prometheus/procfs"
 	"github.com/shirou/gopsutil/cpu"
+	"github.com/shirou/gopsutil/host"
 	"github.com/shirou/gopsutil/load"
 
 	ssmtypes "k8s.io/node-problem-detector/pkg/systemstatsmonitor/types"
+	"k8s.io/node-problem-detector/pkg/util"
 	"k8s.io/node-problem-detector/pkg/util/metrics"
 )
 
@@ -36,11 +39,17 @@ import (
 const clockTick float64 = 100.0
 
 type cpuCollector struct {
-	mRunnableTaskCount *metrics.Float64Metric
-	mUsageTime         *metrics.Float64Metric
-	mCpuLoad1m         *metrics.Float64Metric
-	mCpuLoad5m         *metrics.Float64Metric
-	mCpuLoad15m        *metrics.Float64Metric
+	tags map[string]string
+
+	mRunnableTaskCount     *metrics.Float64Metric
+	mUsageTime             *metrics.Float64Metric
+	mCpuLoad1m             *metrics.Float64Metric
+	mCpuLoad5m             *metrics.Float64Metric
+	mCpuLoad15m            *metrics.Float64Metric
+	mSystemProcessesTotal  *metrics.Int64Metric
+	mSystemProcsRunning    *metrics.Int64Metric
+	mSystemProcsBlocked    *metrics.Int64Metric
+	mSystemInterruptsTotal *metrics.Int64Metric
 
 	config *ssmtypes.CPUStatsConfig
 
@@ -48,9 +57,19 @@ type cpuCollector struct {
 }
 
 func NewCPUCollectorOrDie(cpuConfig *ssmtypes.CPUStatsConfig) *cpuCollector {
-	cc := cpuCollector{config: cpuConfig}
+	cc := cpuCollector{tags: map[string]string{}, config: cpuConfig}
 
-	var err error
+	kernelVersion, err := host.KernelVersion()
+	if err != nil {
+		glog.Fatalf("Failed to retrieve kernel version: %v", err)
+	}
+	cc.tags["kernel_version"] = kernelVersion
+
+	osVersion, err := util.GetOSVersion()
+	if err != nil {
+		glog.Fatalf("Failed to retrieve OS version: %v", err)
+	}
+	cc.tags["os_version"] = osVersion
 
 	cc.mRunnableTaskCount, err = metrics.NewFloat64Metric(
 		metrics.CPURunnableTaskCountID,
@@ -105,6 +124,50 @@ func NewCPUCollectorOrDie(cpuConfig *ssmtypes.CPUStatsConfig) *cpuCollector {
 		[]string{})
 	if err != nil {
 		glog.Fatalf("Error initializing metric for %q: %v", metrics.CPULoad15m, err)
+	}
+
+	cc.mSystemProcessesTotal, err = metrics.NewInt64Metric(
+		metrics.SystemProcessesTotal,
+		cpuConfig.MetricsConfigs[string(metrics.SystemProcessesTotal)].DisplayName,
+		"Number of forks since boot.",
+		"1",
+		metrics.Sum,
+		[]string{osVersionLabel, kernelVersionLabel})
+	if err != nil {
+		glog.Fatalf("Error initializing metric for %q: %v", metrics.SystemProcessesTotal, err)
+	}
+
+	cc.mSystemProcsRunning, err = metrics.NewInt64Metric(
+		metrics.SystemProcsRunning,
+		cpuConfig.MetricsConfigs[string(metrics.SystemProcsRunning)].DisplayName,
+		"Number of processes currently running.",
+		"1",
+		metrics.LastValue,
+		[]string{osVersionLabel, kernelVersionLabel})
+	if err != nil {
+		glog.Fatalf("Error initializing metric for %q: %v", metrics.SystemProcsRunning, err)
+	}
+
+	cc.mSystemProcsBlocked, err = metrics.NewInt64Metric(
+		metrics.SystemProcsBlocked,
+		cpuConfig.MetricsConfigs[string(metrics.SystemProcsBlocked)].DisplayName,
+		"Number of processes currently blocked.",
+		"1",
+		metrics.LastValue,
+		[]string{osVersionLabel, kernelVersionLabel})
+	if err != nil {
+		glog.Fatalf("Error initializing metric for %q: %v", metrics.SystemProcsBlocked, err)
+	}
+
+	cc.mSystemInterruptsTotal, err = metrics.NewInt64Metric(
+		metrics.SystemInterruptsTotal,
+		cpuConfig.MetricsConfigs[string(metrics.SystemInterruptsTotal)].DisplayName,
+		"Total number of interrupts serviced (cumulative).",
+		"1",
+		metrics.Sum,
+		[]string{osVersionLabel, kernelVersionLabel})
+	if err != nil {
+		glog.Fatalf("Error initializing metric for %q: %v", metrics.SystemInterruptsTotal, err)
 	}
 
 	cc.lastUsageTime = make(map[string]float64)
@@ -174,6 +237,33 @@ func (cc *cpuCollector) recordUsage() {
 	cc.lastUsageTime["guest_nice"] = clockTick * timersStat.GuestNice
 }
 
+func (cc *cpuCollector) recordSystemStats() {
+	if cc.mSystemProcessesTotal == nil {
+		return
+	}
+	if cc.mSystemProcsRunning == nil {
+		return
+	}
+	if cc.mSystemProcsBlocked == nil {
+		return
+	}
+	if cc.mSystemInterruptsTotal == nil {
+		return
+	}
+
+	fs, err := procfs.NewFS("/proc")
+	stats, err := fs.Stat()
+	if err != nil {
+		glog.Errorf("Failed to retrieve cpu/process stats: %v", err)
+		return
+	}
+
+	cc.mSystemProcessesTotal.Record(cc.tags, int64(stats.ProcessCreated))
+	cc.mSystemProcsRunning.Record(cc.tags, int64(stats.ProcessesRunning))
+	cc.mSystemProcsBlocked.Record(cc.tags, int64(stats.ProcessesBlocked))
+	cc.mSystemInterruptsTotal.Record(cc.tags, int64(stats.IRQTotal))
+}
+
 func (cc *cpuCollector) collect() {
 	if cc == nil {
 		return
@@ -181,4 +271,5 @@ func (cc *cpuCollector) collect() {
 
 	cc.recordLoad()
 	cc.recordUsage()
+	cc.recordSystemStats()
 }
