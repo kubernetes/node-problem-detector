@@ -45,3 +45,9 @@ const kernelVersionLabel = "kernel_version"
 
 // interfaceNameLabel labels the network interface name
 const interfaceNameLabel = "interface_name"
+
+// cpuLabel labels the CPU (eg "cpu0")
+const cpuLabel = "cpu"
+
+// stageLabel labels the stage according to the kernel where CPU time was spent
+const stageLabel = "stage"

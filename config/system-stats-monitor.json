@@ -1,99 +1,102 @@
 {
-	"cpu": {
-		"metricsConfigs": {
-			"cpu/runnable_task_count": {
-				"displayName": "cpu/runnable_task_count"
-			},
-			"cpu/usage_time": {
-				"displayName": "cpu/usage_time"
-			},
-			"cpu/load_1m": {
-				"displayName": "cpu/load_1m"
-			},
-			"cpu/load_5m": {
-				"displayName": "cpu/load_5m"
-			},
-			"cpu/load_15m": {
-				"displayName": "cpu/load_15m"
-			},
-			"system/processes_total": {
-				"displayName": "system/processes_total"
-			},
-			"system/procs_running": {
-				"displayName": "system/procs_running"
-			},
-			"system/procs_blocked": {
-				"displayName": "system/procs_blocked"
-			},
-			"system/interrupts_total": {
-				"displayName": "system/interrupts_total"
-			}
-		}
-	},
-	"disk": {
-		"metricsConfigs": {
-			"disk/io_time": {
-				"displayName": "disk/io_time"
-			},
-			"disk/weighted_io": {
-				"displayName": "disk/weighted_io"
-			},
-			"disk/avg_queue_len": {
-				"displayName": "disk/avg_queue_len"
-			},
-			"disk/operation_count": {
-				"displayName": "disk/operation_count"
-			},
-			"disk/merged_operation_count": {
-				"displayName": "disk/merged_operation_count"
-			},
-			"disk/operation_bytes_count": {
-				"displayName": "disk/operation_bytes_count"
-			},
-			"disk/operation_time": {
-				"displayName": "disk/operation_time"
-			},
-			"disk/bytes_used": {
-				"displayName": "disk/bytes_used"
-			}
-		},
-		"includeRootBlk": true,
-		"includeAllAttachedBlk": true,
-		"lsblkTimeout": "5s"
-	},
-	"host": {
-		"metricsConfigs": {
-			"host/uptime": {
-				"displayName": "host/uptime"
-			}
-		}
-	},
-	"memory": {
-		"metricsConfigs": {
-			"memory/bytes_used": {
-				"displayName": "memory/bytes_used"
-			},
-			"memory/anonymous_used": {
-				"displayName": "memory/anonymous_used"
-			},
-			"memory/page_cache_used": {
-				"displayName": "memory/page_cache_used"
-			},
-			"memory/unevictable_used": {
-				"displayName": "memory/unevictable_used"
-			},
-			"memory/dirty_used": {
-				"displayName": "memory/dirty_used"
-			}
-		}
-	},
-	"osFeature": {
-		"metricsConfigs": {
-			"system/os_feature": {
-				"displayName": "system/os_feature"
-			}
-		},
-		"KnownModulesConfigPath": "config/guestosconfig/known-modules.json"
-	},
-	"invokeInterval": "60s"
+  "cpu": {
+    "metricsConfigs": {
+      "cpu/load_15m": {
+        "displayName": "cpu/load_15m"
+      },
+      "cpu/load_1m": {
+        "displayName": "cpu/load_1m"
+      },
+      "cpu/load_5m": {
+        "displayName": "cpu/load_5m"
+      },
+      "cpu/runnable_task_count": {
+        "displayName": "cpu/runnable_task_count"
+      },
+      "cpu/usage_time": {
+        "displayName": "cpu/usage_time"
+      },
+      "system/cpu_stat": {
+        "displayName": "system/cpu_stat"
+      },
+      "system/interrupts_total": {
+        "displayName": "system/interrupts_total"
+      },
+      "system/processes_total": {
+        "displayName": "system/processes_total"
+      },
+      "system/procs_blocked": {
+        "displayName": "system/procs_blocked"
+      },
+      "system/procs_running": {
+        "displayName": "system/procs_running"
+      }
+    }
+  },
+  "disk": {
+    "includeAllAttachedBlk": true,
+    "includeRootBlk": true,
+    "lsblkTimeout": "5s",
+    "metricsConfigs": {
+      "disk/avg_queue_len": {
+        "displayName": "disk/avg_queue_len"
+      },
+      "disk/bytes_used": {
+        "displayName": "disk/bytes_used"
+      },
+      "disk/io_time": {
+        "displayName": "disk/io_time"
+      },
+      "disk/merged_operation_count": {
+        "displayName": "disk/merged_operation_count"
+      },
+      "disk/operation_bytes_count": {
+        "displayName": "disk/operation_bytes_count"
+      },
+      "disk/operation_count": {
+        "displayName": "disk/operation_count"
+      },
+      "disk/operation_time": {
+        "displayName": "disk/operation_time"
+      },
+      "disk/weighted_io": {
+        "displayName": "disk/weighted_io"
+      }
+    }
+  },
+  "host": {
+    "metricsConfigs": {
+      "host/uptime": {
+        "displayName": "host/uptime"
+      }
+    }
+  },
+  "invokeInterval": "60s",
+  "memory": {
+    "metricsConfigs": {
+      "memory/anonymous_used": {
+        "displayName": "memory/anonymous_used"
+      },
+      "memory/bytes_used": {
+        "displayName": "memory/bytes_used"
+      },
+      "memory/dirty_used": {
+        "displayName": "memory/dirty_used"
+      },
+      "memory/page_cache_used": {
+        "displayName": "memory/page_cache_used"
+      },
+      "memory/unevictable_used": {
+        "displayName": "memory/unevictable_used"
+      }
+    }
+  },
+  "osFeature": {
+    "KnownModulesConfigPath": "config/guestosconfig/known-modules.json",
+    "metricsConfigs": {
+      "system/os_feature": {
+        "displayName": "system/os_feature"
+      }
+    }
+  }
 }

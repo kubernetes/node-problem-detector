@@ -32,6 +32,7 @@ Below metrics are collected from `cpu` component:
 * `system/procs_running`: Number of processes currently running.
 * `system/procs_blocked`: Number of processes currently blocked.
 * `system/interrupts_total`: Total number of interrupts serviced (cumulative).
+* `system/cpu_stats`: Cumulative time each cpu spent in various stages. Collected from `/proc/stats`. Has a label for `cpu` and `stage`.
 
 [/proc doc]: http://man7.org/linux/man-pages/man5/proc.5.html
 
