@@ -19,15 +19,11 @@ package systemstatsmonitor
 import (
 	"github.com/golang/glog"
 	"github.com/prometheus/procfs"
-	"github.com/shirou/gopsutil/host"
 	ssmtypes "k8s.io/node-problem-detector/pkg/systemstatsmonitor/types"
-	"k8s.io/node-problem-detector/pkg/util"
 	"k8s.io/node-problem-detector/pkg/util/metrics"
 )
 
 type netCollector struct {
-	tags map[string]string
-
 	mNetDevRxBytes      *metrics.Int64Metric
 	mNetDevRxPackets    *metrics.Int64Metric
 	mNetDevRxErrors     *metrics.Int64Metric
@@ -49,19 +45,9 @@ type netCollector struct {
 }
 
 func NewNetCollectorOrDie(netConfig *ssmtypes.NetStatsConfig) *netCollector {
-	nc := netCollector{tags: map[string]string{}, config: netConfig}
+	nc := netCollector{config: netConfig}
 
-	kernelVersion, err := host.KernelVersion()
-	if err != nil {
-		glog.Fatalf("Failed to retrieve kernel version: %v", err)
-	}
-	nc.tags[kernelVersionLabel] = kernelVersion
-
-	osVersion, err := util.GetOSVersion()
-	if err != nil {
-		glog.Fatalf("Failed to retrieve OS version: %v", err)
-	}
-	nc.tags[osVersionLabel] = osVersion
+	var err error
 
 	nc.mNetDevRxBytes, err = metrics.NewInt64Metric(
 		metrics.NetDevRxBytes,
@@ -69,7 +55,7 @@ func NewNetCollectorOrDie(netConfig *ssmtypes.NetStatsConfig) *netCollector {
 		"Cumulative count of bytes received.",
 		"Byte",
 		metrics.Sum,
-		[]string{osVersionLabel, kernelVersionLabel, interfaceNameLabel})
+		[]string{interfaceNameLabel})
 	if err != nil {
 		glog.Fatalf("Error initializing metric for %q: %v", metrics.NetDevRxBytes, err)
 	}
@@ -80,7 +66,7 @@ func NewNetCollectorOrDie(netConfig *ssmtypes.NetStatsConfig) *netCollector {
 		"Cumulative count of packets received.",
 		"1",
 		metrics.Sum,
-		[]string{osVersionLabel, kernelVersionLabel, interfaceNameLabel})
+		[]string{interfaceNameLabel})
 	if err != nil {
 		glog.Fatalf("Error initializing metric for %q: %v", metrics.NetDevRxPackets, err)
 	}
@@ -91,7 +77,7 @@ func NewNetCollectorOrDie(netConfig *ssmtypes.NetStatsConfig) *netCollector {
 		"Cumulative count of receive errors encountered.",
 		"1",
 		metrics.Sum,
-		[]string{osVersionLabel, kernelVersionLabel, interfaceNameLabel})
+		[]string{interfaceNameLabel})
 	if err != nil {
 		glog.Fatalf("Error initializing metric for %q: %v", metrics.NetDevRxErrors, err)
 	}
@@ -102,7 +88,7 @@ func NewNetCollectorOrDie(netConfig *ssmtypes.NetStatsConfig) *netCollector {
 		"Cumulative count of packets dropped while receiving.",
 		"1",
 		metrics.Sum,
-		[]string{osVersionLabel, kernelVersionLabel, interfaceNameLabel})
+		[]string{interfaceNameLabel})
 	if err != nil {
 		glog.Fatalf("Error initializing metric for %q: %v", metrics.NetDevRxDropped, err)
 	}
@@ -113,7 +99,7 @@ func NewNetCollectorOrDie(netConfig *ssmtypes.NetStatsConfig) *netCollector {
 		"Cumulative count of FIFO buffer errors.",
 		"1",
 		metrics.Sum,
-		[]string{osVersionLabel, kernelVersionLabel, interfaceNameLabel})
+		[]string{interfaceNameLabel})
 	if err != nil {
 		glog.Fatalf("Error initializing metric for %q: %v", metrics.NetDevRxFifo, err)
 	}
@@ -124,7 +110,7 @@ func NewNetCollectorOrDie(netConfig *ssmtypes.NetStatsConfig) *netCollector {
 		"Cumulative count of packet framing errors.",
 		"1",
 		metrics.Sum,
-		[]string{osVersionLabel, kernelVersionLabel, interfaceNameLabel})
+		[]string{interfaceNameLabel})
 	if err != nil {
 		glog.Fatalf("Error initializing metric for %q: %v", metrics.NetDevRxFrame, err)
 	}
@@ -135,7 +121,7 @@ func NewNetCollectorOrDie(netConfig *ssmtypes.NetStatsConfig) *netCollector {
 		"Cumulative count of compressed packets received by the device driver.",
 		"1",
 		metrics.Sum,
-		[]string{osVersionLabel, kernelVersionLabel, interfaceNameLabel})
+		[]string{interfaceNameLabel})
 	if err != nil {
 		glog.Fatalf("Error initializing metric for %q: %v", metrics.NetDevRxCompressed, err)
 	}
@@ -146,7 +132,7 @@ func NewNetCollectorOrDie(netConfig *ssmtypes.NetStatsConfig) *netCollector {
 		"Cumulative count of multicast frames received by the device driver.",
 		"1",
 		metrics.Sum,
-		[]string{osVersionLabel, kernelVersionLabel, interfaceNameLabel})
+		[]string{interfaceNameLabel})
 	if err != nil {
 		glog.Fatalf("Error initializing metric for %q: %v", metrics.NetDevRxMulticast, err)
 	}
@@ -157,7 +143,7 @@ func NewNetCollectorOrDie(netConfig *ssmtypes.NetStatsConfig) *netCollector {
 		"Cumulative count of bytes transmitted.",
 		"Byte",
 		metrics.Sum,
-		[]string{osVersionLabel, kernelVersionLabel, interfaceNameLabel})
+		[]string{interfaceNameLabel})
 	if err != nil {
 		glog.Fatalf("Error initializing metric for %q: %v", metrics.NetDevTxBytes, err)
 	}
@@ -168,7 +154,7 @@ func NewNetCollectorOrDie(netConfig *ssmtypes.NetStatsConfig) *netCollector {
 		"Cumulative count of packets transmitted.",
 		"1",
 		metrics.Sum,
-		[]string{osVersionLabel, kernelVersionLabel, interfaceNameLabel})
+		[]string{interfaceNameLabel})
 	if err != nil {
 		glog.Fatalf("Error initializing metric for %q: %v", metrics.NetDevTxPackets, err)
 	}
@@ -179,7 +165,7 @@ func NewNetCollectorOrDie(netConfig *ssmtypes.NetStatsConfig) *netCollector {
 		"Cumulative count of transmit errors encountered.",
 		"1",
 		metrics.Sum,
-		[]string{osVersionLabel, kernelVersionLabel, interfaceNameLabel})
+		[]string{interfaceNameLabel})
 	if err != nil {
 		glog.Fatalf("Error initializing metric for %q: %v", metrics.NetDevTxErrors, err)
 	}
@@ -190,7 +176,7 @@ func NewNetCollectorOrDie(netConfig *ssmtypes.NetStatsConfig) *netCollector {
 		"Cumulative count of packets dropped while transmitting.",
 		"1",
 		metrics.Sum,
-		[]string{osVersionLabel, kernelVersionLabel, interfaceNameLabel})
+		[]string{interfaceNameLabel})
 	if err != nil {
 		glog.Fatalf("Error initializing metric for %q: %v", metrics.NetDevTxDropped, err)
 	}
@@ -201,7 +187,7 @@ func NewNetCollectorOrDie(netConfig *ssmtypes.NetStatsConfig) *netCollector {
 		"Cumulative count of FIFO buffer errors.",
 		"1",
 		metrics.Sum,
-		[]string{osVersionLabel, kernelVersionLabel, interfaceNameLabel})
+		[]string{interfaceNameLabel})
 	if err != nil {
 		glog.Fatalf("Error initializing metric for %q: %v", metrics.NetDevTxFifo, err)
 	}
@@ -212,7 +198,7 @@ func NewNetCollectorOrDie(netConfig *ssmtypes.NetStatsConfig) *netCollector {
 		"Cumulative count of collisions detected on the interface.",
 		"1",
 		metrics.Sum,
-		[]string{osVersionLabel, kernelVersionLabel, interfaceNameLabel})
+		[]string{interfaceNameLabel})
 	if err != nil {
 		glog.Fatalf("Error initializing metric for %q: %v", metrics.NetDevTxCollisions, err)
 	}
@@ -223,7 +209,7 @@ func NewNetCollectorOrDie(netConfig *ssmtypes.NetStatsConfig) *netCollector {
 		"Cumulative count of carrier losses detected by the device driver.",
 		"1",
 		metrics.Sum,
-		[]string{osVersionLabel, kernelVersionLabel, interfaceNameLabel})
+		[]string{interfaceNameLabel})
 	if err != nil {
 		glog.Fatalf("Error initializing metric for %q: %v", metrics.NetDevTxCarrier, err)
 	}
@@ -234,7 +220,7 @@ func NewNetCollectorOrDie(netConfig *ssmtypes.NetStatsConfig) *netCollector {
 		"Cumulative count of compressed packets transmitted by the device driver.",
 		"1",
 		metrics.Sum,
-		[]string{osVersionLabel, kernelVersionLabel, interfaceNameLabel})
+		[]string{interfaceNameLabel})
 	if err != nil {
 		glog.Fatalf("Error initializing metric for %q: %v", metrics.NetDevTxCompressed, err)
 	}
@@ -300,24 +286,25 @@ func (nc *netCollector) recordNetDev() {
 	}
 
 	for iface, ifaceStats := range stats {
-		nc.tags[interfaceNameLabel] = iface
+		tags := map[string]string{}
+		tags[interfaceNameLabel] = iface
 
-		nc.mNetDevRxBytes.Record(nc.tags, int64(ifaceStats.RxBytes))
-		nc.mNetDevRxPackets.Record(nc.tags, int64(ifaceStats.RxPackets))
-		nc.mNetDevRxErrors.Record(nc.tags, int64(ifaceStats.RxErrors))
-		nc.mNetDevRxDropped.Record(nc.tags, int64(ifaceStats.RxDropped))
-		nc.mNetDevRxFifo.Record(nc.tags, int64(ifaceStats.RxFIFO))
-		nc.mNetDevRxFrame.Record(nc.tags, int64(ifaceStats.RxFrame))
-		nc.mNetDevRxCompressed.Record(nc.tags, int64(ifaceStats.RxCompressed))
-		nc.mNetDevRxMulticast.Record(nc.tags, int64(ifaceStats.RxMulticast))
-		nc.mNetDevTxBytes.Record(nc.tags, int64(ifaceStats.TxBytes))
-		nc.mNetDevTxPackets.Record(nc.tags, int64(ifaceStats.TxPackets))
-		nc.mNetDevTxErrors.Record(nc.tags, int64(ifaceStats.TxErrors))
-		nc.mNetDevTxDropped.Record(nc.tags, int64(ifaceStats.TxDropped))
-		nc.mNetDevTxFifo.Record(nc.tags, int64(ifaceStats.TxFIFO))
-		nc.mNetDevTxCollisions.Record(nc.tags, int64(ifaceStats.TxCollisions))
-		nc.mNetDevTxCarrier.Record(nc.tags, int64(ifaceStats.TxCarrier))
-		nc.mNetDevTxCompressed.Record(nc.tags, int64(ifaceStats.TxCompressed))
+		nc.mNetDevRxBytes.Record(tags, int64(ifaceStats.RxBytes))
+		nc.mNetDevRxPackets.Record(tags, int64(ifaceStats.RxPackets))
+		nc.mNetDevRxErrors.Record(tags, int64(ifaceStats.RxErrors))
+		nc.mNetDevRxDropped.Record(tags, int64(ifaceStats.RxDropped))
+		nc.mNetDevRxFifo.Record(tags, int64(ifaceStats.RxFIFO))
+		nc.mNetDevRxFrame.Record(tags, int64(ifaceStats.RxFrame))
+		nc.mNetDevRxCompressed.Record(tags, int64(ifaceStats.RxCompressed))
+		nc.mNetDevRxMulticast.Record(tags, int64(ifaceStats.RxMulticast))
+		nc.mNetDevTxBytes.Record(tags, int64(ifaceStats.TxBytes))
+		nc.mNetDevTxPackets.Record(tags, int64(ifaceStats.TxPackets))
+		nc.mNetDevTxErrors.Record(tags, int64(ifaceStats.TxErrors))
+		nc.mNetDevTxDropped.Record(tags, int64(ifaceStats.TxDropped))
+		nc.mNetDevTxFifo.Record(tags, int64(ifaceStats.TxFIFO))
+		nc.mNetDevTxCollisions.Record(tags, int64(ifaceStats.TxCollisions))
+		nc.mNetDevTxCarrier.Record(tags, int64(ifaceStats.TxCarrier))
+		nc.mNetDevTxCompressed.Record(tags, int64(ifaceStats.TxCompressed))
 	}
 }
 
