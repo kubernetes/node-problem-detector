@@ -71,6 +71,7 @@ func ParsePrometheusMetrics(metricsText string) ([]Float64MetricRepresentation, 
 	var metrics []Float64MetricRepresentation
 
 	var textParser expfmt.TextParser
+	metricsText = strings.ReplaceAll(metricsText, "\r", "")
 	metricFamilies, err := textParser.TextToMetricFamilies(strings.NewReader(metricsText))
 	if err != nil {
 		return metrics, err

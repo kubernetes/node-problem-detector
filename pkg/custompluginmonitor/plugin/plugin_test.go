@@ -17,6 +17,7 @@ limitations under the License.
 package plugin
 
 import (
+	"runtime"
 	"testing"
 	"time"
 
@@ -25,6 +26,13 @@ import (
 
 func TestNewPluginRun(t *testing.T) {
 	ruleTimeout := 1 * time.Second
+	timeoutExitStatus := cpmtypes.Unknown
+	ext := "sh"
+
+	if runtime.GOOS == "windows" {
+		ext = "cmd"
+		timeoutExitStatus = cpmtypes.NonOK
+	}
 
 	utMetas := map[string]struct {
 		Rule       cpmtypes.CustomRule
@@ -33,7 +41,7 @@ func TestNewPluginRun(t *testing.T) {
 	}{
 		"ok": {
 			Rule: cpmtypes.CustomRule{
-				Path:    "./test-data/ok.sh",
+				Path:    "./test-data/ok." + ext,
 				Timeout: &ruleTimeout,
 			},
 			ExitStatus: cpmtypes.OK,
@@ -41,7 +49,7 @@ func TestNewPluginRun(t *testing.T) {
 		},
 		"non-ok": {
 			Rule: cpmtypes.CustomRule{
-				Path:    "./test-data/non-ok.sh",
+				Path:    "./test-data/non-ok." + ext,
 				Timeout: &ruleTimeout,
 			},
 			ExitStatus: cpmtypes.NonOK,
@@ -49,7 +57,7 @@ func TestNewPluginRun(t *testing.T) {
 		},
 		"unknown": {
 			Rule: cpmtypes.CustomRule{
-				Path:    "./test-data/unknown.sh",
+				Path:    "./test-data/unknown." + ext,
 				Timeout: &ruleTimeout,
 			},
 			ExitStatus: cpmtypes.Unknown,
@@ -57,6 +65,7 @@ func TestNewPluginRun(t *testing.T) {
 		},
 		"non executable": {
 			Rule: cpmtypes.CustomRule{
+				// Intentionally run .sh for Windows, this is meant to be not executable.
 				Path:    "./test-data/non-executable.sh",
 				Timeout: &ruleTimeout,
 			},
@@ -65,7 +74,7 @@ func TestNewPluginRun(t *testing.T) {
 		},
 		"longer than 80 stdout with ok exit status": {
 			Rule: cpmtypes.CustomRule{
-				Path:    "./test-data/longer-than-80-stdout-with-ok-exit-status.sh",
+				Path:    "./test-data/longer-than-80-stdout-with-ok-exit-status." + ext,
 				Timeout: &ruleTimeout,
 			},
 			ExitStatus: cpmtypes.OK,
@@ -73,7 +82,7 @@ func TestNewPluginRun(t *testing.T) {
 		},
 		"non defined exit status": {
 			Rule: cpmtypes.CustomRule{
-				Path:    "./test-data/non-defined-exit-status.sh",
+				Path:    "./test-data/non-defined-exit-status." + ext,
 				Timeout: &ruleTimeout,
 			},
 			ExitStatus: cpmtypes.Unknown,
@@ -81,29 +90,32 @@ func TestNewPluginRun(t *testing.T) {
 		},
 		"sleep 3 second with ok exit status": {
 			Rule: cpmtypes.CustomRule{
-				Path:    "./test-data/sleep-3-second-with-ok-exit-status.sh",
+				Path:    "./test-data/sleep-3-second-with-ok-exit-status." + ext,
 				Timeout: &ruleTimeout,
 			},
-			ExitStatus: cpmtypes.Unknown,
-			Output:     `Timeout when running plugin "./test-data/sleep-3-second-with-ok-exit-status.sh": state - signal: killed. output - ""`,
+			ExitStatus: timeoutExitStatus,
+			Output:     `Timeout when running plugin "./test-data/sleep-3-second-with-ok-exit-status.` + ext + `": state - signal: killed. output - ""`,
 		},
 	}
 
-	conf := cpmtypes.CustomPluginConfig{}
-	(&conf).ApplyConfiguration()
-	p := Plugin{config: conf}
-	for desp, utMeta := range utMetas {
-		gotExitStatus, gotOutput := p.run(utMeta.Rule)
-		// cut at position max_output_length if expected output is longer than max_output_length bytes
-		if len(utMeta.Output) > *p.config.PluginGlobalConfig.MaxOutputLength {
-			utMeta.Output = utMeta.Output[:*p.config.PluginGlobalConfig.MaxOutputLength]
-		}
-		if gotExitStatus != utMeta.ExitStatus || gotOutput != utMeta.Output {
-			t.Errorf("%s", desp)
-			t.Errorf("Error in run plugin and get exit status and output for %q. "+
-				"Got exit status: %v, Expected exit status: %v. "+
-				"Got output: %q, Expected output: %q",
-				utMeta.Rule.Path, gotExitStatus, utMeta.ExitStatus, gotOutput, utMeta.Output)
-		}
+	for k, v := range utMetas {
+		desp := k
+		utMeta := v
+		t.Run(desp, func(t *testing.T) {
+			conf := cpmtypes.CustomPluginConfig{}
+			(&conf).ApplyConfiguration()
+			p := Plugin{config: conf}
+			gotExitStatus, gotOutput := p.run(utMeta.Rule)
+			// cut at position max_output_length if expected output is longer than max_output_length bytes
+			if len(utMeta.Output) > *p.config.PluginGlobalConfig.MaxOutputLength {
+				utMeta.Output = utMeta.Output[:*p.config.PluginGlobalConfig.MaxOutputLength]
+			}
+			if gotExitStatus != utMeta.ExitStatus || gotOutput != utMeta.Output {
+				t.Errorf("Error in run plugin and get exit status and output for %q. "+
+					"Got exit status: %v, Expected exit status: %v. "+
+					"Got output: %q, Expected output: %q",
+					utMeta.Rule.Path, gotExitStatus, utMeta.ExitStatus, gotOutput, utMeta.Output)
+			}
+		})
 	}
 }

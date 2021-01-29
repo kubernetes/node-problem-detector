@@ -8,13 +8,18 @@
 	"logPath": "C:\\Program Files\\containerd\\containerd.log",
 	"lookback": "5m",
 	"bufferSize": 10,
-	"source": "docker-monitor",
+	"source": "containerd",
 	"conditions": [],
 	"rules": [
 		{
 			"type": "temporary",
-			"reason": "BadCNIConfig",
-			"pattern": "failed to reload cni configuration.*"
+			"reason": "MissingPigz",
+			"pattern": "unpigz not found.*"
+		},
+		{
+			"type": "temporary",
+			"reason": "IncompatibleContainer",
+			"pattern": ".*CreateComputeSystem.*"
 		}
 	]
 }
