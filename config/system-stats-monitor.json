@@ -6,28 +6,28 @@
 			},
 			"cpu/usage_time": {
 				"displayName": "cpu/usage_time"
-      },
-      "cpu/load_1m": {
+			},
+			"cpu/load_1m": {
 				"displayName": "cpu/load_1m"
-      },
-      "cpu/load_5m": {
+			},
+			"cpu/load_5m": {
 				"displayName": "cpu/load_5m"
-      },
-      "cpu/load_15m": {
+			},
+			"cpu/load_15m": {
 				"displayName": "cpu/load_15m"
-      },
-      "system/processes_total": {
-        "displayName": "system/processes_total"
-      },
-      "system/procs_running": {
-        "displayName": "system/procs_running"
-      },
-      "system/procs_blocked": {
-        "displayName": "system/procs_blocked"
-      },
-      "system/interrupts_total": {
-        "displayName": "system/interrupts_total"
-      }
+			},
+			"system/processes_total": {
+				"displayName": "system/processes_total"
+			},
+			"system/procs_running": {
+				"displayName": "system/procs_running"
+			},
+			"system/procs_blocked": {
+				"displayName": "system/procs_blocked"
+			},
+			"system/interrupts_total": {
+				"displayName": "system/interrupts_total"
+			}
 		}
 	},
 	"disk": {
