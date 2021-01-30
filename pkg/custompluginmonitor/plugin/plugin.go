@@ -175,6 +175,9 @@ func (p *Plugin) run(rule cpmtypes.CustomRule) (exitStatus cpmtypes.Status, outp
 	go func() {
 		select {
 		case <-ctx.Done():
+			if ctx.Err() == context.Canceled {
+				return
+			}
 			glog.Errorf("Error in running plugin timeout %q", rule.Path)
 			if cmd.Process == nil || cmd.Process.Pid == 0 {
 				glog.Errorf("Error in cmd.Process check %q", rule.Path)
