@@ -46,6 +46,7 @@ const (
 	SystemProcsRunning      MetricID = "system/procs_running"
 	SystemProcsBlocked      MetricID = "system/procs_blocked"
 	SystemInterruptsTotal   MetricID = "system/interrupts_total"
+	SystemCPUStat           MetricID = "system/cpu_stat"
 	NetDevRxBytes           MetricID = "net/rx_bytes"
 	NetDevRxPackets         MetricID = "net/rx_packets"
 	NetDevRxErrors          MetricID = "net/rx_errors"

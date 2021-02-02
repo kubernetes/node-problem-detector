@@ -73,6 +73,7 @@ var NPDMetricToSDMetric = map[metrics.MetricID]string{
 	metrics.SystemProcsRunning:      "kubernetes.io/internal/node/guest/system/procs_running",
 	metrics.SystemProcsBlocked:      "kubernetes.io/internal/node/guest/system/procs_blocked",
 	metrics.SystemInterruptsTotal:   "kubernetes.io/internal/node/guest/system/interrupts_total",
+	metrics.SystemCPUStat:           "kubernetes.io/internal/node/guest/system/cpu_stat",
 	metrics.NetDevRxBytes:           "kubernetes.io/internal/node/guest/net/rx_bytes",
 	metrics.NetDevRxPackets:         "kubernetes.io/internal/node/guest/net/rx_packets",
 	metrics.NetDevRxErrors:          "kubernetes.io/internal/node/guest/net/rx_errors",

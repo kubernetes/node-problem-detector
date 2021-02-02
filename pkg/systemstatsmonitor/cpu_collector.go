@@ -17,6 +17,8 @@ limitations under the License.
 package systemstatsmonitor
 
 import (
+	"fmt"
+
 	"github.com/golang/glog"
 	"github.com/prometheus/procfs"
 	"github.com/shirou/gopsutil/cpu"
@@ -50,6 +52,7 @@ type cpuCollector struct {
 	mSystemProcsRunning    *metrics.Int64Metric
 	mSystemProcsBlocked    *metrics.Int64Metric
 	mSystemInterruptsTotal *metrics.Int64Metric
+	mSystemCPUStat         *metrics.Float64Metric // per-cpu time from /proc/stats
 
 	config *ssmtypes.CPUStatsConfig
 
@@ -63,13 +66,13 @@ func NewCPUCollectorOrDie(cpuConfig *ssmtypes.CPUStatsConfig) *cpuCollector {
 	if err != nil {
 		glog.Fatalf("Failed to retrieve kernel version: %v", err)
 	}
-	cc.tags["kernel_version"] = kernelVersion
+	cc.tags[kernelVersionLabel] = kernelVersion
 
 	osVersion, err := util.GetOSVersion()
 	if err != nil {
 		glog.Fatalf("Failed to retrieve OS version: %v", err)
 	}
-	cc.tags["os_version"] = osVersion
+	cc.tags[osVersionLabel] = osVersion
 
 	cc.mRunnableTaskCount, err = metrics.NewFloat64Metric(
 		metrics.CPURunnableTaskCountID,
@@ -170,6 +173,17 @@ func NewCPUCollectorOrDie(cpuConfig *ssmtypes.CPUStatsConfig) *cpuCollector {
 		glog.Fatalf("Error initializing metric for %q: %v", metrics.SystemInterruptsTotal, err)
 	}
 
+	cc.mSystemCPUStat, err = metrics.NewFloat64Metric(
+		metrics.SystemCPUStat,
+		cpuConfig.MetricsConfigs[string(metrics.SystemCPUStat)].DisplayName,
+		"Cumulative time each cpu spent in various stages.",
+		"ns",
+		metrics.Sum,
+		[]string{osVersionLabel, kernelVersionLabel, cpuLabel, stageLabel})
+	if err != nil {
+		glog.Fatalf("Error initializing metric for %q: %v", metrics.SystemCPUStat, err)
+	}
+
 	cc.lastUsageTime = make(map[string]float64)
 
 	return &cc
@@ -238,19 +252,6 @@ func (cc *cpuCollector) recordUsage() {
 }
 
 func (cc *cpuCollector) recordSystemStats() {
-	if cc.mSystemProcessesTotal == nil {
-		return
-	}
-	if cc.mSystemProcsRunning == nil {
-		return
-	}
-	if cc.mSystemProcsBlocked == nil {
-		return
-	}
-	if cc.mSystemInterruptsTotal == nil {
-		return
-	}
-
 	fs, err := procfs.NewFS("/proc")
 	stats, err := fs.Stat()
 	if err != nil {
@@ -262,6 +263,32 @@ func (cc *cpuCollector) recordSystemStats() {
 	cc.mSystemProcsRunning.Record(cc.tags, int64(stats.ProcessesRunning))
 	cc.mSystemProcsBlocked.Record(cc.tags, int64(stats.ProcessesBlocked))
 	cc.mSystemInterruptsTotal.Record(cc.tags, int64(stats.IRQTotal))
+
+	for i, c := range stats.CPU {
+		tags := cc.tags
+		tags[cpuLabel] = fmt.Sprintf("cpu%d", i)
+
+		tags[stageLabel] = "user"
+		cc.mSystemCPUStat.Record(tags, c.User)
+		tags[stageLabel] = "nice"
+		cc.mSystemCPUStat.Record(tags, c.Nice)
+		tags[stageLabel] = "system"
+		cc.mSystemCPUStat.Record(tags, c.System)
+		tags[stageLabel] = "idle"
+		cc.mSystemCPUStat.Record(tags, c.Idle)
+		tags[stageLabel] = "iowait"
+		cc.mSystemCPUStat.Record(tags, c.Iowait)
+		tags[stageLabel] = "iRQ"
+		cc.mSystemCPUStat.Record(tags, c.IRQ)
+		tags[stageLabel] = "softIRQ"
+		cc.mSystemCPUStat.Record(tags, c.SoftIRQ)
+		tags[stageLabel] = "steal"
+		cc.mSystemCPUStat.Record(tags, c.Steal)
+		tags[stageLabel] = "guest"
+		cc.mSystemCPUStat.Record(tags, c.Guest)
+		tags[stageLabel] = "guestNice"
+		cc.mSystemCPUStat.Record(tags, c.GuestNice)
+	}
 }
 
 func (cc *cpuCollector) collect() {
