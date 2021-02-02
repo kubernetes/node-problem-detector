@@ -53,6 +53,10 @@ IMAGE:=$(REGISTRY)/node-problem-detector:$(TAG)
 # support needs libsystemd-dev or libsystemd-journal-dev.
 ENABLE_JOURNALD?=1
 
+ifeq ($(shell uname -s 2>/dev/null), Darwin)
+ENABLE_JOURNALD=0
+endif
+
 # TODO(random-liu): Support different architectures.
 # The debian-base:v1.0.0 image built from kubernetes repository is based on
 # Debian Stretch. It includes systemd 232 with support for both +XZ and +LZ4
