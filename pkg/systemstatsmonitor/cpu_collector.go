@@ -22,11 +22,9 @@ import (
 	"github.com/golang/glog"
 	"github.com/prometheus/procfs"
 	"github.com/shirou/gopsutil/cpu"
-	"github.com/shirou/gopsutil/host"
 	"github.com/shirou/gopsutil/load"
 
 	ssmtypes "k8s.io/node-problem-detector/pkg/systemstatsmonitor/types"
-	"k8s.io/node-problem-detector/pkg/util"
 	"k8s.io/node-problem-detector/pkg/util/metrics"
 )
 
@@ -41,8 +39,6 @@ import (
 const clockTick float64 = 100.0
 
 type cpuCollector struct {
-	tags map[string]string
-
 	mRunnableTaskCount     *metrics.Float64Metric
 	mUsageTime             *metrics.Float64Metric
 	mCpuLoad1m             *metrics.Float64Metric
@@ -60,20 +56,9 @@ type cpuCollector struct {
 }
 
 func NewCPUCollectorOrDie(cpuConfig *ssmtypes.CPUStatsConfig) *cpuCollector {
-	cc := cpuCollector{tags: map[string]string{}, config: cpuConfig}
+	cc := cpuCollector{config: cpuConfig}
 
-	kernelVersion, err := host.KernelVersion()
-	if err != nil {
-		glog.Fatalf("Failed to retrieve kernel version: %v", err)
-	}
-	cc.tags[kernelVersionLabel] = kernelVersion
-
-	osVersion, err := util.GetOSVersion()
-	if err != nil {
-		glog.Fatalf("Failed to retrieve OS version: %v", err)
-	}
-	cc.tags[osVersionLabel] = osVersion
-
+	var err error
 	cc.mRunnableTaskCount, err = metrics.NewFloat64Metric(
 		metrics.CPURunnableTaskCountID,
 		cpuConfig.MetricsConfigs[string(metrics.CPURunnableTaskCountID)].DisplayName,
@@ -135,7 +120,7 @@ func NewCPUCollectorOrDie(cpuConfig *ssmtypes.CPUStatsConfig) *cpuCollector {
 		"Number of forks since boot.",
 		"1",
 		metrics.Sum,
-		[]string{osVersionLabel, kernelVersionLabel})
+		[]string{})
 	if err != nil {
 		glog.Fatalf("Error initializing metric for %q: %v", metrics.SystemProcessesTotal, err)
 	}
@@ -146,7 +131,7 @@ func NewCPUCollectorOrDie(cpuConfig *ssmtypes.CPUStatsConfig) *cpuCollector {
 		"Number of processes currently running.",
 		"1",
 		metrics.LastValue,
-		[]string{osVersionLabel, kernelVersionLabel})
+		[]string{})
 	if err != nil {
 		glog.Fatalf("Error initializing metric for %q: %v", metrics.SystemProcsRunning, err)
 	}
@@ -157,7 +142,7 @@ func NewCPUCollectorOrDie(cpuConfig *ssmtypes.CPUStatsConfig) *cpuCollector {
 		"Number of processes currently blocked.",
 		"1",
 		metrics.LastValue,
-		[]string{osVersionLabel, kernelVersionLabel})
+		[]string{})
 	if err != nil {
 		glog.Fatalf("Error initializing metric for %q: %v", metrics.SystemProcsBlocked, err)
 	}
@@ -168,7 +153,7 @@ func NewCPUCollectorOrDie(cpuConfig *ssmtypes.CPUStatsConfig) *cpuCollector {
 		"Total number of interrupts serviced (cumulative).",
 		"1",
 		metrics.Sum,
-		[]string{osVersionLabel, kernelVersionLabel})
+		[]string{})
 	if err != nil {
 		glog.Fatalf("Error initializing metric for %q: %v", metrics.SystemInterruptsTotal, err)
 	}
@@ -179,7 +164,7 @@ func NewCPUCollectorOrDie(cpuConfig *ssmtypes.CPUStatsConfig) *cpuCollector {
 		"Cumulative time each cpu spent in various stages.",
 		"ns",
 		metrics.Sum,
-		[]string{osVersionLabel, kernelVersionLabel, cpuLabel, stageLabel})
+		[]string{cpuLabel, stageLabel})
 	if err != nil {
 		glog.Fatalf("Error initializing metric for %q: %v", metrics.SystemCPUStat, err)
 	}
@@ -259,13 +244,13 @@ func (cc *cpuCollector) recordSystemStats() {
 		return
 	}
 
-	cc.mSystemProcessesTotal.Record(cc.tags, int64(stats.ProcessCreated))
-	cc.mSystemProcsRunning.Record(cc.tags, int64(stats.ProcessesRunning))
-	cc.mSystemProcsBlocked.Record(cc.tags, int64(stats.ProcessesBlocked))
-	cc.mSystemInterruptsTotal.Record(cc.tags, int64(stats.IRQTotal))
+	cc.mSystemProcessesTotal.Record(map[string]string{}, int64(stats.ProcessCreated))
+	cc.mSystemProcsRunning.Record(map[string]string{}, int64(stats.ProcessesRunning))
+	cc.mSystemProcsBlocked.Record(map[string]string{}, int64(stats.ProcessesBlocked))
+	cc.mSystemInterruptsTotal.Record(map[string]string{}, int64(stats.IRQTotal))
 
 	for i, c := range stats.CPU {
-		tags := cc.tags
+		tags := map[string]string{}
 		tags[cpuLabel] = fmt.Sprintf("cpu%d", i)
 
 		tags[stageLabel] = "user"
