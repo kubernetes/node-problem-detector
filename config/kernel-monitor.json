@@ -59,6 +59,11 @@
 			"pattern": "Buffer I/O error .*"
 		},
 		{
+			"type": "temporary",
+			"reason": "MemoryReadError",
+			"pattern": "CE memory read error .*"
+		},
+		{
 			"type": "permanent",
 			"condition": "KernelDeadlock",
 			"reason": "AUFSUmountHung",

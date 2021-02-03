@@ -46,6 +46,11 @@ data:
                 "pattern": "divide error: 0000 \\[#\\d+\\] SMP"
             },
             {
+    			"type": "temporary",
+    			"reason": "MemoryReadError",
+    			"pattern": "CE memory read error .*"
+            },
+            {
                 "type": "permanent",
                 "condition": "KernelDeadlock",
                 "reason": "AUFSUmountHung",
