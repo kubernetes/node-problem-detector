@@ -53,7 +53,9 @@ IMAGE:=$(REGISTRY)/node-problem-detector:$(TAG)
 # support needs libsystemd-dev or libsystemd-journal-dev.
 ENABLE_JOURNALD?=1
 
-ifeq ($(shell uname -s 2>/dev/null), Darwin)
+ifeq ($(go env GOHOSTOS), darwin)
+ENABLE_JOURNALD=0
+else ifeq ($(go env GOHOSTOS), windows)
 ENABLE_JOURNALD=0
 endif
 
