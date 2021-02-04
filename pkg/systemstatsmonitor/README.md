@@ -116,3 +116,17 @@ Below metrics are collected from `net` component:
 * `net/tx_compressed`: Cumulative count of compressed packets transmitted by the device driver.
 
 All of the above have `interface_name` label for the net interface.
+
+### cgroup stats
+
+Below metrics are collected from the cgroup for kubepods slices:
+
+* `cgroup/cpu/periods_count`: Cumulative number of periods that have elapsed. See 'cpu.stat:nr_periods' in kernel.org/doc/Documentation/scheduler/sched-bwc.txt. Service_name is set only if the metric is for a system cgroup (and not a pod/container)
+* `cgroup/cpu/throttled_periods_count`: Cumulative number of periods where groups were throttled. See 'cpu.stat:nr_throttled' in kernel.org/doc/Documentation/scheduler/sched-bwc.txt.
+* `cgroup/cpu/throttled_time`: Cumulative time (in nanoseconds) the groups were throttled. See 'cpu.stat:throttled_time' in kernel.org/doc/Documentation/scheduler/sched-bwc.txt.
+* `cgroup/cpu/usage_percpu`: The cumulative CPU time, in nanoseconds, consumed by all tasks in this group, separated by CPU.
+* `cgroup/cpu/time`: The cumulative user and system time consumed by tasks in this group. See https://www.kernel.org/doc/Documentation/cgroup-v1/cpuacct.txt.
+* `cgroup/memory/usage`: Instantaneous memory in bytes used by this cgroup. See https://www.kernel.org/doc/Documentation/cgroup-v1/memory.txt
+* `cgroup/memory/limit`: The memory limit in bytes of this group. See https://www.kernel.org/doc/Documentation/cgroup-v1/memory.txt
+* `cgroup/memory/failcnt_count`: The number of memory usage hits limits. See https://www.kernel.org/doc/Documentation/cgroup-v1/memory.txt
+* `cgroup/pids/current_count`: The number of processes currently in the cgroup. See https://www.kernel.org/doc/Documentation/cgroup-v1/pids.txt.

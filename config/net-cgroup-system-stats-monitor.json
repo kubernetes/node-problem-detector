@@ -1,4 +1,35 @@
 {
+  "cgroup": {
+    "metricsConfigs": {
+      "cgroup/cpu/periods_count": {
+        "displayName": "cgroup/cpu/periods_count"
+      },
+      "cgroup/cpu/throttled_periods_count": {
+        "displayName": "cgroup/cpu/throttled_periods_count"
+      },
+      "cgroup/cpu/throttled_time": {
+        "displayName": "cgroup/cpu/throttled_time"
+      },
+      "cgroup/cpu/usage_percpu": {
+        "displayName": "cgroup/cpu/usage_percpu"
+      },
+      "cgroup/cpu/time": {
+        "displayName": "cgroup/cpu/time"
+      },
+      "cgroup/memory/usage": {
+        "displayName": "cgroup/memory/usage"
+      },
+      "cgroup/memory/limit": {
+        "displayName": "cgroup/memory/limit"
+      },
+      "cgroup/memory/failcnt_count": {
+        "displayName": "cgroup/memory/failcnt_count"
+      },
+      "cgroup/pids/current_count": {
+        "displayName": "cgroup/pids/current_count"
+      }
+    }
+  },
   "net": {
     "metricsConfigs": {
       "net/rx_bytes": {
@@ -51,5 +82,5 @@
       }
     }
   },
-  "invokeInterval": "120s"
+  "invokeInterval": "600s"
 }

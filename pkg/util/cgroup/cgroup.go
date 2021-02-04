@@ -1,3 +1,19 @@
+/*
+Copyright 2021 The Kubernetes Authors All rights reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 package cgroup
 
 import (
@@ -8,6 +24,7 @@ import (
 	"strings"
 
 	"github.com/containerd/cgroups"
+	cgroupsV1 "github.com/containerd/cgroups/stats/v1"
 	v1 "k8s.io/api/core/v1"
 )
 
@@ -23,17 +40,16 @@ var (
 )
 
 type podCFS struct {
-	podID       string
-	containerID string
+	PodID       string
+	ContainerID string
 	QOSClass    v1.PodQOSClass
 }
 
 func (p *podCFS) String() {
-	fmt.Printf("Pod = %s, Container = %s, QOS = %s\n", p.podID, p.containerID, p.QOSClass)
+	fmt.Printf("Pod = %s, Container = %s, QOS = %s\n", p.PodID, p.ContainerID, p.QOSClass)
 }
 
-// TODO: add a test for this
-var allPodPaths = func() ([]string, error) {
+func allPodPaths() ([]string, error) {
 	podPaths := []string{}
 	err := filepath.Walk(kubeCFSBasePath, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
@@ -50,9 +66,8 @@ var allPodPaths = func() ([]string, error) {
 	return podPaths, nil
 }
 
-// TODO: add a test for this
-// Recursively lists and returns info about pods and containers tracked
-func allKubeCgroups() ([]podCFS, error) {
+// AllKubeCgroups lists and returns info about pods and containers tracked
+func AllKubeCgroups() ([]podCFS, error) {
 	podPaths, err := allPodPaths()
 	if err != nil {
 		return nil, err
@@ -72,35 +87,28 @@ func allKubeCgroups() ([]podCFS, error) {
 			qos = v1.PodQOSBurstable
 		}
 		pods = append(pods, podCFS{
-			podID:       matches[1],
-			containerID: matches[2],
+			PodID:       matches[1],
+			ContainerID: matches[2],
 			QOSClass:    qos,
 		})
 	}
 	return pods, err
 }
 
-func main() {
-	allPods, err := allKubeCgroups()
+func (p *podCFS) CgroupPath() string {
+	kubepath := "kubepods/burstable/pod" + p.PodID + "/" + p.ContainerID
+	if p.QOSClass == "guaranteed" {
+		kubepath = "kubepods/pod" + p.PodID + "/" + p.ContainerID
+	} else if p.QOSClass == "besteffort" {
+		kubepath = "kubepods/besteffort/pod" + p.PodID + "/" + p.ContainerID
+	}
+	return kubepath
+}
+
+func (p *podCFS) CgroupStats() (*cgroupsV1.Metrics, error) {
+	control, err := cgroups.Load(cgroups.V1, cgroups.StaticPath(p.CgroupPath()))
 	if err != nil {
 		panic(err)
 	}
-
-	counter := make(map[string]int)
-	for _, p := range allPods {
-		counter[p.podID]++
-		p.String()
-	}
-	fmt.Printf("num of pods = %d", len(counter))
-	fmt.Printf("num of containers = %d", len(allPods))
-
-	_, err = cgroups.Load(cgroups.V1, cgroups.RootPath)
-	if err != nil {
-		panic(err)
-	}
-	// stats, err := control.Stat()
-	// if err != nil {
-	// 	panic(err)
-	// }
-	// fmt.Printf("stats = %+v", stats)
+	return control.Stat()
 }

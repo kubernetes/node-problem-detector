@@ -36,6 +36,7 @@ require (
 	k8s.io/heapster v0.0.0-20180704153620-b25f8a16208f
 	k8s.io/kubernetes v1.14.6
 	k8s.io/test-infra v0.0.0-20190914015041-e1cbc3ccd91c
+  github.com/containerd/cgroups v0.0.0-20210114181951-8a68de567b68
 )
 
 replace git.apache.org/thrift.git => github.com/apache/thrift v0.0.0-20180902110319-2566ecd5d999

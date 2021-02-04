@@ -45,3 +45,21 @@ const cpuLabel = "cpu"
 
 // stageLabel labels the stage according to the kernel where CPU time was spent
 const stageLabel = "stage"
+
+// podIDLabel labels the pod
+const podIDLabel = "pod_id"
+
+//containerIDLabel labels the container
+const containerIDLabel = "container_id"
+
+// serviceNameLabel labels the systemd service
+const serviceNameLabel = "service_name"
+
+// userLabel labels if the feature is for user space
+const userLabel = "user"
+
+// systemLabel labels if the feature is for system space
+const systemLabel = "system"
+
+// typeLabel labels any type appropriate for the metric
+const typeLabel = "type"
