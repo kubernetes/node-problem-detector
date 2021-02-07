@@ -25,7 +25,7 @@ import (
 )
 
 func TestRegistration(t *testing.T) {
-	fooMonitorFactory := func(configPath string) types.Monitor {
+	fooMonitorFactory := func(configPath string, instance string) types.Monitor {
 		return nil
 	}
 	fooMonitorHandler := types.ProblemDaemonHandler{
@@ -33,7 +33,7 @@ func TestRegistration(t *testing.T) {
 		CmdOptionDescription:     "foo option",
 	}
 
-	barMonitorFactory := func(configPath string) types.Monitor {
+	barMonitorFactory := func(configPath string, instance string) types.Monitor {
 		return nil
 	}
 	barMonitorHandler := types.ProblemDaemonHandler{
@@ -55,7 +55,7 @@ func TestRegistration(t *testing.T) {
 }
 
 func TestGetProblemDaemonHandlerOrDie(t *testing.T) {
-	fooMonitorFactory := func(configPath string) types.Monitor {
+	fooMonitorFactory := func(configPath string, instance string) types.Monitor {
 		return nil
 	}
 	fooMonitorHandler := types.ProblemDaemonHandler{

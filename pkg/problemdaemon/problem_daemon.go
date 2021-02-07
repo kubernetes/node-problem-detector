@@ -52,7 +52,7 @@ func GetProblemDaemonHandlerOrDie(problemDaemonType types.ProblemDaemonType) typ
 }
 
 // NewProblemDaemons creates all problem daemons based on the configurations provided.
-func NewProblemDaemons(monitorConfigPaths types.ProblemDaemonConfigPathMap) []types.Monitor {
+func NewProblemDaemons(monitorConfigPaths types.ProblemDaemonConfigPathMap, instance string) []types.Monitor {
 	problemDaemonMap := make(map[string]types.Monitor)
 	for problemDaemonType, configs := range monitorConfigPaths {
 		for _, config := range *configs {
@@ -61,7 +61,7 @@ func NewProblemDaemons(monitorConfigPaths types.ProblemDaemonConfigPathMap) []ty
 				glog.Warningf("Duplicated problem daemon configuration %q", config)
 				continue
 			}
-			problemDaemonMap[config] = handlers[problemDaemonType].CreateProblemDaemonOrDie(config)
+			problemDaemonMap[config] = handlers[problemDaemonType].CreateProblemDaemonOrDie(config, instance)
 		}
 	}
 

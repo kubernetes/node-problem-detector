@@ -49,8 +49,8 @@ func main() {
 	npdo.SetConfigFromDeprecatedOptionsOrDie()
 	npdo.ValidOrDie()
 
-	// Initialize problem daemons.
-	problemDaemons := problemdaemon.NewProblemDaemons(npdo.MonitorConfigPaths)
+	instance := npdo.NodeName
+	problemDaemons := problemdaemon.NewProblemDaemons(npdo.MonitorConfigPaths, instance)
 	if len(problemDaemons) == 0 {
 		glog.Fatalf("No problem daemon is configured")
 	}
@@ -78,7 +78,7 @@ func main() {
 
 	// Initialize NPD core.
 	p := problemdetector.NewProblemDetector(problemDaemons, npdExporters)
-	if err := p.Run(); err != nil {
+	if err := p.Run(instance); err != nil {
 		glog.Fatalf("Problem detector failed with error: %v", err)
 	}
 }

@@ -56,7 +56,7 @@ type logMonitor struct {
 }
 
 // NewLogMonitorOrDie create a new LogMonitor, panic if error occurs.
-func NewLogMonitorOrDie(configPath string) types.Monitor {
+func NewLogMonitorOrDie(configPath string, instance string) types.Monitor {
 	l := &logMonitor{
 		configPath: configPath,
 		tomb:       tomb.NewTomb(),
@@ -84,37 +84,38 @@ func NewLogMonitorOrDie(configPath string) types.Monitor {
 	l.output = make(chan *types.Status, 1000)
 
 	if *l.config.EnableMetricsReporting {
-		initializeProblemMetricsOrDie(l.config.Rules)
+		initializeProblemMetricsOrDie(l.config.Rules, instance)
 	}
 	return l
 }
 
 // initializeProblemMetricsOrDie creates problem metrics for all problems and set the value to 0,
 // panic if error occurs.
-func initializeProblemMetricsOrDie(rules []systemlogtypes.Rule) {
+func initializeProblemMetricsOrDie(rules []systemlogtypes.Rule, instance string) {
 	for _, rule := range rules {
 		if rule.Type == types.Perm {
-			err := problemmetrics.GlobalProblemMetricsManager.SetProblemGauge(rule.Condition, rule.Reason, false)
+			err := problemmetrics.GlobalProblemMetricsManager.SetProblemGauge(rule.Condition, rule.Reason, instance,
+				false)
 			if err != nil {
 				glog.Fatalf("Failed to initialize problem gauge metrics for problem %q, reason %q: %v",
 					rule.Condition, rule.Reason, err)
 			}
 		}
-		err := problemmetrics.GlobalProblemMetricsManager.IncrementProblemCounter(rule.Reason, 0)
+		err := problemmetrics.GlobalProblemMetricsManager.IncrementProblemCounter(rule.Reason, instance, 0)
 		if err != nil {
 			glog.Fatalf("Failed to initialize problem counter metrics for %q: %v", rule.Reason, err)
 		}
 	}
 }
 
-func (l *logMonitor) Start() (<-chan *types.Status, error) {
+func (l *logMonitor) Start(instance string) (<-chan *types.Status, error) {
 	glog.Infof("Start log monitor %s", l.configPath)
 	var err error
 	l.logCh, err = l.watcher.Watch()
 	if err != nil {
 		return nil, err
 	}
-	go l.monitorLoop()
+	go l.monitorLoop(instance)
 	return l.output, nil
 }
 
@@ -124,7 +125,7 @@ func (l *logMonitor) Stop() {
 }
 
 // monitorLoop is the main loop of log monitor.
-func (l *logMonitor) monitorLoop() {
+func (l *logMonitor) monitorLoop(instance string) {
 	defer func() {
 		close(l.output)
 		l.tomb.Done()
@@ -137,7 +138,7 @@ func (l *logMonitor) monitorLoop() {
 				glog.Errorf("Log channel closed: %s", l.configPath)
 				return
 			}
-			l.parseLog(log)
+			l.parseLog(log, instance)
 		case <-l.tomb.Stopping():
 			l.watcher.Stop()
 			glog.Infof("Log monitor stopped: %s", l.configPath)
@@ -147,7 +148,7 @@ func (l *logMonitor) monitorLoop() {
 }
 
 // parseLog parses one log line.
-func (l *logMonitor) parseLog(log *logtypes.Log) {
+func (l *logMonitor) parseLog(log *logtypes.Log, instance string) {
 	// Once there is new log, log monitor will push it into the log buffer and try
 	// to match each rule. If any rule is matched, log monitor will report a status.
 	l.buffer.Push(log)
@@ -156,14 +157,14 @@ func (l *logMonitor) parseLog(log *logtypes.Log) {
 		if len(matched) == 0 {
 			continue
 		}
-		status := l.generateStatus(matched, rule)
+		status := l.generateStatus(matched, rule, instance)
 		glog.Infof("New status generated: %+v", status)
 		l.output <- status
 	}
 }
 
 // generateStatus generates status from the logs.
-func (l *logMonitor) generateStatus(logs []*logtypes.Log, rule systemlogtypes.Rule) *types.Status {
+func (l *logMonitor) generateStatus(logs []*logtypes.Log, rule systemlogtypes.Rule, instance string) *types.Status {
 	// We use the timestamp of the first log line as the timestamp of the status.
 	timestamp := logs[0].Timestamp
 	message := generateMessage(logs)
@@ -205,14 +206,14 @@ func (l *logMonitor) generateStatus(logs []*logtypes.Log, rule systemlogtypes.Ru
 
 	if *l.config.EnableMetricsReporting {
 		for _, event := range events {
-			err := problemmetrics.GlobalProblemMetricsManager.IncrementProblemCounter(event.Reason, 1)
+			err := problemmetrics.GlobalProblemMetricsManager.IncrementProblemCounter(event.Reason, instance, 1)
 			if err != nil {
 				glog.Errorf("Failed to update problem counter metrics for %q: %v", event.Reason, err)
 			}
 		}
 		for _, condition := range changedConditions {
 			err := problemmetrics.GlobalProblemMetricsManager.SetProblemGauge(
-				condition.Type, condition.Reason, condition.Status == types.True)
+				condition.Type, condition.Reason, instance, condition.Status == types.True)
 			if err != nil {
 				glog.Errorf("Failed to update problem gauge metrics for problem %q, reason %q: %v",
 					condition.Type, condition.Reason, err)

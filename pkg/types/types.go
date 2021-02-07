@@ -106,7 +106,7 @@ type Monitor interface {
 	// Start starts the monitor.
 	// The Status channel is used to report problems. If the Monitor does not report any
 	// problem (i.e. metrics reporting only), the channel should be set to nil.
-	Start() (<-chan *Status, error)
+	Start(instance string) (<-chan *Status, error)
 	// Stop stops the monitor.
 	Stop()
 }
@@ -129,7 +129,7 @@ type ProblemDaemonConfigPathMap map[ProblemDaemonType]*[]string
 // ProblemDaemonHandler represents the initialization handler for a type problem daemon.
 type ProblemDaemonHandler struct {
 	// CreateProblemDaemonOrDie initializes a problem daemon, panic if error occurs.
-	CreateProblemDaemonOrDie func(string) Monitor
+	CreateProblemDaemonOrDie func(string, string) Monitor
 	// CmdOptionDescription explains how to configure the problem daemon from command line arguments.
 	CmdOptionDescription string
 }

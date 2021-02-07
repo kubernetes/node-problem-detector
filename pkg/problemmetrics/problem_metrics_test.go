@@ -25,6 +25,7 @@ import (
 )
 
 func TestNewProblem(t *testing.T) {
+	instance := "127.0.0.1"
 	testCases := []struct {
 		name            string
 		reasons         []string
@@ -118,7 +119,7 @@ func TestNewProblem(t *testing.T) {
 			pmm, fakeProblemCounter, fakeProblemGauge := NewProblemMetricsManagerStub()
 
 			for idx, reason := range test.reasons {
-				pmm.IncrementProblemCounter(reason, test.counts[idx])
+				pmm.IncrementProblemCounter(reason, instance, test.counts[idx])
 			}
 
 			gotMetrics := append(fakeProblemCounter.ListMetrics(), fakeProblemGauge.ListMetrics()...)
@@ -129,6 +130,7 @@ func TestNewProblem(t *testing.T) {
 }
 
 func TestSetProblemGauge(t *testing.T) {
+	instance := "127.0.0.1"
 	type argumentType struct {
 		problemType string
 		reason      string
@@ -266,7 +268,7 @@ func TestSetProblemGauge(t *testing.T) {
 			pmm, fakeProblemCounter, fakeProblemGauge := NewProblemMetricsManagerStub()
 
 			for _, argument := range test.arguments {
-				pmm.SetProblemGauge(argument.problemType, argument.reason, argument.value)
+				pmm.SetProblemGauge(argument.problemType, argument.reason, instance, argument.value)
 			}
 
 			gotMetrics := append(fakeProblemCounter.ListMetrics(), fakeProblemGauge.ListMetrics()...)

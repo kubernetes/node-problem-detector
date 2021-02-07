@@ -54,7 +54,7 @@ func NewProblemMetricsManagerOrDie() *ProblemMetricsManager {
 		"Number of times a specific type of problem have occurred.",
 		"1",
 		metrics.Sum,
-		[]string{"reason"})
+		[]string{"reason", "instance"})
 	if err != nil {
 		glog.Fatalf("Failed to create problem_counter metric: %v", err)
 	}
@@ -65,7 +65,7 @@ func NewProblemMetricsManagerOrDie() *ProblemMetricsManager {
 		"Whether a specific type of problem is affecting the node or not.",
 		"1",
 		metrics.LastValue,
-		[]string{"type", "reason"})
+		[]string{"type", "reason", "instance"})
 	if err != nil {
 		glog.Fatalf("Failed to create problem_gauge metric: %v", err)
 	}
@@ -76,16 +76,16 @@ func NewProblemMetricsManagerOrDie() *ProblemMetricsManager {
 }
 
 // IncrementProblemCounter increments the value of a problem counter.
-func (pmm *ProblemMetricsManager) IncrementProblemCounter(reason string, count int64) error {
+func (pmm *ProblemMetricsManager) IncrementProblemCounter(reason string, instance string, count int64) error {
 	if pmm.problemCounter == nil {
 		return errors.New("problem counter is being incremented before initialized.")
 	}
 
-	return pmm.problemCounter.Record(map[string]string{"reason": reason}, count)
+	return pmm.problemCounter.Record(map[string]string{"reason": reason, "instance": instance}, count)
 }
 
 // SetProblemGauge sets the value of a problem gauge.
-func (pmm *ProblemMetricsManager) SetProblemGauge(problemType string, reason string, value bool) error {
+func (pmm *ProblemMetricsManager) SetProblemGauge(problemType string, reason string, instance string, value bool) error {
 	if pmm.problemGauge == nil {
 		return errors.New("problem gauge is being set before initialized.")
 	}
@@ -99,7 +99,7 @@ func (pmm *ProblemMetricsManager) SetProblemGauge(problemType string, reason str
 	// However, problemGauges with different "type" and "reason" are considered as different
 	// metrics in Prometheus. So we need to clear the previous metrics explicitly.
 	if lastReason, ok := pmm.problemTypeToReason[problemType]; ok {
-		err := pmm.problemGauge.Record(map[string]string{"type": problemType, "reason": lastReason}, 0)
+		err := pmm.problemGauge.Record(map[string]string{"type": problemType, "reason": lastReason, "instance": instance}, 0)
 		if err != nil {
 			return fmt.Errorf("failed to clear previous reason %q for type %q: %v",
 				problemType, lastReason, err)
@@ -112,5 +112,5 @@ func (pmm *ProblemMetricsManager) SetProblemGauge(problemType string, reason str
 	if value {
 		valueInt = 1
 	}
-	return pmm.problemGauge.Record(map[string]string{"type": problemType, "reason": reason}, valueInt)
+	return pmm.problemGauge.Record(map[string]string{"type": problemType, "reason": reason, "instance": instance}, valueInt)
 }

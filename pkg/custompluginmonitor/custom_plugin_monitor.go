@@ -53,7 +53,7 @@ type customPluginMonitor struct {
 }
 
 // NewCustomPluginMonitorOrDie create a new customPluginMonitor, panic if error occurs.
-func NewCustomPluginMonitorOrDie(configPath string) types.Monitor {
+func NewCustomPluginMonitorOrDie(configPath string, instance string) types.Monitor {
 	c := &customPluginMonitor{
 		configPath: configPath,
 		tomb:       tomb.NewTomb(),
@@ -85,33 +85,33 @@ func NewCustomPluginMonitorOrDie(configPath string) types.Monitor {
 	c.statusChan = make(chan *types.Status, 1000)
 
 	if *c.config.EnableMetricsReporting {
-		initializeProblemMetricsOrDie(c.config.Rules)
+		initializeProblemMetricsOrDie(c.config.Rules, instance)
 	}
 	return c
 }
 
 // initializeProblemMetricsOrDie creates problem metrics for all problems and set the value to 0,
 // panic if error occurs.
-func initializeProblemMetricsOrDie(rules []*cpmtypes.CustomRule) {
+func initializeProblemMetricsOrDie(rules []*cpmtypes.CustomRule, instance string) {
 	for _, rule := range rules {
 		if rule.Type == types.Perm {
-			err := problemmetrics.GlobalProblemMetricsManager.SetProblemGauge(rule.Condition, rule.Reason, false)
+			err := problemmetrics.GlobalProblemMetricsManager.SetProblemGauge(rule.Condition, rule.Reason, instance, false)
 			if err != nil {
 				glog.Fatalf("Failed to initialize problem gauge metrics for problem %q, reason %q: %v",
 					rule.Condition, rule.Reason, err)
 			}
 		}
-		err := problemmetrics.GlobalProblemMetricsManager.IncrementProblemCounter(rule.Reason, 0)
+		err := problemmetrics.GlobalProblemMetricsManager.IncrementProblemCounter(rule.Reason, instance, 0)
 		if err != nil {
 			glog.Fatalf("Failed to initialize problem counter metrics for %q: %v", rule.Reason, err)
 		}
 	}
 }
 
-func (c *customPluginMonitor) Start() (<-chan *types.Status, error) {
+func (c *customPluginMonitor) Start(instance string) (<-chan *types.Status, error) {
 	glog.Infof("Start custom plugin monitor %s", c.configPath)
 	go c.plugin.Run()
-	go c.monitorLoop()
+	go c.monitorLoop(instance)
 	return c.statusChan, nil
 }
 
@@ -121,7 +121,7 @@ func (c *customPluginMonitor) Stop() {
 }
 
 // monitorLoop is the main loop of customPluginMonitor.
-func (c *customPluginMonitor) monitorLoop() {
+func (c *customPluginMonitor) monitorLoop(instance string) {
 	c.initializeStatus()
 
 	resultChan := c.plugin.GetResultChan()
@@ -134,7 +134,7 @@ func (c *customPluginMonitor) monitorLoop() {
 				return
 			}
 			glog.V(3).Infof("Receive new plugin result for %s: %+v", c.configPath, result)
-			status := c.generateStatus(result)
+			status := c.generateStatus(result, instance)
 			glog.V(3).Infof("New status generated: %+v", status)
 			c.statusChan <- status
 		case <-c.tomb.Stopping():
@@ -147,7 +147,7 @@ func (c *customPluginMonitor) monitorLoop() {
 }
 
 // generateStatus generates status from the plugin check result.
-func (c *customPluginMonitor) generateStatus(result cpmtypes.Result) *types.Status {
+func (c *customPluginMonitor) generateStatus(result cpmtypes.Result, instance string) *types.Status {
 	timestamp := time.Now()
 	var activeProblemEvents []types.Event
 	var inactiveProblemEvents []types.Event
@@ -250,7 +250,7 @@ func (c *customPluginMonitor) generateStatus(result cpmtypes.Result) *types.Stat
 		// Increment problem counter only for active problems which just got detected.
 		for _, event := range activeProblemEvents {
 			err := problemmetrics.GlobalProblemMetricsManager.IncrementProblemCounter(
-				event.Reason, 1)
+				event.Reason, instance, 1)
 			if err != nil {
 				glog.Errorf("Failed to update problem counter metrics for %q: %v",
 					event.Reason, err)
@@ -258,7 +258,7 @@ func (c *customPluginMonitor) generateStatus(result cpmtypes.Result) *types.Stat
 		}
 		for _, condition := range c.conditions {
 			err := problemmetrics.GlobalProblemMetricsManager.SetProblemGauge(
-				condition.Type, condition.Reason, condition.Status == types.True)
+				condition.Type, condition.Reason, instance, condition.Status == types.True)
 			if err != nil {
 				glog.Errorf("Failed to update problem gauge metrics for problem %q, reason %q: %v",
 					condition.Type, condition.Reason, err)

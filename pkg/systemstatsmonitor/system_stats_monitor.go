@@ -50,7 +50,7 @@ type systemStatsMonitor struct {
 }
 
 // NewSystemStatsMonitorOrDie creates a system stats monitor.
-func NewSystemStatsMonitorOrDie(configPath string) types.Monitor {
+func NewSystemStatsMonitorOrDie(configPath string, instance string) types.Monitor {
 	ssm := systemStatsMonitor{
 		configPath: configPath,
 		tomb:       tomb.NewTomb(),
@@ -97,13 +97,13 @@ func NewSystemStatsMonitorOrDie(configPath string) types.Monitor {
 	return &ssm
 }
 
-func (ssm *systemStatsMonitor) Start() (<-chan *types.Status, error) {
+func (ssm *systemStatsMonitor) Start(instance string) (<-chan *types.Status, error) {
 	glog.Infof("Start system stats monitor %s", ssm.configPath)
-	go ssm.monitorLoop()
+	go ssm.monitorLoop(instance)
 	return nil, nil
 }
 
-func (ssm *systemStatsMonitor) monitorLoop() {
+func (ssm *systemStatsMonitor) monitorLoop(instance string) {
 	defer ssm.tomb.Done()
 
 	runTicker := time.NewTicker(ssm.config.InvokeInterval)
