@@ -23,8 +23,8 @@ import (
 // NewProblemMetricsManagerStub creates a ProblemMetricsManager stubbed by fake metrics.
 // The stubbed ProblemMetricsManager and fake metrics are returned.
 func NewProblemMetricsManagerStub() (*ProblemMetricsManager, *metrics.FakeInt64Metric, *metrics.FakeInt64Metric) {
-	fakeProblemCounter := metrics.NewFakeInt64Metric("problem_counter", metrics.Sum, []string{"reason"})
-	fakeProblemGauge := metrics.NewFakeInt64Metric("problem_gauge", metrics.LastValue, []string{"type", "reason"})
+	fakeProblemCounter := metrics.NewFakeInt64Metric("problem_counter", metrics.Sum, []string{"reason", "instance"})
+	fakeProblemGauge := metrics.NewFakeInt64Metric("problem_gauge", metrics.LastValue, []string{"type", "reason", "instance"})
 
 	pmm := ProblemMetricsManager{}
 	pmm.problemCounter = metrics.Int64MetricInterface(fakeProblemCounter)

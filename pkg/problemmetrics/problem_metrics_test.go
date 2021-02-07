@@ -24,8 +24,9 @@ import (
 	"k8s.io/node-problem-detector/pkg/util/metrics"
 )
 
+const instance = "127.0.0.1"
+
 func TestNewProblem(t *testing.T) {
-	instance := "127.0.0.1"
 	testCases := []struct {
 		name            string
 		reasons         []string
@@ -45,7 +46,7 @@ func TestNewProblem(t *testing.T) {
 			expectedMetrics: []metrics.Int64MetricRepresentation{
 				{
 					Name:   "problem_counter",
-					Labels: map[string]string{"reason": "foo"},
+					Labels: map[string]string{"reason": "foo", "instance": instance},
 					Value:  1,
 				},
 			},
@@ -57,7 +58,7 @@ func TestNewProblem(t *testing.T) {
 			expectedMetrics: []metrics.Int64MetricRepresentation{
 				{
 					Name:   "problem_counter",
-					Labels: map[string]string{"reason": "foo"},
+					Labels: map[string]string{"reason": "foo", "instance": instance},
 					Value:  2,
 				},
 			},
@@ -69,12 +70,12 @@ func TestNewProblem(t *testing.T) {
 			expectedMetrics: []metrics.Int64MetricRepresentation{
 				{
 					Name:   "problem_counter",
-					Labels: map[string]string{"reason": "foo"},
+					Labels: map[string]string{"reason": "foo", "instance": instance},
 					Value:  2,
 				},
 				{
 					Name:   "problem_counter",
-					Labels: map[string]string{"reason": "bar"},
+					Labels: map[string]string{"reason": "bar", "instance": instance},
 					Value:  1,
 				},
 			},
@@ -86,12 +87,12 @@ func TestNewProblem(t *testing.T) {
 			expectedMetrics: []metrics.Int64MetricRepresentation{
 				{
 					Name:   "problem_counter",
-					Labels: map[string]string{"reason": "foo"},
+					Labels: map[string]string{"reason": "foo", "instance": instance},
 					Value:  0,
 				},
 				{
 					Name:   "problem_counter",
-					Labels: map[string]string{"reason": "bar"},
+					Labels: map[string]string{"reason": "bar", "instance": instance},
 					Value:  0,
 				},
 			},
@@ -103,12 +104,12 @@ func TestNewProblem(t *testing.T) {
 			expectedMetrics: []metrics.Int64MetricRepresentation{
 				{
 					Name:   "problem_counter",
-					Labels: map[string]string{"reason": "foo"},
+					Labels: map[string]string{"reason": "foo", "instance": instance},
 					Value:  2,
 				},
 				{
 					Name:   "problem_counter",
-					Labels: map[string]string{"reason": "bar"},
+					Labels: map[string]string{"reason": "bar", "instance": instance},
 					Value:  1,
 				},
 			},
@@ -130,7 +131,6 @@ func TestNewProblem(t *testing.T) {
 }
 
 func TestSetProblemGauge(t *testing.T) {
-	instance := "127.0.0.1"
 	type argumentType struct {
 		problemType string
 		reason      string
@@ -155,7 +155,7 @@ func TestSetProblemGauge(t *testing.T) {
 			expectedMetrics: []metrics.Int64MetricRepresentation{
 				{
 					Name:   "problem_gauge",
-					Labels: map[string]string{"type": "ProblemTypeA", "reason": "ReasonFoo"},
+					Labels: map[string]string{"type": "ProblemTypeA", "reason": "ReasonFoo", "instance": instance},
 					Value:  1,
 				},
 			},
@@ -169,7 +169,7 @@ func TestSetProblemGauge(t *testing.T) {
 			expectedMetrics: []metrics.Int64MetricRepresentation{
 				{
 					Name:   "problem_gauge",
-					Labels: map[string]string{"type": "ProblemTypeA", "reason": "ReasonFoo"},
+					Labels: map[string]string{"type": "ProblemTypeA", "reason": "ReasonFoo", "instance": instance},
 					Value:  1,
 				},
 			},
@@ -183,12 +183,12 @@ func TestSetProblemGauge(t *testing.T) {
 			expectedMetrics: []metrics.Int64MetricRepresentation{
 				{
 					Name:   "problem_gauge",
-					Labels: map[string]string{"type": "ProblemTypeA", "reason": "ReasonFoo"},
+					Labels: map[string]string{"type": "ProblemTypeA", "reason": "ReasonFoo", "instance": instance},
 					Value:  0,
 				},
 				{
 					Name:   "problem_gauge",
-					Labels: map[string]string{"type": "ProblemTypeA", "reason": "ReasonBar"},
+					Labels: map[string]string{"type": "ProblemTypeA", "reason": "ReasonBar", "instance": instance},
 					Value:  1,
 				},
 			},
@@ -202,12 +202,12 @@ func TestSetProblemGauge(t *testing.T) {
 			expectedMetrics: []metrics.Int64MetricRepresentation{
 				{
 					Name:   "problem_gauge",
-					Labels: map[string]string{"type": "ProblemTypeA", "reason": ""},
+					Labels: map[string]string{"type": "ProblemTypeA", "reason": "", "instance": instance},
 					Value:  0,
 				},
 				{
 					Name:   "problem_gauge",
-					Labels: map[string]string{"type": "ProblemTypeA", "reason": "ReasonFoo"},
+					Labels: map[string]string{"type": "ProblemTypeA", "reason": "ReasonFoo", "instance": instance},
 					Value:  0,
 				},
 			},
@@ -222,17 +222,17 @@ func TestSetProblemGauge(t *testing.T) {
 			expectedMetrics: []metrics.Int64MetricRepresentation{
 				{
 					Name:   "problem_gauge",
-					Labels: map[string]string{"type": "ProblemTypeA", "reason": ""},
+					Labels: map[string]string{"type": "ProblemTypeA", "reason": "", "instance": instance},
 					Value:  0,
 				},
 				{
 					Name:   "problem_gauge",
-					Labels: map[string]string{"type": "ProblemTypeA", "reason": "ReasonFoo"},
+					Labels: map[string]string{"type": "ProblemTypeA", "reason": "ReasonFoo", "instance": instance},
 					Value:  0,
 				},
 				{
 					Name:   "problem_gauge",
-					Labels: map[string]string{"type": "ProblemTypeA", "reason": "ReasonBar"},
+					Labels: map[string]string{"type": "ProblemTypeA", "reason": "ReasonBar", "instance": instance},
 					Value:  1,
 				},
 			},
@@ -247,17 +247,17 @@ func TestSetProblemGauge(t *testing.T) {
 			expectedMetrics: []metrics.Int64MetricRepresentation{
 				{
 					Name:   "problem_gauge",
-					Labels: map[string]string{"type": "ProblemTypeA", "reason": ""},
+					Labels: map[string]string{"type": "ProblemTypeA", "reason": "", "instance": instance},
 					Value:  0,
 				},
 				{
 					Name:   "problem_gauge",
-					Labels: map[string]string{"type": "ProblemTypeA", "reason": "ReasonFoo"},
+					Labels: map[string]string{"type": "ProblemTypeA", "reason": "ReasonFoo", "instance": instance},
 					Value:  0,
 				},
 				{
 					Name:   "problem_gauge",
-					Labels: map[string]string{"type": "ProblemTypeB", "reason": "ReasonBar"},
+					Labels: map[string]string{"type": "ProblemTypeB", "reason": "ReasonBar", "instance": instance},
 					Value:  1,
 				},
 			},
