@@ -200,6 +200,37 @@ node-problem-detector --apiserver-override=http://APISERVER_IP:APISERVER_INSECUR
 
 For more scenarios, see [here](https://github.com/kubernetes/heapster/blob/master/docs/source-configuration.md#kubernetes)
 
+## Windows
+
+Node Problem Detector has preliminary support Windows. Most of the functionality has not been tested but filelog plugin works.
+
+Follow [Issue #461](https://github.com/kubernetes/node-problem-detector/issues/461) for development status of Windows support.
+
+### Development
+
+To develop NPD on Windows you'll need to setup your Windows machine for Go development. Install the following tools:
+
+* [Git for Windows](https://git-scm.com/)
+* [Go](https://golang.org/)
+* [Visual Studio Code](https://code.visualstudio.com/)
+* [Make](http://gnuwin32.sourceforge.net/packages/make.htm)
+* [mingw-64 WinBuilds](http://mingw-w64.org/doku.php/download/win-builds)
+  * Tested with x86-64 Windows Native mode.
+  * Add the `$InstallDir\bin` to [Windows `PATH` variable](https://answers.microsoft.com/en-us/windows/forum/windows_10-other_settings-winpc/adding-path-variable/97300613-20cb-4d85-8d0e-cc9d3549ba23).
+
+```powershell
+# Run these commands in the node-problem-detector directory.
+
+# Build
+make clean windows-binaries
+
+# Test
+make test
+
+# Run with containerd log monitoring enabled. (Assumes containerd is installed.)
+%CD%\bin\windows_amd64\node-problem-detector.exe --logtostderr --enable-k8s-exporter=false --config.system-log-monitor=%CD%\config\windows-containerd-monitor-filelog.json
+```
+
 ## Try It Out
 
 You can try node-problem-detector in a running cluster by injecting messages to the logs that node-problem-detector is watching. For example, Let's assume node-problem-detector is using [KernelMonitor](https://github.com/kubernetes/node-problem-detector/blob/master/config/kernel-monitor.json). On your workstation, run ```kubectl get events -w```. On the node, run ```sudo sh -c "echo 'kernel: BUG: unable to handle kernel NULL pointer dereference at TESTING' >> /dev/kmsg"```. Then you should see the ```KernelOops``` event.
