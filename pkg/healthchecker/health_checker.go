@@ -33,6 +33,7 @@ import (
 
 type healthChecker struct {
 	component       string
+	systemdService  string
 	enableRepair    bool
 	healthCheckFunc func() (bool, error)
 	// The repair is "best-effort" and ignores the error from the underlying actions.
@@ -42,6 +43,7 @@ type healthChecker struct {
 	crictlPath         string
 	healthCheckTimeout time.Duration
 	coolDownTime       time.Duration
+	logPatternsToCheck map[string]int
 }
 
 // NewHealthChecker returns a new health checker configured with the given options.
@@ -52,6 +54,8 @@ func NewHealthChecker(hco *options.HealthCheckerOptions) (types.HealthChecker, e
 		crictlPath:         hco.CriCtlPath,
 		healthCheckTimeout: hco.HealthCheckTimeout,
 		coolDownTime:       hco.CoolDownTime,
+		systemdService:     hco.SystemdService,
+		logPatternsToCheck: hco.LogPatterns.GetLogPatternCountMap(),
 	}
 	hc.healthCheckFunc = getHealthCheckFunc(hco)
 	hc.repairFunc = getRepairFunc(hco)
@@ -106,7 +110,14 @@ func getRepairFunc(hco *options.HealthCheckerOptions) func() {
 func getHealthCheckFunc(hco *options.HealthCheckerOptions) func() (bool, error) {
 	switch hco.Component {
 	case types.KubeletComponent:
-		return getKubeletHealthCheckFunc(hco.HealthCheckTimeout)
+		return func() (bool, error) {
+			httpClient := http.Client{Timeout: hco.HealthCheckTimeout}
+			response, err := httpClient.Get(types.KubeletHealthCheckEndpoint)
+			if err != nil || response.StatusCode != http.StatusOK {
+				return false, nil
+			}
+			return true, nil
+		}
 	case types.DockerComponent:
 		return func() (bool, error) {
 			if _, err := execCommand(hco.HealthCheckTimeout, "docker", "ps"); err != nil {
@@ -132,7 +143,11 @@ func (hc *healthChecker) CheckHealth() (bool, error) {
 	if err != nil {
 		return healthy, err
 	}
-	if healthy {
+	logPatternHealthy, err := logPatternHealthCheck(hc.systemdService, hc.logPatternsToCheck)
+	if err != nil {
+		return logPatternHealthy, err
+	}
+	if healthy && logPatternHealthy {
 		return true, nil
 	}
 	// The service is unhealthy.
@@ -165,24 +180,14 @@ func execCommand(timeout time.Duration, command string, args ...string) (string,
 	return strings.TrimSuffix(string(out), "\n"), nil
 }
 
-// kubeletHttpHealthCheck checks the health api response on kubelet.
-// Returns true for healthy, false otherwise.
-func kubeletHttpHealthCheck(healthCheckTimeout time.Duration) bool {
-	httpClient := http.Client{Timeout: healthCheckTimeout}
-	response, err := httpClient.Get(types.KubeletHealthCheckEndpoint)
-	if err != nil || response.StatusCode != http.StatusOK {
-		glog.Info("kubelet failed http health check")
-		return false
+// logPatternHealthCheck checks for the provided logPattern occurrences in the service logs.
+// Returns true if the pattern is empty or does not exist logThresholdCount times since start of service, false otherwise.
+func logPatternHealthCheck(service string, logPatternsToCheck map[string]int) (bool, error) {
+	if len(logPatternsToCheck) == 0 {
+		return true, nil
 	}
-	return true
-}
-
-// kubeletConnectionHealthCheck checks for the kubelet-apiserver connection issue
-// by checking repeated occurrences of log "use of closed network connection" in kubelet logs.
-// Returns true if the pattern does not exist 10 times since start of service or the last 10 min, false otherwise.
-func kubeletConnectionHealthCheck() (bool, error) {
-	kubeletUptimeFunc := getUptimeFunc(types.KubeletComponent)
-	uptime, err := kubeletUptimeFunc()
+	uptimeFunc := getUptimeFunc(service)
+	uptime, err := uptimeFunc()
 	if err != nil {
 		return true, err
 	}
@@ -190,11 +195,23 @@ func kubeletConnectionHealthCheck() (bool, error) {
 	if err != nil {
 		return true, err
 	}
+	for pattern, count := range logPatternsToCheck {
+		healthy, err := checkForPattern(service, logStartTime, pattern, count)
+		if err != nil || !healthy {
+			return healthy, err
+		}
+	}
+	return true, nil
+}
+
+// checkForPattern returns (true, nil) if logPattern occurs atleast logCountThreshold number of times since last
+// service restart. (false, nil) otherwise.
+func checkForPattern(service, logStartTime, logPattern string, logCountThreshold int) (bool, error) {
 	out, err := execCommand(types.CmdTimeout, "/bin/sh", "-c",
-		// Query kubelet logs since the logStartTime
-		`journalctl --unit kubelet --since "`+logStartTime+
-			// Grep the pattern for lost connection
-			`" | grep -i "`+types.KubeletClosedConnectionLogPattern+
+		// Query service logs since the logStartTime
+		`journalctl --unit "`+service+`" --since "`+logStartTime+
+			// Grep the pattern
+			`" | grep -i "`+logPattern+
 			// Get the count of occurrences
 			`" | wc -l`)
 	if err != nil {
@@ -204,26 +221,9 @@ func kubeletConnectionHealthCheck() (bool, error) {
 	if err != nil {
 		return true, err
 	}
-	if occurrences >= types.KubeletClosedConnectionLogPatternThresholdCount {
-		glog.Infof("kubelet failed apiserver connection check, log pattern occurrences: %v", occurrences)
+	if occurrences >= logCountThreshold {
+		glog.Infof("%s failed log pattern check, %s occurrences: %v", service, logPattern, occurrences)
 		return false, nil
 	}
 	return true, nil
-}
-
-// getKubeletHealthCheckFunc returns a function that checks for kubelet health and
-// return false if identified as unhealthy, true otherwise.
-func getKubeletHealthCheckFunc(healthCheckTimeout time.Duration) func() (bool, error) {
-	return func() (bool, error) {
-		httpHealthy := kubeletHttpHealthCheck(healthCheckTimeout)
-		connectionHealthy, err := kubeletConnectionHealthCheck()
-		// The plugin will return Unknown status code in case there is any error in
-		// checking kubelet health.
-		if err != nil {
-			glog.Infof("Error in determining apiserver connection health: %v", err)
-			return false, err
-		}
-		healthy := httpHealthy && connectionHealthy
-		return healthy, nil
-	}
 }
