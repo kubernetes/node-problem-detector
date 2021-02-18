@@ -40,6 +40,7 @@ type HealthCheckerOptions struct {
 	CriSocketPath      string
 	CoolDownTime       time.Duration
 	HealthCheckTimeout time.Duration
+	LogPatterns        types.LogPatternFlag
 }
 
 // AddFlags adds health checker command line options to pflag.
@@ -57,6 +58,8 @@ func (hco *HealthCheckerOptions) AddFlags(fs *pflag.FlagSet) {
 		"The duration to wait for the service to be up before attempting repair.")
 	fs.DurationVar(&hco.HealthCheckTimeout, "health-check-timeout", types.DefaultHealthCheckTimeout,
 		"The time to wait before marking the component as unhealthy.")
+	fs.Var(&hco.LogPatterns, "log-pattern",
+		"The log pattern to look for in service journald logs. The format for flag value <failureThresholdCount>:<logPattern>")
 }
 
 // IsValid validates health checker command line options.

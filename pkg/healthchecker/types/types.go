@@ -16,7 +16,12 @@ limitations under the License.
 
 package types
 
-import "time"
+import (
+	"fmt"
+	"strconv"
+	"strings"
+	"time"
+)
 
 const (
 	DefaultCoolDownTime       = 2 * time.Minute
@@ -33,11 +38,63 @@ const (
 	DockerComponent   = "docker"
 	ContainerdService = "containerd"
 
-	KubeletHealthCheckEndpoint                      = "http://127.0.0.1:10248/healthz"
-	KubeletClosedConnectionLogPattern               = "use of closed network connection"
-	KubeletClosedConnectionLogPatternThresholdCount = 10
+	KubeletHealthCheckEndpoint = "http://127.0.0.1:10248/healthz"
+
+	LogPatternFlagSeparator = ":"
 )
 
 type HealthChecker interface {
 	CheckHealth() (bool, error)
+}
+
+// LogPatternFlag defines the flag for log pattern health check.
+// It contains a map of <log pattern> to <failure threshold for the pattern>
+type LogPatternFlag struct {
+	logPatternCountMap map[string]int
+}
+
+// String implements the String function for flag.Value interface
+func (lpf *LogPatternFlag) String() string {
+	result := ""
+	for k, v := range lpf.logPatternCountMap {
+		if result != "" {
+			result += " "
+		}
+		result += fmt.Sprintf("%v:%v", k, v)
+	}
+	return result
+}
+
+// Set implements the Set function for flag.Value interface
+func (lpf *LogPatternFlag) Set(value string) error {
+	if lpf.logPatternCountMap == nil {
+		lpf.logPatternCountMap = make(map[string]int)
+	}
+	items := strings.Split(value, ",")
+	for _, item := range items {
+		val := strings.SplitN(item, LogPatternFlagSeparator, 2)
+		if len(val) != 2 {
+			return fmt.Errorf("invalid format of the flag value: %v", val)
+		}
+		countThreshold, err := strconv.Atoi(val[0])
+		if err != nil || countThreshold == 0 {
+			return fmt.Errorf("invalid format for the flag value: %v: %v", val, err)
+		}
+		pattern := val[1]
+		if pattern == "" {
+			return fmt.Errorf("invalid format for the flag value: %v: %v", val, err)
+		}
+		lpf.logPatternCountMap[pattern] = countThreshold
+	}
+	return nil
+}
+
+// Type implements the Type function for flag.Value interface
+func (lpf *LogPatternFlag) Type() string {
+	return "logPatternFlag"
+}
+
+// GetLogPatternCountMap returns the stored log count map
+func (lpf *LogPatternFlag) GetLogPatternCountMap() map[string]int {
+	return lpf.logPatternCountMap
 }
