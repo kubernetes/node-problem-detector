@@ -16,10 +16,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Add support for containerd health check.
 - Add metric for `per-cpu`, `per-stage` timing.
 
-### Changed
-
-- Print result's message when status is unknown.
-
 ### Fixed
 
 - Fix an issue that kubelet may be restarted by NPD health checker unexpectedly. Make log pattern check configurable in health checker.
