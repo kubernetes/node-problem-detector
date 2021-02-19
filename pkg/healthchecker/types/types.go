@@ -18,6 +18,7 @@ package types
 
 import (
 	"fmt"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -54,13 +55,19 @@ type LogPatternFlag struct {
 }
 
 // String implements the String function for flag.Value interface
+// Returns a space separated sorted by keys string of map values.
 func (lpf *LogPatternFlag) String() string {
 	result := ""
-	for k, v := range lpf.logPatternCountMap {
+	var keys []string
+	for k := range lpf.logPatternCountMap {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	for _, k := range keys {
 		if result != "" {
 			result += " "
 		}
-		result += fmt.Sprintf("%v:%v", k, v)
+		result += fmt.Sprintf("%v:%v", k, lpf.logPatternCountMap[k])
 	}
 	return result
 }
