@@ -35,7 +35,7 @@ import (
 
 var _ = ginkgo.Describe("NPD should export Prometheus metrics.", func() {
 	var instance gce.Instance
-	nodeName := os.Getenv("NODE_NAME")
+	nodeName := instance.Name
 
 	ginkgo.BeforeEach(func() {
 		var err error
