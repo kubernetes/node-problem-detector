@@ -132,7 +132,7 @@ var _ = ginkgo.Describe("NPD should export Prometheus metrics.", func() {
 			time.Sleep(5 * time.Second)
 			assertMetricValueInBound(instance,
 				"problem_counter", map[string]string{"reason": "Ext4Error", "instance": nodeName},
-				1.0, 2.0)
+				1.0, 3.0)
 			assertMetricValueInBound(instance,
 				"problem_gauge", map[string]string{"reason": "FilesystemIsReadOnly", "type": "ReadonlyFilesystem",
 					"instance": nodeName}, 1.0, 1.0)
