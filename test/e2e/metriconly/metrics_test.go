@@ -36,10 +36,11 @@ import (
 
 var _ = ginkgo.Describe("NPD should export Prometheus metrics.", func() {
 	var instance gce.Instance
-	nodeName, err := exec.Command("hostname").Output()
+	nodeNameBytes, err := exec.Command("hostname").Output()
 	if err != nil {
 		ginkgo.Fail("Unable to get hostname from host")
 	}
+	nodeName := string(nodeNameBytes)
 
 	ginkgo.BeforeEach(func() {
 		var err error
