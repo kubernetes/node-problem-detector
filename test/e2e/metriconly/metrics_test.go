@@ -19,7 +19,6 @@ package e2e_metric_only
 import (
 	"fmt"
 	"os"
-	"os/exec"
 	"path"
 	"strings"
 	"time"
@@ -36,11 +35,7 @@ import (
 
 var _ = ginkgo.Describe("NPD should export Prometheus metrics.", func() {
 	var instance gce.Instance
-	nodeNameBytes, err := exec.Command("hostname").Output()
-	if err != nil {
-		ginkgo.Fail("Unable to get hostname from host")
-	}
-	nodeName := string(nodeNameBytes)
+	nodeName := "npd-metrics-" + *image + "-" + uuid.NewUUID().String()[:8]
 
 	ginkgo.BeforeEach(func() {
 		var err error
@@ -57,7 +52,7 @@ var _ = ginkgo.Describe("NPD should export Prometheus metrics.", func() {
 		}
 		instance, err = gce.CreateInstance(
 			gce.Instance{
-				Name:           "npd-metrics-" + *image + "-" + uuid.NewUUID().String()[:8],
+				Name:           nodeName,
 				Zone:           *zone,
 				Project:        *project,
 				SshKey:         *sshKey,
