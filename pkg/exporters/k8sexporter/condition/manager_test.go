@@ -27,7 +27,7 @@ import (
 	"k8s.io/node-problem-detector/pkg/types"
 	problemutil "k8s.io/node-problem-detector/pkg/util"
 
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/clock"
 )
 
@@ -53,33 +53,43 @@ func newTestCondition(condition string) types.Condition {
 func TestNeedUpdates(t *testing.T) {
 	m, _, _ := newTestManager()
 	var c types.Condition
-	for desc, test := range map[string]struct {
+	for _, testCase := range []struct {
+		name      string
 		condition string
 		update    bool
 	}{
-		"Init condition needs update": {
+		{
+			name:      "Init condition needs update",
 			condition: "TestCondition",
 			update:    true,
 		},
-		"Same condition doesn't need update": {
+		{
+			name: "Same condition doesn't need update",
 			// not set condition, the test will reuse the condition in last case.
 			update: false,
 		},
-		"Same condition with different timestamp need update": {
+		{
+			name:      "Same condition with different timestamp need update",
 			condition: "TestCondition",
 			update:    true,
 		},
-		"New condition needs update": {
+		{
+			name:      "New condition needs update",
 			condition: "TestConditionNew",
 			update:    true,
 		},
 	} {
-		if test.condition != "" {
-			c = newTestCondition(test.condition)
+		tc := testCase
+		t.Log(tc.name)
+		if tc.condition != "" {
+			// Guarantee that the time advances before creating a new condition.
+			for now := time.Now(); now == time.Now(); {
+			}
+			c = newTestCondition(tc.condition)
 		}
 		m.UpdateCondition(c)
-		assert.Equal(t, test.update, m.needUpdates(), desc)
-		assert.Equal(t, c, m.conditions[c.Type], desc)
+		assert.Equal(t, tc.update, m.needUpdates(), tc.name)
+		assert.Equal(t, c, m.conditions[c.Type], tc.name)
 	}
 }
 

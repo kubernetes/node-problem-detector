@@ -29,6 +29,7 @@ import (
 
 	"github.com/golang/glog"
 	cpmtypes "k8s.io/node-problem-detector/pkg/custompluginmonitor/types"
+	"k8s.io/node-problem-detector/pkg/util"
 	"k8s.io/node-problem-detector/pkg/util/tomb"
 )
 
@@ -147,12 +148,7 @@ func (p *Plugin) run(rule cpmtypes.CustomRule) (exitStatus cpmtypes.Status, outp
 	}
 	defer cancel()
 
-	// create a process group
-	sysProcAttr := &syscall.SysProcAttr{
-		Setpgid: true,
-	}
-	cmd := exec.Command(rule.Path, rule.Args...)
-	cmd.SysProcAttr = sysProcAttr
+	cmd := util.Exec(rule.Path, rule.Args...)
 
 	stdoutPipe, err := cmd.StdoutPipe()
 	if err != nil {
@@ -172,6 +168,9 @@ func (p *Plugin) run(rule cpmtypes.CustomRule) (exitStatus cpmtypes.Status, outp
 	waitChan := make(chan struct{})
 	defer close(waitChan)
 
+	var m sync.Mutex
+	timeout := false
+
 	go func() {
 		select {
 		case <-ctx.Done():
@@ -183,7 +182,12 @@ func (p *Plugin) run(rule cpmtypes.CustomRule) (exitStatus cpmtypes.Status, outp
 				glog.Errorf("Error in cmd.Process check %q", rule.Path)
 				break
 			}
-			err := syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
+
+			m.Lock()
+			timeout = true
+			m.Unlock()
+
+			err := util.Kill(cmd)
 			if err != nil {
 				glog.Errorf("Error in kill process %d, %v", cmd.Process.Pid, err)
 			}
@@ -202,12 +206,12 @@ func (p *Plugin) run(rule cpmtypes.CustomRule) (exitStatus cpmtypes.Status, outp
 
 	wg.Add(2)
 	go func() {
+		defer wg.Done()
 		stdout, stdoutErr = readFromReader(stdoutPipe, maxCustomPluginBufferBytes)
-		wg.Done()
 	}()
 	go func() {
+		defer wg.Done()
 		stderr, stderrErr = readFromReader(stderrPipe, maxCustomPluginBufferBytes)
-		wg.Done()
 	}()
 	// This will wait for the reads to complete. If the execution times out, the pipes
 	// will be closed and the wait group unblocks.
@@ -234,7 +238,11 @@ func (p *Plugin) run(rule cpmtypes.CustomRule) (exitStatus cpmtypes.Status, outp
 	output = string(stdout)
 	output = strings.TrimSpace(output)
 
-	if cmd.ProcessState.Sys().(syscall.WaitStatus).Signaled() {
+	m.Lock()
+	cmdKilled := timeout
+	m.Unlock()
+
+	if cmdKilled {
 		output = fmt.Sprintf("Timeout when running plugin %q: state - %s. output - %q", rule.Path, cmd.ProcessState.String(), output)
 	}
 
@@ -257,6 +265,7 @@ func (p *Plugin) run(rule cpmtypes.CustomRule) (exitStatus cpmtypes.Status, outp
 	}
 }
 
+// Stop the plugin.
 func (p *Plugin) Stop() {
 	p.tomb.Stop()
 	glog.Info("Stop plugin execution")
