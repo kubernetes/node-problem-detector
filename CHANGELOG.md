@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [0.8.7] - 2020-02-18
+
+### Added
+
+- Add memory read error.
+- Add support for building NPD on MacOS.
+- Add support for containerd health check.
+- Add metric for `per-cpu`, `per-stage` timing.
+
+### Fixed
+
+- Fix an issue that kubelet may be restarted by NPD health checker unexpectedly. Make log pattern check configurable in health checker.
+- Exit the process when there is a timeout in plugin daemon
+
+
 ## [0.8.6] - 2020-01-22
 
 ### Added
