@@ -38,7 +38,12 @@ UPLOAD_PATH:=$(shell echo $(UPLOAD_PATH) | sed '$$s/\/*$$//')
 PKG:=k8s.io/node-problem-detector
 
 # PKG_SOURCES are all the go source code.
+ifeq ($(OS),Windows_NT)
+PKG_SOURCES:=
+# TODO: File change detection does not work in Windows.
+else
 PKG_SOURCES:=$(shell find pkg cmd -name '*.go')
+endif
 
 # PARALLEL specifies the number of parallel test nodes to run for e2e tests.
 PARALLEL?=3
@@ -74,6 +79,12 @@ BUILD_TAGS?=
 LINUX_BUILD_TAGS = $(BUILD_TAGS)
 WINDOWS_BUILD_TAGS = $(BUILD_TAGS)
 
+ifeq ($(OS),Windows_NT)
+HOST_PLATFORM_BUILD_TAGS = $(WINDOWS_BUILD_TAGS)
+else
+HOST_PLATFORM_BUILD_TAGS = $(LINUX_BUILD_TAGS)
+endif
+
 ifeq ($(ENABLE_JOURNALD), 1)
 	# Enable journald build tag.
 	LINUX_BUILD_TAGS := $(BUILD_TAGS) journald
@@ -91,9 +102,9 @@ else
 endif
 
 vet:
-	GO111MODULE=on go list -mod vendor -tags "$(LINUX_BUILD_TAGS)" ./... | \
+	GO111MODULE=on go list -mod vendor -tags "$(HOST_PLATFORM_BUILD_TAGS)" ./... | \
 		grep -v "./vendor/*" | \
-		GO111MODULE=on xargs go vet -mod vendor -tags "$(LINUX_BUILD_TAGS)"
+		GO111MODULE=on xargs go vet -mod vendor -tags "$(HOST_PLATFORM_BUILD_TAGS)"
 
 fmt:
 	find . -type f -name "*.go" | grep -v "./vendor/*" | xargs gofmt -s -w -l
@@ -109,7 +120,10 @@ ifeq ($(ENABLE_JOURNALD), 1)
 	LINUX_AMD64_BINARIES += bin/linux_amd64/log-counter
 endif
 
-windows-binaries: $(WINDOWS_AMD64_BINARIES) $(WINDOWS_AMD64_TEST_BINARIES)
+WINDOWS_BINARIES = $(WINDOWS_AMD64_BINARIES) $(WINDOWS_AMD64_TEST_BINARIES)
+LINUX_BINARIES = $(LINUX_AMD64_BINARIES) $(LINUX_AMD64_TEST_BINARIES)
+
+windows-binaries: $(WINDOWS_BINARIES)
 
 bin/windows_amd64/%.exe: $(PKG_SOURCES)
 ifeq ($(ENABLE_JOURNALD), 1)
@@ -191,10 +205,10 @@ endif
 		cmd/healthchecker/health_checker.go
 
 test: vet fmt
-	GO111MODULE=on go test -mod vendor -timeout=1m -v -race -short -tags "$(LINUX_BUILD_TAGS)" ./...
+	GO111MODULE=on go test -mod vendor -timeout=1m -v -race -short -tags "$(HOST_PLATFORM_BUILD_TAGS)" ./...
 
 e2e-test: vet fmt build-tar
-	GO111MODULE=on ginkgo -nodes=$(PARALLEL) -mod vendor -timeout=10m -v -tags "$(LINUX_BUILD_TAGS)" -stream \
+	GO111MODULE=on ginkgo -nodes=$(PARALLEL) -mod vendor -timeout=10m -v -tags "$(HOST_PLATFORM_BUILD_TAGS)" -stream \
 	./test/e2e/metriconly/... -- \
 	-project=$(PROJECT) -zone=$(ZONE) \
 	-image=$(VM_IMAGE) -image-family=$(IMAGE_FAMILY) -image-project=$(IMAGE_PROJECT) \
@@ -203,7 +217,7 @@ e2e-test: vet fmt build-tar
 	-boskos-project-type=$(BOSKOS_PROJECT_TYPE) -job-name=$(JOB_NAME) \
 	-artifacts-dir=$(ARTIFACTS)
 
-build-binaries: ./bin/node-problem-detector ./bin/log-counter ./bin/health-checker
+build-binaries: ./bin/node-problem-detector ./bin/log-counter ./bin/health-checker $(WINDOWS_BINARIES) $(LINUX_BINARIES)
 
 build-container: build-binaries Dockerfile
 	docker build -t $(IMAGE) --build-arg BASEIMAGE=$(BASEIMAGE) --build-arg LOGCOUNTER=$(LOGCOUNTER) .

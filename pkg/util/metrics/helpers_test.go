@@ -63,7 +63,7 @@ func TestPrometheusMetricsParsingAndMatching(t *testing.T) {
 					Name:   "host_uptime",
 					Labels: map[string]string{"kernel_version": "mismatched-version"},
 				},
-				// Non-exsistant metric.
+				// Non-existant metric.
 				{
 					Name:   "host_downtime",
 					Labels: map[string]string{},
@@ -109,7 +109,7 @@ func TestPrometheusMetricsParsingAndMatching(t *testing.T) {
 					Name:   "host_uptime",
 					Labels: map[string]string{"kernel_version": "mismatched-version"},
 				},
-				// Non-exsistant metric.
+				// Non-existant metric.
 				{
 					Name:   "host_downtime",
 					Labels: map[string]string{},

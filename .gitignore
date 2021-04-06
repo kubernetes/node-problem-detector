@@ -4,3 +4,4 @@
 ci.env
 pr.env
 junit*.xml
+debug.test

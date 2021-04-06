@@ -26,7 +26,7 @@ import (
 
 // ProblemDetector collects statuses from all problem daemons and update the node condition and send node event.
 type ProblemDetector interface {
-	Run(instance string) error
+	Run(termCh <-chan error, instance string) error
 }
 
 type problemDetector struct {
@@ -44,7 +44,7 @@ func NewProblemDetector(monitors []types.Monitor, exporters []types.Exporter) Pr
 }
 
 // Run starts the problem detector.
-func (p *problemDetector) Run(instance string) error {
+func (p *problemDetector) Run(termCh <-chan error, instance string) error {
 	// Start the log monitors one by one.
 	var chans []<-chan *types.Status
 	failureCount := 0
@@ -53,21 +53,32 @@ func (p *problemDetector) Run(instance string) error {
 		if err != nil {
 			// Do not return error and keep on trying the following config files.
 			glog.Errorf("Failed to start problem daemon %v: %v", m, err)
-			failureCount += 1
+			failureCount++
 			continue
 		}
 		if ch != nil {
 			chans = append(chans, ch)
 		}
 	}
-	if len(p.monitors) == failureCount {
+	allMonitors := p.monitors
+
+	if len(allMonitors) == failureCount {
 		return fmt.Errorf("no problem daemon is successfully setup")
 	}
+
+	defer func() {
+		for _, m := range allMonitors {
+			m.Stop()
+		}
+	}()
+
 	ch := groupChannel(chans)
 	glog.Info("Problem detector started")
 
 	for {
 		select {
+		case <-termCh:
+			return nil
 		case status := <-ch:
 			for _, exporter := range p.exporters {
 				exporter.ExportProblems(status)
