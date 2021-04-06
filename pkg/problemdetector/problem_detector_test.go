@@ -17,14 +17,18 @@ limitations under the License.
 package problemdetector
 
 import (
+	"github.com/spf13/pflag"
+	"k8s.io/node-problem-detector/cmd/options"
 	"testing"
 
 	"k8s.io/node-problem-detector/pkg/types"
 )
 
 func TestEmpty(t *testing.T) {
+	npdo := options.NewNodeProblemDetectorOptions()
+	npdo.AddFlags(pflag.CommandLine)
 	pd := NewProblemDetector([]types.Monitor{}, []types.Exporter{})
-	if err := pd.Run(nil); err == nil {
+	if err := pd.Run(nil, npdo.NodeName); err == nil {
 		t.Error("expected error when running an empty problem detector")
 	}
 }
