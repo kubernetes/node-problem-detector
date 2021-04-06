@@ -17,10 +17,7 @@ limitations under the License.
 package main
 
 import (
-	"os"
-
 	"github.com/golang/glog"
-	"github.com/spf13/pflag"
 
 	_ "k8s.io/node-problem-detector/cmd/nodeproblemdetector/exporterplugins"
 	_ "k8s.io/node-problem-detector/cmd/nodeproblemdetector/problemdaemonplugins"
@@ -34,15 +31,19 @@ import (
 	"k8s.io/node-problem-detector/pkg/version"
 )
 
-func main() {
-	npdo := options.NewNodeProblemDetectorOptions()
-	npdo.AddFlags(pflag.CommandLine)
+func npdInteractive(npdo *options.NodeProblemDetectorOptions) {
+	termCh := make(chan error, 1)
+	defer close(termCh)
 
-	pflag.Parse()
+	if err := npdMain(npdo, termCh); err != nil {
+		glog.Fatalf("Problem detector failed with error: %v", err)
+	}
+}
 
+func npdMain(npdo *options.NodeProblemDetectorOptions, termCh <-chan error) error {
 	if npdo.PrintVersion {
 		version.PrintVersion()
-		os.Exit(0)
+		return nil
 	}
 
 	npdo.SetNodeNameOrDie()
@@ -78,7 +79,5 @@ func main() {
 
 	// Initialize NPD core.
 	p := problemdetector.NewProblemDetector(problemDaemons, npdExporters)
-	if err := p.Run(); err != nil {
-		glog.Fatalf("Problem detector failed with error: %v", err)
-	}
+	return p.Run(termCh)
 }

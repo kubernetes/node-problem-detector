@@ -229,6 +229,11 @@ make test
 
 # Run with containerd log monitoring enabled. (Assumes containerd is installed.)
 %CD%\bin\windows_amd64\node-problem-detector.exe --logtostderr --enable-k8s-exporter=false --config.system-log-monitor=%CD%\config\windows-containerd-monitor-filelog.json
+
+# Configure NPD to run as a Windows Service
+sc.exe create NodeProblemDetector binpath= "%CD%\node-problem-detector.exe [FLAGS]" start= demand 
+sc.exe failure NodeProblemDetector reset= 0 actions= restart/10000
+sc.exe start NodeProblemDetector
 ```
 
 ## Try It Out
