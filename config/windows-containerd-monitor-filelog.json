@@ -2,10 +2,10 @@
 	"plugin": "filelog",
 	"pluginConfig": {
 		"timestamp": "^time=\"(\\S*)\"",
-		"message": "msg=\"([^\n]*)\"",
-		"timestampFormat": "2006-01-02T15:04:05.999999999-07:00"
+		"message": "msg=\"?([^\n]*)\"?",
+		"timestampFormat": "2006-01-02T15:04:05.999999999Z"
 	},
-	"logPath": "C:\\Program Files\\containerd\\containerd.log",
+	"logPath": "C:\\etc\\kubernetes\\logs\\containerd.log",
 	"lookback": "5m",
 	"bufferSize": 10,
 	"source": "containerd",
