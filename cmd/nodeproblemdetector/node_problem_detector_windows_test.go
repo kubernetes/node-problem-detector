@@ -1,3 +1,5 @@
+// +build !disable_system_log_monitor
+
 /*
 Copyright 2021 The Kubernetes Authors All rights reserved.
 

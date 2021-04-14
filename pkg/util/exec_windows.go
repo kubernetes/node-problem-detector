@@ -42,13 +42,20 @@ func Exec(name string, arg ...string) *exec.Cmd {
 		name = "cmd.exe"
 	// Powershell Scripts
 	case ".ps1":
-		cmdArgs = append([]string{"-NoLogo", "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "RemoteSigned", name}, cmdArgs...)
-		name = "powershell.exe"
+		cmdArgs = append([]string{name}, cmdArgs...)
+		return Powershell(cmdArgs...)
 	default:
 		// Run directly.
 	}
 
 	return exec.Command(name, cmdArgs...)
+}
+
+// Powershell creates a new powershell process with the specified arguments
+func Powershell(args ...string) *exec.Cmd {
+	defaultFlags := []string{"-NoLogo", "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "RemoteSigned"}
+	args = append(defaultFlags, args...)
+	return exec.Command("powershell.exe", args...)
 }
 
 // ExitStatus returns the exit code of the application.

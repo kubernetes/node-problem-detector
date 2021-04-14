@@ -56,9 +56,9 @@ func TestIsValid(t *testing.T) {
 		{
 			name: "empty systemd-service and repair enabled",
 			hco: HealthCheckerOptions{
-				Component:      types.KubeletComponent,
-				EnableRepair:   true,
-				SystemdService: "",
+				Component:    types.KubeletComponent,
+				EnableRepair: true,
+				Service:      "",
 			},
 			expectError: true,
 		},
