@@ -1,7 +1,8 @@
 /bin/
 /test/bin/
-/*.tar.gz
+/*.tar.gz*
 ci.env
 pr.env
 junit*.xml
 debug.test
+/output/

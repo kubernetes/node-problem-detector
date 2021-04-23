@@ -14,11 +14,15 @@
 
 # Build the node-problem-detector image.
 
-.PHONY: all build-container build-tar build push-container push-tar push \
-        clean vet fmt version \
-        Dockerfile build-binaries docker-builder build-in-docker
+.PHONY: all \
+        vet fmt version test e2e-test \
+        build-binaries build-container build-tar build \
+        docker-builder build-in-docker push-container push-tar push clean
 
 all: build
+
+# PLATFORMS is the set of OS_ARCH that NPD can build against.
+PLATFORMS=linux_amd64 windows_amd64
 
 # VERSION is the version of the binary.
 VERSION?=$(shell if [ -d .git ]; then echo `git describe --tags --dirty`; else echo "UNKNOWN"; fi)
@@ -48,8 +52,9 @@ endif
 # PARALLEL specifies the number of parallel test nodes to run for e2e tests.
 PARALLEL?=3
 
+NPD_NAME_VERSION?=node-problem-detector-$(VERSION)
 # TARBALL is the name of release tar. Include binary version by default.
-TARBALL?=node-problem-detector-$(VERSION).tar.gz
+TARBALL=$(NPD_NAME_VERSION).tar.gz
 
 # IMAGE is the image name of the node problem detector container image.
 IMAGE:=$(REGISTRY)/node-problem-detector:$(TAG)
@@ -87,7 +92,7 @@ endif
 
 ifeq ($(ENABLE_JOURNALD), 1)
 	# Enable journald build tag.
-	LINUX_BUILD_TAGS := $(BUILD_TAGS) journald
+	LINUX_BUILD_TAGS := journald $(BUILD_TAGS)
 	# Enable cgo because sdjournal needs cgo to compile. The binary will be
 	# dynamically linked if CGO_ENABLED is enabled. This is fine because fedora
 	# already has necessary dynamic library. We can not use `-extldflags "-static"`
@@ -112,23 +117,16 @@ fmt:
 version:
 	@echo $(VERSION)
 
-WINDOWS_AMD64_BINARIES = bin/windows_amd64/node-problem-detector.exe bin/windows_amd64/health-checker.exe
-WINDOWS_AMD64_TEST_BINARIES = test/bin/windows_amd64/problem-maker.exe
-LINUX_AMD64_BINARIES = bin/linux_amd64/node-problem-detector bin/linux_amd64/health-checker
-LINUX_AMD64_TEST_BINARIES = test/bin/linux_amd64/problem-maker
+BINARIES = bin/node-problem-detector bin/health-checker test/bin/problem-maker
+BINARIES_LINUX_ONLY =
 ifeq ($(ENABLE_JOURNALD), 1)
-	LINUX_AMD64_BINARIES += bin/linux_amd64/log-counter
+	BINARIES_LINUX_ONLY += bin/log-counter
 endif
 
-WINDOWS_BINARIES = $(WINDOWS_AMD64_BINARIES) $(WINDOWS_AMD64_TEST_BINARIES)
-LINUX_BINARIES = $(LINUX_AMD64_BINARIES) $(LINUX_AMD64_TEST_BINARIES)
+ALL_BINARIES = $(foreach binary, $(BINARIES) $(BINARIES_LINUX_ONLY), ./$(binary)) $(foreach binary, $(BINARIES) $(BINARIES_LINUX_ONLY), output/linux_amd64/$(binary)) $(foreach binary, $(BINARIES), output/windows_amd64/$(binary).exe)
+ALL_TARBALLS = $(foreach platform, $(PLATFORMS), $(NPD_NAME_VERSION)-$(platform).tar.gz)
 
-windows-binaries: $(WINDOWS_BINARIES)
-
-bin/windows_amd64/%.exe: $(PKG_SOURCES)
-ifeq ($(ENABLE_JOURNALD), 1)
-	echo "Journald on Windows is not supported, use make ENABLE_JOURNALD=0 [TARGET]"
-endif
+output/windows_amd64/bin/%.exe: $(PKG_SOURCES)
 	GOOS=windows GOARCH=amd64 CGO_ENABLED=$(CGO_ENABLED) GO111MODULE=on go build \
 		-mod vendor \
 		-o $@ \
@@ -137,17 +135,14 @@ endif
 		./cmd/$(subst -,,$*)
 	touch $@
 
-./test/bin/windows_amd64/%.exe: $(PKG_SOURCES)
-ifeq ($(ENABLE_JOURNALD), 1)
-	echo "Journald on Windows is not supported, use make ENABLE_JOURNALD=0 [TARGET]"
-endif
+output/windows_amd64/test/bin/%.exe: $(PKG_SOURCES)
 	GOOS=windows GOARCH=amd64 CGO_ENABLED=$(CGO_ENABLED) GO111MODULE=on go build \
 		-mod vendor \
 		-o $@ \
 		-tags "$(WINDOWS_BUILD_TAGS)" \
 		./test/e2e/$(subst -,,$*)
 
-bin/linux_amd64/%: $(PKG_SOURCES)
+output/linux_amd64/bin/%: $(PKG_SOURCES)
 	GOOS=linux GOARCH=amd64 CGO_ENABLED=$(CGO_ENABLED) GO111MODULE=on go build \
 		-mod vendor \
 		-o $@ \
@@ -156,17 +151,12 @@ bin/linux_amd64/%: $(PKG_SOURCES)
 		./cmd/$(subst -,,$*)
 	touch $@
 
-./test/bin/linux_amd64/%: $(PKG_SOURCES)
+output/linux_amd64/test/bin/%: $(PKG_SOURCES)
 	GOOS=linux GOARCH=amd64 CGO_ENABLED=$(CGO_ENABLED) GO111MODULE=on go build \
 		-mod vendor \
 		-o $@ \
 		-tags "$(LINUX_BUILD_TAGS)" \
 		./test/e2e/$(subst -,,$*)
-
-ifneq ($(ENABLE_JOURNALD), 1)
-bin/linux_amd64/log-counter:
-	echo "Warning: log-counter requires journald, skipping."
-endif
 
 # In the future these targets should be deprecated.
 ./bin/log-counter: $(PKG_SOURCES)
@@ -217,15 +207,24 @@ e2e-test: vet fmt build-tar
 	-boskos-project-type=$(BOSKOS_PROJECT_TYPE) -job-name=$(JOB_NAME) \
 	-artifacts-dir=$(ARTIFACTS)
 
-build-binaries: ./bin/node-problem-detector ./bin/log-counter ./bin/health-checker $(WINDOWS_BINARIES) $(LINUX_BINARIES)
+$(NPD_NAME_VERSION)-%.tar.gz: $(ALL_BINARIES) test/e2e-install.sh
+	mkdir -p output/$*/ output/$*/test/
+	cp -r config/ output/$*/
+	cp test/e2e-install.sh output/$*/test/e2e-install.sh
+	(cd output/$*/ && tar -zcvf ../../$@ *)
+	sha512sum $@ > $@.sha512
+
+build-binaries: $(ALL_BINARIES)
 
 build-container: build-binaries Dockerfile
 	docker build -t $(IMAGE) --build-arg BASEIMAGE=$(BASEIMAGE) --build-arg LOGCOUNTER=$(LOGCOUNTER) .
 
-build-tar: ./bin/node-problem-detector ./bin/log-counter ./bin/health-checker ./test/bin/problem-maker
+$(TARBALL): ./bin/node-problem-detector ./bin/log-counter ./bin/health-checker ./test/bin/problem-maker
 	tar -zcvf $(TARBALL) bin/ config/ test/e2e-install.sh test/bin/problem-maker
 	sha1sum $(TARBALL)
 	md5sum $(TARBALL)
+
+build-tar: $(TARBALL) $(ALL_TARBALLS)
 
 build: build-container build-tar
 
@@ -243,13 +242,12 @@ push-container: build-container
 
 push-tar: build-tar
 	gsutil cp $(TARBALL) $(UPLOAD_PATH)/node-problem-detector/
+	gsutil cp node-problem-detector-$(VERSION)-*.tar.gz* $(UPLOAD_PATH)/node-problem-detector/
 
 push: push-container push-tar
 
 clean:
-	rm -f bin/health-checker
-	rm -f bin/log-counter
-	rm -f bin/node-problem-detector
-	rm -f $(WINDOWS_AMD64_BINARIES) $(LINUX_AMD64_BINARIES)
-	rm -f test/bin/problem-maker
-	rm -f node-problem-detector-*.tar.gz
+	rm -rf bin/
+	rm -rf test/bin/
+	rm -f node-problem-detector-*.tar.gz*
+	rm -rf output/
