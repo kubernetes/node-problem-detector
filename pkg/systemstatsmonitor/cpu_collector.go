@@ -17,12 +17,8 @@ limitations under the License.
 package systemstatsmonitor
 
 import (
-	"fmt"
-
 	"github.com/golang/glog"
-	"github.com/prometheus/procfs"
 	"github.com/shirou/gopsutil/cpu"
-	"github.com/shirou/gopsutil/load"
 
 	ssmtypes "k8s.io/node-problem-detector/pkg/systemstatsmonitor/types"
 	"k8s.io/node-problem-detector/pkg/util/metrics"
@@ -174,24 +170,6 @@ func NewCPUCollectorOrDie(cpuConfig *ssmtypes.CPUStatsConfig) *cpuCollector {
 	return &cc
 }
 
-func (cc *cpuCollector) recordLoad() {
-	if cc.mRunnableTaskCount == nil {
-		return
-	}
-
-	loadAvg, err := load.Avg()
-	if err != nil {
-		glog.Errorf("Failed to retrieve average CPU load: %v", err)
-		return
-	}
-
-	cc.mRunnableTaskCount.Record(map[string]string{}, loadAvg.Load1)
-
-	cc.mCpuLoad1m.Record(map[string]string{}, loadAvg.Load1)
-	cc.mCpuLoad5m.Record(map[string]string{}, loadAvg.Load5)
-	cc.mCpuLoad15m.Record(map[string]string{}, loadAvg.Load15)
-}
-
 func (cc *cpuCollector) recordUsage() {
 	if cc.mUsageTime == nil {
 		return
@@ -234,46 +212,6 @@ func (cc *cpuCollector) recordUsage() {
 
 	cc.mUsageTime.Record(map[string]string{stateLabel: "guest_nice"}, clockTick*timersStat.GuestNice-cc.lastUsageTime["guest_nice"])
 	cc.lastUsageTime["guest_nice"] = clockTick * timersStat.GuestNice
-}
-
-func (cc *cpuCollector) recordSystemStats() {
-	fs, err := procfs.NewFS("/proc")
-	stats, err := fs.Stat()
-	if err != nil {
-		glog.Errorf("Failed to retrieve cpu/process stats: %v", err)
-		return
-	}
-
-	cc.mSystemProcessesTotal.Record(map[string]string{}, int64(stats.ProcessCreated))
-	cc.mSystemProcsRunning.Record(map[string]string{}, int64(stats.ProcessesRunning))
-	cc.mSystemProcsBlocked.Record(map[string]string{}, int64(stats.ProcessesBlocked))
-	cc.mSystemInterruptsTotal.Record(map[string]string{}, int64(stats.IRQTotal))
-
-	for i, c := range stats.CPU {
-		tags := map[string]string{}
-		tags[cpuLabel] = fmt.Sprintf("cpu%d", i)
-
-		tags[stageLabel] = "user"
-		cc.mSystemCPUStat.Record(tags, c.User)
-		tags[stageLabel] = "nice"
-		cc.mSystemCPUStat.Record(tags, c.Nice)
-		tags[stageLabel] = "system"
-		cc.mSystemCPUStat.Record(tags, c.System)
-		tags[stageLabel] = "idle"
-		cc.mSystemCPUStat.Record(tags, c.Idle)
-		tags[stageLabel] = "iowait"
-		cc.mSystemCPUStat.Record(tags, c.Iowait)
-		tags[stageLabel] = "iRQ"
-		cc.mSystemCPUStat.Record(tags, c.IRQ)
-		tags[stageLabel] = "softIRQ"
-		cc.mSystemCPUStat.Record(tags, c.SoftIRQ)
-		tags[stageLabel] = "steal"
-		cc.mSystemCPUStat.Record(tags, c.Steal)
-		tags[stageLabel] = "guest"
-		cc.mSystemCPUStat.Record(tags, c.Guest)
-		tags[stageLabel] = "guestNice"
-		cc.mSystemCPUStat.Record(tags, c.GuestNice)
-	}
 }
 
 func (cc *cpuCollector) collect() {

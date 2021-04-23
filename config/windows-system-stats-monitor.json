@@ -1,0 +1,94 @@
+{
+  "cpu": {
+    "metricsConfigs": {
+      "cpu/load_15m": {
+        "displayName": "cpu/load_15m"
+      },
+      "cpu/load_1m": {
+        "displayName": "cpu/load_1m"
+      },
+      "cpu/load_5m": {
+        "displayName": "cpu/load_5m"
+      },
+      "cpu/runnable_task_count": {
+        "displayName": "cpu/runnable_task_count"
+      },
+      "cpu/usage_time": {
+        "displayName": "cpu/usage_time"
+      },
+      "system/cpu_stat": {
+        "displayName": "system/cpu_stat"
+      },
+      "system/interrupts_total": {
+        "displayName": "system/interrupts_total"
+      },
+      "system/processes_total": {
+        "displayName": "system/processes_total"
+      },
+      "system/procs_blocked": {
+        "displayName": "system/procs_blocked"
+      },
+      "system/procs_running": {
+        "displayName": "system/procs_running"
+      }
+    }
+  },
+  "disk": {
+    "includeAllAttachedBlk": false,
+    "includeRootBlk": false,
+    "lsblkTimeout": "60s",
+    "metricsConfigs": {
+      "disk/avg_queue_len": {
+        "displayName": "disk/avg_queue_len"
+      },
+      "disk/bytes_used": {
+        "displayName": "disk/bytes_used"
+      },
+      "disk/io_time": {
+        "displayName": "disk/io_time"
+      },
+      "disk/merged_operation_count": {
+        "displayName": "disk/merged_operation_count"
+      },
+      "disk/operation_bytes_count": {
+        "displayName": "disk/operation_bytes_count"
+      },
+      "disk/operation_count": {
+        "displayName": "disk/operation_count"
+      },
+      "disk/operation_time": {
+        "displayName": "disk/operation_time"
+      },
+      "disk/weighted_io": {
+        "displayName": "disk/weighted_io"
+      }
+    }
+  },
+  "host": {
+    "metricsConfigs": {
+      "host/uptime": {
+        "displayName": "host/uptime"
+      }
+    }
+  },
+  "invokeInterval": "60s",
+  "memory": {
+    "metricsConfigs": {
+      "memory/anonymous_used": {
+        "displayName": "memory/anonymous_used"
+      },
+      "memory/bytes_used": {
+        "displayName": "memory/bytes_used"
+      },
+      "memory/dirty_used": {
+        "displayName": "memory/dirty_used"
+      },
+      "memory/page_cache_used": {
+        "displayName": "memory/page_cache_used"
+      },
+      "memory/unevictable_used": {
+        "displayName": "memory/unevictable_used"
+      }
+    }
+  }
+}

@@ -28,8 +28,8 @@ func TestExec(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		cmds = [][]string{
 			{"powershell.exe"},
-			{"cmd.exe", "/C", "echo", "Hello"},
-			{"cmd.exe", "/K", "echo", "Wait", "forever"},
+			{"cmd.exe", "/C", "set", "/p", "$="},
+			{"cmd.exe", "/K", "set", "/p", "$="},
 			{"testdata/hello-world.cmd"},
 			{"testdata/hello-world.bat"},
 			{"testdata/hello-world.ps1"},
