@@ -28,11 +28,7 @@ const (
 	DefaultCoolDownTime       = 2 * time.Minute
 	DefaultHealthCheckTimeout = 10 * time.Second
 	CmdTimeout                = 10 * time.Second
-	UptimeTimeLayout          = "Mon 2006-01-02 15:04:05 UTC"
 	LogParsingTimeLayout      = "2006-01-02 15:04:05"
-
-	DefaultCriCtl        = "/usr/bin/crictl"
-	DefaultCriSocketPath = "unix:///var/run/containerd/containerd.sock"
 
 	KubeletComponent  = "kubelet"
 	CRIComponent      = "cri"

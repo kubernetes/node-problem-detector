@@ -55,7 +55,7 @@ func main() {
 		os.Exit(int(types.Unknown))
 	}
 	if !healthy {
-		fmt.Printf("%v:%v was found unhealthy; repair flag : %v\n", hco.Component, hco.SystemdService, hco.EnableRepair)
+		fmt.Printf("%v:%v was found unhealthy; repair flag : %v\n", hco.Component, hco.Service, hco.EnableRepair)
 		os.Exit(int(types.NonOK))
 	}
 	os.Exit(int(types.OK))
