@@ -13,13 +13,13 @@
 	"rules": [
 		{
 			"type": "temporary",
-			"reason": "MissingPigz",
-			"pattern": "unpigz not found.*"
+			"reason": "ContainerCreationFailed",
+			"pattern": ".*failed to create containerd container.*error unpacking image.*wrong diff id calculated on extraction.*"
 		},
 		{
 			"type": "temporary",
-			"reason": "IncompatibleContainer",
-			"pattern": ".*CreateComputeSystem.*"
+			"reason": "CorruptContainerImageLayer",
+			"pattern": ".*failed to pull and unpack image.*failed to extract layer.*archive/tar: invalid tar header.*"
 		}
 	]
 }
