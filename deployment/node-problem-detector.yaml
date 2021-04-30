@@ -79,3 +79,8 @@ spec:
             path: kernel-monitor.json
           - key: docker-monitor.json
             path: docker-monitor.json
+      tolerations:
+        - effect: NoSchedule
+          operator: Exists
+        - effect: NoExecute
+          operator: Exists
