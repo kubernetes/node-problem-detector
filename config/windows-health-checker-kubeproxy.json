@@ -1,0 +1,34 @@
+{
+    "plugin": "custom",
+    "pluginConfig": {
+      "invoke_interval": "10s",
+      "timeout": "3m",
+      "max_output_length": 80,
+      "concurrency": 1
+    },
+    "source": "health-checker",
+    "metricsReporting": true,
+    "conditions": [
+      {
+        "type": "KubeProxyUnhealthy",
+        "reason": "KubeProxyIsHealthy",
+        "message": "kube-proxy on the node is functioning properly"
+      }
+    ],
+    "rules": [
+      {
+        "type": "permanent",
+        "condition": "KubeProxyUnhealthy",
+        "reason": "KubeProxyUnhealthy",
+        "path": "C:\\etc\\kubernetes\\node\\bin\\health-checker.exe",
+        "args": [
+          "--component=kube-proxy",
+          "--enable-repair=true",
+          "--cooldown-time=1m",
+          "--health-check-timeout=10s"
+        ],
+        "timeout": "3m"
+      }
+    ]
+  }
+  

@@ -68,14 +68,9 @@ func getRepairFunc(hco *options.HealthCheckerOptions) func() {
 func getHealthCheckFunc(hco *options.HealthCheckerOptions) func() (bool, error) {
 	switch hco.Component {
 	case types.KubeletComponent:
-		return func() (bool, error) {
-			httpClient := http.Client{Timeout: hco.HealthCheckTimeout}
-			response, err := httpClient.Get(types.KubeletHealthCheckEndpoint)
-			if err != nil || response.StatusCode != http.StatusOK {
-				return false, nil
-			}
-			return true, nil
-		}
+		return healthCheckEndpointOKFunc(types.KubeletHealthCheckEndpoint, hco.HealthCheckTimeout)
+	case types.KubeProxyComponent:
+		return healthCheckEndpointOKFunc(types.KubeProxyHealthCheckEndpoint, hco.HealthCheckTimeout)
 	case types.DockerComponent:
 		return func() (bool, error) {
 			if _, err := execCommand("docker.exe", "ps"); err != nil {
@@ -92,6 +87,18 @@ func getHealthCheckFunc(hco *options.HealthCheckerOptions) func() (bool, error) 
 		}
 	}
 	return nil
+}
+
+// healthCheckEndpointOKFunc returns a function to check the status of an http endpoint
+func healthCheckEndpointOKFunc(endpoint string, timeout time.Duration) func() (bool, error) {
+	return func() (bool, error) {
+		httpClient := http.Client{Timeout: timeout}
+		response, err := httpClient.Get(endpoint)
+		if err != nil || response.StatusCode != http.StatusOK {
+			return false, nil
+		}
+		return true, nil
+	}
 }
 
 // execCommand creates a new process, executes the command, and returns the (output, error) from command.
