@@ -30,12 +30,14 @@ const (
 	CmdTimeout                = 10 * time.Second
 	LogParsingTimeLayout      = "2006-01-02 15:04:05"
 
-	KubeletComponent  = "kubelet"
-	CRIComponent      = "cri"
-	DockerComponent   = "docker"
-	ContainerdService = "containerd"
+	KubeletComponent   = "kubelet"
+	CRIComponent       = "cri"
+	DockerComponent    = "docker"
+	ContainerdService  = "containerd"
+	KubeProxyComponent = "kube-proxy"
 
-	KubeletHealthCheckEndpoint = "http://127.0.0.1:10248/healthz"
+	KubeletHealthCheckEndpoint   = "http://127.0.0.1:10248/healthz"
+	KubeProxyHealthCheckEndpoint = "http://127.0.0.1:10256/healthz"
 
 	LogPatternFlagSeparator = ":"
 )

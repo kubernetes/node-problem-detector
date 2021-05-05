@@ -47,7 +47,7 @@ type HealthCheckerOptions struct {
 // AddFlags adds health checker command line options to pflag.
 func (hco *HealthCheckerOptions) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&hco.Component, "component", types.KubeletComponent,
-		"The component to check health for. Supports kubelet, docker and cri")
+		"The component to check health for. Supports kubelet, docker, kube-proxy, and cri")
 	// Deprecated: For backward compatibility on linux environment. Going forward "service" will be used instead of systemd-service
 	if runtime.GOOS == "linux" {
 		fs.MarkDeprecated("systemd-service", "please use --service flag instead")
@@ -73,8 +73,9 @@ func (hco *HealthCheckerOptions) AddFlags(fs *pflag.FlagSet) {
 // Returns error if invalid, nil otherwise.
 func (hco *HealthCheckerOptions) IsValid() error {
 	// Make sure the component specified is valid.
-	if hco.Component != types.KubeletComponent && hco.Component != types.DockerComponent && hco.Component != types.CRIComponent {
-		return fmt.Errorf("the component specified is not supported. Supported components are : <kubelet/docker/cri>")
+	if hco.Component != types.KubeletComponent && hco.Component != types.DockerComponent &&
+		hco.Component != types.CRIComponent && hco.Component != types.KubeProxyComponent {
+		return fmt.Errorf("the component specified is not supported. Supported components are : <kubelet/docker/cri/kube-proxy>")
 	}
 	// Make sure the service is specified if repair is enabled.
 	if hco.EnableRepair && hco.Service == "" {
