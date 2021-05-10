@@ -137,75 +137,11 @@ func TestGetStartTime(t *testing.T) {
 }
 
 func TestGetOSVersion(t *testing.T) {
-	testCases := []struct {
-		name              string
-		fakeOSReleasePath string
-		expectedOSVersion string
-		expectErr         bool
-	}{
-		{
-			name:              "COS",
-			fakeOSReleasePath: "testdata/os-release-cos",
-			expectedOSVersion: "cos 77-12293.0.0",
-			expectErr:         false,
-		},
-		{
-			name:              "Debian",
-			fakeOSReleasePath: "testdata/os-release-debian",
-			expectedOSVersion: "debian 9 (stretch)",
-			expectErr:         false,
-		},
-		{
-			name:              "Ubuntu",
-			fakeOSReleasePath: "testdata/os-release-ubuntu",
-			expectedOSVersion: "ubuntu 16.04.6 LTS (Xenial Xerus)",
-			expectErr:         false,
-		},
-		{
-			name:              "centos",
-			fakeOSReleasePath: "testdata/os-release-centos",
-			expectedOSVersion: "centos 7 (Core)",
-			expectErr:         false,
-		},
-		{
-			name:              "rhel",
-			fakeOSReleasePath: "testdata/os-release-rhel",
-			expectedOSVersion: "rhel 7.7 (Maipo)",
-			expectErr:         false,
-		},
-		{
-			name:              "Unknown",
-			fakeOSReleasePath: "testdata/os-release-unknown",
-			expectedOSVersion: "",
-			expectErr:         true,
-		},
-		{
-			name:              "Empty",
-			fakeOSReleasePath: "testdata/os-release-empty",
-			expectedOSVersion: "",
-			expectErr:         true,
-		},
+	ver, err := GetOSVersion()
+	if err != nil {
+		t.Errorf("cannot get os version, %s", err)
 	}
-
-	for _, test := range testCases {
-		t.Run(test.name, func(t *testing.T) {
-			originalOSReleasePath := osReleasePath
-			defer func() {
-				osReleasePath = originalOSReleasePath
-			}()
-
-			osReleasePath = test.fakeOSReleasePath
-			osVersion, err := GetOSVersion()
-
-			if test.expectErr && err == nil {
-				t.Errorf("Expect to get error, but got no returned error.")
-			}
-			if !test.expectErr && err != nil {
-				t.Errorf("Expect to get no error, but got returned error: %v", err)
-			}
-			if !test.expectErr && osVersion != test.expectedOSVersion {
-				t.Errorf("Wanted: %+v. \nGot: %+v", test.expectedOSVersion, osVersion)
-			}
-		})
+	if ver == "" {
+		t.Errorf("GetOSVersion() should not be empty string")
 	}
 }

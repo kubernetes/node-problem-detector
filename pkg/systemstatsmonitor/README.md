@@ -116,3 +116,14 @@ Below metrics are collected from `net` component:
 * `net/tx_compressed`: Cumulative count of compressed packets transmitted by the device driver.
 
 All of the above have `interface_name` label for the net interface.
+
+## Windows Support
+
+NPD has preliminary support for system stats monitor. The following modules are supported:
+
+* CPU - Idle, System, and User metrics.
+* Memory - Used and available.
+* Disk - Space used and free.
+* Uptime - within kernel version and product name.
+
+All the data is currently retried from the `github.com/shirou/gopsutil` library. Any data parsed directly from `/proc` from Linux is not supported on Windows. There will be later integration to use WMI (Windows Management Instrumentation) to gather node metrics.

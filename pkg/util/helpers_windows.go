@@ -16,9 +16,12 @@ limitations under the License.
 package util
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/shirou/gopsutil/host"
+	"golang.org/x/sys/windows"
+	"golang.org/x/sys/windows/registry"
 )
 
 // GetUptimeDuration returns the time elapsed since last boot.
@@ -28,4 +31,28 @@ func GetUptimeDuration() (time.Duration, error) {
 		return 0, err
 	}
 	return time.Duration(ut), nil
+}
+
+// GetOSVersion retrieves the version of the current operating system.
+// For example: "windows 10.0.17763.1697 (Windows Server 2016 Datacenter)".
+func GetOSVersion() (string, error) {
+	k, err := registry.OpenKey(registry.LOCAL_MACHINE, `SOFTWARE\Microsoft\Windows NT\CurrentVersion`, registry.QUERY_VALUE)
+	if err != nil {
+		return "", err
+	}
+	defer k.Close()
+
+	productName, _, err := k.GetStringValue("ProductName")
+	if err != nil {
+		productName = "windows"
+	}
+
+	ubr, _, err := k.GetIntegerValue("UBR")
+	if err != nil {
+		ubr = 0
+	}
+
+	major, minor, build := windows.RtlGetNtVersionNumbers()
+
+	return fmt.Sprintf("windows %d.%d.%d.%d (%s)", major, minor, build, ubr, productName), nil
 }
