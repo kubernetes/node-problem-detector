@@ -1,0 +1,21 @@
+{
+    "plugin": "custom",
+    "pluginConfig": {
+      "invoke_interval": "10m",
+      "timeout": "5s",
+      "max_output_length": 80,
+      "concurrency": 3
+    },
+    "source": "windows-defender-custom-plugin-monitor",
+    "metricsReporting": true,
+    "conditions": [],
+    "rules": [
+      {
+        "type": "temporary",
+        "reason": "WindowsDefenderThreatsDetected",
+        "path": "./config/plugin/windows_defender_problem.ps1",
+        "timeout": "3s"
+      }
+    ]
+  }
+  
