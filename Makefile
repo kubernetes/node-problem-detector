@@ -214,6 +214,9 @@ $(NPD_NAME_VERSION)-%.tar.gz: $(ALL_BINARIES) test/e2e-install.sh
 	(cd output/$*/ && tar -zcvf ../../$@ *)
 	sha512sum $@ > $@.sha512
 
+windows-binaries: ENABLE_JOURNALD=0
+windows-binaries: $(foreach binary, $(BINARIES), output/windows_amd64/$(binary).exe)
+
 build-binaries: $(ALL_BINARIES)
 
 build-container: build-binaries Dockerfile

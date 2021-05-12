@@ -35,6 +35,7 @@ const (
 	DockerComponent    = "docker"
 	ContainerdService  = "containerd"
 	KubeProxyComponent = "kube-proxy"
+	CsiProxyComponent  = "csi-proxy"
 
 	KubeletHealthCheckEndpoint   = "http://127.0.0.1:10248/healthz"
 	KubeProxyHealthCheckEndpoint = "http://127.0.0.1:10256/healthz"

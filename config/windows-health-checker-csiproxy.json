@@ -1,0 +1,35 @@
+{
+    "plugin": "custom",
+    "pluginConfig": {
+      "invoke_interval": "10s",
+      "timeout": "3m",
+      "max_output_length": 80,
+      "concurrency": 1
+    },
+    "source": "health-checker",
+    "metricsReporting": true,
+    "conditions": [
+      {
+        "type": "CsiProxyUnhealthy",
+        "reason": "CsiProxyIsHealthy",
+        "message": "Csi-Proxy on the node is functioning properly"
+      }
+    ],
+    "rules": [
+      {
+        "type": "permanent",
+        "condition": "CsiProxyUnhealthy",
+        "reason": "CsiProxyUnhealthy",
+        "path": "C:\\etc\\kubernetes\\node\\bin\\health-checker.exe",
+        "args": [
+          "--component=csi-proxy",
+          "--enable-repair=true",
+          "--service=csiproxy",
+          "--cooldown-time=2m",
+          "--health-check-timeout=60s"
+        ],
+        "timeout": "3m"
+      }
+    ]
+  }
+  

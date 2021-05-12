@@ -85,6 +85,13 @@ func getHealthCheckFunc(hco *options.HealthCheckerOptions) func() (bool, error) 
 			}
 			return true, nil
 		}
+	case types.CsiProxyComponent:
+		return func() (bool, error) {
+			if _, err := powershell("Get-Process", types.CsiProxyComponent); err != nil {
+				return false, nil
+			}
+			return true, nil
+		}
 	}
 	return nil
 }
