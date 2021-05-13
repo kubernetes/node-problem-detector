@@ -12,7 +12,7 @@ services:
  - docker
 before_install:
  - sudo apt-get -qq update
- - sudo apt-get install -y libsystemd-dev
+ - sudo apt-get install -y libsystemd-dev libc6-dev-arm64-cross gcc-aarch64-linux-gnu
 install:
  - mkdir -p $HOME/gopath/src/k8s.io
  - mv $TRAVIS_BUILD_DIR $HOME/gopath/src/k8s.io/node-problem-detector
