@@ -19,6 +19,7 @@ package systemstatsmonitor
 import (
 	"encoding/json"
 	"io/ioutil"
+	"path/filepath"
 	"time"
 
 	"github.com/golang/glog"
@@ -89,6 +90,12 @@ func NewSystemStatsMonitorOrDie(configPath string) types.Monitor {
 		ssm.memoryCollector = NewMemoryCollectorOrDie(&ssm.config.MemoryConfig)
 	}
 	if len(ssm.config.OsFeatureConfig.MetricsConfigs) > 0 {
+		// update the KnownModulesConfigPath to relative the system-stats-monitors path
+		// only when the KnownModulesConfigPath path is relative
+		if !filepath.IsAbs(ssm.config.OsFeatureConfig.KnownModulesConfigPath) {
+			ssm.config.OsFeatureConfig.KnownModulesConfigPath = filepath.Join(filepath.Dir(configPath),
+				ssm.config.OsFeatureConfig.KnownModulesConfigPath)
+		}
 		ssm.osFeatureCollector = NewOsFeatureCollectorOrDie(&ssm.config.OsFeatureConfig)
 	}
 	if len(ssm.config.NetConfig.MetricsConfigs) > 0 {

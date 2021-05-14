@@ -92,7 +92,8 @@ UnknownModules are derived from the /proc/modules compared with the known-module
 
 And an option:
 `knownModulesConfigPath`: The path to the file that contains the known modules(default
-modules) can be set. By default, the path is set to `known-modules.json`
+modules) can be set. By default, the path is set to `guestosconfig/known-modules.json` 
+(relative to the system-stats-monitor config path).
 
 ### IP Stats (Net Dev)
 

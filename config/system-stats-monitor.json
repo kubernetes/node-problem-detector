@@ -92,7 +92,7 @@
     }
   },
   "osFeature": {
-    "KnownModulesConfigPath": "config/guestosconfig/known-modules.json",
+    "KnownModulesConfigPath": "guestosconfig/known-modules.json",
     "metricsConfigs": {
       "system/os_feature": {
         "displayName": "system/os_feature"
