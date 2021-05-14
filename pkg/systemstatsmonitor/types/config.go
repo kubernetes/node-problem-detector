@@ -24,7 +24,7 @@ import (
 var (
 	defaultInvokeIntervalString   = (60 * time.Second).String()
 	defaultlsblkTimeoutString     = (5 * time.Second).String()
-	defaultKnownModulesConfigPath = "config/guestosconfig/known-modules.json"
+	defaultKnownModulesConfigPath = "guestosconfig/known-modules.json"
 )
 
 type MetricConfig struct {

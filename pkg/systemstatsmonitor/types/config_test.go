@@ -44,7 +44,7 @@ func TestApplyConfiguration(t *testing.T) {
 					LsblkTimeoutString: "5s",
 				},
 				OsFeatureConfig: OSFeatureStatsConfig{
-					KnownModulesConfigPath: "config/guestosconfig/known-modules.json",
+					KnownModulesConfigPath: "guestosconfig/known-modules.json",
 				},
 				InvokeIntervalString: "60s",
 				InvokeInterval:       60 * time.Second,
@@ -62,7 +62,7 @@ func TestApplyConfiguration(t *testing.T) {
 					LsblkTimeoutString: "5s",
 				},
 				OsFeatureConfig: OSFeatureStatsConfig{
-					KnownModulesConfigPath: "config/guestosconfig/known-modules.json",
+					KnownModulesConfigPath: "guestosconfig/known-modules.json",
 				},
 				InvokeIntervalString: "1m0s",
 				InvokeInterval:       60 * time.Second,
@@ -79,7 +79,7 @@ func TestApplyConfiguration(t *testing.T) {
 			wantedConfig: SystemStatsConfig{
 				DiskConfig: DiskStatsConfig{},
 				OsFeatureConfig: OSFeatureStatsConfig{
-					KnownModulesConfigPath: "config/guestosconfig/known-modules.json",
+					KnownModulesConfigPath: "guestosconfig/known-modules.json",
 				},
 			},
 		},
