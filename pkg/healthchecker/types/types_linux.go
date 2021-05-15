@@ -19,5 +19,5 @@ package types
 const (
 	DefaultCriCtl        = "/usr/bin/crictl"
 	DefaultCriSocketPath = "unix:///var/run/containerd/containerd.sock"
-	UptimeTimeLayout     = "Mon 2006-01-02 15:04:05 UTC"
+	UptimeTimeLayout     = "Mon 2006-01-02 15:04:05 MST"
 )
