@@ -56,7 +56,7 @@ func NewProblemMetricsManagerOrDie() *ProblemMetricsManager {
 		metrics.Sum,
 		[]string{"reason"})
 	if err != nil {
-		glog.Fatalf("Failed to create problem_counter metric: %v", err)
+		glog.Fatalf("Failed to create npd_problem_counter metric: %v", err)
 	}
 
 	pmm.problemGauge, err = metrics.NewInt64Metric(
@@ -67,7 +67,7 @@ func NewProblemMetricsManagerOrDie() *ProblemMetricsManager {
 		metrics.LastValue,
 		[]string{"type", "reason"})
 	if err != nil {
-		glog.Fatalf("Failed to create problem_gauge metric: %v", err)
+		glog.Fatalf("Failed to create npd_problem_gauge metric: %v", err)
 	}
 
 	pmm.problemTypeToReason = make(map[string]string)

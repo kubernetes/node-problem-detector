@@ -80,11 +80,11 @@ func TestPrometheusMetricsParsingAndMatching(t *testing.T) {
 					Labels: map[string]string{"kernel_version": "4.14.127+", "os_version": "cos 73-11647.217.0"},
 				},
 				{
-					Name:   "problem_counter",
+					Name:   "npd_problem_counter",
 					Labels: map[string]string{"reason": "DockerHung"},
 				},
 				{
-					Name:   "problem_counter",
+					Name:   "npd_problem_counter",
 					Labels: map[string]string{"reason": "OOMKilling"},
 				},
 			},
