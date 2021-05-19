@@ -96,20 +96,20 @@ default.
 Temporary problems will be reported as counter metrics, such as below example:
 
 ```
-# HELP problem_counter Number of times a specific type of problem have occurred.
-# TYPE problem_counter counter
-problem_counter{reason="TaskHung"} 2
+# HELP npd_problem_counter Number of times a specific type of problem have occurred.
+# TYPE npd_problem_counter counter
+npd_problem_counter{reason="TaskHung"} 2
 ```
 
 Permanent problems will be reported as both gauge metrics and counter metrics, such as below
 example:
 
 ```
-# HELP problem_counter Number of times a specific type of problem have occurred.
-# TYPE problem_counter counter
-problem_counter{reason="DockerHung"} 1
-# HELP problem_gauge Whether a specific type of problem is affecting the node or not.
-# TYPE problem_gauge gauge
-problem_gauge{condition="KernelDeadlock",reason="DockerHung"} 1
+# HELP npd_problem_counter Number of times a specific type of problem have occurred.
+# TYPE npd_problem_counter counter
+npd_problem_counter{reason="DockerHung"} 1
+# HELP npd_problem_gauge Whether a specific type of problem is affecting the node or not.
+# TYPE npd_problem_gauge gauge
+npd_problem_gauge{condition="KernelDeadlock",reason="DockerHung"} 1
 ```
 

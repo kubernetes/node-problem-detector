@@ -43,7 +43,7 @@ func TestNewProblem(t *testing.T) {
 			counts:  []int64{1},
 			expectedMetrics: []metrics.Int64MetricRepresentation{
 				{
-					Name:   "problem_counter",
+					Name:   "npd_problem_counter",
 					Labels: map[string]string{"reason": "foo"},
 					Value:  1,
 				},
@@ -55,7 +55,7 @@ func TestNewProblem(t *testing.T) {
 			counts:  []int64{1, 1},
 			expectedMetrics: []metrics.Int64MetricRepresentation{
 				{
-					Name:   "problem_counter",
+					Name:   "npd_problem_counter",
 					Labels: map[string]string{"reason": "foo"},
 					Value:  2,
 				},
@@ -67,12 +67,12 @@ func TestNewProblem(t *testing.T) {
 			counts:  []int64{1, 1, 1},
 			expectedMetrics: []metrics.Int64MetricRepresentation{
 				{
-					Name:   "problem_counter",
+					Name:   "npd_problem_counter",
 					Labels: map[string]string{"reason": "foo"},
 					Value:  2,
 				},
 				{
-					Name:   "problem_counter",
+					Name:   "npd_problem_counter",
 					Labels: map[string]string{"reason": "bar"},
 					Value:  1,
 				},
@@ -84,12 +84,12 @@ func TestNewProblem(t *testing.T) {
 			counts:  []int64{0, 0},
 			expectedMetrics: []metrics.Int64MetricRepresentation{
 				{
-					Name:   "problem_counter",
+					Name:   "npd_problem_counter",
 					Labels: map[string]string{"reason": "foo"},
 					Value:  0,
 				},
 				{
-					Name:   "problem_counter",
+					Name:   "npd_problem_counter",
 					Labels: map[string]string{"reason": "bar"},
 					Value:  0,
 				},
@@ -101,12 +101,12 @@ func TestNewProblem(t *testing.T) {
 			counts:  []int64{0, 0, 1, 1, 1},
 			expectedMetrics: []metrics.Int64MetricRepresentation{
 				{
-					Name:   "problem_counter",
+					Name:   "npd_problem_counter",
 					Labels: map[string]string{"reason": "foo"},
 					Value:  2,
 				},
 				{
-					Name:   "problem_counter",
+					Name:   "npd_problem_counter",
 					Labels: map[string]string{"reason": "bar"},
 					Value:  1,
 				},
@@ -152,7 +152,7 @@ func TestSetProblemGauge(t *testing.T) {
 			},
 			expectedMetrics: []metrics.Int64MetricRepresentation{
 				{
-					Name:   "problem_gauge",
+					Name:   "npd_problem_gauge",
 					Labels: map[string]string{"type": "ProblemTypeA", "reason": "ReasonFoo"},
 					Value:  1,
 				},
@@ -166,7 +166,7 @@ func TestSetProblemGauge(t *testing.T) {
 			},
 			expectedMetrics: []metrics.Int64MetricRepresentation{
 				{
-					Name:   "problem_gauge",
+					Name:   "npd_problem_gauge",
 					Labels: map[string]string{"type": "ProblemTypeA", "reason": "ReasonFoo"},
 					Value:  1,
 				},
@@ -180,12 +180,12 @@ func TestSetProblemGauge(t *testing.T) {
 			},
 			expectedMetrics: []metrics.Int64MetricRepresentation{
 				{
-					Name:   "problem_gauge",
+					Name:   "npd_problem_gauge",
 					Labels: map[string]string{"type": "ProblemTypeA", "reason": "ReasonFoo"},
 					Value:  0,
 				},
 				{
-					Name:   "problem_gauge",
+					Name:   "npd_problem_gauge",
 					Labels: map[string]string{"type": "ProblemTypeA", "reason": "ReasonBar"},
 					Value:  1,
 				},
@@ -199,12 +199,12 @@ func TestSetProblemGauge(t *testing.T) {
 			},
 			expectedMetrics: []metrics.Int64MetricRepresentation{
 				{
-					Name:   "problem_gauge",
+					Name:   "npd_problem_gauge",
 					Labels: map[string]string{"type": "ProblemTypeA", "reason": ""},
 					Value:  0,
 				},
 				{
-					Name:   "problem_gauge",
+					Name:   "npd_problem_gauge",
 					Labels: map[string]string{"type": "ProblemTypeA", "reason": "ReasonFoo"},
 					Value:  0,
 				},
@@ -219,17 +219,17 @@ func TestSetProblemGauge(t *testing.T) {
 			},
 			expectedMetrics: []metrics.Int64MetricRepresentation{
 				{
-					Name:   "problem_gauge",
+					Name:   "npd_problem_gauge",
 					Labels: map[string]string{"type": "ProblemTypeA", "reason": ""},
 					Value:  0,
 				},
 				{
-					Name:   "problem_gauge",
+					Name:   "npd_problem_gauge",
 					Labels: map[string]string{"type": "ProblemTypeA", "reason": "ReasonFoo"},
 					Value:  0,
 				},
 				{
-					Name:   "problem_gauge",
+					Name:   "npd_problem_gauge",
 					Labels: map[string]string{"type": "ProblemTypeA", "reason": "ReasonBar"},
 					Value:  1,
 				},
@@ -244,17 +244,17 @@ func TestSetProblemGauge(t *testing.T) {
 			},
 			expectedMetrics: []metrics.Int64MetricRepresentation{
 				{
-					Name:   "problem_gauge",
+					Name:   "npd_problem_gauge",
 					Labels: map[string]string{"type": "ProblemTypeA", "reason": ""},
 					Value:  0,
 				},
 				{
-					Name:   "problem_gauge",
+					Name:   "npd_problem_gauge",
 					Labels: map[string]string{"type": "ProblemTypeA", "reason": "ReasonFoo"},
 					Value:  0,
 				},
 				{
-					Name:   "problem_gauge",
+					Name:   "npd_problem_gauge",
 					Labels: map[string]string{"type": "ProblemTypeB", "reason": "ReasonBar"},
 					Value:  1,
 				},
