@@ -137,12 +137,16 @@ For example, to run without auth, use the following config:
 
 ## Build Image
 
+* Install development dependencies for `libsystemd` and the ARM GCC toolchain
+  * Debian: `apt install libsystemd-dev gcc-aarch64-linux-gnu`
+  * Ubuntu: `apt install libsystemd-journal-dev gcc-aarch64-linux-gnu`
+
 * `go get` or `git clone` node-problem-detector repo into `$GOPATH/src/k8s.io` or `$GOROOT/src/k8s.io`
 with one of the below directions:
   * `cd $GOPATH/src/k8s.io && git clone git@github.com:kubernetes/node-problem-detector.git`
   * `cd $GOPATH/src/k8s.io && go get k8s.io/node-problem-detector`
 
-* run `make` in the top directory. It will:
+* Run `make` in the top directory. It will:
   * Build the binary.
   * Build the docker image. The binary and `config/` are copied into the docker image.
 
@@ -157,11 +161,6 @@ The above command will compile the node-problem-detector without [Custom Plugin 
 and [System Stats Monitor](https://github.com/kubernetes/node-problem-detector/tree/master/pkg/systemstatsmonitor).
 Check out the [Problem Daemon](https://github.com/kubernetes/node-problem-detector#problem-daemon) section
 to see how to disable each problem daemon during compilation time.
-
-**Note**:
-By default, node-problem-detector will be built with systemd support with the `make` command. This requires systemd develop files.
-You should download the systemd develop files first. For Ubuntu, the `libsystemd-journal-dev` package should
-be installed. For Debian, the `libsystemd-dev` package should be installed.
 
 ## Push Image
 
