@@ -12,14 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM golang:1.11.0
+FROM golang:1.16
 LABEL maintainer="Andy Xie <andy.xning@gmail.com>"
 
-ENV GOPATH /gopath/
-ENV PATH $GOPATH/bin:$PATH
+RUN apt-get -qq update && apt-get install -y libsystemd-dev libc6-dev-arm64-cross gcc-aarch64-linux-gnu
 
-RUN apt-get update && apt-get --yes install libsystemd-dev
-RUN go version
-RUN go get github.com/tools/godep
-RUN godep version
 CMD ["/bin/bash"]
