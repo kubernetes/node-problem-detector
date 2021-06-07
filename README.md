@@ -221,13 +221,13 @@ To develop NPD on Windows you'll need to setup your Windows machine for Go devel
 # Run these commands in the node-problem-detector directory.
 
 # Build in MINGW64 Window
-make clean windows-binaries
+make clean ENABLE_JOURNALD=0 build-binaries
 
 # Test in MINGW64 Window
 make test
 
 # Run with containerd log monitoring enabled in Command Prompt. (Assumes containerd is installed.)
-%CD%\output\windows_amd64\node-problem-detector.exe --logtostderr --enable-k8s-exporter=false --config.system-log-monitor=%CD%\config\windows-containerd-monitor-filelog.json --config.system-stats-monitor=config\windows-system-stats-monitor.json
+%CD%\output\windows_amd64\bin\node-problem-detector.exe --logtostderr --enable-k8s-exporter=false --config.system-log-monitor=%CD%\config\windows-containerd-monitor-filelog.json --config.system-stats-monitor=config\windows-system-stats-monitor.json
 
 # Configure NPD to run as a Windows Service
 sc.exe create NodeProblemDetector binpath= "%CD%\node-problem-detector.exe [FLAGS]" start= demand 
