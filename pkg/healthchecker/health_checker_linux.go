@@ -17,10 +17,7 @@ limitations under the License.
 package healthchecker
 
 import (
-	"context"
 	"errors"
-	"net/http"
-	"os/exec"
 	"strconv"
 	"strings"
 	"time"
@@ -75,49 +72,6 @@ func getRepairFunc(hco *options.HealthCheckerOptions) func() {
 	}
 }
 
-// getHealthCheckFunc returns the health check function based on the component.
-func getHealthCheckFunc(hco *options.HealthCheckerOptions) func() (bool, error) {
-	switch hco.Component {
-	case types.KubeletComponent:
-		return func() (bool, error) {
-			httpClient := http.Client{Timeout: hco.HealthCheckTimeout}
-			response, err := httpClient.Get(types.KubeletHealthCheckEndpoint)
-			if err != nil || response.StatusCode != http.StatusOK {
-				return false, nil
-			}
-			return true, nil
-		}
-	case types.DockerComponent:
-		return func() (bool, error) {
-			if _, err := execCommand(hco.HealthCheckTimeout, "docker", "ps"); err != nil {
-				return false, nil
-			}
-			return true, nil
-		}
-	case types.CRIComponent:
-		return func() (bool, error) {
-			if _, err := execCommand(hco.HealthCheckTimeout, hco.CriCtlPath, "--runtime-endpoint="+hco.CriSocketPath, "--image-endpoint="+hco.CriSocketPath, "pods"); err != nil {
-				return false, nil
-			}
-			return true, nil
-		}
-	}
-	return nil
-}
-
-// execCommand executes the bash command and returns the (output, error) from command, error if timeout occurs.
-func execCommand(timeout time.Duration, command string, args ...string) (string, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	cmd := exec.CommandContext(ctx, command, args...)
-	out, err := cmd.Output()
-	if err != nil {
-		glog.Infof("command %v failed: %v, %v\n", cmd, err, out)
-		return "", err
-	}
-	return strings.TrimSuffix(string(out), "\n"), nil
-}
-
 // checkForPattern returns (true, nil) if logPattern occurs less than logCountThreshold number of times since last
 // service restart. (false, nil) otherwise.
 func checkForPattern(service, logStartTime, logPattern string, logCountThreshold int) (bool, error) {
@@ -140,4 +94,8 @@ func checkForPattern(service, logStartTime, logPattern string, logCountThreshold
 		return false, nil
 	}
 	return true, nil
+}
+
+func getDockerPath() string {
+	return "docker"
 }
