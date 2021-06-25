@@ -40,6 +40,7 @@ type HealthCheckerOptions struct {
 	CriCtlPath         string
 	CriSocketPath      string
 	CoolDownTime       time.Duration
+	LoopBackTime       time.Duration
 	HealthCheckTimeout time.Duration
 	LogPatterns        types.LogPatternFlag
 }
@@ -63,6 +64,8 @@ func (hco *HealthCheckerOptions) AddFlags(fs *pflag.FlagSet) {
 		"The path to the cri socket. Used with crictl to specify the socket path.")
 	fs.DurationVar(&hco.CoolDownTime, "cooldown-time", types.DefaultCoolDownTime,
 		"The duration to wait for the service to be up before attempting repair.")
+	fs.DurationVar(&hco.LoopBackTime, "loopback-time", types.DefaultLoopBackTime,
+		"The duration to loop back, if it is 0, health-check will check from start time.")
 	fs.DurationVar(&hco.HealthCheckTimeout, "health-check-timeout", types.DefaultHealthCheckTimeout,
 		"The time to wait before marking the component as unhealthy.")
 	fs.Var(&hco.LogPatterns, "log-pattern",

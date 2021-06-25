@@ -36,6 +36,7 @@ type healthChecker struct {
 	crictlPath         string
 	healthCheckTimeout time.Duration
 	coolDownTime       time.Duration
+	loopBackTime       time.Duration
 	logPatternsToCheck map[string]int
 }
 
@@ -48,6 +49,7 @@ func NewHealthChecker(hco *options.HealthCheckerOptions) (types.HealthChecker, e
 		healthCheckTimeout: hco.HealthCheckTimeout,
 		coolDownTime:       hco.CoolDownTime,
 		service:            hco.Service,
+		loopBackTime:       hco.LoopBackTime,
 		logPatternsToCheck: hco.LogPatterns.GetLogPatternCountMap(),
 	}
 	hc.healthCheckFunc = getHealthCheckFunc(hco)
@@ -59,11 +61,22 @@ func NewHealthChecker(hco *options.HealthCheckerOptions) (types.HealthChecker, e
 // CheckHealth checks for the health of the component and tries to repair if enabled.
 // Returns true if healthy, false otherwise.
 func (hc *healthChecker) CheckHealth() (bool, error) {
+	var logStartTime string
 	healthy, err := hc.healthCheckFunc()
 	if err != nil {
 		return healthy, err
 	}
-	logPatternHealthy, err := logPatternHealthCheck(hc.service, hc.logPatternsToCheck)
+	uptime, err := hc.uptimeFunc()
+	if err != nil {
+		glog.Warningf("Failed to get the uptime: %+v", err)
+		return true, err
+	}
+	if hc.loopBackTime > 0 && uptime > hc.loopBackTime {
+		logStartTime = time.Now().Add(-hc.loopBackTime).Format(types.LogParsingTimeLayout)
+	} else {
+		logStartTime = time.Now().Add(-uptime).Format(types.LogParsingTimeLayout)
+	}
+	logPatternHealthy, err := logPatternHealthCheck(hc.service, logStartTime, hc.logPatternsToCheck)
 	if err != nil {
 		return logPatternHealthy, err
 	}
@@ -74,10 +87,6 @@ func (hc *healthChecker) CheckHealth() (bool, error) {
 	// Attempt repair based on flag.
 	if hc.enableRepair {
 		// repair if the service has been up for the cool down period.
-		uptime, err := hc.uptimeFunc()
-		if err != nil {
-			glog.Infof("error in getting uptime for %v: %v\n", hc.component, err)
-		}
 		glog.Infof("%v is unhealthy, component uptime: %v\n", hc.component, uptime)
 		if uptime > hc.coolDownTime {
 			glog.Infof("%v cooldown period of %v exceeded, repairing", hc.component, hc.coolDownTime)
@@ -89,18 +98,9 @@ func (hc *healthChecker) CheckHealth() (bool, error) {
 
 // logPatternHealthCheck checks for the provided logPattern occurrences in the service logs.
 // Returns true if the pattern is empty or does not exist logThresholdCount times since start of service, false otherwise.
-func logPatternHealthCheck(service string, logPatternsToCheck map[string]int) (bool, error) {
+func logPatternHealthCheck(service, logStartTime string, logPatternsToCheck map[string]int) (bool, error) {
 	if len(logPatternsToCheck) == 0 {
 		return true, nil
-	}
-	uptimeFunc := getUptimeFunc(service)
-	uptime, err := uptimeFunc()
-	if err != nil {
-		return true, err
-	}
-	logStartTime := time.Now().Add(-uptime).Format(types.LogParsingTimeLayout)
-	if err != nil {
-		return true, err
 	}
 	for pattern, count := range logPatternsToCheck {
 		healthy, err := checkForPattern(service, logStartTime, pattern, count)

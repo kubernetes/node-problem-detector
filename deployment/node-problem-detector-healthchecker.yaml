@@ -1,0 +1,102 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: node-problem-detector
+  namespace: kube-system
+  labels:
+    app: node-problem-detector
+spec:
+  selector:
+    matchLabels:
+      app: node-problem-detector
+  template:
+    metadata:
+      labels:
+        app: node-problem-detector
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: kubernetes.io/os
+                    operator: In
+                    values:
+                      - linux
+      containers:
+      - name: node-problem-detector
+        command:
+        - /node-problem-detector
+        - --logtostderr
+        - --config.system-log-monitor=/config/kernel-monitor.json,/config/docker-monitor.json
+        - --config.custom-plugin-monitor=/config/health-checker-kubelet.json
+        image: k8s.gcr.io/node-problem-detector/node-problem-detector:v0.8.6
+        resources:
+          limits:
+            cpu: 10m
+            memory: 80Mi
+          requests:
+            cpu: 10m
+            memory: 80Mi
+        imagePullPolicy: Always
+        securityContext:
+          privileged: true
+        env:
+        - name: NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        volumeMounts:
+        - name: log
+          mountPath: /var/log
+          readOnly: true
+        - name: kmsg
+          mountPath: /dev/kmsg
+          readOnly: true
+        # Make sure node problem detector is in the same timezone
+        # with the host.
+        - name: localtime
+          mountPath: /etc/localtime
+          readOnly: true
+        - name: config
+          mountPath: /config
+          readOnly: true
+        - mountPath: /etc/machine-id
+          name: machine-id
+          readOnly: true
+        - mountPath: /run/systemd/system
+          name: systemd
+        - mountPath: /var/run/dbus/
+          name: dbus
+          mountPropagation: Bidirectional
+      volumes:
+      - name: log
+        # Config `log` to your system log directory
+        hostPath:
+          path: /var/log/
+      - name: kmsg
+        hostPath:
+          path: /dev/kmsg
+      - name: localtime
+        hostPath:
+          path: /etc/localtime
+      - name: config
+        configMap:
+          name: node-problem-detector-config
+          items:
+          - key: kernel-monitor.json
+            path: kernel-monitor.json
+          - key: docker-monitor.json
+            path: docker-monitor.json
+      - name: machine-id
+        hostPath:
+          path: /etc/machine-id
+          type: "File"
+      - name: systemd
+        hostPath:
+          path: /run/systemd/system/
+          type: ""
+      - name: dbus
+        hostPath:
+          path: /var/run/dbus/
+          type: ""
