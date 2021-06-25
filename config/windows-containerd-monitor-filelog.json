@@ -20,6 +20,11 @@
 			"type": "temporary",
 			"reason": "CorruptContainerImageLayer",
 			"pattern": ".*failed to pull and unpack image.*failed to extract layer.*archive/tar: invalid tar header.*"
+		},
+		{
+			"type": "temporary",
+			"reason": "HCSEmptyLayerchain",
+			"pattern": ".*Failed to unmarshall layerchain json - invalid character '\\x00' looking for beginning of value*"
 		}
 	]
 }
