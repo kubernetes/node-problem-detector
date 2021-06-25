@@ -244,19 +244,21 @@ func (dc *diskCollector) collect() {
 	if dc.config.IncludeRootBlk {
 		devices = append(devices, listRootBlockDevices(dc.config.LsblkTimeout)...)
 	}
+
+	partitions, err := disk.Partitions(false)
+	if err != nil {
+		glog.Errorf("Failed to list disk partitions: %v", err)
+		return
+	}
+
 	if dc.config.IncludeAllAttachedBlk {
-		devices = append(devices, listAttachedBlockDevices()...)
+		devices = append(devices, listAttachedBlockDevices(partitions)...)
 	}
 
 	// Fetch metrics from /proc, /sys.
 	ioCountersStats, err := disk.IOCounters(devices...)
 	if err != nil {
 		glog.Errorf("Failed to retrieve disk IO counters: %v", err)
-		return
-	}
-	partitions, err := disk.Partitions(false)
-	if err != nil {
-		glog.Errorf("Failed to list disk partitions: %v", err)
 		return
 	}
 	sampleTime := time.Now()
@@ -310,14 +312,8 @@ func listRootBlockDevices(timeout time.Duration) []string {
 }
 
 // listAttachedBlockDevices lists all currently attached block devices.
-func listAttachedBlockDevices() []string {
+func listAttachedBlockDevices(partitions []disk.PartitionStat) []string {
 	blks := []string{}
-
-	partitions, err := disk.Partitions(false)
-	if err != nil {
-		glog.Errorf("Failed to retrieve the list of disk partitions: %v", err)
-		return blks
-	}
 
 	for _, partition := range partitions {
 		blks = append(blks, partition.Device)
