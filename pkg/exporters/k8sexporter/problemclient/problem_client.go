@@ -19,6 +19,7 @@ package problemclient
 import (
 	"encoding/json"
 	"fmt"
+	types2 "k8s.io/node-problem-detector/pkg/types"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -50,6 +51,10 @@ type Client interface {
 	// GetNode returns the Node object of the node on which the
 	// node-problem-detector runs.
 	GetNode() (*v1.Node, error)
+	// TaintNode taints the node if tainting is enabled on the config file on specific conditions
+	TaintNode(condition types2.Condition) error
+	// UntaintNode removes taint from node if tainting is enabled on the config file on specific conditions, and problem recovered
+	UntaintNode(condition types2.Condition) error
 }
 
 type nodeProblemClient struct {
@@ -123,6 +128,58 @@ func (c *nodeProblemClient) Eventf(eventType, source, reason, messageFmt string,
 
 func (c *nodeProblemClient) GetNode() (*v1.Node, error) {
 	return c.client.Nodes().Get(c.nodeName, metav1.GetOptions{})
+}
+
+// TaintNode taints the node if tainting is enabled and problem occurred
+func (c *nodeProblemClient) TaintNode(condition types2.Condition) error {
+	node, err := c.client.Nodes().Get(c.nodeName, metav1.GetOptions{})
+	if err != nil {
+		return err
+	}
+
+	for _, v := range node.Spec.Taints {
+		if v.Key == condition.TaintKey && v.Value == condition.TaintValue && v.Effect == v1.TaintEffect(condition.TaintEffect) {
+			return nil
+		}
+	}
+
+	node.Spec.Taints = append(node.Spec.Taints, v1.Taint{
+		Key:       condition.TaintKey,
+		Value:     condition.TaintValue,
+		Effect:    v1.TaintEffect(condition.TaintEffect),
+	})
+
+	_, err = c.client.Nodes().Update(node)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// UntaintNode removes taint from node if tainting is enabled on the config file on specific conditions, and problem recovered
+func (c *nodeProblemClient) UntaintNode(condition types2.Condition) error {
+	node, err := c.client.Nodes().Get(c.nodeName, metav1.GetOptions{})
+	if err != nil {
+		return err
+	}
+
+	var taints []v1.Taint
+	for _, v := range node.Spec.Taints {
+		if v.Key == condition.TaintKey && v.Value == condition.TaintValue && v.Effect == v1.TaintEffect(condition.TaintEffect) {
+			continue
+		}
+
+		taints = append(taints, v)
+	}
+
+	node.Spec.Taints = taints
+	_, err = c.client.Nodes().Update(node)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // generatePatch generates condition patch
