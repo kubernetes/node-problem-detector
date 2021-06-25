@@ -129,9 +129,9 @@ var _ = ginkgo.Describe("NPD should export Prometheus metrics.", func() {
 
 		ginkgo.It("NPD should update problem_counter{reason:Ext4Error} and problem_gauge{type:ReadonlyFilesystem}", func() {
 			time.Sleep(5 * time.Second)
-			assertMetricValueInBound(instance,
+			assertMetricValueAtLeast(instance,
 				"problem_counter", map[string]string{"reason": "Ext4Error"},
-				1.0, 2.0)
+				1.0)
 			assertMetricValueInBound(instance,
 				"problem_gauge", map[string]string{"reason": "FilesystemIsReadOnly", "type": "ReadonlyFilesystem"},
 				1.0, 1.0)
@@ -202,13 +202,29 @@ func assertMetricExist(metricList []metrics.Float64MetricRepresentation, metricN
 	Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("Failed to find metric %q: %v.\nHere is all NPD exported metrics: %v", metricName, err, metricList))
 }
 
+func assertValueAtLeast(metricName string, labels map[string]string, value float64, lowBound float64) {
+	Expect(value).Should(BeNumerically(">=", lowBound),
+		"Got value for metric %s with label %v: %v, expect at least %v.", metricName, labels, value, lowBound)
+}
+
+func assertValueAtMost(metricName string, labels map[string]string, value float64, highBound float64) {
+	Expect(value).Should(BeNumerically("<=", highBound),
+		"Got value for metric %s with label %v: %v, expect at most %v.", metricName, labels, value, highBound)
+}
+
 func assertMetricValueInBound(instance gce.Instance, metricName string, labels map[string]string, lowBound float64, highBound float64) {
 	value, err := npd.FetchNPDMetric(instance, metricName, labels)
 	if err != nil {
 		ginkgo.Fail(fmt.Sprintf("Failed to find %s metric with label %v: %v", metricName, labels, err))
 	}
-	Expect(value).Should(BeNumerically(">=", lowBound),
-		"Got value for metric %s with label %v: %v, expect at least %v.", metricName, labels, value, lowBound)
-	Expect(value).Should(BeNumerically("<=", highBound),
-		"Got value for metric %s with label %v: %v, expect at most %v.", metricName, labels, value, highBound)
+	assertValueAtLeast(metricName, labels, value, lowBound)
+	assertValueAtMost(metricName, labels, value, highBound)
+}
+
+func assertMetricValueAtLeast(instance gce.Instance, metricName string, labels map[string]string, lowBound float64) {
+	value, err := npd.FetchNPDMetric(instance, metricName, labels)
+	if err != nil {
+		ginkgo.Fail(fmt.Sprintf("Failed to find %s metric with label %v: %v", metricName, labels, err))
+	}
+	assertValueAtLeast(metricName, labels, value, lowBound)
 }
