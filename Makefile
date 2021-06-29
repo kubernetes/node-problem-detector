@@ -256,8 +256,8 @@ docker-builder:
 
 build-in-docker: clean docker-builder
 	docker run \
-		-v `pwd`:/gopath/src/k8s.io/node-problem-detector/ npd-builder:latest bash \
-		-c 'cd /gopath/src/k8s.io/node-problem-detector/ && make build-binaries'
+		-v `pwd`:/node-problem-detector/ npd-builder:latest bash \
+		-c 'cd /node-problem-detector/ && make build-binaries'
 
 push-container: build-container
 	gcloud auth configure-docker
