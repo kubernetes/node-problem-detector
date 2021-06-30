@@ -20,6 +20,7 @@ import (
 	"testing"
 	"time"
 
+	"k8s.io/node-problem-detector/cmd/healthchecker/options"
 	"k8s.io/node-problem-detector/pkg/healthchecker/types"
 )
 
@@ -118,4 +119,39 @@ func TestHealthCheck(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestComponentsSupported(t *testing.T) {
+	for _, tc := range []struct {
+		description string
+		component   string
+	}{
+		{
+			description: "Kube Proxy should be supported",
+			component:   types.KubeProxyComponent,
+		},
+		{
+			description: "Kubelet should be supported",
+			component:   types.KubeletComponent,
+		},
+		{
+			description: "Docker should be supported",
+			component:   types.DockerComponent,
+		},
+		{
+			description: "CRI should be supported",
+			component:   types.CRIComponent,
+		},
+	} {
+		t.Run(tc.description, func(t *testing.T) {
+			checkFunc := getHealthCheckFunc(&options.HealthCheckerOptions{
+				Component: tc.component,
+			})
+			if checkFunc == nil {
+				t.Errorf("component %v should be supported", tc.component)
+			}
+
+		})
+	}
+
 }
