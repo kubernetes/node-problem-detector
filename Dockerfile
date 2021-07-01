@@ -17,7 +17,8 @@ FROM ${BASEIMAGE}
 
 MAINTAINER Random Liu <lantaol@google.com>
 
-RUN clean-install util-linux libsystemd0 bash
+ARG PREINSTALL=true
+RUN if [ "$PREINSTALL" = "true" ] ; then clean-install util-linux libsystemd0 bash ; fi
 
 # Avoid symlink of /etc/localtime.
 RUN test -h /etc/localtime && rm -f /etc/localtime && cp /usr/share/zoneinfo/UTC /etc/localtime || true
