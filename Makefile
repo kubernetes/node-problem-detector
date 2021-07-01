@@ -17,7 +17,7 @@
 .PHONY: all \
         vet fmt version test e2e-test \
         build-binaries build-container build-tar build \
-        docker-builder build-in-docker push-container push-tar push clean
+        docker-builder build-in-docker push-container push-container-multi-arch push-tar push clean
 
 all: build
 
@@ -262,6 +262,12 @@ build-in-docker: clean docker-builder
 push-container: build-container
 	gcloud auth configure-docker
 	docker push $(IMAGE)
+
+push-container-multi-arch: build-binaries Dockerfile
+	gcloud auth configure-docker
+	docker buildx build \
+		--push --platform linux/amd64,linux/arm/v7,linux/arm64,windows/amd64 \
+		-t $(IMAGE) --build-arg BASEIMAGE=$(BASEIMAGE) --build-arg LOGCOUNTER=$(LOGCOUNTER) .
 
 push-tar: build-tar
 	gsutil cp $(TARBALL) $(UPLOAD_PATH)/node-problem-detector/
