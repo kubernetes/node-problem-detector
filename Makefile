@@ -266,8 +266,12 @@ push-container: build-container
 push-container-multi-arch: build-binaries Dockerfile
 	gcloud auth configure-docker
 	docker buildx build \
-		--push --platform linux/amd64,linux/arm/v7,linux/arm64,windows/amd64 \
-		-t $(IMAGE) --build-arg BASEIMAGE=$(BASEIMAGE) --build-arg LOGCOUNTER=$(LOGCOUNTER) .
+		--push \
+		--platform linux/amd64,linux/arm/v7,linux/arm64,linux/ppc64le,linux/s390x \
+		-t $(IMAGE) \
+		--build-arg BASEIMAGE=debian:buster \
+		--build-arg LOGCOUNTER=$(LOGCOUNTER) \
+		--build-arg PREINSTALL=false .
 
 push-tar: build-tar
 	gsutil cp $(TARBALL) $(UPLOAD_PATH)/node-problem-detector/
