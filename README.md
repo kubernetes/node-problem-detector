@@ -138,8 +138,7 @@ For example, to run without auth, use the following config:
 ## Build Image
 
 * Install development dependencies for `libsystemd` and the ARM GCC toolchain
-  * Debian: `apt install libsystemd-dev gcc-aarch64-linux-gnu`
-  * Ubuntu: `apt install libsystemd-journal-dev gcc-aarch64-linux-gnu`
+  * Debian/Ubuntu: `apt install libsystemd-dev gcc-aarch64-linux-gnu`
 
 * `go get` or `git clone` node-problem-detector repo into `$GOPATH/src/k8s.io` or `$GOROOT/src/k8s.io`
 with one of the below directions:
