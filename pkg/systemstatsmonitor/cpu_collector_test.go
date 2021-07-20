@@ -67,6 +67,6 @@ func TestCpuCollector(t *testing.T) {
 	if err := json.Unmarshal([]byte(fakeCPUConfig), cfg); err != nil {
 		t.Fatalf("cannot load cpu config: %s", err)
 	}
-	mc := NewCPUCollectorOrDie(cfg)
+	mc := NewCPUCollectorOrDie(cfg, "/proc")
 	mc.collect()
 }

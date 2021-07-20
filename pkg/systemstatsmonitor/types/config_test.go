@@ -48,6 +48,7 @@ func TestApplyConfiguration(t *testing.T) {
 				},
 				InvokeIntervalString: "60s",
 				InvokeInterval:       60 * time.Second,
+				ProcPath:             defaultProcPath,
 			},
 		},
 		{
@@ -66,6 +67,7 @@ func TestApplyConfiguration(t *testing.T) {
 				},
 				InvokeIntervalString: "1m0s",
 				InvokeInterval:       60 * time.Second,
+				ProcPath:             defaultProcPath,
 			},
 		},
 		{

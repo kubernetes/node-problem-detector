@@ -97,15 +97,9 @@ func TestModules(t *testing.T) {
 	}
 	for _, test := range testcases {
 		t.Run(test.name, func(t *testing.T) {
-			originalModuleFilePath := modulesFilePath
-			defer func() {
-				modulesFilePath = originalModuleFilePath
-			}()
-
-			modulesFilePath = test.fakeModuleFilePath
-			modules, err := Modules()
+			modules, err := Modules(test.fakeModuleFilePath)
 			if err != nil {
-				t.Errorf("Unexpected error retrieving modules: %v\nModulesFilePath: %s\n", err, modulesFilePath)
+				t.Errorf("Unexpected error retrieving modules: %v\nModulesFilePath: %s\n", err, test.fakeModuleFilePath)
 			}
 			assert.Equal(t, modules, test.expectedModules, "unpected modules retrieved: %v, expected: %v", modules, test.expectedModules)
 		})

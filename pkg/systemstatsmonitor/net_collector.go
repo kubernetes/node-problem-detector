@@ -28,12 +28,14 @@ import (
 
 type netCollector struct {
 	config   *ssmtypes.NetStatsConfig
+	procPath string
 	recorder *ifaceStatRecorder
 }
 
-func NewNetCollectorOrDie(netConfig *ssmtypes.NetStatsConfig) *netCollector {
+func NewNetCollectorOrDie(netConfig *ssmtypes.NetStatsConfig, procPath string) *netCollector {
 	nc := netCollector{
 		config:   netConfig,
+		procPath: procPath,
 		recorder: newIfaceStatRecorder(),
 	}
 
@@ -207,7 +209,7 @@ func (nc *netCollector) mustRegisterMetric(metricID metrics.MetricID, descriptio
 }
 
 func (nc *netCollector) recordNetDev() {
-	fs, err := procfs.NewFS("/proc")
+	fs, err := procfs.NewFS(nc.procPath)
 	stats, err := fs.NetDev()
 	if err != nil {
 		glog.Errorf("Failed to retrieve net dev stat: %v", err)

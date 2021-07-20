@@ -19,8 +19,6 @@ import (
 	"strings"
 )
 
-var cmdlineFilePath = "/proc/cmdline"
-
 type CmdlineArg struct {
 	Key   string `json:"key"`
 	Value string `json:"value"`
@@ -52,7 +50,7 @@ func splitAfterSpace(inputChar rune) bool {
 }
 
 // CmdlineArgs returns all the kernel cmdline. It is read from cat /proc/cmdline.
-func CmdlineArgs() ([]CmdlineArg, error) {
+func CmdlineArgs(cmdlineFilePath string) ([]CmdlineArg, error) {
 	lines, err := ReadFileIntoLines(cmdlineFilePath)
 	if err != nil {
 		return nil, fmt.Errorf("error reading the file %s, %v", cmdlineFilePath, err)

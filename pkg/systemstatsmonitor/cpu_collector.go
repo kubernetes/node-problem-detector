@@ -46,13 +46,17 @@ type cpuCollector struct {
 	mSystemInterruptsTotal *metrics.Int64Metric
 	mSystemCPUStat         *metrics.Float64Metric // per-cpu time from /proc/stats
 
-	config *ssmtypes.CPUStatsConfig
+	config   *ssmtypes.CPUStatsConfig
+	procPath string
 
 	lastUsageTime map[string]float64
 }
 
-func NewCPUCollectorOrDie(cpuConfig *ssmtypes.CPUStatsConfig) *cpuCollector {
-	cc := cpuCollector{config: cpuConfig}
+func NewCPUCollectorOrDie(cpuConfig *ssmtypes.CPUStatsConfig, procPath string) *cpuCollector {
+	cc := cpuCollector{
+		config:   cpuConfig,
+		procPath: procPath,
+	}
 
 	var err error
 	cc.mRunnableTaskCount, err = metrics.NewFloat64Metric(

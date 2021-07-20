@@ -78,7 +78,7 @@ func NewSystemStatsMonitorOrDie(configPath string) types.Monitor {
 	}
 
 	if len(ssm.config.CPUConfig.MetricsConfigs) > 0 {
-		ssm.cpuCollector = NewCPUCollectorOrDie(&ssm.config.CPUConfig)
+		ssm.cpuCollector = NewCPUCollectorOrDie(&ssm.config.CPUConfig, ssm.config.ProcPath)
 	}
 	if len(ssm.config.DiskConfig.MetricsConfigs) > 0 {
 		ssm.diskCollector = NewDiskCollectorOrDie(&ssm.config.DiskConfig)
@@ -96,10 +96,10 @@ func NewSystemStatsMonitorOrDie(configPath string) types.Monitor {
 			ssm.config.OsFeatureConfig.KnownModulesConfigPath = filepath.Join(filepath.Dir(configPath),
 				ssm.config.OsFeatureConfig.KnownModulesConfigPath)
 		}
-		ssm.osFeatureCollector = NewOsFeatureCollectorOrDie(&ssm.config.OsFeatureConfig)
+		ssm.osFeatureCollector = NewOsFeatureCollectorOrDie(&ssm.config.OsFeatureConfig, ssm.config.ProcPath)
 	}
 	if len(ssm.config.NetConfig.MetricsConfigs) > 0 {
-		ssm.netCollector = NewNetCollectorOrDie(&ssm.config.NetConfig)
+		ssm.netCollector = NewNetCollectorOrDie(&ssm.config.NetConfig, ssm.config.ProcPath)
 	}
 	return &ssm
 }

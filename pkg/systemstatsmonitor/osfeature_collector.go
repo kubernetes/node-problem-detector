@@ -16,6 +16,7 @@ package systemstatsmonitor
 import (
 	"encoding/json"
 	"io/ioutil"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -27,11 +28,15 @@ import (
 
 type osFeatureCollector struct {
 	config    *ssmtypes.OSFeatureStatsConfig
+	procPath  string
 	osFeature *metrics.Int64Metric
 }
 
-func NewOsFeatureCollectorOrDie(osFeatureConfig *ssmtypes.OSFeatureStatsConfig) *osFeatureCollector {
-	oc := osFeatureCollector{config: osFeatureConfig}
+func NewOsFeatureCollectorOrDie(osFeatureConfig *ssmtypes.OSFeatureStatsConfig, procPath string) *osFeatureCollector {
+	oc := osFeatureCollector{
+		config:   osFeatureConfig,
+		procPath: procPath,
+	}
 	var err error
 	// Use metrics.Last aggregation method to ensure the metric is a guage metric.
 	if osFeatureConfig.MetricsConfigs["system/os_feature"].DisplayName != "" {
@@ -145,12 +150,12 @@ func (ofc *osFeatureCollector) collect() {
 	if ofc == nil || ofc.osFeature == nil {
 		return
 	}
-	cmdlineArgs, err := system.CmdlineArgs()
+	cmdlineArgs, err := system.CmdlineArgs(filepath.Join(ofc.procPath, "/cmdline"))
 	if err != nil {
 		glog.Fatalf("Error retrieving cmdline args: %v", err)
 	}
 	ofc.recordFeaturesFromCmdline(cmdlineArgs)
-	modules, err := system.Modules()
+	modules, err := system.Modules(filepath.Join(ofc.procPath, "/modules"))
 	if err != nil {
 		glog.Fatalf("Error retrieving kernel modules: %v", err)
 	}
