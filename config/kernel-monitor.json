@@ -66,12 +66,6 @@
 		{
 			"type": "permanent",
 			"condition": "KernelDeadlock",
-			"reason": "AUFSUmountHung",
-			"pattern": "task umount\\.aufs:\\w+ blocked for more than \\w+ seconds\\."
-		},
-		{
-			"type": "permanent",
-			"condition": "KernelDeadlock",
 			"reason": "DockerHung",
 			"pattern": "task docker:\\w+ blocked for more than \\w+ seconds\\."
 		},

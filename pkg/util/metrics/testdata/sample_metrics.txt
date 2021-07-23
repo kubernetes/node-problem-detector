@@ -18,7 +18,6 @@ disk_weighted_io{device="sda8"} 160
 host_uptime{kernel_version="4.14.127+",os_version="cos 73-11647.217.0"} 81
 # HELP problem_counter Number of times a specific type of problem have occurred.
 # TYPE problem_counter counter
-problem_counter{reason="AUFSUmountHung"} 0
 problem_counter{reason="ContainerdStart"} 1
 problem_counter{reason="CorruptDockerImage"} 0
 problem_counter{reason="CorruptDockerOverlay2"} 0
@@ -35,7 +34,6 @@ problem_counter{reason="TaskHung"} 0
 problem_counter{reason="UnregisterNetDevice"} 0
 # HELP problem_gauge Whether a specific type of problem is affecting the node or not.
 # TYPE problem_gauge gauge
-problem_gauge{reason="AUFSUmountHung",type="KernelDeadlock"} 0
 problem_gauge{reason="CorruptDockerOverlay2",type="CorruptDockerOverlay2"} 0
 problem_gauge{reason="DockerHung",type="KernelDeadlock"} 0
 problem_gauge{reason="FilesystemIsReadOnly",type="ReadonlyFilesystem"} 0
