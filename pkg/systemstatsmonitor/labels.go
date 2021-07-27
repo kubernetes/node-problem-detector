@@ -31,6 +31,9 @@ const fsTypeLabel = "fs_type"
 // mountOptionLabel labels the mount_options of the monitored disk device
 const mountOptionLabel = "mount_option"
 
+// mountPointLabel labels the mount_point of the monitored disk device
+const mountPointLabel = "mount_point"
+
 // featureLabel labels the features of the guest os system
 const featureLabel = "os_feature"
 
