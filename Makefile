@@ -269,6 +269,10 @@ push-tar: build-tar
 
 push: push-container push-tar
 
+coverage.out:
+	rm -f coverage.out
+	go test -coverprofile=coverage.out -mod vendor -timeout=1m -v -short ./...
+
 clean:
 	rm -rf bin/
 	rm -rf test/bin/
