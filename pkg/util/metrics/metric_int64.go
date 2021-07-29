@@ -98,3 +98,10 @@ func (metric *Int64Metric) Record(tags map[string]string, measurement int64) err
 		mutators,
 		metric.measure.M(measurement))
 }
+
+// 重新注册view，解决磁盘设备增减后，已删除磁盘的指标数据无法清除
+func (metric *Int64Metric) Reregister() error {
+	_view := view.Find(metric.name)
+	view.Unregister(_view)
+	return view.Register(_view)
+}

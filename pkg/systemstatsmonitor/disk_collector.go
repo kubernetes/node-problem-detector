@@ -272,6 +272,12 @@ func (dc *diskCollector) collect() {
 		return
 	}
 
+	// 重新注册view，解决磁盘设备增减后，已删除磁盘的指标数据无法清除
+	if dc.mBytesUsed.Reregister() != nil {
+		glog.Errorf("Failed to reregister for mBytesUsed: %v", err)
+		return
+	}
+
 	// to make sure that the rows are not duplicated
 	// we display only the only one row even if there are
 	// mutiple rows for the same disk.
