@@ -17,6 +17,10 @@ limitations under the License.
 package healthchecker
 
 import (
+	"context"
+	"net/http"
+	"os/exec"
+	"strings"
 	"time"
 
 	"github.com/golang/glog"
@@ -109,4 +113,58 @@ func logPatternHealthCheck(service, logStartTime string, logPatternsToCheck map[
 		}
 	}
 	return true, nil
+}
+
+// healthCheckEndpointOKFunc returns a function to check the status of an http endpoint
+func healthCheckEndpointOKFunc(endpoint string, timeout time.Duration) func() (bool, error) {
+	return func() (bool, error) {
+		httpClient := http.Client{Timeout: timeout}
+		response, err := httpClient.Get(endpoint)
+		if err != nil || response.StatusCode != http.StatusOK {
+			return false, nil
+		}
+		return true, nil
+	}
+}
+
+
+// getHealthCheckFunc returns the health check function based on the component.
+func getHealthCheckFunc(hco *options.HealthCheckerOptions) func() (bool, error) {
+	switch hco.Component {
+	case types.KubeletComponent:
+		return healthCheckEndpointOKFunc(types.KubeletHealthCheckEndpoint, hco.HealthCheckTimeout)
+	case types.KubeProxyComponent:
+		return healthCheckEndpointOKFunc(types.KubeProxyHealthCheckEndpoint, hco.HealthCheckTimeout)
+	case types.DockerComponent:
+		return func() (bool, error) {
+			if _, err := execCommand(hco.HealthCheckTimeout, getDockerPath(), "ps"); err != nil {
+				return false, nil
+			}
+			return true, nil
+		}
+	case types.CRIComponent:
+		return func() (bool, error) {
+			if _, err := execCommand(hco.HealthCheckTimeout, hco.CriCtlPath, "--runtime-endpoint="+hco.CriSocketPath, "--image-endpoint="+hco.CriSocketPath, "pods"); err != nil {
+				return false, nil
+			}
+			return true, nil
+		}
+	default:
+		glog.Warningf("Unsupported component: %v", hco.Component)
+	}
+
+	return nil
+}
+
+// execCommand executes the bash command and returns the (output, error) from command, error if timeout occurs.
+func execCommand(timeout time.Duration, command string, args ...string) (string, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	cmd := exec.CommandContext(ctx, command, args...)
+	out, err := cmd.Output()
+	if err != nil {
+		glog.Infof("command %v failed: %v, %v\n", cmd, err, out)
+		return "", err
+	}
+	return strings.TrimSuffix(string(out), "\n"), nil
 }

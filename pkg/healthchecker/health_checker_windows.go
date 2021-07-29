@@ -18,7 +18,6 @@ package healthchecker
 
 import (
 	"fmt"
-	"net/http"
 	"os/exec"
 	"strconv"
 	"strings"
@@ -64,49 +63,6 @@ func getRepairFunc(hco *options.HealthCheckerOptions) func() {
 	}
 }
 
-// getHealthCheckFunc returns the health check function based on the component.
-func getHealthCheckFunc(hco *options.HealthCheckerOptions) func() (bool, error) {
-	switch hco.Component {
-	case types.KubeletComponent:
-		return healthCheckEndpointOKFunc(types.KubeletHealthCheckEndpoint, hco.HealthCheckTimeout)
-	case types.KubeProxyComponent:
-		return healthCheckEndpointOKFunc(types.KubeProxyHealthCheckEndpoint, hco.HealthCheckTimeout)
-	case types.DockerComponent:
-		return func() (bool, error) {
-			if _, err := execCommand("docker.exe", "ps"); err != nil {
-				return false, nil
-			}
-			return true, nil
-		}
-	case types.CRIComponent:
-		return func() (bool, error) {
-			if _, err := execCommand(hco.CriCtlPath, "--runtime-endpoint="+hco.CriSocketPath, "--image-endpoint="+hco.CriSocketPath, "pods"); err != nil {
-				return false, nil
-			}
-			return true, nil
-		}
-	}
-	return nil
-}
-
-// healthCheckEndpointOKFunc returns a function to check the status of an http endpoint
-func healthCheckEndpointOKFunc(endpoint string, timeout time.Duration) func() (bool, error) {
-	return func() (bool, error) {
-		httpClient := http.Client{Timeout: timeout}
-		response, err := httpClient.Get(endpoint)
-		if err != nil || response.StatusCode != http.StatusOK {
-			return false, nil
-		}
-		return true, nil
-	}
-}
-
-// execCommand creates a new process, executes the command, and returns the (output, error) from command.
-func execCommand(command string, args ...string) (string, error) {
-	cmd := util.Exec(command, args...)
-	return extractCommandOutput(cmd)
-}
-
 // powershell executes the arguments in powershell process and returns (output, error) from command.
 func powershell(args ...string) (string, error) {
 	cmd := util.Powershell(args...)
@@ -142,4 +98,8 @@ func checkForPattern(service, logStartTime, logPattern string, logCountThreshold
 		return false, nil
 	}
 	return true, nil
+}
+
+func getDockerPath() string {
+	return "docker.exe"
 }
