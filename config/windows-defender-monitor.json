@@ -13,7 +13,7 @@
       {
         "type": "temporary",
         "reason": "WindowsDefenderThreatsDetected",
-        "path": "./config/plugin/windows_defender_problem.ps1",
+        "path": "C:\\etc\\kubernetes\\node-problem-detector\\config\\plugin\\windows_defender_problem.ps1",
         "timeout": "3s"
       }
     ]

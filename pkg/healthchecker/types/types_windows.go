@@ -17,7 +17,7 @@ limitations under the License.
 package types
 
 const (
-	DefaultCriCtl        = "C:/node/crictl.exe"
+	DefaultCriCtl        = "C:/etc/kubernetes/node/bin/crictl.exe"
 	DefaultCriSocketPath = "npipe:////./pipe/containerd-containerd"
 	UptimeTimeLayout     = "Mon 02 Jan 2006 15:04:05 MST"
 	LogParsingTimeFormat = "yyyy-MM-dd HH:mm:ss"

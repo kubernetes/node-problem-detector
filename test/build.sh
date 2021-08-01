@@ -65,7 +65,7 @@ function get-version() {
 
 function install-lib() {
   apt-get update
-  apt-get install -y libsystemd-dev
+  apt-get install -y libsystemd-dev gcc-aarch64-linux-gnu
   # Turn off go modules here, because we are not trying to install
   # ginkgo library/module. We are trying to install the ginkgo executable.
   GO111MODULE=off go get -v github.com/onsi/ginkgo/ginkgo
@@ -82,7 +82,7 @@ function write-env-file() {
 export KUBE_ENABLE_NODE_PROBLEM_DETECTOR=standalone
 export NODE_PROBLEM_DETECTOR_RELEASE_PATH=${UPLOAD_PATH/gs:\/\//${GCS_URL_PREFIX}}
 export NODE_PROBLEM_DETECTOR_VERSION=${VERSION}
-export NODE_PROBLEM_DETECTOR_TAR_HASH=$(sha1sum ${ROOT_PATH}/node-problem-detector-${VERSION}.tar.gz | cut -d ' ' -f1)
+export NODE_PROBLEM_DETECTOR_TAR_HASH=$(sha1sum ${ROOT_PATH}/node-problem-detector-${VERSION}-linux_amd64.tar.gz | cut -d ' ' -f1)
 export EXTRA_ENVS=NODE_PROBLEM_DETECTOR_IMAGE=${REGISTRY}/node-problem-detector:${TAG}
 EOF
 

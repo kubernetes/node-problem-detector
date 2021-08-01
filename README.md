@@ -137,12 +137,16 @@ For example, to run without auth, use the following config:
 
 ## Build Image
 
+* Install development dependencies for `libsystemd` and the ARM GCC toolchain
+  * Debian: `apt install libsystemd-dev gcc-aarch64-linux-gnu`
+  * Ubuntu: `apt install libsystemd-journal-dev gcc-aarch64-linux-gnu`
+
 * `go get` or `git clone` node-problem-detector repo into `$GOPATH/src/k8s.io` or `$GOROOT/src/k8s.io`
 with one of the below directions:
   * `cd $GOPATH/src/k8s.io && git clone git@github.com:kubernetes/node-problem-detector.git`
   * `cd $GOPATH/src/k8s.io && go get k8s.io/node-problem-detector`
 
-* run `make` in the top directory. It will:
+* Run `make` in the top directory. It will:
   * Build the binary.
   * Build the docker image. The binary and `config/` are copied into the docker image.
 
@@ -157,11 +161,6 @@ The above command will compile the node-problem-detector without [Custom Plugin 
 and [System Stats Monitor](https://github.com/kubernetes/node-problem-detector/tree/master/pkg/systemstatsmonitor).
 Check out the [Problem Daemon](https://github.com/kubernetes/node-problem-detector#problem-daemon) section
 to see how to disable each problem daemon during compilation time.
-
-**Note**:
-By default, node-problem-detector will be built with systemd support with the `make` command. This requires systemd develop files.
-You should download the systemd develop files first. For Ubuntu, the `libsystemd-journal-dev` package should
-be installed. For Debian, the `libsystemd-dev` package should be installed.
 
 ## Push Image
 
@@ -222,13 +221,13 @@ To develop NPD on Windows you'll need to setup your Windows machine for Go devel
 # Run these commands in the node-problem-detector directory.
 
 # Build in MINGW64 Window
-make clean windows-binaries
+make clean ENABLE_JOURNALD=0 build-binaries
 
 # Test in MINGW64 Window
 make test
 
 # Run with containerd log monitoring enabled in Command Prompt. (Assumes containerd is installed.)
-%CD%\output\windows_amd64\node-problem-detector.exe --logtostderr --enable-k8s-exporter=false --config.system-log-monitor=%CD%\config\windows-containerd-monitor-filelog.json --config.system-stats-monitor=config\windows-system-stats-monitor.json
+%CD%\output\windows_amd64\bin\node-problem-detector.exe --logtostderr --enable-k8s-exporter=false --config.system-log-monitor=%CD%\config\windows-containerd-monitor-filelog.json --config.system-stats-monitor=config\windows-system-stats-monitor.json
 
 # Configure NPD to run as a Windows Service
 sc.exe create NodeProblemDetector binpath= "%CD%\node-problem-detector.exe [FLAGS]" start= demand 

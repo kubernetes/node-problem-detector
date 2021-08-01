@@ -25,6 +25,7 @@
         "--component=kubelet",
         "--enable-repair=true",
         "--cooldown-time=1m",
+        "--loopback-time=0",
         "--health-check-timeout=10s"
       ],
       "timeout": "3m"

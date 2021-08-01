@@ -107,9 +107,10 @@ func waitForAPIServerReadyWithTimeout(c problemclient.Client, npdo *options.Node
 	return wait.PollImmediate(npdo.APIServerWaitInterval, npdo.APIServerWaitTimeout, func() (done bool, err error) {
 		// If NPD can get the node object from kube-apiserver, the server is
 		// ready and the RBAC permission is set correctly.
-		if _, err := c.GetNode(); err == nil {
-			return true, nil
+		if _, err := c.GetNode(); err != nil {
+			glog.Errorf("Can't get node object: %v", err)
+			return false, nil
 		}
-		return false, nil
+		return true, nil
 	})
 }

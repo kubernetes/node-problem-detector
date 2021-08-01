@@ -22,7 +22,8 @@
 all: build
 
 # PLATFORMS is the set of OS_ARCH that NPD can build against.
-PLATFORMS=linux_amd64 windows_amd64
+LINUX_PLATFORMS=linux_amd64 linux_arm64
+PLATFORMS=$(LINUX_PLATFORMS) windows_amd64
 
 # VERSION is the version of the binary.
 VERSION?=$(shell if [ -d .git ]; then echo `git describe --tags --dirty`; else echo "UNKNOWN"; fi)
@@ -73,7 +74,7 @@ endif
 # The debian-base:v1.0.0 image built from kubernetes repository is based on
 # Debian Stretch. It includes systemd 232 with support for both +XZ and +LZ4
 # compression. +LZ4 is needed on some os distros such as COS.
-BASEIMAGE:=k8s.gcr.io/debian-base-amd64:v1.0.0
+BASEIMAGE:=k8s.gcr.io/debian-base-amd64:v2.0.0
 
 # Disable cgo by default to make the binary statically linked.
 CGO_ENABLED:=0
@@ -123,7 +124,9 @@ ifeq ($(ENABLE_JOURNALD), 1)
 	BINARIES_LINUX_ONLY += bin/log-counter
 endif
 
-ALL_BINARIES = $(foreach binary, $(BINARIES) $(BINARIES_LINUX_ONLY), ./$(binary)) $(foreach binary, $(BINARIES) $(BINARIES_LINUX_ONLY), output/linux_amd64/$(binary)) $(foreach binary, $(BINARIES), output/windows_amd64/$(binary).exe)
+ALL_BINARIES = $(foreach binary, $(BINARIES) $(BINARIES_LINUX_ONLY), ./$(binary)) \
+  $(foreach platform, $(LINUX_PLATFORMS), $(foreach binary, $(BINARIES) $(BINARIES_LINUX_ONLY), output/$(platform)/$(binary))) \
+  $(foreach binary, $(BINARIES), output/windows_amd64/$(binary).exe)
 ALL_TARBALLS = $(foreach platform, $(PLATFORMS), $(NPD_NAME_VERSION)-$(platform).tar.gz)
 
 output/windows_amd64/bin/%.exe: $(PKG_SOURCES)
@@ -143,7 +146,8 @@ output/windows_amd64/test/bin/%.exe: $(PKG_SOURCES)
 		./test/e2e/$(subst -,,$*)
 
 output/linux_amd64/bin/%: $(PKG_SOURCES)
-	GOOS=linux GOARCH=amd64 CGO_ENABLED=$(CGO_ENABLED) GO111MODULE=on go build \
+	GOOS=linux GOARCH=amd64 CGO_ENABLED=$(CGO_ENABLED) GO111MODULE=on \
+	  CC=x86_64-linux-gnu-gcc go build \
 		-mod vendor \
 		-o $@ \
 		-ldflags '-X $(PKG)/pkg/version.version=$(VERSION)' \
@@ -152,7 +156,26 @@ output/linux_amd64/bin/%: $(PKG_SOURCES)
 	touch $@
 
 output/linux_amd64/test/bin/%: $(PKG_SOURCES)
-	GOOS=linux GOARCH=amd64 CGO_ENABLED=$(CGO_ENABLED) GO111MODULE=on go build \
+	GOOS=linux GOARCH=amd64 CGO_ENABLED=$(CGO_ENABLED) GO111MODULE=on \
+	  CC=x86_64-linux-gnu-gcc go build \
+		-mod vendor \
+		-o $@ \
+		-tags "$(LINUX_BUILD_TAGS)" \
+		./test/e2e/$(subst -,,$*)
+
+output/linux_arm64/bin/%: $(PKG_SOURCES)
+	GOOS=linux GOARCH=arm64 CGO_ENABLED=$(CGO_ENABLED) GO111MODULE=on \
+	  CC=aarch64-linux-gnu-gcc go build \
+		-mod vendor \
+		-o $@ \
+		-ldflags '-X $(PKG)/pkg/version.version=$(VERSION)' \
+		-tags "$(LINUX_BUILD_TAGS)" \
+		./cmd/$(subst -,,$*)
+	touch $@
+
+output/linux_arm64/test/bin/%: $(PKG_SOURCES)
+	GOOS=linux GOARCH=arm64 CGO_ENABLED=$(CGO_ENABLED) GO111MODULE=on \
+	  CC=aarch64-linux-gnu-gcc go build \
 		-mod vendor \
 		-o $@ \
 		-tags "$(LINUX_BUILD_TAGS)" \
@@ -245,6 +268,10 @@ push-tar: build-tar
 	gsutil cp node-problem-detector-$(VERSION)-*.tar.gz* $(UPLOAD_PATH)/node-problem-detector/
 
 push: push-container push-tar
+
+coverage.out:
+	rm -f coverage.out
+	go test -coverprofile=coverage.out -mod vendor -timeout=1m -v -short ./...
 
 clean:
 	rm -rf bin/
