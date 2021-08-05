@@ -278,3 +278,4 @@ clean:
 	rm -rf test/bin/
 	rm -f node-problem-detector-*.tar.gz*
 	rm -rf output/
+	rm -f coverage.out
