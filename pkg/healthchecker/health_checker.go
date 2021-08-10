@@ -127,7 +127,6 @@ func healthCheckEndpointOKFunc(endpoint string, timeout time.Duration) func() (b
 	}
 }
 
-
 // getHealthCheckFunc returns the health check function based on the component.
 func getHealthCheckFunc(hco *options.HealthCheckerOptions) func() (bool, error) {
 	switch hco.Component {

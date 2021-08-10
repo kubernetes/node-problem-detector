@@ -39,15 +39,16 @@ func init() {
 }
 
 type systemStatsMonitor struct {
-	configPath         string
-	config             ssmtypes.SystemStatsConfig
-	cpuCollector       *cpuCollector
-	diskCollector      *diskCollector
-	hostCollector      *hostCollector
-	memoryCollector    *memoryCollector
-	netCollector       *netCollector
-	osFeatureCollector *osFeatureCollector
-	tomb               *tomb.Tomb
+	configPath           string
+	config               ssmtypes.SystemStatsConfig
+	cpuCollector         *cpuCollector
+	diskCollector        *diskCollector
+	hostCollector        *hostCollector
+	memoryCollector      *memoryCollector
+	netCollector         *netCollector
+	osFeatureCollector   *osFeatureCollector
+	fileHandlerCollector *fileHandlerCollector
+	tomb                 *tomb.Tomb
 }
 
 // NewSystemStatsMonitorOrDie creates a system stats monitor.
@@ -101,6 +102,9 @@ func NewSystemStatsMonitorOrDie(configPath string) types.Monitor {
 	if len(ssm.config.NetConfig.MetricsConfigs) > 0 {
 		ssm.netCollector = NewNetCollectorOrDie(&ssm.config.NetConfig)
 	}
+	if len(ssm.config.FileHandlerConfig.MetricsConfigs) > 0 {
+		ssm.fileHandlerCollector = NewFileHandlerCollectorOrDie(&ssm.config.FileHandlerConfig)
+	}
 	return &ssm
 }
 
@@ -127,6 +131,7 @@ func (ssm *systemStatsMonitor) monitorLoop() {
 		ssm.memoryCollector.collect()
 		ssm.osFeatureCollector.collect()
 		ssm.netCollector.collect()
+		ssm.fileHandlerCollector.collect()
 	}
 
 	for {
@@ -138,6 +143,8 @@ func (ssm *systemStatsMonitor) monitorLoop() {
 			ssm.memoryCollector.collect()
 			ssm.osFeatureCollector.collect()
 			ssm.netCollector.collect()
+			ssm.fileHandlerCollector.collect()
+
 		case <-ssm.tomb.Stopping():
 			glog.Infof("System stats monitor stopped: %s", ssm.configPath)
 			return

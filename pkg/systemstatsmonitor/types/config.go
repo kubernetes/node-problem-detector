@@ -60,15 +60,20 @@ type NetStatsConfig struct {
 	MetricsConfigs map[string]MetricConfig `json:"metricsConfigs"`
 }
 
+type FileHandlerStatsConfig struct {
+	MetricsConfigs map[string]MetricConfig `json:"metricsConfigs"`
+}
+
 type SystemStatsConfig struct {
-	CPUConfig            CPUStatsConfig       `json:"cpu"`
-	DiskConfig           DiskStatsConfig      `json:"disk"`
-	HostConfig           HostStatsConfig      `json:"host"`
-	MemoryConfig         MemoryStatsConfig    `json:"memory"`
-	OsFeatureConfig      OSFeatureStatsConfig `json:"osFeature"`
-	NetConfig            NetStatsConfig       `json:"net"`
-	InvokeIntervalString string               `json:"invokeInterval"`
-	InvokeInterval       time.Duration        `json:"-"`
+	CPUConfig            CPUStatsConfig         `json:"cpu"`
+	DiskConfig           DiskStatsConfig        `json:"disk"`
+	HostConfig           HostStatsConfig        `json:"host"`
+	MemoryConfig         MemoryStatsConfig      `json:"memory"`
+	OsFeatureConfig      OSFeatureStatsConfig   `json:"osFeature"`
+	NetConfig            NetStatsConfig         `json:"net"`
+	FileHandlerConfig    FileHandlerStatsConfig `json:"file"`
+	InvokeIntervalString string                 `json:"invokeInterval"`
+	InvokeInterval       time.Duration          `json:"-"`
 }
 
 // ApplyConfiguration applies default configurations.
