@@ -71,7 +71,7 @@
       }
     }
   },
-  "invokeInterval": "60s",
+  "invokeInterval": "",
   "memory": {
     "metricsConfigs": {
       "memory/anonymous_used": {

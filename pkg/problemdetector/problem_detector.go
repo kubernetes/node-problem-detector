@@ -37,6 +37,10 @@ type problemDetector struct {
 // NewProblemDetector creates the problem detector. Currently we just directly passed in the problem daemons, but
 // in the future we may want to let the problem daemons register themselves.
 func NewProblemDetector(monitors []types.Monitor, exporters []types.Exporter) ProblemDetector {
+	if len(monitors) == 0 && len(exporters) == 0 {
+		return nil
+	}
+
 	return &problemDetector{
 		monitors:  monitors,
 		exporters: exporters,

@@ -63,6 +63,9 @@ const (
 	NetDevTxCollisions      MetricID = "net/tx_collisions"
 	NetDevTxCarrier         MetricID = "net/tx_carrier"
 	NetDevTxCompressed      MetricID = "net/tx_compressed"
+	ProcessCPUTime          MetricID = "process/cpu_time"
+	ProcessRSSUsage         MetricID = "process/rss_usage"
+	ProcessVMSUsage         MetricID = "process/vm_usage"
 )
 
 var MetricMap MetricMapping

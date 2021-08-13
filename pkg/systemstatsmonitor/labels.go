@@ -45,3 +45,12 @@ const cpuLabel = "cpu"
 
 // stageLabel labels the stage according to the kernel where CPU time was spent
 const stageLabel = "stage"
+
+// pid labels the stage process id of the process
+const pidLabel = "pid"
+
+// processLabel labels the process name
+const processLabel = "process"
+
+// ownerLabel labels the owner of the process
+const ownerLabel = "owner"

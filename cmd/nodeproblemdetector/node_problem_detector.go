@@ -58,13 +58,17 @@ func npdMain(npdo *options.NodeProblemDetectorOptions, termCh <-chan error) erro
 
 	// Initialize exporters.
 	defaultExporters := []types.Exporter{}
-	if ke := k8sexporter.NewExporterOrDie(npdo); ke != nil {
-		defaultExporters = append(defaultExporters, ke)
-		glog.Info("K8s exporter started.")
+	if npdo.EnableK8sExporter {
+		if ke := k8sexporter.NewExporterOrDie(npdo); ke != nil {
+			defaultExporters = append(defaultExporters, ke)
+			glog.Info("K8s exporter started.")
+		}
 	}
-	if pe := prometheusexporter.NewExporterOrDie(npdo); pe != nil {
-		defaultExporters = append(defaultExporters, pe)
-		glog.Info("Prometheus exporter started.")
+	if npdo.PrometheusServerAddress != "" {
+		if pe := prometheusexporter.NewExporterOrDie(npdo); pe != nil {
+			defaultExporters = append(defaultExporters, pe)
+			glog.Info("Prometheus exporter started.")
+		}
 	}
 
 	plugableExporters := exporters.NewExporters()
@@ -79,5 +83,8 @@ func npdMain(npdo *options.NodeProblemDetectorOptions, termCh <-chan error) erro
 
 	// Initialize NPD core.
 	p := problemdetector.NewProblemDetector(problemDaemons, npdExporters)
+	if p == nil {
+		return nil
+	}
 	return p.Run(termCh)
 }
