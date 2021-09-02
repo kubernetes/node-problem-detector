@@ -44,8 +44,8 @@ func getUptimeFunc(service string) func() (time.Duration, error) {
 		getTimeCreatedCmd := `$ProcessId = (Get-WMIObject -Class Win32_Service -Filter "Name='` + service + `'" | Select-Object -ExpandProperty ProcessId);` +
 			`if ([string]::IsNullOrEmpty($ProcessId) -or $ProcessId -eq 0) { (Get-WinEvent -FilterHashtable @{logname='system';id=7036} ` +
 			`| Where-Object {$_.Message -match '.*(` + service + `).*(running).*'}  | Select-Object -Property TimeCreated -First 1 | ` +
-			`foreach {$_.TimeCreated.ToString('R')} | Out-String).Trim() } else { (Get-Process -Id $ProcessId | Select starttime | ` +
-			`foreach {$_.starttime.ToString('R')} | Out-String).Trim() }`
+			`foreach {$_.TimeCreated.ToUniversalTime().ToString('R')} | Out-String).Trim() } else { (Get-Process -Id $ProcessId | Select starttime | ` +
+			`foreach {$_.starttime.ToUniversalTime().ToString('R')} | Out-String).Trim() }`
 		out, err := powershell(getTimeCreatedCmd)
 		if err != nil {
 			return time.Duration(0), err
