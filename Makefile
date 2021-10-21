@@ -257,10 +257,11 @@ build: build-container build-tar
 docker-builder:
 	docker build -t npd-builder . --target=builder
 
+DOCKER_BUILD_VARS ?=
 build-in-docker: clean docker-builder
 	docker run \
 		-v `pwd`:/gopath/src/k8s.io/node-problem-detector/ npd-builder:latest bash \
-		-c 'cd /gopath/src/k8s.io/node-problem-detector/ && make build-binaries'
+		-c 'cd /gopath/src/k8s.io/node-problem-detector/ && make build-binaries $(DOCKER_BUILD_VARS)'
 
 push-container: build-container
 	# So we can push to docker hub by setting REGISTRY
