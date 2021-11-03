@@ -43,6 +43,16 @@
 			"pattern": "divide error: 0000 \\[#\\d+\\] SMP"
 		},
 		{
+            "type": "temporary",
+            "reason": "TCPMemOverFlow",
+            "pattern": "TCP: out of memory -- consider tuning tcp_mem"
+        },
+        {
+            "type": "temporary",
+            "reason": "TCPSkOverFlow",
+            "pattern": "TCP: too many orphaned sockets"
+        },
+		{
 			"type": "permanent",
 			"condition": "KernelDeadlock",
 			"reason": "DockerHung",

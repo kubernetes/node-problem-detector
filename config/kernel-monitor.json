@@ -70,6 +70,16 @@
 			"pattern": "task docker:\\w+ blocked for more than \\w+ seconds\\."
 		},
 		{
+			"type": "temporary",
+			"reason": "TCPMemOverFlow",
+			"pattern": "TCP: out of memory -- consider tuning tcp_mem"
+		},
+		{
+			"type": "temporary",
+			"reason": "TCPSkOverFlow",
+			"pattern": "TCP: too many orphaned sockets"
+		},
+		{
 			"type": "permanent",
 			"condition": "ReadonlyFilesystem",
 			"reason": "FilesystemIsReadOnly",
