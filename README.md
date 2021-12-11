@@ -138,8 +138,7 @@ For example, to run without auth, use the following config:
 ## Build Image
 
 * Install development dependencies for `libsystemd` and the ARM GCC toolchain
-  * Debian: `apt install libsystemd-dev gcc-aarch64-linux-gnu`
-  * Ubuntu: `apt install libsystemd-journal-dev gcc-aarch64-linux-gnu`
+  * Debian/Ubuntu: `apt install libsystemd-dev gcc-aarch64-linux-gnu`
 
 * `go get` or `git clone` node-problem-detector repo into `$GOPATH/src/k8s.io` or `$GOROOT/src/k8s.io`
 with one of the below directions:
@@ -263,7 +262,7 @@ For example, to test [KernelMonitor](https://github.com/kubernetes/node-problem-
 node-problem-detector uses [go modules](https://github.com/golang/go/wiki/Modules)
 to manage dependencies. Therefore, building node-problem-detector requires
 golang 1.11+. It still uses vendoring. See the
-[Kubernetes go modules KEP](https://github.com/kubernetes/enhancements/blob/master/keps/sig-architecture/2019-03-19-go-modules.md#alternatives-to-vendoring-using-go-modules)
+[Kubernetes go modules KEP](https://github.com/kubernetes/enhancements/tree/master/keps/sig-architecture/917-go-modules#alternatives-to-vendoring-using-go-modules)
 for the design decisions. To add a new dependency, update [go.mod](go.mod) and
 run `GO111MODULE=on go mod vendor`.
 

@@ -33,12 +33,19 @@ import (
 // getUptimeFunc returns the time for which the given service has been running.
 func getUptimeFunc(service string) func() (time.Duration, error) {
 	return func() (time.Duration, error) {
-		// Using the WinEvent Log Objects to find the Service logs' time when the Service last entered running state.
+		// To attempt to calculate uptime more efficiently, we attempt to grab the process id to grab the start time.
+		// If the process id does not exist (meaning the service is not running for some reason), we will result to
+		// using the WinEvent Log Objects to find the Service logs' time when the Service last entered running state.
+		// In addition to filtering not by the logname=system we also filter on event id=7036 to reduce the number of
+		// entries the next command Where-Object will have to look through. id 7036 messages indicating a stopped or running service.
 		// The powershell command formats the TimeCreated of the event log in RFC1123Pattern.
 		// However, because the time library parser does not recognize the ',' in this RFC1123Pattern format,
 		// it is manually removed before parsing it using the UptimeTimeLayout.
-		getTimeCreatedCmd := "(Get-WinEvent -Logname System | Where-Object {$_.Message -Match '.*(" + service +
-			").*(running).*'} | Select-Object -Property TimeCreated -First 1 | foreach {$_.TimeCreated.ToString('R')} | Out-String).Trim()"
+		getTimeCreatedCmd := `$ProcessId = (Get-WMIObject -Class Win32_Service -Filter "Name='` + service + `'" | Select-Object -ExpandProperty ProcessId);` +
+			`if ([string]::IsNullOrEmpty($ProcessId) -or $ProcessId -eq 0) { (Get-WinEvent -FilterHashtable @{logname='system';id=7036} ` +
+			`| Where-Object {$_.Message -match '.*(` + service + `).*(running).*'}  | Select-Object -Property TimeCreated -First 1 | ` +
+			`foreach {$_.TimeCreated.ToUniversalTime().ToString('R')} | Out-String).Trim() } else { (Get-Process -Id $ProcessId | Select starttime | ` +
+			`foreach {$_.starttime.ToUniversalTime().ToString('R')} | Out-String).Trim() }`
 		out, err := powershell(getTimeCreatedCmd)
 		if err != nil {
 			return time.Duration(0), err
