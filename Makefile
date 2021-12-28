@@ -16,7 +16,7 @@
 
 .PHONY: all \
         vet fmt version test e2e-test \
-        build-binaries build-container build-tar build \
+        build-binaries build-container-amd64 build-container-arm64 build-container build-tar build \
         docker-builder build-in-docker push-container push-tar push clean
 
 all: build
@@ -69,12 +69,6 @@ ENABLE_JOURNALD=0
 else ifeq ($(go env GOHOSTOS), windows)
 ENABLE_JOURNALD=0
 endif
-
-# TODO(random-liu): Support different architectures.
-# The debian-base:v1.0.0 image built from kubernetes repository is based on
-# Debian Stretch. It includes systemd 232 with support for both +XZ and +LZ4
-# compression. +LZ4 is needed on some os distros such as COS.
-BASEIMAGE:=k8s.gcr.io/debian-base-amd64:v2.0.0
 
 # Disable cgo by default to make the binary statically linked.
 CGO_ENABLED:=0
@@ -239,8 +233,12 @@ $(NPD_NAME_VERSION)-%.tar.gz: $(ALL_BINARIES) test/e2e-install.sh
 
 build-binaries: $(ALL_BINARIES)
 
-build-container: build-binaries Dockerfile
-	docker build -t $(IMAGE) --build-arg BASEIMAGE=$(BASEIMAGE) --build-arg LOGCOUNTER=$(LOGCOUNTER) .
+build-container-%: build-binaries Dockerfile
+	docker buildx build --output=type=docker \
+ 		--build-arg LOGCOUNTER=$(LOGCOUNTER) \
+ 		--tag $(IMAGE)-$* .
+
+build-container: build-binaries Dockerfile build-container-amd64 build-container-arm64
 
 $(TARBALL): ./bin/node-problem-detector ./bin/log-counter ./bin/health-checker ./test/bin/problem-maker
 	tar -zcvf $(TARBALL) bin/ config/ test/e2e-install.sh test/bin/problem-maker
@@ -259,9 +257,12 @@ build-in-docker: clean docker-builder
 		-v `pwd`:/gopath/src/k8s.io/node-problem-detector/ npd-builder:latest bash \
 		-c 'cd /gopath/src/k8s.io/node-problem-detector/ && make build-binaries'
 
-push-container: build-container
+push-container:
 	gcloud auth configure-docker
-	docker push $(IMAGE)
+	docker buildx build --output=type=registry \
+		--build-arg LOGCOUNTER=$(LOGCOUNTER) \
+		--platform linux/amd64,linux/arm64 \
+		--tag $(IMAGE) .
 
 push-tar: build-tar
 	gsutil cp $(TARBALL) $(UPLOAD_PATH)/node-problem-detector/
