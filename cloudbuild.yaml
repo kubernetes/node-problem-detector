@@ -3,7 +3,7 @@
 # this must be specified in seconds. If omitted, defaults to 600s (10 mins)
 timeout: 7200s
 steps:
-  - name: 'gcr.io/k8s-testimages/gcb-docker-gcloud:latest'
+  - name: 'gcr.io/k8s-staging-test-infra/gcb-docker-gcloud:v20211118-2f2d816b90'
     entrypoint: bash
     env:
     - PROW_GIT_TAG=$_GIT_TAG
