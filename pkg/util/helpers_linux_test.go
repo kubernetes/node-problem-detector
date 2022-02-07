@@ -58,6 +58,12 @@ func TestGetOSVersionLinux(t *testing.T) {
 			expectErr:         false,
 		},
 		{
+			name:              "fedora",
+			fakeOSReleasePath: "testdata/os-release-fedora",
+			expectedOSVersion: "35 (Thirty Five)",
+			expectErr:         false,
+		},
+		{
 			name:              "Unknown",
 			fakeOSReleasePath: "testdata/os-release-unknown",
 			expectedOSVersion: "",
