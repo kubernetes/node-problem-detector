@@ -23,6 +23,7 @@ all: build
 
 # PLATFORMS is the set of OS_ARCH that NPD can build against.
 LINUX_PLATFORMS=linux_amd64 linux_arm64
+DOCKER_PLATFORMS=linux/amd64,linux/arm64
 PLATFORMS=$(LINUX_PLATFORMS) windows_amd64
 
 # VERSION is the version of the binary.
@@ -74,7 +75,7 @@ endif
 # The debian-base:v1.0.0 image built from kubernetes repository is based on
 # Debian Stretch. It includes systemd 232 with support for both +XZ and +LZ4
 # compression. +LZ4 is needed on some os distros such as COS.
-BASEIMAGE:=k8s.gcr.io/debian-base-amd64:v2.0.0
+BASEIMAGE:=k8s.gcr.io/debian-base:v2.0.0
 
 # Disable cgo by default to make the binary statically linked.
 CGO_ENABLED:=0
@@ -239,8 +240,8 @@ $(NPD_NAME_VERSION)-%.tar.gz: $(ALL_BINARIES) test/e2e-install.sh
 
 build-binaries: $(ALL_BINARIES)
 
-build-container: build-binaries Dockerfile
-	docker build -t $(IMAGE) --build-arg BASEIMAGE=$(BASEIMAGE) --build-arg LOGCOUNTER=$(LOGCOUNTER) .
+build-container: clean Dockerfile
+	docker buildx build --platform $(DOCKER_PLATFORMS) -t $(IMAGE) --build-arg BASEIMAGE=$(BASEIMAGE) --build-arg LOGCOUNTER=$(LOGCOUNTER) .
 
 $(TARBALL): ./bin/node-problem-detector ./bin/log-counter ./bin/health-checker ./test/bin/problem-maker
 	tar -zcvf $(TARBALL) bin/ config/ test/e2e-install.sh test/bin/problem-maker
@@ -252,7 +253,7 @@ build-tar: $(TARBALL) $(ALL_TARBALLS)
 build: build-container build-tar
 
 docker-builder:
-	docker build -t npd-builder ./builder
+	docker build -t npd-builder . --target=builder
 
 build-in-docker: clean docker-builder
 	docker run \
@@ -260,8 +261,12 @@ build-in-docker: clean docker-builder
 		-c 'cd /gopath/src/k8s.io/node-problem-detector/ && make build-binaries'
 
 push-container: build-container
+	# So we can push to docker hub by setting REGISTRY
+ifneq (,$(findstring gcr.io,$(REGISTRY)))
 	gcloud auth configure-docker
-	docker push $(IMAGE)
+endif
+	# Build should be cached from build-container
+	docker buildx build --push --platform $(DOCKER_PLATFORMS) -t $(IMAGE) --build-arg BASEIMAGE=$(BASEIMAGE) --build-arg LOGCOUNTER=$(LOGCOUNTER) .
 
 push-tar: build-tar
 	gsutil cp $(TARBALL) $(UPLOAD_PATH)/node-problem-detector/
