@@ -27,8 +27,7 @@ import (
 	"k8s.io/node-problem-detector/test/e2e/lib/gce"
 	"k8s.io/node-problem-detector/test/e2e/lib/npd"
 
-	"github.com/onsi/ginkgo"
-	"github.com/onsi/ginkgo/config"
+	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/pborman/uuid"
 )
@@ -190,7 +189,7 @@ var _ = ginkgo.Describe("NPD should export Prometheus metrics.", func() {
 			}
 		}
 
-		errs := npd.SaveTestArtifacts(instance, artifactSubDir, config.GinkgoConfig.ParallelNode)
+		errs := npd.SaveTestArtifacts(instance, artifactSubDir, ginkgo.GinkgoParallelProcess())
 		if len(errs) != 0 {
 			fmt.Printf("Error storing debugging data to test artifacts: %v", errs)
 		}

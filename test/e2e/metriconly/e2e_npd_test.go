@@ -29,9 +29,8 @@ import (
 	"k8s.io/node-problem-detector/test/e2e/lib/gce"
 	"k8s.io/test-infra/boskos/client"
 
-	"github.com/onsi/ginkgo"
-	"github.com/onsi/ginkgo/config"
-	"github.com/onsi/ginkgo/reporters"
+	"github.com/onsi/ginkgo/v2"
+	"github.com/onsi/ginkgo/v2/reporters"
 	. "github.com/onsi/gomega"
 	compute "google.golang.org/api/compute/v1"
 )
@@ -84,7 +83,7 @@ func TestNPD(t *testing.T) {
 	}
 
 	// The junit formatted result output is for showing test results on testgrid.
-	junitReporter := reporters.NewJUnitReporter(path.Join(*artifactsDir, fmt.Sprintf("junit-%02d.xml", config.GinkgoConfig.ParallelNode)))
+	junitReporter := reporters.NewJUnitReporter(path.Join(*artifactsDir, fmt.Sprintf("junit-%02d.xml", ginkgo.GinkgoParallelProcess())))
 	ginkgo.RunSpecsWithDefaultAndCustomReporters(t, "NPD Metric-only Suite", []ginkgo.Reporter{junitReporter})
 }
 
