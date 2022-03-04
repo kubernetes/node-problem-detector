@@ -8,8 +8,8 @@ require (
 	contrib.go.opencensus.io/exporter/prometheus v0.0.0-20190427222117-f6cda26f80a3
 	contrib.go.opencensus.io/exporter/stackdriver v0.13.4
 	github.com/StackExchange/wmi v0.0.0-20181212234831-e0a55b97c705 // indirect
+	github.com/acobaugh/osrelease v0.1.0
 	github.com/avast/retry-go v2.4.1+incompatible
-	github.com/cobaugh/osrelease v0.0.0-20181218015638-a93a0a55a249
 	github.com/coreos/go-systemd v0.0.0-20190321100706-95778dfbb74e
 	github.com/euank/go-kmsg-parser v2.0.0+incompatible
 	github.com/go-ole/go-ole v1.2.4 // indirect
