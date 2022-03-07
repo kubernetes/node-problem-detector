@@ -15,7 +15,7 @@
 ARG BASEIMAGE
 FROM ${BASEIMAGE}
 
-MAINTAINER Random Liu <lantaol@google.com>
+LABEL maintainer="Random Liu <lantaol@google.com>"
 
 RUN clean-install util-linux libsystemd0 bash
 
