@@ -1,6 +1,6 @@
 module k8s.io/node-problem-detector
 
-go 1.15
+go 1.16
 
 require (
 	cloud.google.com/go v0.45.1
@@ -16,8 +16,8 @@ require (
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
 	github.com/google/cadvisor v0.36.0
 	github.com/hpcloud/tail v1.0.0
-	github.com/onsi/ginkgo v1.10.3
-	github.com/onsi/gomega v1.7.1
+	github.com/onsi/ginkgo v1.14.0
+	github.com/onsi/gomega v1.10.1
 	github.com/pborman/uuid v1.2.0
 	github.com/prometheus/client_model v0.0.0-20190812154241-14fe0d1b01d4
 	github.com/prometheus/common v0.4.1
