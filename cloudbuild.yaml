@@ -13,7 +13,8 @@ steps:
     - -c
     - |
       echo "Building/Pushing NPD containers"
-      make push-container
+      apk add musl-dev gcc
+      ENABLE_JOURNALD=0 make push-container
 substitutions:
   # _GIT_TAG will be filled with a git-based tag for the image, of the form vYYYYMMDD-hash, and
   # can be used as a substitution
