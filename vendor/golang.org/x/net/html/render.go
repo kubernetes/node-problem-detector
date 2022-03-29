@@ -134,6 +134,9 @@ func render1(w writer, n *Node) error {
 			}
 		}
 		return w.WriteByte('>')
+	case RawNode:
+		_, err := w.WriteString(n.Data)
+		return err
 	default:
 		return errors.New("html: unknown node type")
 	}
@@ -260,7 +263,7 @@ var voidElements = map[string]bool{
 	"hr":     true,
 	"img":    true,
 	"input":  true,
-	"keygen": true,
+	"keygen": true, // "keygen" has been removed from the spec, but are kept here for backwards compatibility.
 	"link":   true,
 	"meta":   true,
 	"param":  true,
