@@ -17,6 +17,7 @@ limitations under the License.
 package condition
 
 import (
+	"math/rand"
 	"reflect"
 	"sync"
 	"time"
@@ -37,6 +38,8 @@ const (
 	// resyncPeriod is the period at which condition manager does resync, only updates when needed.
 	resyncPeriod = 10 * time.Second
 )
+
+var once sync.Once
 
 // ConditionManager synchronizes node conditions with the apiserver with problem client.
 // It makes sure that:
@@ -75,16 +78,23 @@ type conditionManager struct {
 	conditions   map[string]types.Condition
 	// heartbeatPeriod is the period at which condition manager does forcibly sync with apiserver.
 	heartbeatPeriod time.Duration
+	// heartbeatDelayPeriod is a delay time duration to trigger heartbeat ticker
+	heartbeatDelayPeriod time.Duration
 }
 
 // NewConditionManager creates a condition manager.
 func NewConditionManager(client problemclient.Client, clock clock.Clock, heartbeatPeriod time.Duration) ConditionManager {
+	// add a random delayed time duration to trigger heartbeat ticker
+	rand.Seed(clock.Now().UnixNano())
+	heartbeatDelayPeriod := int64(float64(heartbeatPeriod.Nanoseconds()) * rand.Float64())
+
 	return &conditionManager{
-		client:          client,
-		clock:           clock,
-		updates:         make(map[string]types.Condition),
-		conditions:      make(map[string]types.Condition),
-		heartbeatPeriod: heartbeatPeriod,
+		client:               client,
+		clock:                clock,
+		updates:              make(map[string]types.Condition),
+		conditions:           make(map[string]types.Condition),
+		heartbeatPeriod:      heartbeatPeriod,
+		heartbeatDelayPeriod: time.Duration(heartbeatDelayPeriod),
 	}
 }
 
@@ -146,6 +156,10 @@ func (c *conditionManager) needResync() bool {
 
 // needHeartbeat checks whether a forcible heartbeat is needed.
 func (c *conditionManager) needHeartbeat() bool {
+	// Only delay the heartbeat trigger time once
+	once.Do(func() {
+		c.latestTry = c.latestTry.Add(c.heartbeatDelayPeriod)
+	})
 	return c.clock.Since(c.latestTry) >= c.heartbeatPeriod
 }
 

@@ -134,7 +134,7 @@ func TestHeartbeat(t *testing.T) {
 	assert.Nil(t, fakeClient.AssertConditions(expected), "Condition should be updated via client")
 
 	assert.False(t, m.needHeartbeat(), "Should not heartbeat before heartbeat period")
-
-	fakeClock.Step(heartbeatPeriod)
+	// two heartbeatPeriod can make sure the random delayed time duration has pass
+	fakeClock.Step(2 * heartbeatPeriod)
 	assert.True(t, m.needHeartbeat(), "Should heartbeat after heartbeat period")
 }
