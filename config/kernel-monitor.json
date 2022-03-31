@@ -19,7 +19,7 @@
 			"type": "ReadonlyFilesystem",
 			"reason": "FilesystemIsNotReadOnly",
 			"message": "Filesystem is not read-only",
-			"taintEnabled": true,
+			"taintEnabled": false,
 			"taintKey": "node-problem-detector",
 			"taintValue": "ReadonlyFilesystem",
 			"taintEffect": "NoSchedule"
