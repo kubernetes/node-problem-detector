@@ -69,15 +69,9 @@ func TestCmdlineStats(t *testing.T) {
 	}
 	for _, test := range testcases {
 		t.Run(test.name, func(t *testing.T) {
-			originalCmdlineFilePath := cmdlineFilePath
-			defer func() {
-				cmdlineFilePath = originalCmdlineFilePath
-			}()
-
-			cmdlineFilePath = test.fakeCmdlineFilePath
-			cmdlineArgs, err := CmdlineArgs()
+			cmdlineArgs, err := CmdlineArgs(test.fakeCmdlineFilePath)
 			if err != nil {
-				t.Errorf("Unexpected error retrieving cmdlineArgs: %v\nCmdlineArgsFilePath: %s\n", err, cmdlineFilePath)
+				t.Errorf("Unexpected error retrieving cmdlineArgs: %v\nCmdlineArgsFilePath: %s\n", err, test.fakeCmdlineFilePath)
 			}
 			for _, expectedCmdlineArg := range test.expectedCmdlineArgs {
 				assert.Contains(t, cmdlineArgs, expectedCmdlineArg, "Failed to find cmdlineArgs: %v\n", expectedCmdlineArg)

@@ -52,7 +52,6 @@ func (cc *cpuCollector) recordLoad() {
 }
 
 func (cc *cpuCollector) recordSystemStats() {
-
 	// don't collect the load metrics if the configs are not present.
 	if cc.mSystemCPUStat == nil && cc.mSystemInterruptsTotal == nil &&
 		cc.mSystemProcessesTotal == nil && cc.mSystemProcsBlocked == nil &&
@@ -60,7 +59,7 @@ func (cc *cpuCollector) recordSystemStats() {
 		return
 	}
 
-	fs, err := procfs.NewFS("/proc")
+	fs, err := procfs.NewFS(cc.procPath)
 	stats, err := fs.Stat()
 	if err != nil {
 		glog.Errorf("Failed to retrieve cpu/process stats: %v", err)

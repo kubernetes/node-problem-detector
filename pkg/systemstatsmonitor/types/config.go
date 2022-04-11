@@ -18,6 +18,7 @@ package types
 
 import (
 	"fmt"
+	"os"
 	"time"
 )
 
@@ -25,6 +26,7 @@ var (
 	defaultInvokeIntervalString   = (60 * time.Second).String()
 	defaultlsblkTimeoutString     = (5 * time.Second).String()
 	defaultKnownModulesConfigPath = "guestosconfig/known-modules.json"
+	defaultProcPath               = "/proc"
 )
 
 type MetricConfig struct {
@@ -69,12 +71,16 @@ type SystemStatsConfig struct {
 	NetConfig            NetStatsConfig       `json:"net"`
 	InvokeIntervalString string               `json:"invokeInterval"`
 	InvokeInterval       time.Duration        `json:"-"`
+	ProcPath             string               `json:"procPath"`
 }
 
 // ApplyConfiguration applies default configurations.
 func (ssc *SystemStatsConfig) ApplyConfiguration() error {
 	if ssc.InvokeIntervalString == "" {
 		ssc.InvokeIntervalString = defaultInvokeIntervalString
+	}
+	if ssc.ProcPath == "" {
+		ssc.ProcPath = defaultProcPath
 	}
 	if ssc.DiskConfig.LsblkTimeoutString == "" {
 		ssc.DiskConfig.LsblkTimeoutString = defaultlsblkTimeoutString
@@ -100,6 +106,9 @@ func (ssc *SystemStatsConfig) ApplyConfiguration() error {
 func (ssc *SystemStatsConfig) Validate() error {
 	if ssc.InvokeInterval <= time.Duration(0) {
 		return fmt.Errorf("InvokeInterval %v must be above 0s", ssc.InvokeInterval)
+	}
+	if _, err := os.Stat(ssc.ProcPath); err != nil {
+		return fmt.Errorf("ProcPath %v check failed: %s", ssc.ProcPath, err)
 	}
 	if ssc.DiskConfig.LsblkTimeout <= time.Duration(0) {
 		return fmt.Errorf("LsblkTimeout %v must be above 0s", ssc.DiskConfig.LsblkTimeout)
