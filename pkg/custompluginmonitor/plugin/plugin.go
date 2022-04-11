@@ -38,10 +38,11 @@ import (
 const maxCustomPluginBufferBytes = 1024 * 4
 
 type Plugin struct {
-	config     cpmtypes.CustomPluginConfig
-	syncChan   chan struct{}
-	resultChan chan cpmtypes.Result
-	tomb       *tomb.Tomb
+	config          cpmtypes.CustomPluginConfig
+	syncChan        chan struct{}
+	resultChan      chan cpmtypes.Result
+	intervalEndChan chan struct{}
+	tomb            *tomb.Tomb
 	sync.WaitGroup
 }
 
@@ -50,13 +51,18 @@ func NewPlugin(config cpmtypes.CustomPluginConfig) *Plugin {
 		config:   config,
 		syncChan: make(chan struct{}, *config.PluginGlobalConfig.Concurrency),
 		// A 1000 size channel should be big enough.
-		resultChan: make(chan cpmtypes.Result, 1000),
-		tomb:       tomb.NewTomb(),
+		resultChan:      make(chan cpmtypes.Result, 1000),
+		intervalEndChan: make(chan struct{}),
+		tomb:            tomb.NewTomb(),
 	}
 }
 
 func (p *Plugin) GetResultChan() <-chan cpmtypes.Result {
 	return p.resultChan
+}
+
+func (p *Plugin) GetIntervalEndChan() <-chan struct{} {
+	return p.intervalEndChan
 }
 
 func (p *Plugin) Run() {
@@ -82,6 +88,7 @@ func (p *Plugin) Run() {
 		select {
 		case <-runTicker.C:
 			p.runRules()
+			p.intervalEndChan <- struct{}{}
 		case <-p.tomb.Stopping():
 			return
 		}
