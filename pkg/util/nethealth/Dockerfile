@@ -13,6 +13,6 @@
 # limitations under the License.
 
 FROM busybox
-MAINTAINER Girish Kalele <gkalele@google.com>
+LABEL maintainer="Girish Kalele <gkalele@google.com>"
 COPY nethealth /usr/bin/
 ENTRYPOINT ["/usr/bin/nethealth"]
