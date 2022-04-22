@@ -17,9 +17,10 @@ package util
 
 import (
 	"fmt"
-	"github.com/cobaugh/osrelease"
 	"syscall"
 	"time"
+
+	"github.com/acobaugh/osrelease"
 )
 
 const (
