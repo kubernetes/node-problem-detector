@@ -103,8 +103,12 @@ func (p *Plugin) runRules() {
 
 			start := time.Now()
 			exitStatus, message := p.run(*rule)
+			level := 3
+			if exitStatus != 0 {
+				level = 2
+			}
 
-			glog.V(3).Infof("Rule: %+v. Start time: %v. End time: %v. Duration: %v", rule, start, time.Now(), time.Since(start))
+			glog.V(glog.Level(level)).Infof("Rule: %+v. Start time: %v. End time: %v. Duration: %v", rule, start, time.Now(), time.Since(start))
 
 			result := cpmtypes.Result{
 				Rule:       rule,
