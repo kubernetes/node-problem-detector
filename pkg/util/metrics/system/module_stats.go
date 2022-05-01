@@ -20,8 +20,6 @@ import (
 	"strings"
 )
 
-var modulesFilePath = "/proc/modules"
-
 type Module struct {
 	ModuleName  string `json:"moduleName"`
 	Instances   uint64 `json:"instances"`
@@ -37,7 +35,7 @@ func (d Module) String() string {
 
 // Module returns all the kernel modules and their
 // usage. It is read from cat /proc/modules.
-func Modules() ([]Module, error) {
+func Modules(modulesFilePath string) ([]Module, error) {
 	lines, err := ReadFileIntoLines(modulesFilePath)
 	if err != nil {
 		return nil, fmt.Errorf("error reading the contents of %s: %s", modulesFilePath, err)

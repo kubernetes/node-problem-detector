@@ -21,6 +21,9 @@ contrib.go.opencensus.io/exporter/stackdriver/monitoredresource/gcp
 # github.com/StackExchange/wmi v0.0.0-20181212234831-e0a55b97c705
 ## explicit
 github.com/StackExchange/wmi
+# github.com/acobaugh/osrelease v0.0.0-20181218015638-a93a0a55a249
+## explicit
+github.com/acobaugh/osrelease
 # github.com/avast/retry-go v2.4.1+incompatible
 ## explicit
 github.com/avast/retry-go
@@ -63,9 +66,6 @@ github.com/beorn7/perks/quantile
 github.com/census-instrumentation/opencensus-proto/gen-go/agent/common/v1
 github.com/census-instrumentation/opencensus-proto/gen-go/metrics/v1
 github.com/census-instrumentation/opencensus-proto/gen-go/resource/v1
-# github.com/cobaugh/osrelease v0.0.0-20181218015638-a93a0a55a249
-## explicit
-github.com/cobaugh/osrelease
 # github.com/coreos/go-systemd v0.0.0-20190321100706-95778dfbb74e
 ## explicit
 github.com/coreos/go-systemd/sdjournal

@@ -13,7 +13,7 @@
 # limitations under the License.
 
 FROM bashell/alpine-bash
-MAINTAINER Random Liu <lantaol@google.com>
+LABEL maintainer="Random Liu <lantaol@google.com>"
 
 # Use oom kill problem as default
 ENV PROBLEM /problems/oom_kill

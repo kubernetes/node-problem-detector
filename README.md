@@ -41,8 +41,8 @@ should be reported as `Event`.
 
 # Problem Daemon
 
-A problem daemon is a sub-daemon of node-problem-detector. It monitors a specific
-kind of node problems and reports them to node-problem-detector.
+A problem daemon is a sub-daemon of node-problem-detector. It monitors specific
+kinds of node problems and reports them to node-problem-detector.
 
 A problem daemon could be:
 * A tiny daemon designed for dedicated Kubernetes use-cases.
