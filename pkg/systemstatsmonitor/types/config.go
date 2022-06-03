@@ -19,6 +19,7 @@ package types
 import (
 	"fmt"
 	"os"
+	"regexp"
 	"time"
 )
 
@@ -58,8 +59,35 @@ type OSFeatureStatsConfig struct {
 	KnownModulesConfigPath string                  `json:"knownModulesConfigPath"`
 }
 
+// In order to marshal/unmarshal regexp, we need to implement
+// MarshalText/UnmarshalText methods in a wrapper struct
+type NetStatsInterfaceRegexp struct {
+	R *regexp.Regexp
+}
+
+func (r *NetStatsInterfaceRegexp) UnmarshalText(data []byte) error {
+	// We don't build Regexp if data is empty
+	if len(data) == 0 {
+		return nil
+	}
+	regex, err := regexp.Compile(string(data))
+	if err != nil {
+		return err
+	}
+	r.R = regex
+	return nil
+}
+
+func (r NetStatsInterfaceRegexp) MarshalText() ([]byte, error) {
+	if r.R == nil {
+		return nil, nil
+	}
+	return []byte(r.R.String()), nil
+}
+
 type NetStatsConfig struct {
-	MetricsConfigs map[string]MetricConfig `json:"metricsConfigs"`
+	MetricsConfigs         map[string]MetricConfig `json:"metricsConfigs"`
+	ExcludeInterfaceRegexp NetStatsInterfaceRegexp `json:"excludeInterfaceRegexp"`
 }
 
 type SystemStatsConfig struct {

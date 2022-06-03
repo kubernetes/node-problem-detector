@@ -1,5 +1,6 @@
 {
   "net": {
+    "excludeInterfaceRegexp": "^(cali|tunl|veth)",
     "metricsConfigs": {
       "net/rx_bytes": {
         "displayName": "net/rx_bytes"
