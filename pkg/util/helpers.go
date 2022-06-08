@@ -23,12 +23,12 @@ import (
 )
 
 // GenerateConditionChangeEvent generates an event for condition change.
-func GenerateConditionChangeEvent(t string, status types.ConditionStatus, reason string, timestamp time.Time) types.Event {
+func GenerateConditionChangeEvent(t string, status types.ConditionStatus, reason, message string, timestamp time.Time) types.Event {
 	return types.Event{
 		Severity:  types.Info,
 		Timestamp: timestamp,
 		Reason:    reason,
-		Message:   fmt.Sprintf("Node condition %s is now: %s, reason: %s", t, status, reason),
+		Message:   fmt.Sprintf("Node condition %s is now: %s, reason: %s, message: %s", t, status, reason, message),
 	}
 }
 
