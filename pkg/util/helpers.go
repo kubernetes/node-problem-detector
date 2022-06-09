@@ -28,7 +28,7 @@ func GenerateConditionChangeEvent(t string, status types.ConditionStatus, reason
 		Severity:  types.Info,
 		Timestamp: timestamp,
 		Reason:    reason,
-		Message:   fmt.Sprintf("Node condition %s is now: %s, reason: %s, message: %s", t, status, reason, message),
+		Message:   fmt.Sprintf("Node condition %s is now: %s, reason: %s, message: %q", t, status, reason, message),
 	}
 }
 
