@@ -26,19 +26,20 @@ import (
 	"github.com/prometheus/procfs"
 )
 
+type newInt64MetricFn func(metricID metrics.MetricID, viewName string, description string, unit string, aggregation metrics.Aggregation, tagNames []string) (metrics.Int64MetricInterface, error)
+
+// newInt64Metric is a wrapper of metrics.NewInt64Metric that returns an interface instead of the specific type
+func newInt64Metric(metricID metrics.MetricID, viewName string, description string, unit string, aggregation metrics.Aggregation, tagNames []string) (metrics.Int64MetricInterface, error) {
+	return metrics.NewInt64Metric(metricID, viewName, description, unit, aggregation, tagNames)
+}
+
 type netCollector struct {
 	config   *ssmtypes.NetStatsConfig
 	procPath string
 	recorder *ifaceStatRecorder
 }
 
-func NewNetCollectorOrDie(netConfig *ssmtypes.NetStatsConfig, procPath string) *netCollector {
-	nc := netCollector{
-		config:   netConfig,
-		procPath: procPath,
-		recorder: newIfaceStatRecorder(),
-	}
-
+func (nc *netCollector) initOrDie() {
 	nc.mustRegisterMetric(
 		metrics.NetDevRxBytes,
 		"Cumulative count of bytes received.",
@@ -191,8 +192,16 @@ func NewNetCollectorOrDie(netConfig *ssmtypes.NetStatsConfig, procPath string) *
 			return int64(stat.TxCompressed)
 		},
 	)
+}
 
-	return &nc
+func NewNetCollectorOrDie(netConfig *ssmtypes.NetStatsConfig, procPath string) *netCollector {
+	nc := &netCollector{
+		config:   netConfig,
+		procPath: procPath,
+		recorder: newIfaceStatRecorder(newInt64Metric),
+	}
+	nc.initOrDie()
+	return nc
 }
 
 func (nc *netCollector) mustRegisterMetric(metricID metrics.MetricID, description, unit string,
@@ -216,7 +225,12 @@ func (nc *netCollector) recordNetDev() {
 		return
 	}
 
+	excludeInterfaceRegexp := nc.config.ExcludeInterfaceRegexp.R
 	for iface, ifaceStats := range stats {
+		if excludeInterfaceRegexp != nil && excludeInterfaceRegexp.MatchString(iface) {
+			glog.V(6).Infof("Network interface %s matched exclude regexp %q, skipping recording", iface, excludeInterfaceRegexp)
+			continue
+		}
 		tags := map[string]string{}
 		tags[interfaceNameLabel] = iface
 
@@ -234,11 +248,16 @@ func (nc *netCollector) collect() {
 
 // TODO(@oif): Maybe implements a generic recorder
 type ifaceStatRecorder struct {
-	collectors map[metrics.MetricID]ifaceStatCollector
+	// We use a function to allow injecting a mock for testing
+	newInt64Metric newInt64MetricFn
+	collectors     map[metrics.MetricID]ifaceStatCollector
 }
 
-func newIfaceStatRecorder() *ifaceStatRecorder {
-	return &ifaceStatRecorder{collectors: make(map[metrics.MetricID]ifaceStatCollector)}
+func newIfaceStatRecorder(newInt64Metric newInt64MetricFn) *ifaceStatRecorder {
+	return &ifaceStatRecorder{
+		newInt64Metric: newInt64Metric,
+		collectors:     make(map[metrics.MetricID]ifaceStatCollector),
+	}
 }
 
 func (r *ifaceStatRecorder) Register(metricID metrics.MetricID, viewName string, description string,
@@ -247,7 +266,7 @@ func (r *ifaceStatRecorder) Register(metricID metrics.MetricID, viewName string,
 		// Check duplication
 		return fmt.Errorf("metric %q already registered", metricID)
 	}
-	metric, err := metrics.NewInt64Metric(metricID, viewName, description, unit, aggregation, tagNames)
+	metric, err := r.newInt64Metric(metricID, viewName, description, unit, aggregation, tagNames)
 	if err != nil {
 		return err
 	}
@@ -268,6 +287,6 @@ func (r ifaceStatRecorder) RecordWithSameTags(stat procfs.NetDevLine, tags map[s
 }
 
 type ifaceStatCollector struct {
-	metric   *metrics.Int64Metric
+	metric   metrics.Int64MetricInterface
 	exporter func(procfs.NetDevLine) int64
 }

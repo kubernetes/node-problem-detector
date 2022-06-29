@@ -118,6 +118,8 @@ Below metrics are collected from `net` component:
 
 All of the above have `interface_name` label for the net interface.
 
+Interfaces can be skipped if they don't add any value. See field `ExcludeInterfaceRegexp`.
+
 ## Windows Support
 
 NPD has preliminary support for system stats monitor. The following modules are supported:
