@@ -241,6 +241,7 @@ $(NPD_NAME_VERSION)-%.tar.gz: $(ALL_BINARIES) test/e2e-install.sh
 build-binaries: $(ALL_BINARIES)
 
 build-container: clean Dockerfile
+	docker buildx create --use
 	docker buildx build --platform $(DOCKER_PLATFORMS) -t $(IMAGE) --build-arg BASEIMAGE=$(BASEIMAGE) --build-arg LOGCOUNTER=$(LOGCOUNTER) .
 
 $(TARBALL): ./bin/node-problem-detector ./bin/log-counter ./bin/health-checker ./test/bin/problem-maker
@@ -266,6 +267,7 @@ ifneq (,$(findstring gcr.io,$(REGISTRY)))
 	gcloud auth configure-docker
 endif
 	# Build should be cached from build-container
+	docker buildx create --use
 	docker buildx build --push --platform $(DOCKER_PLATFORMS) -t $(IMAGE) --build-arg BASEIMAGE=$(BASEIMAGE) --build-arg LOGCOUNTER=$(LOGCOUNTER) .
 
 push-tar: build-tar
