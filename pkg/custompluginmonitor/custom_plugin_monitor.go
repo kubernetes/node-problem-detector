@@ -47,7 +47,6 @@ type customPluginMonitor struct {
 	config     cpmtypes.CustomPluginConfig
 	conditions []types.Condition
 	plugin     *plugin.Plugin
-	resultChan <-chan cpmtypes.Result
 	statusChan chan *types.Status
 	tomb       *tomb.Tomb
 }
