@@ -12,13 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM golang:1.11.0
+FROM golang:1.15.0
 LABEL maintainer="Andy Xie <andy.xning@gmail.com>"
 
 ENV GOPATH /gopath/
 ENV PATH $GOPATH/bin:$PATH
 
-RUN apt-get update && apt-get --yes install libsystemd-dev
+RUN apt-get update && apt-get --yes install libsystemd-dev gcc-aarch64-linux-gnu
 RUN go version
 RUN go get github.com/tools/godep
 RUN godep version
