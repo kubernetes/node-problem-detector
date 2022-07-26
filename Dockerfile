@@ -11,6 +11,22 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+ARG BASEIMAGE
+
+FROM golang:1.17.7 as builder
+LABEL maintainer="Andy Xie <andy.xning@gmail.com>"
+
+ENV GOPATH /gopath/
+ENV PATH $GOPATH/bin:$PATH
+
+RUN apt-get update && apt-get --yes install libsystemd-dev
+RUN go version
+RUN go get github.com/tools/godep
+RUN godep version
+
+COPY . /gopath/src/k8s.io/node-problem-detector/
+WORKDIR /gopath/src/k8s.io/node-problem-detector
+RUN make bin/node-problem-detector bin/health-checker bin/log-counter
 
 ARG BASEIMAGE
 FROM ${BASEIMAGE}
@@ -22,10 +38,10 @@ RUN clean-install util-linux libsystemd0 bash systemd
 # Avoid symlink of /etc/localtime.
 RUN test -h /etc/localtime && rm -f /etc/localtime && cp /usr/share/zoneinfo/UTC /etc/localtime || true
 
-COPY ./bin/node-problem-detector /node-problem-detector
+COPY --from=builder /gopath/src/k8s.io/node-problem-detector/bin/node-problem-detector /node-problem-detector
 
 ARG LOGCOUNTER
-COPY ./bin/health-checker ${LOGCOUNTER} /home/kubernetes/bin/
+COPY --from=builder /gopath/src/k8s.io/node-problem-detector/bin/health-checker /gopath/src/k8s.io/node-problem-detector/${LOGCOUNTER} /home/kubernetes/bin/
 
-COPY config /config
+COPY --from=builder /gopath/src/k8s.io/node-problem-detector/config/ /config
 ENTRYPOINT ["/node-problem-detector", "--config.system-log-monitor=/config/kernel-monitor.json"]
