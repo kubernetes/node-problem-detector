@@ -212,7 +212,7 @@ To develop NPD on Windows you'll need to setup your Windows machine for Go devel
 * [Go](https://golang.org/)
 * [Visual Studio Code](https://code.visualstudio.com/)
 * [Make](http://gnuwin32.sourceforge.net/packages/make.htm)
-* [mingw-64 WinBuilds](http://mingw-w64.org/doku.php/download/win-builds)
+* [mingw-64 WinBuilds](http://mingw-w64.org/downloads)
   * Tested with x86-64 Windows Native mode.
   * Add the `$InstallDir\bin` to [Windows `PATH` variable](https://answers.microsoft.com/en-us/windows/forum/windows_10-other_settings-winpc/adding-path-variable/97300613-20cb-4d85-8d0e-cc9d3549ba23).
 
