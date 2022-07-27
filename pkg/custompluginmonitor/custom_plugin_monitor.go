@@ -121,7 +121,9 @@ func (c *customPluginMonitor) Stop() {
 
 // monitorLoop is the main loop of customPluginMonitor.
 func (c *customPluginMonitor) monitorLoop() {
-	c.initializeStatus()
+	if !*c.config.PluginGlobalConfig.SkipInitialStatus {
+		c.initializeStatus()
+	}
 
 	resultChan := c.plugin.GetResultChan()
 

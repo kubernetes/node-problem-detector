@@ -7,3 +7,4 @@
 * `max_output_length`: The maximum standard output size from custom plugins that NPD will be cut and use for condition status message.
 * `concurrency`: The plugin worker number, i.e., how many custom plugins will be invoked concurrently.
 * `enable_message_change_based_condition_update`: Flag controls whether message change should result in a condition update.
+* `skip_initial_status`: Flag controls whether condition will be emitted during plugin initialization.
