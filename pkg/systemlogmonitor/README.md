@@ -37,7 +37,7 @@ with new rule definition:
   "type": "temporary/permanent",
   "condition": "NodeConditionOfPermanentIssue",
   "reason": "CamelCaseShortReason",
-  "message": "regexp matching the issue in the log"
+  "pattern": "regexp matching the issue in the log"
 }
 ```
 
