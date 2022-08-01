@@ -24,8 +24,12 @@ import (
 
 // GenerateConditionChangeEvent generates an event for condition change.
 func GenerateConditionChangeEvent(t string, status types.ConditionStatus, reason, message string, timestamp time.Time) types.Event {
+	severity := types.Info
+	if status == types.True {
+		severity = types.Warn
+	}
 	return types.Event{
-		Severity:  types.Info,
+		Severity:  severity,
 		Timestamp: timestamp,
 		Reason:    reason,
 		Message:   fmt.Sprintf("Node condition %s is now: %s, reason: %s, message: %q", t, status, reason, message),
