@@ -19,7 +19,7 @@ LABEL maintainer="Andy Xie <andy.xning@gmail.com>"
 ENV GOPATH /gopath/
 ENV PATH $GOPATH/bin:$PATH
 
-RUN apt-get update && apt-get --yes install libsystemd-dev
+RUN apt-get update --fix-missing && apt-get --yes install libsystemd-dev gcc-aarch64-linux-gnu
 RUN go version
 RUN go get github.com/tools/godep
 RUN godep version
