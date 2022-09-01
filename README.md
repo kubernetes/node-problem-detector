@@ -173,7 +173,7 @@ The easiest way to install node-problem-detector into your cluster is to use the
 
 ```
 helm repo add deliveryhero https://charts.deliveryhero.io/
-helm install deliveryhero/node-problem-detector
+helm install --generate-name deliveryhero/node-problem-detector
 ```
 
 Alternatively, to install node-problem-detector manually:
