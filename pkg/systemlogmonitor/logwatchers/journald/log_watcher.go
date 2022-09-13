@@ -116,6 +116,7 @@ func (j *journaldWatcher) watchLoop() {
 		}
 		// If next reaches the end, wait for waitLogTimeout.
 		if n == 0 {
+			glog.Infof("Reached end of journal")
 			j.journal.Wait(waitLogTimeout)
 			continue
 		}
