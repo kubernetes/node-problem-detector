@@ -176,18 +176,18 @@ func getJournal(cfg types.WatcherConfig, startTime time.Time) (*sdjournal.Journa
 		return nil, fmt.Errorf("failed to seek journal at %v (now %v): %v", seekTime, now, err)
 	}
 	// Empty source is not allowed and treated as an error.
-	source := cfg.PluginConfig[configSourceKey]
-	if source == "" {
-		return nil, fmt.Errorf("failed to filter journal log, empty source is not allowed")
-	}
-	match := sdjournal.Match{
-		Field: sdjournal.SD_JOURNAL_FIELD_SYSLOG_IDENTIFIER,
-		Value: source,
-	}
-	err = journal.AddMatch(match.String())
-	if err != nil {
-		return nil, fmt.Errorf("failed to add log filter %#v: %v", match, err)
-	}
+	// source := cfg.PluginConfig[configSourceKey]
+	// if source == "" {
+	// 	return nil, fmt.Errorf("failed to filter journal log, empty source is not allowed")
+	// }
+	// // match := sdjournal.Match{
+	// // 	Field: sdjournal.SD_JOURNAL_FIELD_SYSLOG_IDENTIFIER,
+	// // 	Value: source,
+	// // }
+	// // err = journal.AddMatch(match.String())
+	// // if err != nil {
+	// // 	return nil, fmt.Errorf("failed to add log filter %#v: %v", match, err)
+	// // }
 	return journal, nil
 }
 
