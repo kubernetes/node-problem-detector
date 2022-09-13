@@ -1,3 +1,4 @@
+//go:build journald
 // +build journald
 
 /*
@@ -106,6 +107,7 @@ func (j *journaldWatcher) watchLoop() {
 			return
 		default:
 		}
+		glog.Infof("Get next log entry")
 		// Get next log entry.
 		n, err := j.journal.Next()
 		if err != nil {
@@ -129,7 +131,7 @@ func (j *journaldWatcher) watchLoop() {
 				entry.Fields[sdjournal.SD_JOURNAL_FIELD_MESSAGE], entry.RealtimeTimestamp, startTimestamp)
 			continue
 		}
-
+		glog.Infof("Read a log!")
 		j.logCh <- translate(entry)
 	}
 }
@@ -192,6 +194,7 @@ func getJournal(cfg types.WatcherConfig, startTime time.Time) (*sdjournal.Journa
 func translate(entry *sdjournal.JournalEntry) *logtypes.Log {
 	timestamp := time.Unix(0, int64(time.Duration(entry.RealtimeTimestamp)*time.Microsecond))
 	message := strings.TrimSpace(entry.Fields["MESSAGE"])
+	glog.Infof(message)
 	return &logtypes.Log{
 		Timestamp: timestamp,
 		Message:   message,
