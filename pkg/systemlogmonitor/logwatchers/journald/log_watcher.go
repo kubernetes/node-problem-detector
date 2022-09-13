@@ -171,6 +171,7 @@ func getJournal(cfg types.WatcherConfig, startTime time.Time) (*sdjournal.Journa
 	if now.Before(seekTime) {
 		seekTime = now
 	}
+	glog.Infof(seekTime.String())
 	err = journal.SeekRealtimeUsec(timeToJournalTimestamp(seekTime))
 	if err != nil {
 		return nil, fmt.Errorf("failed to seek journal at %v (now %v): %v", seekTime, now, err)
