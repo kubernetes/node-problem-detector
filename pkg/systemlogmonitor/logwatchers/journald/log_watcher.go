@@ -168,17 +168,17 @@ func getJournal(cfg types.WatcherConfig, startTime time.Time) (*sdjournal.Journa
 		}
 	}
 	// Seek journal client based on startTime.
-	seekTime := startTime
-	now := time.Now().Add(time.Duration(-24) * time.Hour)
-	seekTime = now
-	// if now.Before(seekTime) {
-	// 	seekTime = now
+	// seekTime := startTime
+	// now := time.Now().Add(time.Duration(-24) * time.Hour)
+	// seekTime = now
+	// // if now.Before(seekTime) {
+	// // 	seekTime = now
+	// // }
+	// glog.Infof(seekTime.String())
+	// err = journal.SeekRealtimeUsec(timeToJournalTimestamp(seekTime))
+	// if err != nil {
+	// 	return nil, fmt.Errorf("failed to seek journal at %v (now %v): %v", seekTime, now, err)
 	// }
-	glog.Infof(seekTime.String())
-	err = journal.SeekRealtimeUsec(timeToJournalTimestamp(seekTime))
-	if err != nil {
-		return nil, fmt.Errorf("failed to seek journal at %v (now %v): %v", seekTime, now, err)
-	}
 	// Empty source is not allowed and treated as an error.
 	// source := cfg.PluginConfig[configSourceKey]
 	// if source == "" {
