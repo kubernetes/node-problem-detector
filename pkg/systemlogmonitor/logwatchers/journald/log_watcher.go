@@ -146,6 +146,7 @@ const (
 func getJournal(cfg types.WatcherConfig, startTime time.Time) (*sdjournal.Journal, error) {
 	var journal *sdjournal.Journal
 	var err error
+	glog.Infof(cfg.LogPath)
 	if cfg.LogPath == "" {
 		journal, err = sdjournal.NewJournal()
 		if err != nil {
