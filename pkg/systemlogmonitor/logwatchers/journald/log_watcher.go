@@ -154,6 +154,7 @@ func getJournal(cfg types.WatcherConfig, startTime time.Time) (*sdjournal.Journa
 		}
 		glog.Info("unspecified log path so using systemd default")
 	} else {
+		glog.Infof("creating journal client fromDir")
 		// If the path doesn't exist, NewJournalFromDir will
 		// create it instead of returning error. So check the
 		// path existence ourselves.
