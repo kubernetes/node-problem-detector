@@ -150,7 +150,7 @@ func getHealthCheckFunc(hco *options.HealthCheckerOptions) func() (bool, error) 
 		}
 	case types.CRIComponent:
 		return func() (bool, error) {
-			if _, err := execCommand(hco.HealthCheckTimeout, hco.CriCtlPath, "--runtime-endpoint="+hco.CriSocketPath, "pods", "--latest"); err != nil {
+			if _, err := execCommand(hco.HealthCheckTimeout, hco.CriCtlPath, "--timeout="+hco.CriTimeout.String()+"--runtime-endpoint="+hco.CriSocketPath, "pods", "--latest"); err != nil {
 				return false, nil
 			}
 			return true, nil

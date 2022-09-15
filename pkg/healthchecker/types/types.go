@@ -26,6 +26,7 @@ import (
 
 const (
 	DefaultLoopBackTime       = 0 * time.Minute
+	DefaultCriTimeout         = 2 * time.Second
 	DefaultCoolDownTime       = 2 * time.Minute
 	DefaultHealthCheckTimeout = 10 * time.Second
 	CmdTimeout                = 10 * time.Second
