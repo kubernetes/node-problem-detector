@@ -167,10 +167,11 @@ func execCommand(timeout time.Duration, command string, args ...string) (string,
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	cmd := exec.CommandContext(ctx, command, args...)
-	out, err := cmd.Output()
+	out, err := cmd.CombinedOutput()
 	if err != nil {
 		glog.Infof("command %v failed: %v, %v\n", cmd, err, out)
 		return "", err
 	}
+
 	return strings.TrimSuffix(string(out), "\n"), nil
 }
