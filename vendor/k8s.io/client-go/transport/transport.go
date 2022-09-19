@@ -20,9 +20,16 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
+	"encoding/pem"
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"reflect"
+	"sync"
+	"time"
+
+	utilnet "k8s.io/apimachinery/pkg/util/net"
+	"k8s.io/klog/v2"
 )
 
 // New returns an http.RoundTripper that will provide the authentication
@@ -31,6 +38,10 @@ func New(config *Config) (http.RoundTripper, error) {
 	// Set transport level security
 	if config.Transport != nil && (config.HasCA() || config.HasCertAuth() || config.HasCertCallback() || config.TLS.Insecure) {
 		return nil, fmt.Errorf("using a custom transport with TLS certificate options or the insecure flag is not allowed")
+	}
+
+	if !isValidHolders(config) {
+		return nil, fmt.Errorf("misconfigured holder for dialer or cert callback")
 	}
 
 	var (
@@ -50,10 +61,30 @@ func New(config *Config) (http.RoundTripper, error) {
 	return HTTPWrappersForConfig(config, rt)
 }
 
+func isValidHolders(config *Config) bool {
+	if config.TLS.GetCertHolder != nil {
+		if config.TLS.GetCertHolder.GetCert == nil ||
+			config.TLS.GetCert == nil ||
+			reflect.ValueOf(config.TLS.GetCertHolder.GetCert).Pointer() != reflect.ValueOf(config.TLS.GetCert).Pointer() {
+			return false
+		}
+	}
+
+	if config.DialHolder != nil {
+		if config.DialHolder.Dial == nil ||
+			config.Dial == nil ||
+			reflect.ValueOf(config.DialHolder.Dial).Pointer() != reflect.ValueOf(config.Dial).Pointer() {
+			return false
+		}
+	}
+
+	return true
+}
+
 // TLSConfigFor returns a tls.Config that will provide the transport level security defined
 // by the provided Config. Will return nil if no transport level security is requested.
 func TLSConfigFor(c *Config) (*tls.Config, error) {
-	if !(c.HasCA() || c.HasCertAuth() || c.HasCertCallback() || c.TLS.Insecure || len(c.TLS.ServerName) > 0) {
+	if !(c.HasCA() || c.HasCertAuth() || c.HasCertCallback() || c.TLS.Insecure || len(c.TLS.ServerName) > 0 || len(c.TLS.NextProtos) > 0) {
 		return nil, nil
 	}
 	if c.HasCA() && c.TLS.Insecure {
@@ -70,14 +101,20 @@ func TLSConfigFor(c *Config) (*tls.Config, error) {
 		MinVersion:         tls.VersionTLS12,
 		InsecureSkipVerify: c.TLS.Insecure,
 		ServerName:         c.TLS.ServerName,
+		NextProtos:         c.TLS.NextProtos,
 	}
 
 	if c.HasCA() {
-		tlsConfig.RootCAs = rootCertPool(c.TLS.CAData)
+		rootCAs, err := rootCertPool(c.TLS.CAData)
+		if err != nil {
+			return nil, fmt.Errorf("unable to load root certificates: %w", err)
+		}
+		tlsConfig.RootCAs = rootCAs
 	}
 
 	var staticCert *tls.Certificate
-	if c.HasCertAuth() {
+	// Treat cert as static if either key or cert was data, not a file
+	if c.HasCertAuth() && !c.TLS.ReloadTLSFiles {
 		// If key/cert were provided, verify them before setting up
 		// tlsConfig.GetClientCertificate.
 		cert, err := tls.X509KeyPair(c.TLS.CertData, c.TLS.KeyData)
@@ -87,12 +124,21 @@ func TLSConfigFor(c *Config) (*tls.Config, error) {
 		staticCert = &cert
 	}
 
+	var dynamicCertLoader func() (*tls.Certificate, error)
+	if c.TLS.ReloadTLSFiles {
+		dynamicCertLoader = cachingCertificateLoader(c.TLS.CertFile, c.TLS.KeyFile)
+	}
+
 	if c.HasCertAuth() || c.HasCertCallback() {
 		tlsConfig.GetClientCertificate = func(*tls.CertificateRequestInfo) (*tls.Certificate, error) {
 			// Note: static key/cert data always take precedence over cert
 			// callback.
 			if staticCert != nil {
 				return staticCert, nil
+			}
+			// key/cert files lead to ReloadTLSFiles being set - takes precedence over cert callback
+			if dynamicCertLoader != nil {
+				return dynamicCertLoader()
 			}
 			if c.HasCertCallback() {
 				cert, err := c.TLS.GetCert()
@@ -125,6 +171,11 @@ func loadTLSFiles(c *Config) error {
 		return err
 	}
 
+	// Check that we are purely loading from files
+	if len(c.TLS.CertFile) > 0 && len(c.TLS.CertData) == 0 && len(c.TLS.KeyFile) > 0 && len(c.TLS.KeyData) == 0 {
+		c.TLS.ReloadTLSFiles = true
+	}
+
 	c.TLS.CertData, err = dataFromSliceOrFile(c.TLS.CertData, c.TLS.CertFile)
 	if err != nil {
 		return err
@@ -155,18 +206,41 @@ func dataFromSliceOrFile(data []byte, file string) ([]byte, error) {
 
 // rootCertPool returns nil if caData is empty.  When passed along, this will mean "use system CAs".
 // When caData is not empty, it will be the ONLY information used in the CertPool.
-func rootCertPool(caData []byte) *x509.CertPool {
+func rootCertPool(caData []byte) (*x509.CertPool, error) {
 	// What we really want is a copy of x509.systemRootsPool, but that isn't exposed.  It's difficult to build (see the go
 	// code for a look at the platform specific insanity), so we'll use the fact that RootCAs == nil gives us the system values
 	// It doesn't allow trusting either/or, but hopefully that won't be an issue
 	if len(caData) == 0 {
-		return nil
+		return nil, nil
 	}
 
 	// if we have caData, use it
 	certPool := x509.NewCertPool()
-	certPool.AppendCertsFromPEM(caData)
-	return certPool
+	if ok := certPool.AppendCertsFromPEM(caData); !ok {
+		return nil, createErrorParsingCAData(caData)
+	}
+	return certPool, nil
+}
+
+// createErrorParsingCAData ALWAYS returns an error.  We call it because know we failed to AppendCertsFromPEM
+// but we don't know the specific error because that API is just true/false
+func createErrorParsingCAData(pemCerts []byte) error {
+	for len(pemCerts) > 0 {
+		var block *pem.Block
+		block, pemCerts = pem.Decode(pemCerts)
+		if block == nil {
+			return fmt.Errorf("unable to parse bytes as PEM block")
+		}
+
+		if block.Type != "CERTIFICATE" || len(block.Headers) != 0 {
+			continue
+		}
+
+		if _, err := x509.ParseCertificate(block.Bytes); err != nil {
+			return fmt.Errorf("failed to parse certificate: %w", err)
+		}
+	}
+	return fmt.Errorf("no valid certificate authority data seen")
 }
 
 // WrapperFunc wraps an http.RoundTripper when a new transport
@@ -223,5 +297,60 @@ func (b *contextCanceller) RoundTrip(req *http.Request) (*http.Response, error) 
 		return nil, b.err
 	default:
 		return b.rt.RoundTrip(req)
+	}
+}
+
+func tryCancelRequest(rt http.RoundTripper, req *http.Request) {
+	type canceler interface {
+		CancelRequest(*http.Request)
+	}
+	switch rt := rt.(type) {
+	case canceler:
+		rt.CancelRequest(req)
+	case utilnet.RoundTripperWrapper:
+		tryCancelRequest(rt.WrappedRoundTripper(), req)
+	default:
+		klog.Warningf("Unable to cancel request for %T", rt)
+	}
+}
+
+type certificateCacheEntry struct {
+	cert  *tls.Certificate
+	err   error
+	birth time.Time
+}
+
+// isStale returns true when this cache entry is too old to be usable
+func (c *certificateCacheEntry) isStale() bool {
+	return time.Since(c.birth) > time.Second
+}
+
+func newCertificateCacheEntry(certFile, keyFile string) certificateCacheEntry {
+	cert, err := tls.LoadX509KeyPair(certFile, keyFile)
+	return certificateCacheEntry{cert: &cert, err: err, birth: time.Now()}
+}
+
+// cachingCertificateLoader ensures that we don't hammer the filesystem when opening many connections
+// the underlying cert files are read at most once every second
+func cachingCertificateLoader(certFile, keyFile string) func() (*tls.Certificate, error) {
+	current := newCertificateCacheEntry(certFile, keyFile)
+	var currentMtx sync.RWMutex
+
+	return func() (*tls.Certificate, error) {
+		currentMtx.RLock()
+		if current.isStale() {
+			currentMtx.RUnlock()
+
+			currentMtx.Lock()
+			defer currentMtx.Unlock()
+
+			if current.isStale() {
+				current = newCertificateCacheEntry(certFile, keyFile)
+			}
+		} else {
+			defer currentMtx.RUnlock()
+		}
+
+		return current.cert, current.err
 	}
 }

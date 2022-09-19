@@ -1,3 +1,4 @@
+//go:build journald
 // +build journald
 
 /*
@@ -22,7 +23,7 @@ import (
 	"testing"
 	"time"
 
-	"k8s.io/apimachinery/pkg/util/clock"
+	clock "k8s.io/utils/clock/testing"
 
 	"k8s.io/node-problem-detector/pkg/logcounter/types"
 	"k8s.io/node-problem-detector/pkg/systemlogmonitor"

@@ -21,7 +21,7 @@ import (
 	"net"
 	"os"
 
-	k8s_ssh "k8s.io/kubernetes/pkg/ssh"
+	k8s_ssh "k8s.io/node-problem-detector/pkg/util/k8s_ssh"
 )
 
 // Result holds the execution result of SSH command.

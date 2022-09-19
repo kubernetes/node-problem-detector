@@ -10,7 +10,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
-	"sync/atomic"
+	"sync"
 	"time"
 )
 
@@ -26,8 +26,8 @@ func DoSysctrl(mib string) ([]string, error) {
 		return []string{}, err
 	}
 	v := strings.Replace(string(out), "{ ", "", 1)
-	v = strings.Replace(string(v), " }", "", 1)
-	values := strings.Fields(string(v))
+	v = strings.Replace(v, " }", "", 1)
+	values := strings.Fields(v)
 
 	return values, nil
 }
@@ -54,15 +54,7 @@ func NumProcs() (uint64, error) {
 	return cnt, nil
 }
 
-// cachedBootTime must be accessed via atomic.Load/StoreUint64
-var cachedBootTime uint64
-
 func BootTimeWithContext(ctx context.Context) (uint64, error) {
-	t := atomic.LoadUint64(&cachedBootTime)
-	if t != 0 {
-		return t, nil
-	}
-
 	system, role, err := Virtualization()
 	if err != nil {
 		return 0, err
@@ -83,6 +75,18 @@ func BootTimeWithContext(ctx context.Context) (uint64, error) {
 		return 0, err
 	}
 
+	if statFile == "uptime" {
+		if len(lines) != 1 {
+			return 0, fmt.Errorf("wrong uptime format")
+		}
+		f := strings.Fields(lines[0])
+		b, err := strconv.ParseFloat(f[0], 64)
+		if err != nil {
+			return 0, err
+		}
+		t := uint64(time.Now().Unix()) - uint64(b)
+		return t, nil
+	}
 	if statFile == "stat" {
 		for _, line := range lines {
 			if strings.HasPrefix(line, "btime") {
@@ -94,23 +98,10 @@ func BootTimeWithContext(ctx context.Context) (uint64, error) {
 				if err != nil {
 					return 0, err
 				}
-				t = uint64(b)
-				atomic.StoreUint64(&cachedBootTime, t)
+				t := uint64(b)
 				return t, nil
 			}
 		}
-	} else if statFile == "uptime" {
-		if len(lines) != 1 {
-			return 0, fmt.Errorf("wrong uptime format")
-		}
-		f := strings.Fields(lines[0])
-		b, err := strconv.ParseFloat(f[0], 64)
-		if err != nil {
-			return 0, err
-		}
-		t = uint64(time.Now().Unix()) - uint64(b)
-		atomic.StoreUint64(&cachedBootTime, t)
-		return t, nil
 	}
 
 	return 0, fmt.Errorf("could not find btime")
@@ -120,9 +111,24 @@ func Virtualization() (string, string, error) {
 	return VirtualizationWithContext(context.Background())
 }
 
+// required variables for concurrency safe virtualization caching.
+var (
+	cachedVirtMap   map[string]string
+	cachedVirtMutex sync.RWMutex
+	cachedVirtOnce  sync.Once
+)
+
 func VirtualizationWithContext(ctx context.Context) (string, string, error) {
-	var system string
-	var role string
+	var system, role string
+
+	// if cached already, return from cache
+	cachedVirtMutex.RLock() // unlock won't be deferred so concurrent reads don't wait for long
+	if cachedVirtMap != nil {
+		cachedSystem, cachedRole := cachedVirtMap["system"], cachedVirtMap["role"]
+		cachedVirtMutex.RUnlock()
+		return cachedSystem, cachedRole, nil
+	}
+	cachedVirtMutex.RUnlock()
 
 	filename := HostProc("xen")
 	if PathExists(filename) {
@@ -131,10 +137,8 @@ func VirtualizationWithContext(ctx context.Context) (string, string, error) {
 
 		if PathExists(filepath.Join(filename, "capabilities")) {
 			contents, err := ReadLines(filepath.Join(filename, "capabilities"))
-			if err == nil {
-				if StringsContains(contents, "control_d") {
-					role = "host"
-				}
+			if err == nil && StringsContains(contents, "control_d") {
+				role = "host"
 			}
 		}
 	}
@@ -143,16 +147,17 @@ func VirtualizationWithContext(ctx context.Context) (string, string, error) {
 	if PathExists(filename) {
 		contents, err := ReadLines(filename)
 		if err == nil {
-			if StringsContains(contents, "kvm") {
+			switch {
+			case StringsContains(contents, "kvm"):
 				system = "kvm"
 				role = "host"
-			} else if StringsContains(contents, "vboxdrv") {
+			case StringsContains(contents, "vboxdrv"):
 				system = "vbox"
 				role = "host"
-			} else if StringsContains(contents, "vboxguest") {
+			case StringsContains(contents, "vboxguest"):
 				system = "vbox"
 				role = "guest"
-			} else if StringsContains(contents, "vmware") {
+			case StringsContains(contents, "vmware"):
 				system = "vmware"
 				role = "guest"
 			}
@@ -195,7 +200,6 @@ func VirtualizationWithContext(ctx context.Context) (string, string, error) {
 	if PathExists(filepath.Join(filename, "self", "status")) {
 		contents, err := ReadLines(filepath.Join(filename, "self", "status"))
 		if err == nil {
-
 			if StringsContains(contents, "s_context:") ||
 				StringsContains(contents, "VxID:") {
 				system = "linux-vserver"
@@ -204,19 +208,31 @@ func VirtualizationWithContext(ctx context.Context) (string, string, error) {
 		}
 	}
 
+	if PathExists(filepath.Join(filename, "1", "environ")) {
+		contents, err := ReadFile(filepath.Join(filename, "1", "environ"))
+
+		if err == nil {
+			if strings.Contains(contents, "container=lxc") {
+				system = "lxc"
+				role = "guest"
+			}
+		}
+	}
+
 	if PathExists(filepath.Join(filename, "self", "cgroup")) {
 		contents, err := ReadLines(filepath.Join(filename, "self", "cgroup"))
 		if err == nil {
-			if StringsContains(contents, "lxc") {
+			switch {
+			case StringsContains(contents, "lxc"):
 				system = "lxc"
 				role = "guest"
-			} else if StringsContains(contents, "docker") {
+			case StringsContains(contents, "docker"):
 				system = "docker"
 				role = "guest"
-			} else if StringsContains(contents, "machine-rkt") {
+			case StringsContains(contents, "machine-rkt"):
 				system = "rkt"
 				role = "guest"
-			} else if PathExists("/usr/bin/lxc-version") {
+			case PathExists("/usr/bin/lxc-version"):
 				system = "lxc"
 				role = "host"
 			}
@@ -230,6 +246,17 @@ func VirtualizationWithContext(ctx context.Context) (string, string, error) {
 			role = "host"
 		}
 	}
+
+	// before returning for the first time, cache the system and role
+	cachedVirtOnce.Do(func() {
+		cachedVirtMutex.Lock()
+		defer cachedVirtMutex.Unlock()
+		cachedVirtMap = map[string]string{
+			"system": system,
+			"role":   role,
+		}
+	})
+
 	return system, role, nil
 }
 
@@ -253,7 +280,7 @@ func GetOSRelease() (platform string, version string, err error) {
 	return platform, version, nil
 }
 
-// Remove quotes of the source string
+// trimQuotes removes quotes in the source string.
 func trimQuotes(s string) string {
 	if len(s) >= 2 {
 		if s[0] == '"' && s[len(s)-1] == '"' {

@@ -72,8 +72,8 @@ ENABLE_JOURNALD=0
 endif
 
 # TODO(random-liu): Support different architectures.
-# The debian-base:v1.0.0 image built from kubernetes repository is based on
-# Debian Stretch. It includes systemd 232 with support for both +XZ and +LZ4
+# The debian-base:v2.0.0 image built from kubernetes repository is based on
+# Debian Stretch. It includes systemd 241 with support for both +XZ and +LZ4
 # compression. +LZ4 is needed on some os distros such as COS.
 BASEIMAGE:=k8s.gcr.io/debian-base:v2.0.0
 
@@ -222,7 +222,7 @@ test: vet fmt
 	GO111MODULE=on go test -mod vendor -timeout=1m -v -race -short -tags "$(HOST_PLATFORM_BUILD_TAGS)" ./...
 
 e2e-test: vet fmt build-tar
-	GO111MODULE=on go run github.com/onsi/ginkgo/ginkgo -nodes=$(PARALLEL) -mod vendor -timeout=10m -v -tags "$(HOST_PLATFORM_BUILD_TAGS)" -stream \
+	GO111MODULE=on go run github.com/onsi/ginkgo/v2/ginkgo --procs=$(PARALLEL) --mod vendor --timeout=20m -v --tags "$(HOST_PLATFORM_BUILD_TAGS)" \
 	./test/e2e/metriconly/... -- \
 	-project=$(PROJECT) -zone=$(ZONE) \
 	-image=$(VM_IMAGE) -image-family=$(IMAGE_FAMILY) -image-project=$(IMAGE_PROJECT) \

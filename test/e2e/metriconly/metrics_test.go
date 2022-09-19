@@ -27,8 +27,7 @@ import (
 	"k8s.io/node-problem-detector/test/e2e/lib/gce"
 	"k8s.io/node-problem-detector/test/e2e/lib/npd"
 
-	"github.com/onsi/ginkgo"
-	"github.com/onsi/ginkgo/config"
+	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/pborman/uuid"
 )
@@ -67,7 +66,6 @@ var _ = ginkgo.Describe("NPD should export Prometheus metrics.", func() {
 	})
 
 	ginkgo.Context("On a clean node", func() {
-
 		ginkgo.It("NPD should export cpu/disk/host/memory metric", func() {
 			err := npd.WaitForNPD(instance, []string{"host_uptime"}, 120)
 			Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("Expect NPD to become ready in 120s, but hit error: %v", err))
@@ -119,7 +117,6 @@ var _ = ginkgo.Describe("NPD should export Prometheus metrics.", func() {
 	})
 
 	ginkgo.Context("When ext4 filesystem error happens", func() {
-
 		ginkgo.BeforeEach(func() {
 			err := npd.WaitForNPD(instance, []string{"problem_gauge"}, 120)
 			Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("Expect NPD to become ready in 120s, but hit error: %v", err))
@@ -145,7 +142,6 @@ var _ = ginkgo.Describe("NPD should export Prometheus metrics.", func() {
 	})
 
 	ginkgo.Context("When OOM kills and docker hung happen", func() {
-
 		ginkgo.BeforeEach(func() {
 			err := npd.WaitForNPD(instance, []string{"problem_gauge"}, 120)
 			Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("Expect NPD to become ready in 120s, but hit error: %v", err))
@@ -178,11 +174,11 @@ var _ = ginkgo.Describe("NPD should export Prometheus metrics.", func() {
 
 		artifactSubDir := ""
 		if *artifactsDir != "" {
-			testText := ginkgo.CurrentGinkgoTestDescription().FullTestText
+			testText := ginkgo.CurrentSpecReport().FullText()
 			testSubdirName := strings.Replace(testText, " ", "_", -1)
 
 			artifactSubDir = path.Join(*artifactsDir, testSubdirName)
-			err := os.MkdirAll(artifactSubDir, os.ModeDir|0755)
+			err := os.MkdirAll(artifactSubDir, os.ModeDir|0o755)
 			if err != nil {
 				fmt.Printf("Failed to create sub-directory to hold test artiface for test %s at %s\n",
 					testText, artifactSubDir)
@@ -190,7 +186,8 @@ var _ = ginkgo.Describe("NPD should export Prometheus metrics.", func() {
 			}
 		}
 
-		errs := npd.SaveTestArtifacts(instance, artifactSubDir, config.GinkgoConfig.ParallelNode)
+		ginkgoSuite, _ := ginkgo.GinkgoConfiguration()
+		errs := npd.SaveTestArtifacts(instance, artifactSubDir, ginkgoSuite.ParallelProcess)
 		if len(errs) != 0 {
 			fmt.Printf("Error storing debugging data to test artifacts: %v", errs)
 		}
@@ -202,17 +199,17 @@ func assertMetricExist(metricList []metrics.Float64MetricRepresentation, metricN
 	Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("Failed to find metric %q: %v.\nHere is all NPD exported metrics: %v", metricName, err, metricList))
 }
 
-func assertValueAtLeast(metricName string, labels map[string]string, value float64, lowBound float64) {
+func assertValueAtLeast(metricName string, labels map[string]string, value, lowBound float64) {
 	Expect(value).Should(BeNumerically(">=", lowBound),
 		"Got value for metric %s with label %v: %v, expect at least %v.", metricName, labels, value, lowBound)
 }
 
-func assertValueAtMost(metricName string, labels map[string]string, value float64, highBound float64) {
+func assertValueAtMost(metricName string, labels map[string]string, value, highBound float64) {
 	Expect(value).Should(BeNumerically("<=", highBound),
 		"Got value for metric %s with label %v: %v, expect at most %v.", metricName, labels, value, highBound)
 }
 
-func assertMetricValueInBound(instance gce.Instance, metricName string, labels map[string]string, lowBound float64, highBound float64) {
+func assertMetricValueInBound(instance gce.Instance, metricName string, labels map[string]string, lowBound, highBound float64) {
 	value, err := npd.FetchNPDMetric(instance, metricName, labels)
 	if err != nil {
 		ginkgo.Fail(fmt.Sprintf("Failed to find %s metric with label %v: %v", metricName, labels, err))

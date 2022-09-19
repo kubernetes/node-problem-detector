@@ -25,31 +25,33 @@ import (
 	"testing"
 	"time"
 
+	"github.com/onsi/ginkgo/v2"
 	"k8s.io/node-problem-detector/pkg/util/tomb"
 	"k8s.io/node-problem-detector/test/e2e/lib/gce"
-	"k8s.io/test-infra/boskos/client"
+	"sigs.k8s.io/boskos/client"
 
-	"github.com/onsi/ginkgo"
-	"github.com/onsi/ginkgo/config"
-	"github.com/onsi/ginkgo/reporters"
 	. "github.com/onsi/gomega"
 	compute "google.golang.org/api/compute/v1"
 )
 
-var zone = flag.String("zone", "", "gce zone the hosts live in")
-var project = flag.String("project", "", "gce project the hosts live in")
-var image = flag.String("image", "", "image to test")
-var imageFamily = flag.String("image-family", "", "image family to pick up the test image. Ignored when -image is set.")
-var imageProject = flag.String("image-project", "", "gce project of the OS image")
-var jobName = flag.String("job-name", "", "name of the Prow job running the test")
-var sshKey = flag.String("ssh-key", "", "path to ssh private key.")
-var sshUser = flag.String("ssh-user", "", "use predefined user for ssh.")
-var npdBuildTar = flag.String("npd-build-tar", "", "tarball containing NPD to be tested.")
-var artifactsDir = flag.String("artifacts-dir", "", "local directory to save test artifacts into.")
-var boskosProjectType = flag.String("boskos-project-type", "gce-project",
-	"specifies which project type to select from Boskos.")
+var (
+	zone              = flag.String("zone", "", "gce zone the hosts live in")
+	project           = flag.String("project", "", "gce project the hosts live in")
+	image             = flag.String("image", "", "image to test")
+	imageFamily       = flag.String("image-family", "", "image family to pick up the test image. Ignored when -image is set.")
+	imageProject      = flag.String("image-project", "", "gce project of the OS image")
+	jobName           = flag.String("job-name", "", "name of the Prow job running the test")
+	sshKey            = flag.String("ssh-key", "", "path to ssh private key.")
+	sshUser           = flag.String("ssh-user", "", "use predefined user for ssh.")
+	npdBuildTar       = flag.String("npd-build-tar", "", "tarball containing NPD to be tested.")
+	artifactsDir      = flag.String("artifacts-dir", "", "local directory to save test artifacts into.")
+	boskosProjectType = flag.String("boskos-project-type", "gce-project",
+		"specifies which project type to select from Boskos.")
+)
+
 var boskosServerURL = flag.String("boskos-server-url", "http://boskos.test-pods.svc.cluster.local",
 	"specifies Boskos server URL.")
+
 var boskosWaitDuration = flag.Duration("boskos-wait-duration", 2*time.Minute,
 	"Duration to wait before quitting getting Boskos resource.")
 
@@ -62,8 +64,10 @@ var boskosClient *client.Client
 var boskosRenewingTomb *tomb.Tomb
 
 // SynchronizedBeforeSuite and SynchronizedAfterSuite help manages singleton resource (a Boskos project) across Ginkgo nodes.
-var _ = ginkgo.SynchronizedBeforeSuite(rentBoskosProjectIfNeededOnNode1, acceptBoskosProjectIfNeededFromNode1)
-var _ = ginkgo.SynchronizedAfterSuite(func() {}, releaseBoskosResourcesOnNode1)
+var (
+	_ = ginkgo.SynchronizedBeforeSuite(rentBoskosProjectIfNeededOnNode1, acceptBoskosProjectIfNeededFromNode1)
+	_ = ginkgo.SynchronizedAfterSuite(func() {}, releaseBoskosResourcesOnNode1)
+)
 
 func TestNPD(t *testing.T) {
 	if testing.Short() {
@@ -79,13 +83,15 @@ func TestNPD(t *testing.T) {
 	if *artifactsDir != "" {
 		_, err := os.Stat(*artifactsDir)
 		if err != nil && os.IsNotExist(err) {
-			os.MkdirAll(*artifactsDir, os.ModeDir|0755)
+			os.MkdirAll(*artifactsDir, os.ModeDir|0o755)
 		}
 	}
 
+	ginkgoSuite, reporterConfig := ginkgo.GinkgoConfiguration()
 	// The junit formatted result output is for showing test results on testgrid.
-	junitReporter := reporters.NewJUnitReporter(path.Join(*artifactsDir, fmt.Sprintf("junit-%02d.xml", config.GinkgoConfig.ParallelNode)))
-	ginkgo.RunSpecsWithDefaultAndCustomReporters(t, "NPD Metric-only Suite", []ginkgo.Reporter{junitReporter})
+	reporterConfig.JUnitReport = path.Join(*artifactsDir, fmt.Sprintf("junit-%02d.xml", ginkgoSuite.ParallelProcess))
+
+	ginkgo.RunSpecs(t, "NPD Metric-only Suite", ginkgoSuite, reporterConfig)
 }
 
 // rentBoskosProjectIfNeededOnNode1 rents a GCP project from Boskos if no GCP project is specified.
@@ -101,7 +107,9 @@ func rentBoskosProjectIfNeededOnNode1() []byte {
 	}
 
 	fmt.Printf("Renting project from Boskos\n")
-	boskosClient = client.NewClient(*jobName, *boskosServerURL)
+	var err error
+	boskosClient, err = client.NewClient(*jobName, *boskosServerURL, "", "")
+	Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("Failed to create Boskos client: %v", err))
 	boskosRenewingTomb = tomb.NewTomb()
 
 	ctx, cancel := context.WithTimeout(context.Background(), *boskosWaitDuration)

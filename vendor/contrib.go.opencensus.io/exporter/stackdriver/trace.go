@@ -22,10 +22,10 @@ import (
 	"time"
 
 	tracingclient "cloud.google.com/go/trace/apiv2"
-	"github.com/golang/protobuf/proto"
 	"go.opencensus.io/trace"
 	"google.golang.org/api/support/bundler"
 	tracepb "google.golang.org/genproto/googleapis/devtools/cloudtrace/v2"
+	"google.golang.org/protobuf/proto"
 
 	commonpb "github.com/census-instrumentation/opencensus-proto/gen-go/agent/common/v1"
 	resourcepb "github.com/census-instrumentation/opencensus-proto/gen-go/resource/v1"
@@ -118,6 +118,10 @@ func (e *traceExporter) ExportSpan(s *trace.SpanData) {
 // spans.
 func (e *traceExporter) Flush() {
 	e.bundler.Flush()
+}
+
+func (e *traceExporter) close() error {
+	return e.client.Close()
 }
 
 func (e *traceExporter) pushTraceSpans(ctx context.Context, node *commonpb.Node, r *resourcepb.Resource, spans []*trace.SpanData) (int, error) {

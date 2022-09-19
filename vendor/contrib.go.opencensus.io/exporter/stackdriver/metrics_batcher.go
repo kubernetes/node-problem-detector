@@ -23,7 +23,7 @@ import (
 	"sync"
 	"time"
 
-	monitoring "cloud.google.com/go/monitoring/apiv3"
+	monitoring "cloud.google.com/go/monitoring/apiv3/v2"
 	monitoringpb "google.golang.org/genproto/googleapis/monitoring/v3"
 )
 
@@ -138,20 +138,36 @@ var timeSeriesErrRegex = regexp.MustCompile(`: timeSeries\[([0-9]+(?:-[0-9]+)?(?
 
 // sendReq sends create time series requests to Stackdriver,
 // and returns the count of dropped time series and error.
-func sendReq(ctx context.Context, c *monitoring.MetricClient, req *monitoringpb.CreateTimeSeriesRequest) (int, error) {
+func sendReq(ctx context.Context, c *monitoring.MetricClient, req *monitoringpb.CreateTimeSeriesRequest) (int, []error) {
 	// c == nil only happens in unit tests where we don't make real calls to Stackdriver server
 	if c == nil {
 		return 0, nil
 	}
 
-	err := createTimeSeries(ctx, c, req)
-	if err == nil {
-		return 0, nil
+	dropped := 0
+	errors := []error{}
+	serviceReq, nonServiceReq := splitCreateTimeSeriesRequest(req)
+	if nonServiceReq != nil {
+		err := createTimeSeries(ctx, c, nonServiceReq)
+		if err != nil {
+			dropped += droppedTimeSeriesFromMonitoringAPIError(nonServiceReq, err)
+			errors = append(errors, err)
+		}
 	}
+	if serviceReq != nil {
+		err := createServiceTimeSeries(ctx, c, serviceReq)
+		if err != nil {
+			dropped += droppedTimeSeriesFromMonitoringAPIError(serviceReq, err)
+			errors = append(errors, err)
+		}
+	}
+	return dropped, errors
+}
 
-	droppedTimeSeriesRangeMatches := timeSeriesErrRegex.FindAllStringSubmatch(err.Error(), -1)
-	if !strings.HasPrefix(err.Error(), "One or more TimeSeries could not be written:") || len(droppedTimeSeriesRangeMatches) == 0 {
-		return len(req.TimeSeries), err
+func droppedTimeSeriesFromMonitoringAPIError(req *monitoringpb.CreateTimeSeriesRequest, monitoringAPIerr error) int {
+	droppedTimeSeriesRangeMatches := timeSeriesErrRegex.FindAllStringSubmatch(monitoringAPIerr.Error(), -1)
+	if !strings.HasPrefix(monitoringAPIerr.Error(), "One or more TimeSeries could not be written:") || len(droppedTimeSeriesRangeMatches) == 0 {
+		return len(req.TimeSeries)
 	}
 
 	dropped := 0
@@ -171,7 +187,7 @@ func sendReq(ctx context.Context, c *monitoring.MetricClient, req *monitoringpb.
 			}
 		}
 	}
-	return dropped, err
+	return dropped
 }
 
 type worker struct {
@@ -219,10 +235,10 @@ func (w *worker) sendReqWithTimeout(req *monitoringpb.CreateTimeSeriesRequest) {
 	w.recordDroppedTimeseries(sendReq(ctx, w.mc, req))
 }
 
-func (w *worker) recordDroppedTimeseries(numTimeSeries int, err error) {
+func (w *worker) recordDroppedTimeseries(numTimeSeries int, errors []error) {
 	w.resp.droppedTimeSeries += numTimeSeries
-	if err != nil {
-		w.resp.errs = append(w.resp.errs, err)
+	if len(errors) > 0 {
+		w.resp.errs = append(w.resp.errs, errors...)
 	}
 }
 
