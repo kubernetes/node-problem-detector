@@ -72,8 +72,8 @@ ENABLE_JOURNALD=0
 endif
 
 # TODO(random-liu): Support different architectures.
-# The debian-base:v1.0.0 image built from kubernetes repository is based on
-# Debian Stretch. It includes systemd 232 with support for both +XZ and +LZ4
+# The debian-base:v2.0.0 image built from kubernetes repository is based on
+# Debian Stretch. It includes systemd 241 with support for both +XZ and +LZ4
 # compression. +LZ4 is needed on some os distros such as COS.
 BASEIMAGE:=k8s.gcr.io/debian-base:v2.0.0
 
