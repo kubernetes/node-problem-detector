@@ -18,6 +18,7 @@ package kmsg
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -39,6 +40,7 @@ type kernelLogWatcher struct {
 
 	kmsgParser kmsgparser.Parser
 	clock      utilclock.Clock
+	priority   *uint64
 }
 
 // NewKmsgWatcher creates a watcher which will read messages from /dev/kmsg
@@ -64,7 +66,21 @@ func NewKmsgWatcher(cfg types.WatcherConfig) types.LogWatcher {
 
 var _ types.WatcherCreateFunc = NewKmsgWatcher
 
+const (
+	// priorityKey is the key that defines which priority of source configuration in the plugin configuration.
+	priorityKey = "priority"
+)
+
 func (k *kernelLogWatcher) Watch() (<-chan *logtypes.Log, error) {
+	priorityString, exists := k.cfg.PluginConfig[priorityKey]
+	if exists {
+		priority, err := strconv.ParseUint(priorityString, 10, 8)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse priority custom config: %v", err)
+		}
+		k.priority = &priority
+	}
+
 	if k.kmsgParser == nil {
 		// nil-check to make mocking easier
 		parser, err := kmsgparser.NewParser()
@@ -113,6 +129,14 @@ func (k *kernelLogWatcher) watchLoop() {
 			// Discard messages before start time.
 			if msg.Timestamp.Before(k.startTime) {
 				glog.V(5).Infof("Throwing away msg %q before start time: %v < %v", msg.Message, msg.Timestamp, k.startTime)
+				continue
+			}
+
+			// In case priority has been set, discard message which have a
+			// higher priority
+			// than the one defined
+			if k.priority != nil && uint64(msg.Priority) > *k.priority {
+				glog.V(5).Infof("Throwing away msg %q due to tis priority: %v > %v", msg.Message, msg.Priority, k.priority)
 				continue
 			}
 
