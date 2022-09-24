@@ -149,6 +149,7 @@ func TestWatch(t *testing.T) {
 		},
 		{
 			// The start point is at the head of the log file.
+			// Only logs with priority equal or less than 3 will not be filtered
 			uptime:   0,
 			lookback: "0",
 			delay:    "0",
@@ -157,11 +158,16 @@ func TestWatch(t *testing.T) {
 				{Message: "1", Timestamp: now.Add(0 * time.Second), Priority: 9},
 				{Message: "2", Timestamp: now.Add(1 * time.Second), Priority: 2},
 				{Message: "3", Timestamp: now.Add(2 * time.Second), Priority: 5},
+				{Message: "4", Timestamp: now.Add(3 * time.Second), Priority: 3},
 			}},
 			logs: []logtypes.Log{
 				{
 					Timestamp: now.Add(time.Second),
 					Message:   "2",
+				},
+				{
+					Timestamp: now.Add(3 * time.Second),
+					Message:   "4",
 				},
 			},
 		},
