@@ -56,6 +56,7 @@ func TestWatch(t *testing.T) {
 		delay    string
 		log      *mockKmsgParser
 		logs     []logtypes.Log
+		priority string
 	}{
 		{
 			// The start point is at the head of the log file.
@@ -146,9 +147,32 @@ func TestWatch(t *testing.T) {
 				},
 			},
 		},
+		{
+			// The start point is at the head of the log file.
+			uptime:   0,
+			lookback: "0",
+			delay:    "0",
+			priority: "3",
+			log: &mockKmsgParser{kmsgs: []kmsgparser.Message{
+				{Message: "1", Timestamp: now.Add(0 * time.Second), Priority: 9},
+				{Message: "2", Timestamp: now.Add(1 * time.Second), Priority: 2},
+				{Message: "3", Timestamp: now.Add(2 * time.Second), Priority: 5},
+			}},
+			logs: []logtypes.Log{
+				{
+					Timestamp: now.Add(time.Second),
+					Message:   "2",
+				},
+			},
+		},
 	}
 	for _, test := range testCases {
-		w := NewKmsgWatcher(types.WatcherConfig{Lookback: test.lookback})
+		pluginConfig := make(map[string]string, 0)
+		if test.priority != "" {
+			pluginConfig["priority"] = test.priority
+		}
+
+		w := NewKmsgWatcher(types.WatcherConfig{Lookback: test.lookback, PluginConfig: pluginConfig})
 		w.(*kernelLogWatcher).startTime, _ = util.GetStartTime(fakeClock.Now(), test.uptime, test.lookback, test.delay)
 		w.(*kernelLogWatcher).clock = fakeClock
 		w.(*kernelLogWatcher).kmsgParser = test.log
