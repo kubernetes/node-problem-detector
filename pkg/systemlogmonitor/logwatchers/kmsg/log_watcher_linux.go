@@ -136,7 +136,7 @@ func (k *kernelLogWatcher) watchLoop() {
 			// higher priority
 			// than the one defined
 			if k.priority != nil && uint64(msg.Priority) > *k.priority {
-				glog.V(5).Infof("Throwing away msg %q due to tis priority: %v > %v", msg.Message, msg.Priority, k.priority)
+				glog.V(5).Infof("Throwing away msg %q due to tis priority: %v > %v", msg.Message, msg.Priority, *k.priority)
 				continue
 			}
 
