@@ -64,6 +64,11 @@
 			"pattern": "CE memory read error .*"
 		},
 		{
+			"type": "temporary",
+			"reason": "NICFlapping",
+			"pattern": "NIC Link is Down"
+		},
+		{
 			"type": "permanent",
 			"condition": "KernelDeadlock",
 			"reason": "DockerHung",
