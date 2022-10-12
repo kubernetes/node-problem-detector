@@ -48,7 +48,6 @@ func main() {
 	npdo.AddFlags(pflag.CommandLine)
 
 	pflag.Parse()
-	npdInteractive(npdo)
 
 	handler := &npdService{
 		options: npdo,
