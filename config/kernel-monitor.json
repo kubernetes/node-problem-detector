@@ -64,6 +64,11 @@
 			"pattern": "CE memory read error .*"
 		},
 		{
+			"type": "temporary",
+			"reason": "HardwareError",
+			"pattern": "Hardware Error .*"
+		},
+		{
 			"type": "permanent",
 			"condition": "KernelDeadlock",
 			"reason": "DockerHung",

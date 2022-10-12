@@ -1,0 +1,3 @@
+{1}[Hardware Error]: Hardware error from APEI Generic Hardware Error Source: 5
+{1}[Hardware Error]: event severity: fatal
+mce: [Hardware Error]: Run the above through 'mcelog --ascii'

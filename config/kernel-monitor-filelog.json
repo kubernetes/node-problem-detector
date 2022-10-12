@@ -43,6 +43,11 @@
 			"pattern": "divide error: 0000 \\[#\\d+\\] SMP"
 		},
 		{
+			"type": "temporary",
+			"reason": "HardwareError",
+			"pattern": "Hardware Error .*"
+		},
+		{
 			"type": "permanent",
 			"condition": "KernelDeadlock",
 			"reason": "DockerHung",
