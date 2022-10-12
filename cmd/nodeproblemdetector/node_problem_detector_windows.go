@@ -27,6 +27,7 @@ import (
 	"golang.org/x/sys/windows/svc"
 	"golang.org/x/sys/windows/svc/debug"
 	"golang.org/x/sys/windows/svc/eventlog"
+
 	"k8s.io/node-problem-detector/cmd/options"
 )
 
@@ -47,6 +48,7 @@ func main() {
 	npdo.AddFlags(pflag.CommandLine)
 
 	pflag.Parse()
+	npdInteractive(npdo)
 
 	handler := &npdService{
 		options: npdo,

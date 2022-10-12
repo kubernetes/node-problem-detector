@@ -71,6 +71,10 @@ type CustomPluginConfig struct {
 	EnableMetricsReporting *bool `json:"metricsReporting,omitempty"`
 }
 
+func NewPluginGlobalConfig() pluginGlobalConfig {
+	return pluginGlobalConfig{}
+}
+
 // ApplyConfiguration applies default configurations.
 func (cpc *CustomPluginConfig) ApplyConfiguration() error {
 	if cpc.PluginGlobalConfig.TimeoutString == nil {

@@ -19,10 +19,9 @@ package options
 import (
 	"flag"
 	"fmt"
+	"net/url"
 	"os"
 	"time"
-
-	"net/url"
 
 	"github.com/spf13/pflag"
 
@@ -87,6 +86,11 @@ type NodeProblemDetectorOptions struct {
 
 	// NodeName is the node name used to communicate with Kubernetes ApiServer.
 	NodeName string
+
+	//sync period
+	SyncInterval int
+	//sync url
+	SyncUrl string
 }
 
 func NewNodeProblemDetectorOptions() *NodeProblemDetectorOptions {
@@ -125,6 +129,12 @@ func (npdo *NodeProblemDetectorOptions) AddFlags(fs *pflag.FlagSet) {
 		20257, "The port to bind the Prometheus scrape endpoint. Prometheus exporter is enabled by default at port 20257. Use 0 to disable.")
 	fs.StringVar(&npdo.PrometheusServerAddress, "prometheus-address",
 		"127.0.0.1", "The address to bind the Prometheus scrape endpoint.")
+
+	fs.IntVar(&npdo.SyncInterval, "sync-interval",
+		60, "Periodically synchronize monitoring items from the healing controller. sync interval default is 60s. Use 0 to disable.")
+	fs.StringVar(&npdo.SyncUrl, "sync-url",
+		"", "sync monitor config from healing controller.url default is empty. Empty url to disable.")
+
 	for _, exporterName := range exporters.GetExporterNames() {
 		exporterHandler := exporters.GetExporterHandlerOrDie(exporterName)
 		exporterHandler.Options.SetFlags(fs)

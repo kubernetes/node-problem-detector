@@ -25,12 +25,12 @@ import (
 
 	"contrib.go.opencensus.io/exporter/stackdriver"
 	monitoredres "contrib.go.opencensus.io/exporter/stackdriver/monitoredresource"
+	"github.com/avast/retry-go"
 	"github.com/golang/glog"
 	"github.com/spf13/pflag"
 	"go.opencensus.io/stats/view"
 	"google.golang.org/api/option"
 
-	"github.com/avast/retry-go"
 	"k8s.io/node-problem-detector/pkg/exporters"
 	seconfig "k8s.io/node-problem-detector/pkg/exporters/stackdriver/config"
 	"k8s.io/node-problem-detector/pkg/types"

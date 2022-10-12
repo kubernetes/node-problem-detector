@@ -26,6 +26,7 @@ const (
 	CPULoad5m               MetricID = "cpu/load_5m"
 	CPULoad15m              MetricID = "cpu/load_15m"
 	ProblemCounterID        MetricID = "problem_counter"
+	SyncCounterID           MetricID = "sync_counter"
 	ProblemGaugeID          MetricID = "problem_gauge"
 	DiskIOTimeID            MetricID = "disk/io_time"
 	DiskWeightedIOID        MetricID = "disk/weighted_io"
