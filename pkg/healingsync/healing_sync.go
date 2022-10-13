@@ -67,7 +67,7 @@ func (c *CronService) Run(termCh <-chan error) error {
 		panic(err)
 	}
 
-	glog.V(2).Infof("cron service stack detail:%v", c)
+	glog.V(5).Infof("cron service stack detail:%v", c)
 	for {
 		select {
 		case <-termCh:
@@ -79,7 +79,7 @@ func (c *CronService) Run(termCh <-chan error) error {
 }
 
 func (c *CronService) getMonitorConfig() {
-	glog.V(2).Infof("start get monitor config. url:%s", c.url)
+	glog.V(3).Infof("start get monitor config. url:%s", c.url)
 	resp, err := httpRequest(c.url)
 	if err != nil {
 		if err1 := problemmetrics.GlobalProblemMetricsManager.IncrementSyncCounter("sync config failed", 1); err1 != nil {
@@ -100,7 +100,7 @@ func (c *CronService) getMonitorConfig() {
 		glog.Errorf("Read response body failed, err:%s", err.Error())
 		return
 	}
-	glog.V(2).Infof("resp body:%s", string(body))
+	glog.V(5).Infof("resp body:%s", string(body))
 
 	var tasks HealingTasks
 	if err := json.Unmarshal(body, &tasks); err != nil {
