@@ -15,7 +15,9 @@ const (
 )
 
 type HealingTasks struct {
-	Items []Healing `json:"items"`
+	RequestId string        `json:"requestId"`
+	Status    HealingStatus `json:"status"`
+	Works     []Healing     `json:"works"`
 }
 
 type Healing struct {
@@ -30,4 +32,9 @@ type Healing struct {
 	Script      string      `json:"script"` //脚本内容，base64编码
 	Args        []string    `json:"args"`
 	Timeout     string      `json:"timeout"`
+}
+
+type HealingStatus struct {
+	Code    string `json:"code"`
+	Message string `json:"message"`
 }

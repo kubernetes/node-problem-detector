@@ -112,17 +112,17 @@ func (c *CronService) getMonitorConfig() {
 	}
 
 	extra := make(map[int64]int64)
-	for k, _ := range tasks.Items {
-		extra[tasks.Items[k].MonitorId] = tasks.Items[k].MonitorId
-		if cur, ok := c.curMonitors[tasks.Items[k].MonitorId]; ok {
-			if cur != nil && cur.Version == tasks.Items[k].Version {
+	for k, _ := range tasks.Works {
+		extra[tasks.Works[k].MonitorId] = tasks.Works[k].MonitorId
+		if cur, ok := c.curMonitors[tasks.Works[k].MonitorId]; ok {
+			if cur != nil && cur.Version == tasks.Works[k].Version {
 				continue
 			}
 		}
-		if tasks.Items[k].MonitorType == LogMode {
-			_ = c.genLogMonitor(&tasks.Items[k])
-		} else if tasks.Items[k].MonitorType == CustomPluginMode {
-			_ = c.genCustomPlugin(&tasks.Items[k])
+		if tasks.Works[k].MonitorType == LogMode {
+			_ = c.genLogMonitor(&tasks.Works[k])
+		} else if tasks.Works[k].MonitorType == CustomPluginMode {
+			_ = c.genCustomPlugin(&tasks.Works[k])
 		}
 	}
 
