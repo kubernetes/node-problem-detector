@@ -18,7 +18,9 @@ package healthchecker
 
 import (
 	"context"
+	"fmt"
 	"net/http"
+	"os"
 	"os/exec"
 	"strings"
 	"time"
@@ -136,11 +138,16 @@ func healthCheckEndpointOKFunc(endpoint string, timeout time.Duration) func() (b
 
 // getHealthCheckFunc returns the health check function based on the component.
 func getHealthCheckFunc(hco *options.HealthCheckerOptions) func() (bool, error) {
+	nodeIP := "127.0.0.1"
+	v := os.Getenv("NODE_IP")
+	if v != "" {
+		nodeIP = v
+	}
 	switch hco.Component {
 	case types.KubeletComponent:
-		return healthCheckEndpointOKFunc(types.KubeletHealthCheckEndpoint, hco.HealthCheckTimeout)
+		return healthCheckEndpointOKFunc(fmt.Sprintf(types.KubeletHealthCheckEndpoint, nodeIP), hco.HealthCheckTimeout)
 	case types.KubeProxyComponent:
-		return healthCheckEndpointOKFunc(types.KubeProxyHealthCheckEndpoint, hco.HealthCheckTimeout)
+		return healthCheckEndpointOKFunc(fmt.Sprintf(types.KubeProxyHealthCheckEndpoint, nodeIP), hco.HealthCheckTimeout)
 	case types.DockerComponent:
 		return func() (bool, error) {
 			if _, err := execCommand(hco.HealthCheckTimeout, getDockerPath(), "ps"); err != nil {

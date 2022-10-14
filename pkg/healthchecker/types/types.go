@@ -37,8 +37,8 @@ const (
 	ContainerdService  = "containerd"
 	KubeProxyComponent = "kube-proxy"
 
-	KubeletHealthCheckEndpoint   = "http://127.0.0.1:10248/healthz"
-	KubeProxyHealthCheckEndpoint = "http://127.0.0.1:10256/healthz"
+	KubeletHealthCheckEndpoint   = "http://%s:10248/healthz"
+	KubeProxyHealthCheckEndpoint = "http://%s:10256/healthz"
 
 	LogPatternFlagSeparator = ":"
 )

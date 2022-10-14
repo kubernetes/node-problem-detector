@@ -7,3 +7,4 @@ junit*.xml
 debug.test
 /output/
 coverage.out
+.vscode
