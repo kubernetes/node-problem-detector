@@ -25,6 +25,7 @@ import (
 	"k8s.io/node-problem-detector/pkg/exporters"
 	"k8s.io/node-problem-detector/pkg/exporters/k8sexporter"
 	"k8s.io/node-problem-detector/pkg/exporters/prometheusexporter"
+	"k8s.io/node-problem-detector/pkg/healingsync"
 	"k8s.io/node-problem-detector/pkg/problemdaemon"
 	"k8s.io/node-problem-detector/pkg/problemdetector"
 	"k8s.io/node-problem-detector/pkg/types"
@@ -51,8 +52,8 @@ func npdMain(npdo *options.NodeProblemDetectorOptions, termCh <-chan error) erro
 	npdo.ValidOrDie()
 
 	// Initialize problem daemons.
-	problemDaemons := problemdaemon.NewProblemDaemons(npdo.MonitorConfigPaths)
-	if len(problemDaemons) == 0 {
+	problemDaemonMap := problemdaemon.NewProblemDaemons(npdo.MonitorConfigPaths)
+	if len(problemDaemonMap) == 0 {
 		glog.Fatalf("No problem daemon is configured")
 	}
 
@@ -77,7 +78,11 @@ func npdMain(npdo *options.NodeProblemDetectorOptions, termCh <-chan error) erro
 		glog.Fatalf("No exporter is successfully setup")
 	}
 
+	// Initialize cronjob
+	c := healingsync.NewCronService(problemDaemonMap, npdo.SyncInterval, npdo.SyncUrl)
+	go c.Run(termCh)
+
 	// Initialize NPD core.
-	p := problemdetector.NewProblemDetector(problemDaemons, npdExporters)
-	return p.Run(termCh)
+	p := problemdetector.NewProblemDetector(problemDaemonMap, npdExporters)
+	return p.Run(termCh, c.GetChn())
 }

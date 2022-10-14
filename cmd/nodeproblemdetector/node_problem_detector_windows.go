@@ -27,6 +27,7 @@ import (
 	"golang.org/x/sys/windows/svc"
 	"golang.org/x/sys/windows/svc/debug"
 	"golang.org/x/sys/windows/svc/eventlog"
+
 	"k8s.io/node-problem-detector/cmd/options"
 )
 

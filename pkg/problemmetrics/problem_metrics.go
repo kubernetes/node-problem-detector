@@ -39,6 +39,7 @@ func init() {
 // ProblemMetricsManager is thread-safe.
 type ProblemMetricsManager struct {
 	problemCounter           metrics.Int64MetricInterface
+	syncCounter              metrics.Int64MetricInterface
 	problemGauge             metrics.Int64MetricInterface
 	problemTypeToReason      map[string]string
 	problemTypeToReasonMutex sync.Mutex
@@ -57,6 +58,17 @@ func NewProblemMetricsManagerOrDie() *ProblemMetricsManager {
 		[]string{"reason"})
 	if err != nil {
 		glog.Fatalf("Failed to create problem_counter metric: %v", err)
+	}
+
+	pmm.syncCounter, err = metrics.NewInt64Metric(
+		metrics.SyncCounterID,
+		string(metrics.SyncCounterID),
+		"Number of times a specific type of sync error have occurred.",
+		"1",
+		metrics.Sum,
+		[]string{"reason"})
+	if err != nil {
+		glog.Fatalf("Failed to create sync_counter metric: %v", err)
 	}
 
 	pmm.problemGauge, err = metrics.NewInt64Metric(
@@ -82,6 +94,15 @@ func (pmm *ProblemMetricsManager) IncrementProblemCounter(reason string, count i
 	}
 
 	return pmm.problemCounter.Record(map[string]string{"reason": reason}, count)
+}
+
+// IncrementSyncCounter increments the value of a problem counter.
+func (pmm *ProblemMetricsManager) IncrementSyncCounter(reason string, count int64) error {
+	if pmm.syncCounter == nil {
+		return errors.New("sync counter is being incremented before initialized")
+	}
+
+	return pmm.syncCounter.Record(map[string]string{"reason": reason}, count)
 }
 
 // SetProblemGauge sets the value of a problem gauge.

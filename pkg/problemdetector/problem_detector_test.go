@@ -23,8 +23,8 @@ import (
 )
 
 func TestEmpty(t *testing.T) {
-	pd := NewProblemDetector([]types.Monitor{}, []types.Exporter{})
-	if err := pd.Run(nil); err == nil {
+	pd := NewProblemDetector(map[string]types.Monitor{}, []types.Exporter{})
+	if err := pd.Run(nil, nil); err == nil {
 		t.Error("expected error when running an empty problem detector")
 	}
 }

@@ -52,7 +52,7 @@ func GetProblemDaemonHandlerOrDie(problemDaemonType types.ProblemDaemonType) typ
 }
 
 // NewProblemDaemons creates all problem daemons based on the configurations provided.
-func NewProblemDaemons(monitorConfigPaths types.ProblemDaemonConfigPathMap) []types.Monitor {
+func NewProblemDaemons(monitorConfigPaths types.ProblemDaemonConfigPathMap) map[string]types.Monitor {
 	problemDaemonMap := make(map[string]types.Monitor)
 	for problemDaemonType, configs := range monitorConfigPaths {
 		for _, config := range *configs {
@@ -65,9 +65,10 @@ func NewProblemDaemons(monitorConfigPaths types.ProblemDaemonConfigPathMap) []ty
 		}
 	}
 
-	problemDaemons := []types.Monitor{}
+	/*problemDaemons := []types.Monitor{}
 	for _, problemDaemon := range problemDaemonMap {
 		problemDaemons = append(problemDaemons, problemDaemon)
-	}
-	return problemDaemons
+	}*/
+
+	return problemDaemonMap
 }

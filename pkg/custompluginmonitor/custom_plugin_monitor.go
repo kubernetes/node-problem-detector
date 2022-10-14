@@ -140,6 +140,7 @@ func (c *customPluginMonitor) monitorLoop() {
 		case <-c.tomb.Stopping():
 			c.plugin.Stop()
 			glog.Infof("Custom plugin monitor stopped: %s", c.configPath)
+			close(c.statusChan)
 			c.tomb.Done()
 			return
 		}
