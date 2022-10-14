@@ -22,8 +22,10 @@
 all: build
 
 # PLATFORMS is the set of OS_ARCH that NPD can build against.
-LINUX_PLATFORMS=linux_amd64 linux_arm64
-PLATFORMS=$(LINUX_PLATFORMS) windows_amd64
+# LINUX_PLATFORMS=linux_amd64 linux_arm64
+# PLATFORMS=$(LINUX_PLATFORMS) windows_amd64
+LINUX_PLATFORMS=linux_amd64
+PLATFORMS=$(LINUX_PLATFORMS)
 
 # VERSION is the version of the binary.
 VERSION?=$(shell if [ -d .git ]; then echo `git describe --tags --dirty`; else echo "UNKNOWN"; fi)
@@ -32,7 +34,8 @@ VERSION?=$(shell if [ -d .git ]; then echo `git describe --tags --dirty`; else e
 TAG?=$(VERSION)
 
 # REGISTRY is the container registry to push into.
-REGISTRY?=gcr.io/k8s-staging-npd
+#REGISTRY?=gcr.io/k8s-staging-npd
+REGISTRY?=harbor-dev.eecos.cn:1443
 
 # UPLOAD_PATH is the cloud storage path to upload release tar.
 UPLOAD_PATH?=gs://kubernetes-release
@@ -58,7 +61,7 @@ NPD_NAME_VERSION?=node-problem-detector-$(VERSION)
 TARBALL=$(NPD_NAME_VERSION).tar.gz
 
 # IMAGE is the image name of the node problem detector container image.
-IMAGE:=$(REGISTRY)/node-problem-detector:$(TAG)
+IMAGE:=$(REGISTRY)/ecf-edge/node-problem-detector/node-problem-detector:$(TAG)
 
 # ENABLE_JOURNALD enables build journald support or not. Building journald
 # support needs libsystemd-dev or libsystemd-journal-dev.
@@ -239,7 +242,7 @@ $(NPD_NAME_VERSION)-%.tar.gz: $(ALL_BINARIES) test/e2e-install.sh
 
 build-binaries: $(ALL_BINARIES)
 
-build-container: build-binaries Dockerfile
+build-container: 
 	docker build -t $(IMAGE) --build-arg BASEIMAGE=$(BASEIMAGE) --build-arg LOGCOUNTER=$(LOGCOUNTER) .
 
 $(TARBALL): ./bin/node-problem-detector ./bin/log-counter ./bin/health-checker ./test/bin/problem-maker
