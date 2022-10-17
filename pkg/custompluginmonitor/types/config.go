@@ -41,10 +41,14 @@ var (
 type pluginGlobalConfig struct {
 	// InvokeIntervalString is the interval string at which plugins will be invoked.
 	InvokeIntervalString *string `json:"invoke_interval,omitempty"`
+	// InitialInvokeIntervalString is the interval string at which plugins will be invoked for the first 5 checks after booting.
+	InitialInvokeIntervalString *string `json:"initial_invoke_interval,omitempty"`
 	// TimeoutString is the global plugin execution timeout string.
 	TimeoutString *string `json:"timeout,omitempty"`
 	// InvokeInterval is the interval at which plugins will be invoked.
 	InvokeInterval *time.Duration `json:"-"`
+	// InitialInvokeInterval is the interval at which plugins will be invoked for the first 5 checks after booting.
+	InitialInvokeInterval *time.Duration `json:"-"`
 	// Timeout is the global plugin execution timeout.
 	Timeout *time.Duration `json:"-"`
 	// MaxOutputLength is the maximum plugin output message length.
@@ -97,6 +101,16 @@ func (cpc *CustomPluginConfig) ApplyConfiguration() error {
 	}
 
 	cpc.PluginGlobalConfig.InvokeInterval = &invokeInterval
+
+	// set optional InitialInvokeIntervalString if given
+	if cpc.PluginGlobalConfig.InitialInvokeIntervalString != nil {
+		initialInvokeInterval, err := time.ParseDuration(*cpc.PluginGlobalConfig.InitialInvokeIntervalString)
+		if err != nil {
+			return fmt.Errorf("error in parsing initial invoke interval %q: %v", *cpc.PluginGlobalConfig.InitialInvokeIntervalString, err)
+		}
+
+		cpc.PluginGlobalConfig.InitialInvokeInterval = &initialInvokeInterval
+	}
 
 	if cpc.PluginGlobalConfig.MaxOutputLength == nil {
 		cpc.PluginGlobalConfig.MaxOutputLength = &defaultMaxOutputLength

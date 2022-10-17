@@ -66,9 +66,6 @@ func (p *Plugin) Run() {
 		p.tomb.Done()
 	}()
 
-	runTicker := time.NewTicker(*p.config.PluginGlobalConfig.InvokeInterval)
-	defer runTicker.Stop()
-
 	// on boot run once
 	select {
 	case <-p.tomb.Stopping():
@@ -77,7 +74,24 @@ func (p *Plugin) Run() {
 		p.runRules()
 	}
 
+	// run quickly after the first boot
+	if p.config.PluginGlobalConfig.InitialInvokeInterval != nil {
+		initialTicker := time.NewTicker(*p.config.PluginGlobalConfig.InitialInvokeInterval)
+		defer initialTicker.Stop()
+		for i := 0; i < 5; i++ {
+			select {
+			case <-initialTicker.C:
+				p.runRules()
+			case <-p.tomb.Stopping():
+				return
+			}
+		}
+		initialTicker.Stop()
+	}
+
 	// run every InvokeInterval
+	runTicker := time.NewTicker(*p.config.PluginGlobalConfig.InvokeInterval)
+	defer runTicker.Stop()
 	for {
 		select {
 		case <-runTicker.C:
