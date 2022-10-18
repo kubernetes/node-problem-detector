@@ -29,8 +29,9 @@ import (
 )
 
 const (
-	ScriptPath = "/npd/"
-	ConfigPath = "/npd/configs/"
+	ScriptPath           = "/npd/"
+	ConfigPath           = "/npd/configs/"
+	defaultTimeoutString = "60s"
 )
 
 type CronService struct {
@@ -68,6 +69,7 @@ func (c *CronService) Run(termCh <-chan error) error {
 	}
 
 	glog.V(5).Infof("cron service stack detail:%v", c)
+	_ = problemmetrics.GlobalProblemMetricsManager.IncrementSyncCounter("sync config failed", 0)
 	for {
 		select {
 		case <-termCh:
@@ -100,7 +102,7 @@ func (c *CronService) getMonitorConfig() {
 		glog.Errorf("Read response body failed, err:%s", err.Error())
 		return
 	}
-	glog.V(5).Infof("resp body:%s", string(body))
+	glog.V(4).Infof("resp body:%s", string(body))
 
 	var tasks HealingTasks
 	if err := json.Unmarshal(body, &tasks); err != nil {
@@ -111,19 +113,28 @@ func (c *CronService) getMonitorConfig() {
 		return
 	}
 
+	glog.V(4).Infof("tasks detail:%+v", tasks)
 	extra := make(map[int64]int64)
-	for k, _ := range tasks.Items {
-		extra[tasks.Items[k].MonitorId] = tasks.Items[k].MonitorId
-		if cur, ok := c.curMonitors[tasks.Items[k].MonitorId]; ok {
-			if cur != nil && cur.Version == tasks.Items[k].Version {
+	for k, _ := range tasks.Works {
+		extra[tasks.Works[k].MonitorId] = tasks.Works[k].MonitorId
+		if cur, ok := c.curMonitors[tasks.Works[k].MonitorId]; ok {
+			if cur != nil && cur.Version == tasks.Works[k].Version {
 				continue
 			}
 		}
-		if tasks.Items[k].MonitorType == LogMode {
-			_ = c.genLogMonitor(&tasks.Items[k])
-		} else if tasks.Items[k].MonitorType == CustomPluginMode {
-			_ = c.genCustomPlugin(&tasks.Items[k])
+
+		if tasks.Works[k].MonitorType == LogMode {
+			if er := c.genLogMonitor(&tasks.Works[k]); er != nil {
+				glog.Errorf("genLogMonitor failed, err:%s", er.Error())
+				continue
+			}
+		} else if tasks.Works[k].MonitorType == CustomPluginMode {
+			if er := c.genCustomPlugin(&tasks.Works[k]); er != nil {
+				glog.Errorf("genCustomPlugin failed, err:%s", er.Error())
+				continue
+			}
 		}
+		c.curMonitors[tasks.Works[k].MonitorId] = &tasks.Works[k]
 	}
 
 	for k, v := range c.curMonitors {
@@ -132,10 +143,13 @@ func (c *CronService) getMonitorConfig() {
 				ConfigName: strconv.FormatInt(v.MonitorId, 10),
 				IsDelete:   true,
 			}
+
+			glog.V(3).Infof("delete monitor task. id:%d", v.MonitorId)
 			c.taskChn <- delTask
 			delete(c.curMonitors, k)
 		}
 	}
+	glog.V(5).Infof("curMonitors infos:%+v", c.curMonitors)
 }
 
 func (c *CronService) genLogMonitor(one *Healing) error {
@@ -147,7 +161,7 @@ func (c *CronService) genLogMonitor(one *Healing) error {
 
 	config := systemlogmonitor.MonitorConfig{
 		WatcherConfig: watchertypes.WatcherConfig{
-			Plugin:  "log",
+			Plugin:  "filelog",
 			LogPath: one.LogPath,
 		},
 		Source: strconv.FormatInt(one.MonitorId, 10),
@@ -193,22 +207,36 @@ func (c *CronService) genCustomPlugin(one *Healing) error {
 	pluginGlobalConfig.InvokeIntervalString = &one.Interval
 	filename := ScriptPath + strconv.FormatInt(one.MonitorId, 10)
 
+	timeoutStr := one.Timeout
+	if timeoutStr == "" {
+		timeoutStr = defaultTimeoutString
+	}
+	pluginGlobalConfig.TimeoutString = &timeoutStr
+
 	config := cpmtypes.CustomPluginConfig{
 		Plugin:             "custom",
 		Source:             strconv.FormatInt(one.MonitorId, 10),
 		PluginGlobalConfig: pluginGlobalConfig,
 	}
+
 	rule := &cpmtypes.CustomRule{
 		Type:          types.Type(one.RulesType),
+		Condition:     one.RulesType,
 		Reason:        one.RulesReason,
 		Args:          one.Args,
 		Path:          filename,
-		TimeoutString: &one.Timeout,
+		TimeoutString: &timeoutStr,
 	}
+
 	config.Rules = append(config.Rules, rule)
 
+	conditions := types.Condition{
+		Type: one.RulesType,
+	}
+	config.DefaultConditions = append(config.DefaultConditions, conditions)
+
 	//write script
-	scriptByte, err := base64.StdEncoding.DecodeString(one.Pattern)
+	scriptByte, err := base64.StdEncoding.DecodeString(one.Script)
 	if err != nil {
 		return err
 	}
