@@ -21,13 +21,13 @@ type HealingTasks struct {
 }
 
 type Healing struct {
-	MonitorId   int64       `json:"monitor_id"`   //监控对象唯一id
-	MonitorType MonitorType `json:"monitor_type"` //1是日志，2是脚本
-	Interval    string      `json:"interval"`     //执行间隔,如30s，2m
+	MonitorId   int64       `json:"monitorId"`   //监控对象唯一id
+	MonitorType MonitorType `json:"monitorType"` //1是日志，2是脚本
+	Interval    string      `json:"interval"`    //执行间隔,如30s，2m
 	LogPath     string      `json:"logPath"`
 	Pattern     string      `json:"pattern"` //正则表达式，base64编码
-	RulesReason string      `json:"rules_reason"`
-	RulesType   string      `json:"rules_type"`
+	RulesReason string      `json:"rulesReason"`
+	RulesType   string      `json:"rulesType"`
 	Version     string      `json:"version"`
 	Script      string      `json:"script"` //脚本内容，base64编码
 	Args        []string    `json:"args"`
