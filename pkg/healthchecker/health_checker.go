@@ -69,7 +69,7 @@ func (hc *healthChecker) CheckHealth() (bool, error) {
 	if err != nil {
 		return healthy, err
 	}
-	logPatternHealthy, err := logPatternHealthCheck(hc.service, hc.loopBackTime, hc.logPatternsToCheck)
+	logPatternHealthy, err := hc.logPatternHealthCheck()
 	if err != nil {
 		return logPatternHealthy, err
 	}
@@ -97,24 +97,23 @@ func (hc *healthChecker) CheckHealth() (bool, error) {
 
 // logPatternHealthCheck checks for the provided logPattern occurrences in the service logs.
 // Returns true if the pattern is empty or does not exist logThresholdCount times since start of service, false otherwise.
-func logPatternHealthCheck(service string, loopBackTime time.Duration, logPatternsToCheck map[string]int) (bool, error) {
-	if len(logPatternsToCheck) == 0 {
+func (hc *healthChecker) logPatternHealthCheck() (bool, error) {
+	if len(hc.logPatternsToCheck) == 0 {
 		return true, nil
 	}
-	uptimeFunc := getUptimeFunc(service)
-	glog.Infof("Getting uptime for service: %v\n", service)
-	uptime, err := uptimeFunc()
+	glog.Infof("Getting uptime for service: %v\n", hc.service)
+	uptime, err := hc.uptimeFunc()
 	if err != nil {
 		glog.Warningf("Failed to get the uptime: %+v", err)
 		return true, err
 	}
 
 	logStartTime := time.Now().Add(-uptime).Format(types.LogParsingTimeLayout)
-	if loopBackTime > 0 && uptime > loopBackTime {
-		logStartTime = time.Now().Add(-loopBackTime).Format(types.LogParsingTimeLayout)
+	if hc.loopBackTime > 0 && uptime > hc.loopBackTime {
+		logStartTime = time.Now().Add(-hc.loopBackTime).Format(types.LogParsingTimeLayout)
 	}
-	for pattern, count := range logPatternsToCheck {
-		healthy, err := checkForPattern(service, logStartTime, pattern, count)
+	for pattern, count := range hc.logPatternsToCheck {
+		healthy, err := checkForPattern(hc.service, logStartTime, pattern, count)
 		if err != nil || !healthy {
 			return healthy, err
 		}
