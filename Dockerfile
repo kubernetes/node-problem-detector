@@ -13,19 +13,23 @@
 # limitations under the License.
 
 ARG BASEIMAGE
-FROM ${BASEIMAGE}
+#FROM k8s.gcr.io/debian-base-amd64:v2.0.0
+FROM alpine:3.14
 
 LABEL maintainer="Random Liu <lantaol@google.com>"
 
-RUN clean-install util-linux libsystemd0 bash systemd
+#RUN clean-install util-linux libsystemd0 bash systemd
 
 # Avoid symlink of /etc/localtime.
 RUN test -h /etc/localtime && rm -f /etc/localtime && cp /usr/share/zoneinfo/UTC /etc/localtime || true
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.ustc.edu.cn/g' /etc/apk/repositories && \
+    apk add --no-cache tcpdump lsof net-tools tzdata curl dumb-init libc6-compat bash iproute2 procps
+RUN echo "hosts: files dns" > /etc/nsswitch.conf
 
 COPY ./bin/node-problem-detector /node-problem-detector
 
 ARG LOGCOUNTER
-COPY ./bin/health-checker ${LOGCOUNTER} /home/kubernetes/bin/
+COPY ./bin/health-checker ./bin/log-counter /home/kubernetes/bin/
 
 COPY config /config
 ENTRYPOINT ["/node-problem-detector", "--config.system-log-monitor=/config/kernel-monitor.json"]

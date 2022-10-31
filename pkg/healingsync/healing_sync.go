@@ -10,6 +10,7 @@ package healingsync
 import (
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"strconv"
@@ -29,8 +30,9 @@ import (
 )
 
 const (
-	ScriptPath = "/npd/"
-	ConfigPath = "/npd/configs/"
+	ScriptPath           = "/npd/"
+	ConfigPath           = "/npd/configs/"
+	defaultTimeoutString = "60s"
 )
 
 type CronService struct {
@@ -68,6 +70,7 @@ func (c *CronService) Run(termCh <-chan error) error {
 	}
 
 	glog.V(5).Infof("cron service stack detail:%v", c)
+	_ = problemmetrics.GlobalProblemMetricsManager.IncrementSyncCounter("sync config failed", 0)
 	for {
 		select {
 		case <-termCh:
@@ -100,7 +103,7 @@ func (c *CronService) getMonitorConfig() {
 		glog.Errorf("Read response body failed, err:%s", err.Error())
 		return
 	}
-	glog.V(5).Infof("resp body:%s", string(body))
+	glog.V(4).Infof("resp body:%s", string(body))
 
 	var tasks HealingTasks
 	if err := json.Unmarshal(body, &tasks); err != nil {
@@ -111,19 +114,38 @@ func (c *CronService) getMonitorConfig() {
 		return
 	}
 
+	glog.V(4).Infof("tasks detail:%+v", tasks)
 	extra := make(map[int64]int64)
 	for k, _ := range tasks.Works {
 		extra[tasks.Works[k].MonitorId] = tasks.Works[k].MonitorId
-		if cur, ok := c.curMonitors[tasks.Works[k].MonitorId]; ok {
+		cur, ok := c.curMonitors[tasks.Works[k].MonitorId]
+		if ok {
 			if cur != nil && cur.Version == tasks.Works[k].Version {
+				continue
+			} else {
+				delTask := &problemdetector.ProblemSync{
+					ConfigName: strconv.FormatInt(tasks.Works[k].MonitorId, 10),
+					IsDelete:   true,
+				}
+
+				glog.V(3).Infof("delete monitor task.versions are not equal. id:%d", tasks.Works[k].MonitorId)
+				c.taskChn <- delTask
+				delete(c.curMonitors, tasks.Works[k].MonitorId)
+			}
+		}
+
+		if tasks.Works[k].MonitorType == LogMode {
+			if er := c.genLogMonitor(&tasks.Works[k]); er != nil {
+				glog.Errorf("genLogMonitor failed, err:%s", er.Error())
+				continue
+			}
+		} else if tasks.Works[k].MonitorType == CustomPluginMode {
+			if er := c.genCustomPlugin(&tasks.Works[k]); er != nil {
+				glog.Errorf("genCustomPlugin failed, err:%s", er.Error())
 				continue
 			}
 		}
-		if tasks.Works[k].MonitorType == LogMode {
-			_ = c.genLogMonitor(&tasks.Works[k])
-		} else if tasks.Works[k].MonitorType == CustomPluginMode {
-			_ = c.genCustomPlugin(&tasks.Works[k])
-		}
+		c.curMonitors[tasks.Works[k].MonitorId] = &tasks.Works[k]
 	}
 
 	for k, v := range c.curMonitors {
@@ -132,26 +154,45 @@ func (c *CronService) getMonitorConfig() {
 				ConfigName: strconv.FormatInt(v.MonitorId, 10),
 				IsDelete:   true,
 			}
+
+			glog.V(3).Infof("delete monitor task. id:%d", v.MonitorId)
 			c.taskChn <- delTask
 			delete(c.curMonitors, k)
 		}
 	}
+	glog.V(5).Infof("curMonitors infos:%+v", c.curMonitors)
 }
 
 func (c *CronService) genLogMonitor(one *Healing) error {
+	if one.LogPath == "" {
+		return fmt.Errorf("invalid argument.no logpath")
+	}
+
 	task := &problemdetector.ProblemSync{
 		ConfigName: strconv.FormatInt(one.MonitorId, 10),
 		Version:    one.Version,
 		IsDelete:   false,
 	}
 
+	plugin := "kmsg"
+	if one.LogPath != "/dev/kmsg" {
+		plugin = "filelog"
+	}
 	config := systemlogmonitor.MonitorConfig{
 		WatcherConfig: watchertypes.WatcherConfig{
-			Plugin:  "log",
+			Plugin:  plugin,
 			LogPath: one.LogPath,
 		},
 		Source: strconv.FormatInt(one.MonitorId, 10),
 		Rules:  make([]systemlogtypes.Rule, 0),
+	}
+
+	if plugin == "filelog" && !fileutil.FileIsExist(config.LogPath) {
+		/*if _, err := os.Create(config.LogPath); err != nil {
+			glog.Errorf("create failed. err:%s", err.Error())
+		}*/
+
+		return fmt.Errorf("invalid argument. %s not exist", config.LogPath)
 	}
 
 	patternByte, err := base64.StdEncoding.DecodeString(one.Pattern)
@@ -159,8 +200,12 @@ func (c *CronService) genLogMonitor(one *Healing) error {
 		return err
 	}
 
+	ruleType := types.Temp
+	if one.RulesType == "permanent" {
+		ruleType = types.Perm
+	}
 	rule := systemlogtypes.Rule{
-		Type:    types.Type(one.RulesType),
+		Type:    ruleType, /////types.Type(one.RulesType)
 		Reason:  one.RulesReason,
 		Pattern: string(patternByte),
 	}
@@ -193,22 +238,39 @@ func (c *CronService) genCustomPlugin(one *Healing) error {
 	pluginGlobalConfig.InvokeIntervalString = &one.Interval
 	filename := ScriptPath + strconv.FormatInt(one.MonitorId, 10)
 
+	timeoutStr := one.Timeout
+	if timeoutStr == "" {
+		timeoutStr = defaultTimeoutString
+	}
+	pluginGlobalConfig.TimeoutString = &timeoutStr
+
 	config := cpmtypes.CustomPluginConfig{
 		Plugin:             "custom",
 		Source:             strconv.FormatInt(one.MonitorId, 10),
 		PluginGlobalConfig: pluginGlobalConfig,
 	}
+
 	rule := &cpmtypes.CustomRule{
 		Type:          types.Type(one.RulesType),
 		Reason:        one.RulesReason,
 		Args:          one.Args,
 		Path:          filename,
-		TimeoutString: &one.Timeout,
+		TimeoutString: &timeoutStr,
 	}
+
+	if rule.Type != types.Perm {
+		rule.Condition = one.RulesType
+
+		conditions := types.Condition{
+			Type: one.RulesType,
+		}
+		config.DefaultConditions = append(config.DefaultConditions, conditions)
+	}
+
 	config.Rules = append(config.Rules, rule)
 
 	//write script
-	scriptByte, err := base64.StdEncoding.DecodeString(one.Pattern)
+	scriptByte, err := base64.StdEncoding.DecodeString(one.Script)
 	if err != nil {
 		return err
 	}
