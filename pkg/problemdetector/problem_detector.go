@@ -108,6 +108,7 @@ func (p *problemDetector) syncDetector(task *ProblemSync) {
 		return
 	}
 
+	glog.V(3).Infof("receive sync detector. task detail:%+v", *task)
 	if m, ok := p.monitors[task.ConfigName]; ok {
 		m.Stop()
 		delete(p.monitors, task.ConfigName)
