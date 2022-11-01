@@ -19,7 +19,9 @@ package filelog
 import (
 	"bufio"
 	"bytes"
+	"fmt"
 	"io"
+	"os"
 	"strings"
 	"time"
 
@@ -41,6 +43,7 @@ type filelogWatcher struct {
 	startTime  time.Time
 	tomb       *tomb.Tomb
 	clock      utilclock.Clock
+	startSize  int64
 }
 
 // NewSyslogWatcherOrDie creates a new log watcher. The function panics
@@ -71,13 +74,28 @@ var _ types.WatcherCreateFunc = NewSyslogWatcherOrDie
 
 // Watch starts the filelog watcher.
 func (s *filelogWatcher) Watch() (<-chan *logtypes.Log, error) {
-	r, err := getLogReader(s.cfg.LogPath)
+	/*r, err := getLogReader(s.cfg.LogPath)
+	if err != nil {
+		return nil, err
+	}*/
+
+	if s.cfg.LogPath == "" {
+		return nil, fmt.Errorf("unexpected empty log path")
+	}
+
+	f, err := os.Open(s.cfg.LogPath)
 	if err != nil {
 		return nil, err
 	}
-	s.reader = bufio.NewReader(r)
-	s.closer = r
-	glog.Info("Start watching filelog")
+	fi, err := f.Stat()
+	if err != nil {
+		return nil, err
+	}
+	s.startSize = fi.Size()
+
+	s.reader = bufio.NewReader(f)
+	s.closer = f
+	glog.V(4).Infof("Start watching filelog %s", s.cfg.LogPath)
 	go s.watchLoop()
 	return s.logCh, nil
 }
@@ -99,6 +117,7 @@ func (s *filelogWatcher) watchLoop() {
 		s.tomb.Done()
 	}()
 	var buffer bytes.Buffer
+	var readSize int64
 	for {
 		select {
 		case <-s.tomb.Stopping():
@@ -108,6 +127,7 @@ func (s *filelogWatcher) watchLoop() {
 		}
 
 		line, err := s.reader.ReadString('\n')
+		glog.V(5).Infof("watching filelog %s,line:%s", s.cfg.LogPath, line)
 		if err != nil && err != io.EOF {
 			glog.Errorf("Exiting filelog watch with error: %v", err)
 			return
@@ -117,18 +137,32 @@ func (s *filelogWatcher) watchLoop() {
 			time.Sleep(watchPollInterval)
 			continue
 		}
+
+		readSize += int64(buffer.Len())
 		line = buffer.String()
 		buffer.Reset()
-		log, err := s.translator.translate(strings.TrimSuffix(line, "\n"))
+
+		// Discard messages before start size.
+		if readSize <= s.startSize {
+			glog.V(4).Infof("Throwing away msg %s before start size: %v < %v", line, readSize, s.startSize)
+			continue
+		}
+
+		s.logCh <- &logtypes.Log{
+			Timestamp: time.Now(),
+			Message:   strings.TrimSuffix(line, "\n"),
+		}
+
+		/*log, err := s.translator.translate(strings.TrimSuffix(line, "\n"))
 		if err != nil {
 			glog.Warningf("Unable to parse line: %q, %v", line, err)
 			continue
 		}
+
 		// Discard messages before start time.
 		if log.Timestamp.Before(s.startTime) {
-			glog.V(5).Infof("Throwing away msg %q before start time: %v < %v", log.Message, log.Timestamp, s.startTime)
+			glog.V(4).Infof("Throwing away msg %q before start time: %v < %v", log.Message, log.Timestamp, s.startTime)
 			continue
-		}
-		s.logCh <- log
+		}*/
 	}
 }

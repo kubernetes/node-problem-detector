@@ -112,7 +112,7 @@ func (k *kernelLogWatcher) watchLoop() {
 
 			// Discard messages before start time.
 			if msg.Timestamp.Before(k.startTime) {
-				glog.V(5).Infof("Throwing away msg %q before start time: %v < %v", msg.Message, msg.Timestamp, k.startTime)
+				glog.V(4).Infof("Throwing away msg %q before start time: %v < %v", msg.Message, msg.Timestamp, k.startTime)
 				continue
 			}
 
