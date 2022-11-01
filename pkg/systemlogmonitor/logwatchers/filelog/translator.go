@@ -59,7 +59,6 @@ func newTranslatorOrDie(pluginConfig map[string]string) *translator {
 func (t *translator) translate(line string) (*logtypes.Log, error) {
 	// Parse timestamp.
 	matches := t.timestampRegexp.FindStringSubmatch(line)
-	glog.V(4).Infof("1111- watching filelog ,line:%s,matches:%+v", line, matches)
 	if len(matches) == 0 {
 		return nil, fmt.Errorf("no timestamp found in line %q with regular expression %v", line, t.timestampRegexp)
 	}

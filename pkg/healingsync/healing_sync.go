@@ -10,7 +10,6 @@ package healingsync
 import (
 	"encoding/base64"
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"os"
 	"strconv"
@@ -118,19 +117,9 @@ func (c *CronService) getMonitorConfig() {
 	extra := make(map[int64]int64)
 	for k, _ := range tasks.Works {
 		extra[tasks.Works[k].MonitorId] = tasks.Works[k].MonitorId
-		cur, ok := c.curMonitors[tasks.Works[k].MonitorId]
-		if ok {
+		if cur, ok := c.curMonitors[tasks.Works[k].MonitorId]; ok {
 			if cur != nil && cur.Version == tasks.Works[k].Version {
 				continue
-			} else {
-				delTask := &problemdetector.ProblemSync{
-					ConfigName: strconv.FormatInt(tasks.Works[k].MonitorId, 10),
-					IsDelete:   true,
-				}
-
-				glog.V(3).Infof("delete monitor task.versions are not equal. id:%d", tasks.Works[k].MonitorId)
-				c.taskChn <- delTask
-				delete(c.curMonitors, tasks.Works[k].MonitorId)
 			}
 		}
 
@@ -164,35 +153,19 @@ func (c *CronService) getMonitorConfig() {
 }
 
 func (c *CronService) genLogMonitor(one *Healing) error {
-	if one.LogPath == "" {
-		return fmt.Errorf("invalid argument.no logpath")
-	}
-
 	task := &problemdetector.ProblemSync{
 		ConfigName: strconv.FormatInt(one.MonitorId, 10),
 		Version:    one.Version,
 		IsDelete:   false,
 	}
 
-	plugin := "kmsg"
-	if one.LogPath != "/dev/kmsg" {
-		plugin = "filelog"
-	}
 	config := systemlogmonitor.MonitorConfig{
 		WatcherConfig: watchertypes.WatcherConfig{
-			Plugin:  plugin,
+			Plugin:  "filelog",
 			LogPath: one.LogPath,
 		},
 		Source: strconv.FormatInt(one.MonitorId, 10),
 		Rules:  make([]systemlogtypes.Rule, 0),
-	}
-
-	if plugin == "filelog" && !fileutil.FileIsExist(config.LogPath) {
-		/*if _, err := os.Create(config.LogPath); err != nil {
-			glog.Errorf("create failed. err:%s", err.Error())
-		}*/
-
-		return fmt.Errorf("invalid argument. %s not exist", config.LogPath)
 	}
 
 	patternByte, err := base64.StdEncoding.DecodeString(one.Pattern)
@@ -200,12 +173,8 @@ func (c *CronService) genLogMonitor(one *Healing) error {
 		return err
 	}
 
-	ruleType := types.Temp
-	if one.RulesType == "permanent" {
-		ruleType = types.Perm
-	}
 	rule := systemlogtypes.Rule{
-		Type:    ruleType, /////types.Type(one.RulesType)
+		Type:    types.Type(one.RulesType),
 		Reason:  one.RulesReason,
 		Pattern: string(patternByte),
 	}
@@ -257,15 +226,6 @@ func (c *CronService) genCustomPlugin(one *Healing) error {
 		Args:          one.Args,
 		Path:          filename,
 		TimeoutString: &timeoutStr,
-	}
-
-	if rule.Type != types.Perm {
-		rule.Condition = one.RulesType
-
-		conditions := types.Condition{
-			Type: one.RulesType,
-		}
-		config.DefaultConditions = append(config.DefaultConditions, conditions)
 	}
 
 	config.Rules = append(config.Rules, rule)

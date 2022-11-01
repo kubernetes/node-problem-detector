@@ -36,7 +36,7 @@ type Rule struct {
 	// Condition is the type of the condition the problem triggered. Notice that
 	// the Condition field should be set only when the problem is permanent, or
 	// else the field will be ignored.
-	Condition string `json:"condition,omitempty"`
+	Condition string `json:"condition"`
 	// Reason is the short reason of the problem.
 	Reason string `json:"reason"`
 	// Pattern is the regular expression to match the problem in log.

@@ -150,10 +150,8 @@ func (l *logMonitor) monitorLoop() {
 func (l *logMonitor) parseLog(log *logtypes.Log) {
 	// Once there is new log, log monitor will push it into the log buffer and try
 	// to match each rule. If any rule is matched, log monitor will report a status.
-	glog.V(4).Infof("parseLog: %s,rules:%v", log.Message, l.config.Rules)
 	l.buffer.Push(log)
 	for _, rule := range l.config.Rules {
-		glog.V(4).Infof("parseLog: %s,rules:%s", log.Message, rule.Pattern)
 		matched := l.buffer.Match(rule.Pattern)
 		if len(matched) == 0 {
 			continue
@@ -173,7 +171,6 @@ func (l *logMonitor) generateStatus(logs []*logtypes.Log, rule systemlogtypes.Ru
 	var changedConditions []*types.Condition
 	if rule.Type == types.Temp {
 		// For temporary error only generate event
-		glog.V(4).Infof("generateStatus temporary kind.rule:%v", rule)
 		events = append(events, types.Event{
 			Severity:  types.Warn,
 			Timestamp: timestamp,
@@ -181,7 +178,6 @@ func (l *logMonitor) generateStatus(logs []*logtypes.Log, rule systemlogtypes.Ru
 			Message:   message,
 		})
 	} else {
-		glog.V(4).Infof("generateStatus permanent kind.rule:%v", rule)
 		// For permanent error changes the condition
 		for i := range l.conditions {
 			condition := &l.conditions[i]
