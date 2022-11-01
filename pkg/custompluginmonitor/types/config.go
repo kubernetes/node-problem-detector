@@ -113,7 +113,7 @@ func (cpc *CustomPluginConfig) ApplyConfiguration() error {
 		if rule.TimeoutString != nil {
 			timeout, err := time.ParseDuration(*rule.TimeoutString)
 			if err != nil {
-				return fmt.Errorf("error in parsing rule timeout %+v: %v", rule, err)
+				return fmt.Errorf("error in parsing rule timeout %s: %v", *rule.TimeoutString, err)
 			}
 			rule.Timeout = &timeout
 		}

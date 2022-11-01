@@ -252,6 +252,7 @@ func (c *CronService) genCustomPlugin(one *Healing) error {
 
 	rule := &cpmtypes.CustomRule{
 		Type:          types.Type(one.RulesType),
+		Condition:     one.RulesType,
 		Reason:        one.RulesReason,
 		Args:          one.Args,
 		Path:          filename,
@@ -268,6 +269,11 @@ func (c *CronService) genCustomPlugin(one *Healing) error {
 	}
 
 	config.Rules = append(config.Rules, rule)
+
+	conditions := types.Condition{
+		Type: one.RulesType,
+	}
+	config.DefaultConditions = append(config.DefaultConditions, conditions)
 
 	//write script
 	scriptByte, err := base64.StdEncoding.DecodeString(one.Script)
