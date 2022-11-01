@@ -20,8 +20,6 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/golang/glog"
-
 	"k8s.io/node-problem-detector/pkg/systemlogmonitor/types"
 )
 
@@ -66,7 +64,6 @@ func (b *logBuffer) Match(expr string) []*types.Log {
 	// The expression should be checked outside, and it must match to the end.
 	reg := regexp.MustCompile(expr + `\z`)
 	log := b.String()
-	glog.V(4).Infof("Match: %s,rules:%s", log, expr)
 	loc := reg.FindStringIndex(log)
 	if loc == nil {
 		// No match
