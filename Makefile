@@ -22,8 +22,8 @@
 all: build
 
 # PLATFORMS is the set of OS_ARCH that NPD can build against.
-LINUX_PLATFORMS=linux_amd64 linux_arm64
-DOCKER_PLATFORMS=linux/amd64,linux/arm64
+LINUX_PLATFORMS=linux_amd64 linux_arm64 linux_arm
+DOCKER_PLATFORMS=linux/amd64,linux/arm64,linux/arm
 PLATFORMS=$(LINUX_PLATFORMS) windows_amd64
 
 # VERSION is the version of the binary.
@@ -182,6 +182,24 @@ output/linux_arm64/test/bin/%: $(PKG_SOURCES)
 		-tags "$(LINUX_BUILD_TAGS)" \
 		./test/e2e/$(subst -,,$*)
 
+output/linux_arm/bin/%: $(PKG_SOURCES)
+	GOOS=linux GOARCH=arm CGO_ENABLED=$(CGO_ENABLED) GO111MODULE=on \
+	  CC=arm-linux-gnu-gcc go build \
+		-mod vendor \
+		-o $@ \
+		-ldflags '-X $(PKG)/pkg/version.version=$(VERSION)' \
+		-tags "$(LINUX_BUILD_TAGS)" \
+		./cmd/$(subst -,,$*)
+	touch $@
+
+output/linux_arm/test/bin/%: $(PKG_SOURCES)
+	GOOS=linux GOARCH=arm CGO_ENABLED=$(CGO_ENABLED) GO111MODULE=on \
+	  CC=arm-linux-gnu-gcc go build \
+		-mod vendor \
+		-o $@ \
+		-tags "$(LINUX_BUILD_TAGS)" \
+		./test/e2e/$(subst -,,$*)
+		
 # In the future these targets should be deprecated.
 ./bin/log-counter: $(PKG_SOURCES)
 ifeq ($(ENABLE_JOURNALD), 1)
