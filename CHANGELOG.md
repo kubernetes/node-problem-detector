@@ -29,7 +29,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Windows build now supported.
 - Added metrics to retrieve stats such as `procs_running` and `procs_blocked`.
 - Added metrics to retrieve network stats.
-- Added metric to retrieve guest OS features such as unknwon modules, ktd,
+- Added metric to retrieve guest OS features such as unknown modules, ktd,
   and kernel integrity.
 
 ### Changed
@@ -237,7 +237,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Added resource limites to NPD deployment.
 - Added log-counter to dockerfile.
 - Added `enable_message_change_based_condition_update` option to enable
-  condition update when messages cahnge for custom plugin.
+  condition update when messages change for custom plugin.
 
 ### Fixed
 

@@ -40,7 +40,7 @@ func writeKernelMessageOrDie(msg string) {
 	for _, line := range strings.Split(msg, "\n") {
 		err := ioutil.WriteFile(kmsgPath, []byte(line), 0644)
 		if err != nil {
-			glog.Fatalf("Failed writting to %q: %v", kmsgPath, err)
+			glog.Fatalf("Failed writing to %q: %v", kmsgPath, err)
 		}
 	}
 }
