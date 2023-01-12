@@ -27,14 +27,16 @@ DOCKER_PLATFORMS=linux/amd64,linux/arm64
 PLATFORMS=$(LINUX_PLATFORMS) windows_amd64
 
 # VERSION is the version of the binary.
-VERSION?=$(shell if [ -d .git ]; then echo `git describe --tags --dirty`; else echo "UNKNOWN"; fi)
+//VERSION?=$(shell if [ -d .git ]; then echo `git describe --tags --dirty`; else echo "UNKNOWN"; fi)
 
 # TAG is the tag of the container image, default to binary version.
-TAG?=$(VERSION)
+TAG?=v0.8.13
 
 # REGISTRY is the container registry to push into.
 #REGISTRY?=gcr.io/k8s-staging-npd
-REGISTRY?=harbor-dev.eecos.cn:1443
+REGISTRY?=cloudx2021
+
+
 
 # UPLOAD_PATH is the cloud storage path to upload release tar.
 UPLOAD_PATH?=gs://kubernetes-release
@@ -60,7 +62,7 @@ NPD_NAME_VERSION?=node-problem-detector-$(VERSION)
 TARBALL=$(NPD_NAME_VERSION).tar.gz
 
 # IMAGE is the image name of the node problem detector container image.
-IMAGE:=$(REGISTRY)/ecf-edge/node-problem-detector/node-problem-detector:$(TAG)
+IMAGE:=$(REGISTRY)/node-problem-detector:$(TAG)
 
 # ENABLE_JOURNALD enables build journald support or not. Building journald
 # support needs libsystemd-dev or libsystemd-journal-dev.
