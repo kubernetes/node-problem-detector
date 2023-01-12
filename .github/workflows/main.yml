@@ -28,4 +28,4 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       - name: Build & Push Docker image
-        run: docker buildx build -t ${{ secrets.DOCKERHUB_USERNAME }}/node-problem-detector:$VERSION -t  --build-arg BASEIMAGE=$BASEIMAGE --push --platform=linux/arm64,linux/amd64 .
+        run: docker buildx build -t ${{ secrets.DOCKERHUB_USERNAME }}/node-problem-detector:$VERSION  --build-arg BASEIMAGE=$BASEIMAGE --push --platform=linux/arm64,linux/amd64 .
