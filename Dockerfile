@@ -21,8 +21,7 @@ ENV PATH $GOPATH/bin:$PATH
 
 RUN apt-get update --fix-missing && apt-get --yes install libsystemd-dev gcc-aarch64-linux-gnu
 RUN go version
-RUN export GOPROXY=https://goproxy.cn,direct
-COPY ./godep  bin/
+RUN go get github.com/tools/godep
 RUN godep version
 
 COPY . /gopath/src/k8s.io/node-problem-detector/
