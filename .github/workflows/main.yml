@@ -2,7 +2,7 @@ name:  Build x86 and arm Image
 
 env:
   BASEIMAGE: k8s.gcr.io/debian-base-amd64:v2.0.0
-  VERSION: 0.8.12
+  VERSION: 0.8.13
 
 on:
   pull_request:
