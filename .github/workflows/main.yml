@@ -28,4 +28,4 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       - name: Build & Push Docker image
-        run: make build-container
+        run: make push-container
