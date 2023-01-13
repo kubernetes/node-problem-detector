@@ -27,7 +27,7 @@ DOCKER_PLATFORMS=linux/amd64,linux/arm64
 PLATFORMS=$(LINUX_PLATFORMS) windows_amd64
 
 # VERSION is the version of the binary.
-//VERSION?=$(shell if [ -d .git ]; then echo `git describe --tags --dirty`; else echo "UNKNOWN"; fi)
+#VERSION?=$(shell if [ -d .git ]; then echo `git describe --tags --dirty`; else echo "UNKNOWN"; fi)
 
 # TAG is the tag of the container image, default to binary version.
 TAG?=v0.8.13
@@ -78,7 +78,7 @@ endif
 # The debian-base:v2.0.0 image built from kubernetes repository is based on
 # Debian Stretch. It includes systemd 241 with support for both +XZ and +LZ4
 # compression. +LZ4 is needed on some os distros such as COS.
-BASEIMAGE:=k8s.gcr.io/debian-base-amd64:v2.0.0
+BASEIMAGE:=k8s.gcr.io/debian-base:v2.0.0
 
 # Disable cgo by default to make the binary statically linked.
 CGO_ENABLED:=0
