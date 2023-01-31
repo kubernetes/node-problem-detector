@@ -104,12 +104,12 @@ func (p *Plugin) runRules() {
 
 			start := time.Now()
 			exitStatus, message := p.run(*rule)
-			level := 3
+			level := glog.Level(3)
 			if exitStatus != 0 {
-				level = 2
+				level = glog.Level(2)
 			}
 
-			glog.V(glog.Level(level)).Infof("Rule: %+v. Start time: %v. End time: %v. Duration: %v", rule, start, time.Now(), time.Since(start))
+			glog.V(level).Infof("Rule: %+v. Start time: %v. End time: %v. Duration: %v", rule, start, time.Now(), time.Since(start))
 
 			result := cpmtypes.Result{
 				Rule:       rule,
@@ -121,7 +121,7 @@ func (p *Plugin) runRules() {
 			p.resultChan <- result
 
 			// Let the result be logged at a higher verbosity level. If there is a change in status it is logged later.
-			glog.V(3).Infof("Add check result %+v for rule %+v", result, rule)
+			glog.V(level).Infof("Add check result %+v for rule %+v", result, rule)
 		}(rule)
 	}
 
