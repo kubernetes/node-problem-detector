@@ -287,6 +287,11 @@ Kubernetes cluster to a healthy state. The following remedy systems exist:
   evicts pods violating NoSchedule taints on nodes. The k8s scheduler's TaintNodesByCondition feature must
   be enabled. The [Cluster Autoscaler](https://github.com/kubernetes/autoscaler/tree/master/cluster-autoscaler)
   can be used to automatically terminate drained nodes.
+* [**mediK8S**](https://github.com/medik8s) is an umbrella project for automatic remediation
+  system build on [Node Health Check Operator (NHC)](https://github.com/medik8s/node-healthcheck-operator) that monitors
+  node conditions and delegates remediation to external remediators using the Remediation API.[Poison-Pill](https://github.com/medik8s/poison-pill)
+  is a remediator that will reboot the node and make sure all statefull workloads are rescheduled. NHC supports conditionally remediating if the cluster
+  has enough healthy capacity, or manually pausing any action to minimze cluster disruption.
 
 # Testing
 
