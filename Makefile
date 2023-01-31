@@ -103,7 +103,7 @@ ifeq ($(ENABLE_JOURNALD), 1)
 	CGO_ENABLED:=1
 	LOGCOUNTER=./bin/log-counter
 else
-	# Hack: Don't copy over log-counter, use a wildcard path that shouldnt match
+	# Hack: Don't copy over log-counter, use a wildcard path that shouldn't match
 	# anything in COPY command.
 	LOGCOUNTER=*dont-include-log-counter
 endif

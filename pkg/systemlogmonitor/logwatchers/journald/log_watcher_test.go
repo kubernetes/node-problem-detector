@@ -66,7 +66,7 @@ func TestTranslate(t *testing.T) {
 }
 
 func TestGoroutineLeak(t *testing.T) {
-	orignal := runtime.NumGoroutine()
+	original := runtime.NumGoroutine()
 	w := NewJournaldWatcher(types.WatcherConfig{
 		Plugin:       "journald",
 		PluginConfig: map[string]string{"source": "not-exist-service"},
@@ -75,5 +75,5 @@ func TestGoroutineLeak(t *testing.T) {
 	})
 	_, err := w.Watch()
 	assert.Error(t, err)
-	assert.Equal(t, orignal, runtime.NumGoroutine())
+	assert.Equal(t, original, runtime.NumGoroutine())
 }

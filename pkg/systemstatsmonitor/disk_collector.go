@@ -274,7 +274,7 @@ func (dc *diskCollector) collect() {
 
 	// to make sure that the rows are not duplicated
 	// we display only the only one row even if there are
-	// mutiple rows for the same disk.
+	// multiple rows for the same disk.
 	seen := make(map[string]bool)
 	for _, partition := range partitions {
 		if seen[partition.Device] {

@@ -32,6 +32,6 @@ func makeFilesystemError() {
 	msg := []byte("fake filesystem error from problem-maker")
 	err := ioutil.WriteFile(ext4ErrorTrigger, msg, 0200)
 	if err != nil {
-		glog.Fatalf("Failed writting log to %q: %v", ext4ErrorTrigger, err)
+		glog.Fatalf("Failed writing log to %q: %v", ext4ErrorTrigger, err)
 	}
 }
