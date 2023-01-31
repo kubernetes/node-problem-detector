@@ -10,7 +10,7 @@ node-problem-detector can either run as a
 [DaemonSet](http://kubernetes.io/docs/admin/daemons/) or run standalone.
 Now it is running as a
 [Kubernetes Addon](https://github.com/kubernetes/kubernetes/tree/master/cluster/addons)
-enabled by default in the GCE cluster.
+enabled by default in the GKE cluster.
 
 # Background
 
