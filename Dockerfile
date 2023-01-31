@@ -33,7 +33,7 @@ FROM ${BASEIMAGE}
 
 LABEL maintainer="Random Liu <lantaol@google.com>"
 
-RUN clean-install util-linux libsystemd0 bash systemd
+RUN clean-install util-linux bash libsystemd-dev
 
 # Avoid symlink of /etc/localtime.
 RUN test -h /etc/localtime && rm -f /etc/localtime && cp /usr/share/zoneinfo/UTC /etc/localtime || true
