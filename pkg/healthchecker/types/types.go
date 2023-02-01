@@ -18,6 +18,7 @@ package types
 
 import (
 	"fmt"
+	"os"
 	"sort"
 	"strconv"
 	"strings"
@@ -38,11 +39,41 @@ const (
 	ContainerdService  = "containerd"
 	KubeProxyComponent = "kube-proxy"
 
+	LogPatternFlagSeparator = ":"
+
+	nodeEnvKey    = "HOST_IP"
+	kubeletPort   = "KUBELET_PORT"
+	kubeProxyPort = "KUBEPROXY_PORT"
+)
+
+var (
 	KubeletHealthCheckEndpoint   = "http://127.0.0.1:10248/healthz"
 	KubeProxyHealthCheckEndpoint = "http://127.0.0.1:10256/healthz"
-
-	LogPatternFlagSeparator = ":"
 )
+
+func init() {
+	var o string
+
+	hostIP := "127.0.0.1"
+	kubeletPort := "10248"
+	kubeProxyPort := "10256"
+
+	o = os.Getenv(nodeEnvKey)
+	if o != "" {
+		hostIP = o
+	}
+	o = os.Getenv(kubeletPort)
+	if o != "" {
+		kubeletPort = o
+	}
+	o = os.Getenv(kubeProxyPort)
+	if o != "" {
+		kubeProxyPort = o
+	}
+
+	KubeletHealthCheckEndpoint = fmt.Sprintf("http://%s:%s/healthz", hostIP, kubeletPort)
+	KubeProxyHealthCheckEndpoint = fmt.Sprintf("http://%s:%s/healthz", hostIP, kubeProxyPort)
+}
 
 type HealthChecker interface {
 	CheckHealth() (bool, error)
