@@ -47,8 +47,8 @@ const (
 )
 
 var (
-	KubeletHealthCheckEndpoint   = "http://127.0.0.1:10248/healthz"
-	KubeProxyHealthCheckEndpoint = "http://127.0.0.1:10256/healthz"
+	KubeletHealthCheckEndpoint   string
+	KubeProxyHealthCheckEndpoint string
 )
 
 func init() {
