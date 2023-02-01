@@ -41,9 +41,9 @@ const (
 
 	LogPatternFlagSeparator = ":"
 
-	nodeEnvKey    = "HOST_IP"
-	kubeletPort   = "KUBELET_PORT"
-	kubeProxyPort = "KUBEPROXY_PORT"
+	nodeEnvKey       = "HOST_IP"
+	kubeletPortKey   = "KUBELET_PORT"
+	kubeProxyPortKey = "KUBEPROXY_PORT"
 )
 
 var (
@@ -62,11 +62,11 @@ func init() {
 	if o != "" {
 		hostIP = o
 	}
-	o = os.Getenv(kubeletPort)
+	o = os.Getenv(kubeletPortKey)
 	if o != "" {
 		kubeletPort = o
 	}
-	o = os.Getenv(kubeProxyPort)
+	o = os.Getenv(kubeProxyPortKey)
 	if o != "" {
 		kubeProxyPort = o
 	}
