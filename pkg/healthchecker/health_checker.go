@@ -150,7 +150,15 @@ func getHealthCheckFunc(hco *options.HealthCheckerOptions) func() (bool, error) 
 		}
 	case types.CRIComponent:
 		return func() (bool, error) {
-			if _, err := execCommand(hco.HealthCheckTimeout, hco.CriCtlPath, "--runtime-endpoint="+hco.CriSocketPath, "pods", "--latest"); err != nil {
+			_, err := execCommand(
+				hco.HealthCheckTimeout,
+				hco.CriCtlPath,
+				"--timeout="+hco.CriTimeout.String(),
+				"--runtime-endpoint="+hco.CriSocketPath,
+				"pods",
+				"--latest",
+			)
+			if err != nil {
 				return false, nil
 			}
 			return true, nil
@@ -167,10 +175,11 @@ func execCommand(timeout time.Duration, command string, args ...string) (string,
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	cmd := exec.CommandContext(ctx, command, args...)
-	out, err := cmd.Output()
+	out, err := cmd.CombinedOutput()
 	if err != nil {
 		glog.Infof("command %v failed: %v, %v\n", cmd, err, out)
 		return "", err
 	}
+
 	return strings.TrimSuffix(string(out), "\n"), nil
 }

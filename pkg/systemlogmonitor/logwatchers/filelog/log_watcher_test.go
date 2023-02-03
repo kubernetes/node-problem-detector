@@ -170,7 +170,7 @@ Jan  2 03:04:05 kernel: [2.000000] 3
 			}
 		}
 		// The log channel should have already been drained
-		// There could stil be future messages sent into the channel, but the chance is really slim.
+		// There could still be future messages sent into the channel, but the chance is really slim.
 		timeout := time.After(100 * time.Millisecond)
 		select {
 		case log := <-logCh:

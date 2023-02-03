@@ -1,3 +1,4 @@
+//go:build journald
 // +build journald
 
 /*
@@ -77,7 +78,6 @@ func (j *journaldWatcher) Watch() (<-chan *logtypes.Log, error) {
 		return nil, err
 	}
 	j.journal = journal
-	glog.Info("Start watching journald")
 	go j.watchLoop()
 	return j.logCh, nil
 }

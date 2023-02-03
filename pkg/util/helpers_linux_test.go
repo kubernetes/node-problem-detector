@@ -58,6 +58,24 @@ func TestGetOSVersionLinux(t *testing.T) {
 			expectErr:         false,
 		},
 		{
+			name:              "ol",
+			fakeOSReleasePath: "testdata/os-release-ol",
+			expectedOSVersion: "ol 9.0",
+			expectErr:         false,
+		},
+		{
+			name:              "amzn",
+			fakeOSReleasePath: "testdata/os-release-amzn",
+			expectedOSVersion: "amzn 2",
+			expectErr:         false,
+		},
+		{
+			name:              "sles",
+			fakeOSReleasePath: "testdata/os-release-sles",
+			expectedOSVersion: "sles 15-SP4",
+			expectErr:         false,
+		},
+		{
 			name:              "Unknown",
 			fakeOSReleasePath: "testdata/os-release-unknown",
 			expectedOSVersion: "",

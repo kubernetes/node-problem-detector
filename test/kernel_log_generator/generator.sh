@@ -17,7 +17,7 @@
 # This script generate kernel log in given rate.
 # Note that this only works for journald.
 # Note that this script can't be used to test multi-line patterns, because
-# the test kernel log lines may be splitted by real kernel log.
+# the test kernel log lines may be split by real kernel log.
 
 # PROBLEM is the path to the problem log.
 PROBLEM=${PROBLEM:-""}

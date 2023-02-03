@@ -120,6 +120,8 @@ func (c *customPluginMonitor) Stop() {
 }
 
 // monitorLoop is the main loop of customPluginMonitor.
+// there is one customPluginMonitor, one plugin instance for each configPath.
+// each runs rules in parallel at pre-configured concurrency, and interval.
 func (c *customPluginMonitor) monitorLoop() {
 	if !*c.config.PluginGlobalConfig.SkipInitialStatus {
 		c.initializeStatus()
