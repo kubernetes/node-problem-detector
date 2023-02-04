@@ -20,7 +20,6 @@ func BuildHelpCommand() *Command {
 func printHelp(args []string, additionalArgs []string) {
 	if len(args) == 0 {
 		usage()
-		emitRCAdvertisement()
 	} else {
 		command, found := commandMatching(args[0])
 		if !found {
@@ -28,6 +27,5 @@ func printHelp(args []string, additionalArgs []string) {
 		}
 
 		usageForCommand(command, true)
-		emitRCAdvertisement()
 	}
 }

@@ -37,7 +37,6 @@ func BuildBootstrapCommand() *Command {
 		},
 		Command: func(args []string, additionalArgs []string) {
 			generateBootstrap(agouti, noDot, internal, customBootstrapFile)
-			emitRCAdvertisement()
 		},
 	}
 }

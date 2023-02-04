@@ -1,3 +1,4 @@
+//go:build !disable_system_stats_monitor
 // +build !disable_system_stats_monitor
 
 /*

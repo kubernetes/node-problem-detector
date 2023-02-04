@@ -17,12 +17,14 @@ limitations under the License.
 package gce
 
 import (
+	"bytes"
 	"fmt"
+	"os"
 	"os/exec"
+	"strings"
 	"time"
 
-	"k8s.io/node-problem-detector/test/e2e/lib/ssh"
-
+	"github.com/golang/glog"
 	. "github.com/onsi/gomega"
 	compute "google.golang.org/api/compute/v1"
 )
@@ -106,9 +108,9 @@ func CreateInstance(instance Instance, imageName string, imageProject string) (I
 			instance.populateExternalIP()
 		}
 
-		result := ssh.Run("pwd", instance.ExternalIP, instance.SshUser, instance.SshKey)
-		if result.SSHError != nil {
-			err = fmt.Errorf("SSH to instance %s failed: %s", instance.Name, result.SSHError)
+		_, err := instance.RunCommand("pwd")
+		if err != nil {
+			err = fmt.Errorf("SSH to instance %s failed: %s", instance.Name, err)
 			continue
 		}
 		instanceRunning = true
@@ -139,19 +141,28 @@ func (ins *Instance) populateExternalIP() {
 }
 
 // RunCommand runs a command on the GCE instance and returns the command result.
-func (ins *Instance) RunCommand(cmd string) ssh.Result {
+func (ins *Instance) RunCommand(cmd string) (string, error) {
 	if ins.ExternalIP == "" {
 		ins.populateExternalIP()
 	}
-	return ssh.Run(cmd, ins.ExternalIP, ins.SshUser, ins.SshKey)
+
+	cmdLine := []string{"ssh",
+		"-o", "StrictHostKeyChecking=no",
+		"-o", "UserKnownHostsFile=/dev/null",
+		"-i", ins.SshKey,
+		"-p", "22",
+		fmt.Sprintf("%s@%s", ins.SshUser, ins.ExternalIP),
+		cmd}
+	output, err := runCommand(cmdLine)
+	return output, err
 }
 
-// RunCommand runs a command on the GCE instance and returns the command result, and fails the test when the command failed.
-func (ins *Instance) RunCommandOrFail(cmd string) ssh.Result {
-	result := ins.RunCommand(cmd)
-	Expect(result.SSHError).ToNot(HaveOccurred(), "SSH-ing to the instance failed: %v\n", result)
-	Expect(result.Code).To(Equal(0), "Running command failed: %v\n", result)
-	return result
+// RunCommand runs a command on the GCE instance and returns the command result,
+// and fails the test when the command failed.
+func (ins *Instance) RunCommandOrFail(cmd string) (string, error) {
+	result, err := ins.RunCommand(cmd)
+	Expect(err).To(BeNil(), "Running command failed: %v\n", err)
+	return result, err
 }
 
 // PushFile pushes a local file to a GCE instance.
@@ -177,4 +188,57 @@ func (ins *Instance) DeleteInstance() error {
 		return err
 	}
 	return nil
+}
+
+// runCommand runs the command line specified in cmdLine.
+func runCommand(cmdLine []string) (string, error) {
+	return runCommandWithinDir(cmdLine, "./")
+}
+
+// RunCommandWithinDir runs the command line specified in cmdLine, optionally in
+// the directory specified by cmdDir.  In case of failure, we return the
+// output to the caller.
+func runCommandWithinDir(cmdLine []string, cmdDir string) (string, error) {
+	// this is to avoid the cases where there multiple subcommands
+	// within a command. For example like docker image pull gcr.io/busybox
+	cmdline := []string{
+		"/bin/bash",
+		"-c",
+		strings.Join(cmdLine, " "),
+	}
+	output, _, err := runCommandCaptureStdout(cmdline, cmdDir)
+	return output, err
+}
+
+// runCommandCaptureStdout runs the given command line in the same way as
+// runCommand but also captures standard output of the command and returns
+// it along with exit code and error description
+func runCommandCaptureStdout(cmdLine []string, cmdDir string) (string, int, error) {
+	var buf bytes.Buffer
+	exitCode, err := runCommandWithEnvCaptureStdout(cmdLine, cmdDir, nil, &buf)
+	return string(buf.Bytes()), exitCode, err
+}
+
+// RunCommandWithEnvCaptureStdout runs the given command line in the same way as
+// RunCommandWithEnv but allows to capture standard output into a provided buffer
+func runCommandWithEnvCaptureStdout(cmdLine []string, cmdDir string, env []string, buf *bytes.Buffer) (int, error) {
+	glog.Infof("Running command: %s in directory %s", strings.Join(cmdLine, " "), cmdDir)
+	cmd := exec.Command(cmdLine[0], cmdLine[1:]...)
+	cmd.Stdin = os.Stdin
+	if buf != nil {
+		cmd.Stdout = buf
+	} else {
+		cmd.Stdout = os.Stdout
+	}
+	cmd.Stderr = os.Stderr
+	cmd.Env = append(os.Environ(), env...)
+	if cmdDir != "" && cmdDir != "." {
+		cmd.Dir = cmdDir
+	}
+	if err := cmd.Run(); err != nil {
+		newErr := fmt.Errorf("failed to run command %+v (error: %s)", cmdLine, err)
+		glog.Info(newErr)
+		return cmd.ProcessState.ExitCode(), newErr
+	}
+	return 0, nil
 }

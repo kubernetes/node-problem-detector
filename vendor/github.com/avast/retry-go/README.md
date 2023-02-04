@@ -64,6 +64,12 @@ nonintuitive interface (for me)
 
 ### BREAKING CHANGES
 
+3.0.0
+
+* `DelayTypeFunc` accepts a new parameter `err` - this breaking change affects
+only your custom Delay Functions. This change allow [make delay functions based
+on error](examples/delay_based_on_error_test.go).
+
 1.0.2 -> 2.0.0
 
 * argument of `retry.Delay` is final delay (no multiplication by `retry.Units`
@@ -82,10 +88,23 @@ now implement via functions produces Options (aka `retry.OnRetry`)
 
 ## Usage
 
+```go
+var (
+	DefaultAttempts      = uint(10)
+	DefaultDelay         = 100 * time.Millisecond
+	DefaultMaxJitter     = 100 * time.Millisecond
+	DefaultOnRetry       = func(n uint, err error) {}
+	DefaultRetryIf       = IsRecoverable
+	DefaultDelayType     = CombineDelay(BackOffDelay, RandomDelay)
+	DefaultLastErrorOnly = false
+	DefaultContext       = context.Background()
+)
+```
+
 #### func  BackOffDelay
 
 ```go
-func BackOffDelay(n uint, config *Config) time.Duration
+func BackOffDelay(n uint, _ error, config *Config) time.Duration
 ```
 BackOffDelay is a DelayType which increases delay between consecutive retries
 
@@ -98,7 +117,7 @@ func Do(retryableFunc RetryableFunc, opts ...Option) error
 #### func  FixedDelay
 
 ```go
-func FixedDelay(_ uint, config *Config) time.Duration
+func FixedDelay(_ uint, _ error, config *Config) time.Duration
 ```
 FixedDelay is a DelayType which keeps delay the same through all iterations
 
@@ -109,10 +128,17 @@ func IsRecoverable(err error) bool
 ```
 IsRecoverable checks if error is an instance of `unrecoverableError`
 
+#### func  RandomDelay
+
+```go
+func RandomDelay(_ uint, _ error, config *Config) time.Duration
+```
+RandomDelay is a DelayType which picks a random delay up to config.maxJitter
+
 #### func  Unrecoverable
 
 ```go
-func Unrecoverable(err error) unrecoverableError
+func Unrecoverable(err error) error
 ```
 Unrecoverable wraps an error in `unrecoverableError` struct
 
@@ -127,9 +153,19 @@ type Config struct {
 #### type DelayTypeFunc
 
 ```go
-type DelayTypeFunc func(n uint, config *Config) time.Duration
+type DelayTypeFunc func(n uint, err error, config *Config) time.Duration
 ```
 
+DelayTypeFunc is called to return the next delay to wait after the retriable
+function fails on `err` after `n` attempts.
+
+#### func  CombineDelay
+
+```go
+func CombineDelay(delays ...DelayTypeFunc) DelayTypeFunc
+```
+CombineDelay is a DelayType the combines all of the specified delays into a new
+DelayTypeFunc
 
 #### type Error
 
@@ -180,6 +216,26 @@ func Attempts(attempts uint) Option
 ```
 Attempts set count of retry default is 10
 
+#### func  Context
+
+```go
+func Context(ctx context.Context) Option
+```
+Context allow to set context of retry default are Background context
+
+example of immediately cancellation (maybe it isn't the best example, but it
+describes behavior enough; I hope)
+
+    ctx, cancel := context.WithCancel(context.Background())
+    cancel()
+
+    retry.Do(
+    	func() error {
+    		...
+    	},
+    	retry.Context(ctx),
+    )
+
 #### func  Delay
 
 ```go
@@ -201,6 +257,20 @@ func LastErrorOnly(lastErrorOnly bool) Option
 ```
 return the direct last error that came from the retried function default is
 false (return wrapped errors with everything)
+
+#### func  MaxDelay
+
+```go
+func MaxDelay(maxDelay time.Duration) Option
+```
+MaxDelay set maximum delay between retry does not apply by default
+
+#### func  MaxJitter
+
+```go
+func MaxJitter(maxJitter time.Duration) Option
+```
+MaxJitter sets the maximum random Jitter between retries for RandomDelay
 
 #### func  OnRetry
 
@@ -242,7 +312,7 @@ skip retry if special error example:
     	})
     )
 
-The default RetryIf stops execution if the error is wrapped using
+By default RetryIf stops execution if the error is wrapped using
 `retry.Unrecoverable`, so above example may also be shortened to:
 
     retry.Do(

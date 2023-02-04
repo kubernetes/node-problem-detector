@@ -18,7 +18,7 @@ package npd
 
 import (
 	"fmt"
-	"io/ioutil"
+	"os"
 	"path"
 	"strings"
 	"time"
@@ -32,38 +32,38 @@ import (
 // SetupNPD installs NPD from the test tarball onto the provided GCE instance.
 //
 // Here is how it works:
-// 1. SetupNPD will SCP the NPD build tarball onto the VM.
-// 2. SetupNPD will extract the tarball in the VM, to expose the test/e2e-install.sh on the VM.
-// 3. SetupNPD will then call the e2e-install.sh script, and feed the NPD build tarball as input.
-// 4. Finally, the e2e-install.sh script will do the heavy lifting of installing NPD (setting up
-//    binary/config directories, setting up systemd config file, etc).
+//  1. SetupNPD will SCP the NPD build tarball onto the VM.
+//  2. SetupNPD will extract the tarball in the VM, to expose the test/e2e-install.sh on the VM.
+//  3. SetupNPD will then call the e2e-install.sh script, and feed the NPD build tarball as input.
+//  4. Finally, the e2e-install.sh script will do the heavy lifting of installing NPD (setting up
+//     binary/config directories, setting up systemd config file, etc).
 func SetupNPD(ins gce.Instance, npdBuildTar string) error {
-	tmpDirCmd := ins.RunCommand("mktemp -d")
-	if tmpDirCmd.SSHError != nil || tmpDirCmd.Code != 0 {
+	tmpDirCmd, err := ins.RunCommand("mktemp -d")
+	if err != nil {
 		return fmt.Errorf("error creating temporary directory to hold NPD tarball: %v", tmpDirCmd)
 	}
 
-	tmpDir := strings.TrimSuffix(tmpDirCmd.Stdout, "\n")
+	tmpDir := strings.TrimSuffix(tmpDirCmd, "\n")
 	npdTarVMPath := tmpDir + "/npd.tar.gz"
 	npdExtractDir := tmpDir + "/npd"
 
-	err := ins.PushFile(npdBuildTar, npdTarVMPath)
+	err = ins.PushFile(npdBuildTar, npdTarVMPath)
 	if err != nil {
 		return fmt.Errorf("error pushing local NPD build tarball %s to VM at %s: %v", npdBuildTar, npdTarVMPath, err)
 	}
 
-	mkdirCmd := ins.RunCommand(fmt.Sprintf("mkdir -p %s", npdExtractDir))
-	if mkdirCmd.SSHError != nil || mkdirCmd.Code != 0 {
+	mkdirCmd, err := ins.RunCommand(fmt.Sprintf("mkdir -p %s", npdExtractDir))
+	if err != nil {
 		return fmt.Errorf("error creating directory to extract NPD tarball into: %v", mkdirCmd)
 	}
 
-	extractCmd := ins.RunCommand(fmt.Sprintf("tar -xf %s --directory %s", npdTarVMPath, npdExtractDir))
-	if extractCmd.SSHError != nil || extractCmd.Code != 0 {
+	extractCmd, err := ins.RunCommand(fmt.Sprintf("tar -xf %s --directory %s", npdTarVMPath, npdExtractDir))
+	if err != nil {
 		return fmt.Errorf("error extracting NPD build tarball: %v", extractCmd)
 	}
 
-	installCmd := ins.RunCommand(fmt.Sprintf("sudo bash %s/test/e2e-install.sh -t %s install", npdExtractDir, npdTarVMPath))
-	if installCmd.SSHError != nil || installCmd.Code != 0 {
+	installCmd, err := ins.RunCommand(fmt.Sprintf("sudo bash %s/test/e2e-install.sh -t %s install", npdExtractDir, npdTarVMPath))
+	if err != nil {
 		return fmt.Errorf("error installing NPD: %v", installCmd)
 	}
 
@@ -75,12 +75,12 @@ func FetchNPDMetrics(ins gce.Instance) ([]metrics.Float64MetricRepresentation, e
 	var npdMetrics []metrics.Float64MetricRepresentation
 	var err error
 
-	curlCmd := ins.RunCommand("curl http://localhost:20257/metrics")
-	if curlCmd.SSHError != nil || curlCmd.Code != 0 {
+	curlCmd, err := ins.RunCommand("curl http://localhost:20257/metrics")
+	if err != nil {
 		return npdMetrics, fmt.Errorf("error fetching NPD metrics: %v", curlCmd)
 	}
 
-	npdMetrics, err = metrics.ParsePrometheusMetrics(curlCmd.Stdout)
+	npdMetrics, err = metrics.ParsePrometheusMetrics(curlCmd)
 	if err != nil {
 		return npdMetrics, fmt.Errorf("error parsing NPD metrics: %v", err)
 	}
@@ -148,11 +148,11 @@ func SaveTestArtifacts(ins gce.Instance, artifactDirectory string, testID int) [
 
 func saveCommandResultAsArtifact(ins gce.Instance, artifactDirectory string, testID int, command string, artifactPrefix string) error {
 	artifactPath := path.Join(artifactDirectory, fmt.Sprintf("%v-%02d.txt", artifactPrefix, testID))
-	result := ins.RunCommand(command)
-	if result.SSHError != nil || result.Code != 0 {
+	result, err := ins.RunCommand(command)
+	if err != nil {
 		return fmt.Errorf("Error running command: %v\n", result)
 	}
-	if err := ioutil.WriteFile(artifactPath, []byte(result.Stdout), 0644); err != nil {
+	if err := os.WriteFile(artifactPath, []byte(result), 0644); err != nil {
 		return fmt.Errorf("Error writing artifact to %v: %v\n", artifactPath, err)
 	}
 	return nil

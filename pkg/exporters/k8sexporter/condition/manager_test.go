@@ -28,7 +28,7 @@ import (
 	problemutil "k8s.io/node-problem-detector/pkg/util"
 
 	v1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/util/clock"
+	clock "k8s.io/utils/clock/testing"
 )
 
 const heartbeatPeriod = 1 * time.Minute

@@ -17,8 +17,11 @@ limitations under the License.
 package problemclient
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
+	"k8s.io/client-go/tools/clientcmd"
+	"k8s.io/client-go/tools/clientcmd/api"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -29,12 +32,11 @@ import (
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/apimachinery/pkg/util/clock"
 	clientset "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/record"
+	"k8s.io/utils/clock"
 
 	"github.com/golang/glog"
-	"k8s.io/heapster/common/kubernetes"
 	"k8s.io/node-problem-detector/cmd/options"
 	"k8s.io/node-problem-detector/pkg/version"
 )
@@ -68,14 +70,25 @@ func NewClientOrDie(npdo *options.NodeProblemDetectorOptions) Client {
 	// we have checked it is a valid URI after command line argument is parsed.:)
 	uri, _ := url.Parse(npdo.ApiServerOverride)
 
-	cfg, err := kubernetes.GetKubeClientConfig(uri)
+	cfgOverrides := &clientcmd.ConfigOverrides{
+		ClusterInfo: api.Cluster{
+			Server: fmt.Sprintf("%s://%s", uri.Scheme, uri.Host),
+		},
+	}
+
+	apiConfig, err := clientcmd.NewDefaultClientConfigLoadingRules().Load()
 	if err != nil {
 		panic(err)
 	}
+	cfg := clientcmd.NewDefaultClientConfig(*apiConfig, cfgOverrides)
+	restCfg, err := cfg.ClientConfig()
+	if err != nil {
+		panic(err)
+	}
+	restCfg.UserAgent = fmt.Sprintf("%s/%s", filepath.Base(os.Args[0]), version.Version())
 
-	cfg.UserAgent = fmt.Sprintf("%s/%s", filepath.Base(os.Args[0]), version.Version())
 	// TODO(random-liu): Set QPS Limit
-	c.client = clientset.NewForConfigOrDie(cfg).CoreV1()
+	c.client = clientset.NewForConfigOrDie(restCfg).CoreV1()
 	c.nodeName = npdo.NodeName
 	c.eventNamespace = npdo.EventNamespace
 	c.nodeRef = getNodeRef(c.eventNamespace, c.nodeName)
@@ -108,7 +121,7 @@ func (c *nodeProblemClient) SetConditions(newConditions []v1.NodeCondition) erro
 	if err != nil {
 		return err
 	}
-	return c.client.RESTClient().Patch(types.StrategicMergePatchType).Resource("nodes").Name(c.nodeName).SubResource("status").Body(patch).Do().Error()
+	return c.client.RESTClient().Patch(types.StrategicMergePatchType).Resource("nodes").Name(c.nodeName).SubResource("status").Body(patch).Do(context.TODO()).Error()
 }
 
 func (c *nodeProblemClient) Eventf(eventType, source, reason, messageFmt string, args ...interface{}) {
@@ -122,7 +135,7 @@ func (c *nodeProblemClient) Eventf(eventType, source, reason, messageFmt string,
 }
 
 func (c *nodeProblemClient) GetNode() (*v1.Node, error) {
-	return c.client.Nodes().Get(c.nodeName, metav1.GetOptions{})
+	return c.client.Nodes().Get(context.TODO(), c.nodeName, metav1.GetOptions{})
 }
 
 // generatePatch generates condition patch
