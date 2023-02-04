@@ -52,6 +52,10 @@ var (
 )
 
 func init() {
+	setKubeEndpoints()
+}
+
+func setKubeEndpoints() {
 	var o string
 
 	hostIP := "127.0.0.1"
@@ -73,6 +77,7 @@ func init() {
 
 	KubeletHealthCheckEndpoint = fmt.Sprintf("http://%s:%s/healthz", hostIP, kubeletPort)
 	KubeProxyHealthCheckEndpoint = fmt.Sprintf("http://%s:%s/healthz", hostIP, kubeProxyPort)
+
 }
 
 type HealthChecker interface {
