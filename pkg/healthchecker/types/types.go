@@ -44,6 +44,10 @@ const (
 	nodeEnvKey       = "HOST_IP"
 	kubeletPortKey   = "KUBELET_PORT"
 	kubeProxyPortKey = "KUBEPROXY_PORT"
+
+	defaultHostIP        = "127.0.0.1"
+	defaultKubeletPort   = "10248"
+	defaultKubeproxyPort = "10256"
 )
 
 var (
@@ -58,9 +62,9 @@ func init() {
 func setKubeEndpoints() {
 	var o string
 
-	hostIP := "127.0.0.1"
-	kubeletPort := "10248"
-	kubeProxyPort := "10256"
+	hostIP := defaultHostIP
+	kubeletPort := defaultKubeletPort
+	kubeProxyPort := defaultKubeproxyPort
 
 	o = os.Getenv(nodeEnvKey)
 	if o != "" {
