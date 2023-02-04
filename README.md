@@ -140,10 +140,7 @@ For example, to run without auth, use the following config:
 * Install development dependencies for `libsystemd` and the ARM GCC toolchain
   * Debian/Ubuntu: `apt install libsystemd-dev gcc-aarch64-linux-gnu`
 
-* `go get` or `git clone` node-problem-detector repo into `$GOPATH/src/k8s.io` or `$GOROOT/src/k8s.io`
-with one of the below directions:
-  * `cd $GOPATH/src/k8s.io && git clone git@github.com:kubernetes/node-problem-detector.git`
-  * `cd $GOPATH/src/k8s.io && go get k8s.io/node-problem-detector`
+* `git clone git@github.com:kubernetes/node-problem-detector.git`
 
 * Run `make` in the top directory. It will:
   * Build the binary.
