@@ -171,7 +171,7 @@ func TestKubeEndpointConfiguration(t *testing.T) {
 			}
 			kubeProxyHCEndpoint := KubeProxyHealthCheckEndpoint()
 			kubeletHCEndpoint := KubeletHealthCheckEndpoint()
-
+			setKubeEndpoints()
 			assert.Equal(t, kubeProxyHCEndpoint, test.expectedKubeProxyEndpoint)
 			assert.Equal(t, kubeletHCEndpoint, test.expectedKubeletEndpoint)
 		})
