@@ -157,7 +157,7 @@ func TestKubeEndpointConfiguration(t *testing.T) {
 			name: "HOST_ADDRESS, KUBELET_PORT and KUBEPROXY_PORT override supplied",
 			envConfig: map[string]string{
 				"HOST_ADDRESS":   "10.0.10.1",
-				"KUBELET_PROXY":  "12345",
+				"KUBELET_PORT":   "12345",
 				"KUBEPROXY_PORT": "12346",
 			},
 			expectedKubeletEndpoint:   "http://10.0.10.1:12345/healthz",
