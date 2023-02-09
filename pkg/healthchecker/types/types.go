@@ -44,7 +44,7 @@ const (
 	kubeletPortKey          = "KUBELET_PORT"
 	kubeProxyPortKey        = "KUBEPROXY_PORT"
 
-	defaultHost          = "127.0.0.1"
+	defaultHostAddress   = "127.0.0.1"
 	defaultKubeletPort   = "10248"
 	defaultKubeproxyPort = "10256"
 )
@@ -61,7 +61,7 @@ func init() {
 func setKubeEndpoints() {
 	var o string
 
-	hostAddress := defaultHost
+	hostAddress := defaultHostAddress
 	kubeletPort := defaultKubeletPort
 	kubeProxyPort := defaultKubeproxyPort
 
