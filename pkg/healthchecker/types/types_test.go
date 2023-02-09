@@ -169,9 +169,11 @@ func TestKubeEndpointConfiguration(t *testing.T) {
 			for key, val := range test.envConfig {
 				t.Setenv(key, val)
 			}
+			setKubeEndpoints()
+
 			kubeProxyHCEndpoint := KubeProxyHealthCheckEndpoint()
 			kubeletHCEndpoint := KubeletHealthCheckEndpoint()
-			setKubeEndpoints()
+
 			assert.Equal(t, kubeProxyHCEndpoint, test.expectedKubeProxyEndpoint)
 			assert.Equal(t, kubeletHCEndpoint, test.expectedKubeletEndpoint)
 		})
