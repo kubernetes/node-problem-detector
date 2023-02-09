@@ -13,7 +13,7 @@
 # limitations under the License.
 ARG BASEIMAGE
 
-FROM golang:1.17.7 as builder
+FROM golang:1.20.0@sha256:f69d47fedd3b2ebd23bcf473c0b78522ebbc1823f06b7d47f45f04a30bdc901d as builder
 LABEL maintainer="Andy Xie <andy.xning@gmail.com>"
 
 ENV GOPATH /gopath/
@@ -21,7 +21,7 @@ ENV PATH $GOPATH/bin:$PATH
 
 RUN apt-get update --fix-missing && apt-get --yes install libsystemd-dev gcc-aarch64-linux-gnu
 RUN go version
-RUN go get github.com/tools/godep
+RUN go install github.com/tools/godep@latest
 RUN godep version
 
 COPY . /gopath/src/k8s.io/node-problem-detector/
