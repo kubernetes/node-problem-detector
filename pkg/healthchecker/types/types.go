@@ -40,19 +40,18 @@ const (
 	KubeProxyComponent = "kube-proxy"
 
 	LogPatternFlagSeparator = ":"
+	hostAddressKey          = "HOST_ADDRESS"
+	kubeletPortKey          = "KUBELET_PORT"
+	kubeProxyPortKey        = "KUBEPROXY_PORT"
 
-	nodeEnvKey       = "HOST_IP"
-	kubeletPortKey   = "KUBELET_PORT"
-	kubeProxyPortKey = "KUBEPROXY_PORT"
-
-	defaultHostIP        = "127.0.0.1"
+	defaultHost          = "127.0.0.1"
 	defaultKubeletPort   = "10248"
 	defaultKubeproxyPort = "10256"
 )
 
 var (
-	KubeletHealthCheckEndpoint   string
-	KubeProxyHealthCheckEndpoint string
+	kubeletHealthCheckEndpoint   string
+	kubeProxyHealthCheckEndpoint string
 )
 
 func init() {
@@ -62,13 +61,13 @@ func init() {
 func setKubeEndpoints() {
 	var o string
 
-	hostIP := defaultHostIP
+	hostAddress := defaultHost
 	kubeletPort := defaultKubeletPort
 	kubeProxyPort := defaultKubeproxyPort
 
-	o = os.Getenv(nodeEnvKey)
+	o = os.Getenv(hostAddressKey)
 	if o != "" {
-		hostIP = o
+		hostAddress = o
 	}
 	o = os.Getenv(kubeletPortKey)
 	if o != "" {
@@ -79,9 +78,16 @@ func setKubeEndpoints() {
 		kubeProxyPort = o
 	}
 
-	KubeletHealthCheckEndpoint = fmt.Sprintf("http://%s:%s/healthz", hostIP, kubeletPort)
-	KubeProxyHealthCheckEndpoint = fmt.Sprintf("http://%s:%s/healthz", hostIP, kubeProxyPort)
+	kubeletHealthCheckEndpoint = fmt.Sprintf("http://%s:%s/healthz", hostAddress, kubeletPort)
+	kubeProxyHealthCheckEndpoint = fmt.Sprintf("http://%s:%s/healthz", hostAddress, kubeProxyPort)
 
+}
+
+func KubeProxyHealthCheckEndpoint() string {
+	return kubeProxyHealthCheckEndpoint
+}
+func KubeletHealthCheckEndpoint() string {
+	return kubeletHealthCheckEndpoint
 }
 
 type HealthChecker interface {

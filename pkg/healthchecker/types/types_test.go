@@ -98,3 +98,82 @@ func TestLogPatternFlag(t *testing.T) {
 		})
 	}
 }
+
+func TestKubeEndpointConfiguration(t *testing.T) {
+	testCases := []struct {
+		name                      string
+		envConfig                 map[string]string
+		expectedKubeletEndpoint   string
+		expectedKubeProxyEndpoint string
+	}{
+		{
+			name:                      "no overrides supplied",
+			envConfig:                 map[string]string{},
+			expectedKubeletEndpoint:   "127.0.0.1:10248",
+			expectedKubeProxyEndpoint: "127.0.0.1:10256",
+		}, {
+			name: "HOST_ADDRESS override supplied",
+			envConfig: map[string]string{
+				"HOST_ADDRESS": "samplehost.testdomain.com",
+			},
+			expectedKubeletEndpoint:   "samplehost.testdomain.com:10248",
+			expectedKubeProxyEndpoint: "samplehost.testdomain.com:10256",
+		},
+		{
+			name: "KUBELET_PORT override supplied",
+			envConfig: map[string]string{
+				"KUBELET_PORT": "12345",
+			},
+			expectedKubeletEndpoint:   "127.0.0.1:12345",
+			expectedKubeProxyEndpoint: "127.0.0.1:10256",
+		},
+		{
+			name: "KUBEPROXY_PORT override supplied",
+			envConfig: map[string]string{
+				"KUBEPROXY_PORT": "12345",
+			},
+			expectedKubeletEndpoint:   "127.0.0.1:10248",
+			expectedKubeProxyEndpoint: "127.0.0.1:12345",
+		},
+		{
+			name: "HOST_ADDRESS and KUBELET_PORT override supplied",
+			envConfig: map[string]string{
+				"HOST_ADDRESS": "samplehost.testdomain.com",
+				"KUBELET_PORT": "12345",
+			},
+			expectedKubeletEndpoint:   "samplehost.testdomain.com:12345",
+			expectedKubeProxyEndpoint: "samplehost.testdomain.com:10256",
+		},
+		{
+			name: "HOST_ADDRESS and KUBEPROXY_PORT override supplied",
+			envConfig: map[string]string{
+				"HOST_ADDRESS":   "samplehost.testdomain.com",
+				"KUBEPROXY_PORT": "12345",
+			},
+			expectedKubeletEndpoint:   "samplehost.testdomain.com:10248",
+			expectedKubeProxyEndpoint: "samplehost.testdomain.com:12345",
+		},
+		{
+			name: "HOST_ADDRESS, KUBELET_PORT and KUBEPROXY_PORT override supplied",
+			envConfig: map[string]string{
+				"HOST_ADDRESS":   "10.0.10.1",
+				"KUBELET_PROXY":  "12345",
+				"KUBEPROXY_PORT": "12346",
+			},
+			expectedKubeletEndpoint:   "10.0.10.1:12345",
+			expectedKubeProxyEndpoint: "10.0.10.1:12346",
+		},
+	}
+	for _, test := range testCases {
+		t.Run(test.name, func(t *testing.T) {
+			for key, val := range test.envConfig {
+				t.Setenv(key, val)
+			}
+			kubeProxyHCEndpoint := KubeProxyHealthCheckEndpoint()
+			kubeletHCEndpoint := KubeletHealthCheckEndpoint()
+
+			assert.Equal(t, kubeProxyHCEndpoint, test.expectedKubeProxyEndpoint)
+			assert.Equal(t, kubeletHCEndpoint, test.expectedKubeletEndpoint)
+		})
+	}
+}
