@@ -246,7 +246,7 @@ build-binaries: $(ALL_BINARIES)
 build-container: clean Dockerfile
 	docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
 	docker buildx create --use
-	docker buildx build --platform $(DOCKER_PLATFORMS) -t $(IMAGE) --build-arg BASEIMAGE=$(BASEIMAGE) --build-arg LOGCOUNTER=$(LOGCOUNTER) -o type=docker .
+	docker buildx build --platform $(DOCKER_PLATFORMS) -t $(IMAGE) --build-arg BASEIMAGE=$(BASEIMAGE) --build-arg LOGCOUNTER=$(LOGCOUNTER)  .
 
 $(TARBALL): ./bin/node-problem-detector ./bin/log-counter ./bin/health-checker ./test/bin/problem-maker
 	tar -zcvf $(TARBALL) bin/ config/ test/e2e-install.sh test/bin/problem-maker
