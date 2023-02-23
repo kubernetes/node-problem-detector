@@ -158,7 +158,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 - Empty LogPath will now use journald's default path.
 - Systemd monitor now looks back 5 minutes.
-- Bumped base image to `k8s.gcr.io/debian-base-amd64:1.0.0`.
+- Bumped base image to `registry.k8s.io/debian-base-amd64:1.0.0`.
 - Updated the detection method for docker overlay2 issues.
 - Moved NPD into the kube-system namespace.
 
@@ -248,7 +248,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
-- Bumped base image to `k8s.gcr.io/debian-base-amd64:0.4.0`.
+- Bumped base image to `registry.k8s.io/debian-base-amd64:0.4.0`.
 
 ## [0.6.0] - 2018-11-27
 
@@ -277,7 +277,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 - Changed default port from 10256 to 20256 to avoid conflict with kube-proxy.
 - Bumped golang version from 1.8 to 1.9.
-- Bumped base image to `k8s.gcr.io/debian-base-amd64:0.3`.
+- Bumped base image to `registry.k8s.io/debian-base-amd64:0.3`.
 
 ### Fixed
 

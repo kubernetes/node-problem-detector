@@ -36,7 +36,7 @@ body of the release:
    an idea of what it includes.
 
 3. Provide a link to the new image release (e.g. `Image:
-   k8s.gcr.io/node-problem-detector/node-problem-detector:v0.8.6`)
+   registry.k8s.io/node-problem-detector/node-problem-detector:v0.8.6`)
 
 ## Post release steps
 
