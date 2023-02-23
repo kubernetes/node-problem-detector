@@ -75,7 +75,7 @@ endif
 # The debian-base:v2.0.0 image built from kubernetes repository is based on
 # Debian Stretch. It includes systemd 241 with support for both +XZ and +LZ4
 # compression. +LZ4 is needed on some os distros such as COS.
-BASEIMAGE:=registry.k8s.io/build-image/debian-base:bullseye-v1.4.2
+BASEIMAGE:=registry.k8s.io/build-image/debian-base:bullseye-v1.4.3
 
 # Disable cgo by default to make the binary statically linked.
 CGO_ENABLED:=0
