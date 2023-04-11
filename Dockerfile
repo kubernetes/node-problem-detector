@@ -13,7 +13,7 @@
 # limitations under the License.
 ARG BASEIMAGE
 
-FROM golang:1.20.0@sha256:f69d47fedd3b2ebd23bcf473c0b78522ebbc1823f06b7d47f45f04a30bdc901d as builder
+FROM golang:1.20.3@sha256:bcc311ec9655c350df3899611fdf134806f97a3e3b2c06c2b5c0696428503814 as builder
 LABEL maintainer="Andy Xie <andy.xning@gmail.com>"
 
 ENV GOPATH /gopath/
