@@ -10,8 +10,7 @@ node-problem-detector can either run as a
 [DaemonSet](http://kubernetes.io/docs/admin/daemons/) or run standalone.
 Now it is running as a
 [Kubernetes Addon](https://github.com/kubernetes/kubernetes/tree/master/cluster/addons)
-enabled by default in the GKE cluster.
-
+enabled by default in the GKE cluster. It is also enabled by default in AKS as part of the [AKS Linux Extension](https://learn.microsoft.com/en-us/azure/aks/faq#what-is-the-purpose-of-the-aks-linux-extension-i-see-installed-on-my-linux-vmss-instances).
 # Background
 
 There are tons of node problems that could possibly affect the pods running on the
