@@ -18,7 +18,6 @@ package types
 
 import (
 	"fmt"
-	"os"
 	"regexp"
 	"time"
 )
@@ -27,7 +26,6 @@ var (
 	defaultInvokeIntervalString   = (60 * time.Second).String()
 	defaultlsblkTimeoutString     = (5 * time.Second).String()
 	defaultKnownModulesConfigPath = "guestosconfig/known-modules.json"
-	defaultProcPath               = "/proc"
 )
 
 type MetricConfig struct {
@@ -135,7 +133,7 @@ func (ssc *SystemStatsConfig) Validate() error {
 	if ssc.InvokeInterval <= time.Duration(0) {
 		return fmt.Errorf("InvokeInterval %v must be above 0s", ssc.InvokeInterval)
 	}
-	if _, err := os.Stat(ssc.ProcPath); err != nil {
+	if err := ssc.validateProcPath(); err != nil {
 		return fmt.Errorf("ProcPath %v check failed: %s", ssc.ProcPath, err)
 	}
 	if ssc.DiskConfig.LsblkTimeout <= time.Duration(0) {
