@@ -33,7 +33,10 @@ FROM ${BASEIMAGE}
 
 LABEL maintainer="Random Liu <lantaol@google.com>"
 
-RUN clean-install util-linux libsystemd0 bash systemd
+RUN clean-install util-linux libsystemd0 bash systemd wget curl procps ca-certificates gnupg
+RUN curl -fsSLo /etc/apt/keyrings/kubernetes-archive-keyring.gpg https://packages.cloud.google.com/apt/doc/apt-key.gpg
+RUN echo "deb [signed-by=/etc/apt/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" | tee /etc/apt/sources.list.d/kubernetes.list
+RUN apt-get update && apt-get install -y kubectl
 
 # Avoid symlink of /etc/localtime.
 RUN test -h /etc/localtime && rm -f /etc/localtime && cp /usr/share/zoneinfo/UTC /etc/localtime || true
