@@ -179,9 +179,13 @@ Alternatively, to install node-problem-detector manually:
 
 2. Edit [node-problem-detector-config.yaml](deployment/node-problem-detector-config.yaml) to configure node-problem-detector.
 
-3. Create the ConfigMap with `kubectl create -f node-problem-detector-config.yaml`.
+3. Edit [rbac.yaml](deployment/rbac.yaml) to fit your environment.
 
-3. Create the DaemonSet with `kubectl create -f node-problem-detector.yaml`.
+4. Create the ServiceAccount and ClusterRoleBinding with `kubectl create -f rbac.yaml`.
+
+4. Create the ConfigMap with `kubectl create -f node-problem-detector-config.yaml`.
+
+5. Create the DaemonSet with `kubectl create -f node-problem-detector.yaml`.
 
 ## Start Standalone
 
