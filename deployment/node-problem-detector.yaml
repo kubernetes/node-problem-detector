@@ -60,6 +60,7 @@ spec:
         - name: config
           mountPath: /config
           readOnly: true
+      serviceAccountName: node-problem-detector
       volumes:
       - name: log
         # Config `log` to your system log directory
