@@ -2,7 +2,7 @@ name:  Build x86 and arm Image
 
 env:
   BASEIMAGE: k8s.gcr.io/debian-base-amd64:v2.0.0
-  VERSION: 0.8.13
+  VERSION: v0.8.20
 
 on:
   pull_request:
@@ -15,7 +15,7 @@ on:
 jobs:
   docker-image:
     name: Build x86 and arm Image
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v2
       - name: Set up QEMU

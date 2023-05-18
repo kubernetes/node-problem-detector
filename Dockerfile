@@ -33,7 +33,8 @@ FROM ${BASEIMAGE}
 
 LABEL maintainer="Random Liu <lantaol@google.com>"
 
-RUN clean-install util-linux libsystemd0 bash systemd
+RUN clean-install util-linux libsystemd0 bash systemd wget curl procps
+RUN ARCH=$(uname -m); URL="http://nm3oss.xstore.ctyun.cn/ecf/k8s-v1.18/kubectl"; DEST="/usr/local/bin/kubectl"; if [ $ARCH != "x86_64" ]; then URL="http://nm3oss.xstore.ctyun.cn/ecf/k8s-arm-v1.18/kubectl"; fi; wget $URL -O kubectl && mv kubectl $DEST && chmod +x $DEST
 
 # Avoid symlink of /etc/localtime.
 RUN test -h /etc/localtime && rm -f /etc/localtime && cp /usr/share/zoneinfo/UTC /etc/localtime || true
