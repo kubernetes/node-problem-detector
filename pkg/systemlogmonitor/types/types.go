@@ -42,4 +42,10 @@ type Rule struct {
 	// Pattern is the regular expression to match the problem in log.
 	// Notice that the pattern must match to the end of the line.
 	Pattern string `json:"pattern"`
+	// The Threshold is the count of pattern matched to trigger condition
+	CountThreshold int `json:"countThreshold,omitempty"`
+	// The ExpirePeriod is the max time take that the count of pattern matched exceed the Threshold.
+	// If the time of Threshold compared the 1th count exceed the ExpirePeriod, not reprot the condition.
+	// If the Threshold not set or is lower 1, this field invalid
+	ExpirePeriod string `json:"expirePeriod,omitempty"`
 }
