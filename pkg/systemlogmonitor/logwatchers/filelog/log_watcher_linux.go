@@ -21,7 +21,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/google/cadvisor/utils/tail"
+	"k8s.io/node-problem-detector/pkg/util/tail"
 )
 
 // getLogReader returns log reader for filelog log. Note that getLogReader doesn't look back

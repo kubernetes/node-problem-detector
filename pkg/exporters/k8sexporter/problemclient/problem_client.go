@@ -17,6 +17,7 @@ limitations under the License.
 package problemclient
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/url"
@@ -107,7 +108,7 @@ func (c *nodeProblemClient) SetConditions(newConditions []v1.NodeCondition) erro
 	if err != nil {
 		return err
 	}
-	return c.client.RESTClient().Patch(types.StrategicMergePatchType).Resource("nodes").Name(c.nodeName).SubResource("status").Body(patch).Do().Error()
+	return c.client.RESTClient().Patch(types.StrategicMergePatchType).Resource("nodes").Name(c.nodeName).SubResource("status").Body(patch).Do(context.TODO()).Error()
 }
 
 func (c *nodeProblemClient) Eventf(eventType, source, reason, messageFmt string, args ...interface{}) {
@@ -121,7 +122,7 @@ func (c *nodeProblemClient) Eventf(eventType, source, reason, messageFmt string,
 }
 
 func (c *nodeProblemClient) GetNode() (*v1.Node, error) {
-	return c.client.Nodes().Get(c.nodeName, metav1.GetOptions{})
+	return c.client.Nodes().Get(context.TODO(), c.nodeName, metav1.GetOptions{})
 }
 
 // generatePatch generates condition patch
