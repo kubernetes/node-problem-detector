@@ -26,7 +26,7 @@ import (
 	problemutil "k8s.io/node-problem-detector/pkg/util"
 
 	"k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/util/clock"
+	"k8s.io/utils/clock"
 
 	"github.com/golang/glog"
 )
@@ -111,7 +111,7 @@ func (c *conditionManager) GetConditions() []types.Condition {
 }
 
 func (c *conditionManager) syncLoop() {
-	ticker := c.clock.NewTicker(updatePeriod)
+	ticker := c.clock.NewTimer(updatePeriod)
 	defer ticker.Stop()
 	for {
 		select {
