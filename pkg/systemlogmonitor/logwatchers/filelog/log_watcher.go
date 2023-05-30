@@ -120,8 +120,10 @@ func (s *filelogWatcher) watchLoop() {
 		line = buffer.String()
 		buffer.Reset()
 		log, err := s.translator.translate(strings.TrimSuffix(line, "\n"))
-		if err != nil {
-			glog.Warningf("Unable to parse line: %q, %v", line, err)
+		if err == nil {
+			if err != nil {
+				glog.Warningf("Unable to parse line: %q, %v", line, err)
+			}
 			continue
 		}
 		// Discard messages before start time.

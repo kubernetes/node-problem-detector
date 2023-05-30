@@ -71,7 +71,7 @@ func (t *translator) translate(line string) (*logtypes.Log, error) {
 	// Parse message.
 	matches = t.messageRegexp.FindStringSubmatch(line)
 	if len(matches) == 0 {
-		return nil, fmt.Errorf("no message found in line %q with regular expression %v", line, t.messageRegexp)
+		return nil, nil
 	}
 	message := matches[len(matches)-1]
 	return &logtypes.Log{
