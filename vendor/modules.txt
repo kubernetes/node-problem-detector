@@ -650,9 +650,6 @@ k8s.io/client-go/util/connrotation
 k8s.io/client-go/util/flowcontrol
 k8s.io/client-go/util/homedir
 k8s.io/client-go/util/keyutil
-# k8s.io/heapster v0.0.0-20180704153620-b25f8a16208f
-## explicit
-k8s.io/heapster/common/kubernetes
 # k8s.io/klog v0.4.0
 ## explicit; go 1.12
 k8s.io/klog

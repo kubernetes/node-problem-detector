@@ -34,7 +34,6 @@ import (
 	"k8s.io/client-go/tools/record"
 
 	"github.com/golang/glog"
-	"k8s.io/heapster/common/kubernetes"
 	"k8s.io/node-problem-detector/cmd/options"
 	"k8s.io/node-problem-detector/pkg/version"
 )
@@ -68,7 +67,7 @@ func NewClientOrDie(npdo *options.NodeProblemDetectorOptions) Client {
 	// we have checked it is a valid URI after command line argument is parsed.:)
 	uri, _ := url.Parse(npdo.ApiServerOverride)
 
-	cfg, err := kubernetes.GetKubeClientConfig(uri)
+	cfg, err := getKubeClientConfig(uri)
 	if err != nil {
 		panic(err)
 	}
