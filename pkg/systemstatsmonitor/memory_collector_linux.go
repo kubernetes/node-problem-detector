@@ -37,7 +37,7 @@ func (mc *memoryCollector) collect() {
 		return
 	}
 
-	if mc.mBytesUsed != nil && meminfo != nil {
+	if mc.mBytesUsed != nil && meminfo.MemTotal != nil && meminfo.MemFree != nil && meminfo.Buffers != nil && meminfo.Cached != nil && meminfo.Slab != nil {
 		memUsed := *meminfo.MemTotal - *meminfo.MemFree - *meminfo.Buffers - *meminfo.Cached - *meminfo.Slab
 		mc.mBytesUsed.Record(map[string]string{stateLabel: "free"}, int64(*meminfo.MemFree)*1024)
 		mc.mBytesUsed.Record(map[string]string{stateLabel: "used"}, int64(memUsed)*1024)
