@@ -46,22 +46,22 @@ func (mc *memoryCollector) collect() {
 		mc.mBytesUsed.Record(map[string]string{stateLabel: "slab"}, int64(*meminfo.Slab)*1024)
 	}
 
-	if mc.mDirtyUsed != nil {
+	if mc.mDirtyUsed != nil && meminfo.Dirty != nil && meminfo.Writeback != nil {
 		mc.mDirtyUsed.Record(map[string]string{stateLabel: "dirty"}, int64(*meminfo.Dirty)*1024)
 		mc.mDirtyUsed.Record(map[string]string{stateLabel: "writeback"}, int64(*meminfo.Writeback)*1024)
 	}
 
-	if mc.mAnonymousUsed != nil {
+	if mc.mAnonymousUsed != nil && meminfo.ActiveAnon != nil && meminfo.InactiveAnon != nil {
 		mc.mAnonymousUsed.Record(map[string]string{stateLabel: "active"}, int64(*meminfo.ActiveAnon)*1024)
 		mc.mAnonymousUsed.Record(map[string]string{stateLabel: "inactive"}, int64(*meminfo.InactiveAnon)*1024)
 	}
 
-	if mc.mPageCacheUsed != nil {
+	if mc.mPageCacheUsed != nil && meminfo ActiveFile != nil && meminfo.InactiveFile != nil {
 		mc.mPageCacheUsed.Record(map[string]string{stateLabel: "active"}, int64(*meminfo.ActiveFile)*1024)
 		mc.mPageCacheUsed.Record(map[string]string{stateLabel: "inactive"}, int64(*meminfo.InactiveFile)*1024)
 	}
 
-	if mc.mUnevictableUsed != nil {
+	if mc.mUnevictableUsed != nil && meminfo.Unevictable != nil {
 		mc.mUnevictableUsed.Record(map[string]string{}, int64(*meminfo.Unevictable)*1024)
 	}
 }
