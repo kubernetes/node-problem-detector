@@ -56,7 +56,7 @@ func (mc *memoryCollector) collect() {
 		mc.mAnonymousUsed.Record(map[string]string{stateLabel: "inactive"}, int64(*meminfo.InactiveAnon)*1024)
 	}
 
-	if mc.mPageCacheUsed != nil && meminfo ActiveFile != nil && meminfo.InactiveFile != nil {
+	if mc.mPageCacheUsed != nil && meminfo.ActiveFile != nil && meminfo.InactiveFile != nil {
 		mc.mPageCacheUsed.Record(map[string]string{stateLabel: "active"}, int64(*meminfo.ActiveFile)*1024)
 		mc.mPageCacheUsed.Record(map[string]string{stateLabel: "inactive"}, int64(*meminfo.InactiveFile)*1024)
 	}
