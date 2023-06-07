@@ -42,14 +42,14 @@ import (
 // Client is the interface of problem client
 type Client interface {
 	// GetConditions get all specific conditions of current node.
-	GetConditions(conditionTypes []v1.NodeConditionType) ([]*v1.NodeCondition, error)
+	GetConditions(ctx context.Context, conditionTypes []v1.NodeConditionType) ([]*v1.NodeCondition, error)
 	// SetConditions set or update conditions of current node.
-	SetConditions(conditions []v1.NodeCondition) error
+	SetConditions(ctx context.Context, conditions []v1.NodeCondition) error
 	// Eventf reports the event.
 	Eventf(eventType string, source, reason, messageFmt string, args ...interface{})
 	// GetNode returns the Node object of the node on which the
 	// node-problem-detector runs.
-	GetNode() (*v1.Node, error)
+	GetNode(ctx context.Context) (*v1.Node, error)
 }
 
 type nodeProblemClient struct {
@@ -62,7 +62,7 @@ type nodeProblemClient struct {
 }
 
 // NewClientOrDie creates a new problem client, panics if error occurs.
-func NewClientOrDie(npdo *options.NodeProblemDetectorOptions) Client {
+func NewClientOrDie(npdo *options.NodeProblemDetectorOptions) *nodeProblemClient {
 	c := &nodeProblemClient{clock: clock.RealClock{}}
 
 	// we have checked it is a valid URI after command line argument is parsed.:)
@@ -83,8 +83,8 @@ func NewClientOrDie(npdo *options.NodeProblemDetectorOptions) Client {
 	return c
 }
 
-func (c *nodeProblemClient) GetConditions(conditionTypes []v1.NodeConditionType) ([]*v1.NodeCondition, error) {
-	node, err := c.GetNode()
+func (c *nodeProblemClient) GetConditions(ctx context.Context, conditionTypes []v1.NodeConditionType) ([]*v1.NodeCondition, error) {
+	node, err := c.GetNode(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -99,7 +99,7 @@ func (c *nodeProblemClient) GetConditions(conditionTypes []v1.NodeConditionType)
 	return conditions, nil
 }
 
-func (c *nodeProblemClient) SetConditions(newConditions []v1.NodeCondition) error {
+func (c *nodeProblemClient) SetConditions(ctx context.Context, newConditions []v1.NodeCondition) error {
 	for i := range newConditions {
 		// Each time we update the conditions, we update the heart beat time
 		newConditions[i].LastHeartbeatTime = metav1.NewTime(c.clock.Now())
@@ -108,7 +108,7 @@ func (c *nodeProblemClient) SetConditions(newConditions []v1.NodeCondition) erro
 	if err != nil {
 		return err
 	}
-	return c.client.RESTClient().Patch(types.StrategicMergePatchType).Resource("nodes").Name(c.nodeName).SubResource("status").Body(patch).Do(context.TODO()).Error()
+	return c.client.RESTClient().Patch(types.StrategicMergePatchType).Resource("nodes").Name(c.nodeName).SubResource("status").Body(patch).Do(ctx).Error()
 }
 
 func (c *nodeProblemClient) Eventf(eventType, source, reason, messageFmt string, args ...interface{}) {
@@ -121,8 +121,8 @@ func (c *nodeProblemClient) Eventf(eventType, source, reason, messageFmt string,
 	recorder.Eventf(c.nodeRef, eventType, reason, messageFmt, args...)
 }
 
-func (c *nodeProblemClient) GetNode() (*v1.Node, error) {
-	return c.client.Nodes().Get(context.TODO(), c.nodeName, metav1.GetOptions{})
+func (c *nodeProblemClient) GetNode(ctx context.Context) (*v1.Node, error) {
+	return c.client.Nodes().Get(ctx, c.nodeName, metav1.GetOptions{})
 }
 
 // generatePatch generates condition patch
