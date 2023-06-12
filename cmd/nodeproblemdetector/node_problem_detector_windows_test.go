@@ -1,3 +1,4 @@
+//go:build !disable_system_log_monitor
 // +build !disable_system_log_monitor
 
 /*

@@ -1,3 +1,4 @@
+//go:build !disable_custom_plugin_monitor
 // +build !disable_custom_plugin_monitor
 
 /*

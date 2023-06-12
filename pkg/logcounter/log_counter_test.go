@@ -1,3 +1,4 @@
+//go:build journald
 // +build journald
 
 /*
