@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package kubernetes
+package problemclient
 
 import (
 	"fmt"
@@ -57,7 +57,7 @@ func getConfigOverrides(uri *url.URL) (*kubeClientCmd.ConfigOverrides, error) {
 	return &kubeConfigOverride, nil
 }
 
-func GetKubeClientConfig(uri *url.URL) (*kube_rest.Config, error) {
+func getKubeClientConfig(uri *url.URL) (*kube_rest.Config, error) {
 	var (
 		kubeConfig *kube_rest.Config
 		err        error

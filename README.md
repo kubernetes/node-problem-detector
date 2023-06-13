@@ -10,8 +10,8 @@ node-problem-detector can either run as a
 [DaemonSet](http://kubernetes.io/docs/admin/daemons/) or run standalone.
 Now it is running as a
 [Kubernetes Addon](https://github.com/kubernetes/kubernetes/tree/master/cluster/addons)
-enabled by default in the GCE cluster.
-
+enabled by default in the GKE cluster. It is also enabled by default in AKS as part of the
+[AKS Linux Extension](https://learn.microsoft.com/en-us/azure/aks/faq#what-is-the-purpose-of-the-aks-linux-extension-i-see-installed-on-my-linux-vmss-instances).
 # Background
 
 There are tons of node problems that could possibly affect the pods running on the
@@ -158,10 +158,7 @@ problem is resolved. This feature is disabled by default but you can enable it l
 * Install development dependencies for `libsystemd` and the ARM GCC toolchain
   * Debian/Ubuntu: `apt install libsystemd-dev gcc-aarch64-linux-gnu`
 
-* `go get` or `git clone` node-problem-detector repo into `$GOPATH/src/k8s.io` or `$GOROOT/src/k8s.io`
-with one of the below directions:
-  * `cd $GOPATH/src/k8s.io && git clone git@github.com:kubernetes/node-problem-detector.git`
-  * `cd $GOPATH/src/k8s.io && go get k8s.io/node-problem-detector`
+* `git clone git@github.com:kubernetes/node-problem-detector.git`
 
 * Run `make` in the top directory. It will:
   * Build the binary.
@@ -191,7 +188,7 @@ The easiest way to install node-problem-detector into your cluster is to use the
 
 ```
 helm repo add deliveryhero https://charts.deliveryhero.io/
-helm install deliveryhero/node-problem-detector
+helm install --generate-name deliveryhero/node-problem-detector
 ```
 
 Alternatively, to install node-problem-detector manually:
@@ -200,9 +197,13 @@ Alternatively, to install node-problem-detector manually:
 
 2. Edit [node-problem-detector-config.yaml](deployment/node-problem-detector-config.yaml) to configure node-problem-detector.
 
-3. Create the ConfigMap with `kubectl create -f node-problem-detector-config.yaml`.
+3. Edit [rbac.yaml](deployment/rbac.yaml) to fit your environment.
 
-3. Create the DaemonSet with `kubectl create -f node-problem-detector.yaml`.
+4. Create the ServiceAccount and ClusterRoleBinding with `kubectl create -f rbac.yaml`.
+
+4. Create the ConfigMap with `kubectl create -f node-problem-detector-config.yaml`.
+
+5. Create the DaemonSet with `kubectl create -f node-problem-detector.yaml`.
 
 ## Start Standalone
 
@@ -230,7 +231,7 @@ To develop NPD on Windows you'll need to setup your Windows machine for Go devel
 * [Go](https://golang.org/)
 * [Visual Studio Code](https://code.visualstudio.com/)
 * [Make](http://gnuwin32.sourceforge.net/packages/make.htm)
-* [mingw-64 WinBuilds](http://mingw-w64.org/doku.php/download/win-builds)
+* [mingw-64 WinBuilds](http://mingw-w64.org/downloads)
   * Tested with x86-64 Windows Native mode.
   * Add the `$InstallDir\bin` to [Windows `PATH` variable](https://answers.microsoft.com/en-us/windows/forum/windows_10-other_settings-winpc/adding-path-variable/97300613-20cb-4d85-8d0e-cc9d3549ba23).
 
@@ -305,6 +306,11 @@ Kubernetes cluster to a healthy state. The following remedy systems exist:
   evicts pods violating NoSchedule taints on nodes. The k8s scheduler's TaintNodesByCondition feature must
   be enabled. The [Cluster Autoscaler](https://github.com/kubernetes/autoscaler/tree/master/cluster-autoscaler)
   can be used to automatically terminate drained nodes.
+* [**mediK8S**](https://github.com/medik8s) is an umbrella project for automatic remediation
+  system build on [Node Health Check Operator (NHC)](https://github.com/medik8s/node-healthcheck-operator) that monitors
+  node conditions and delegates remediation to external remediators using the Remediation API.[Poison-Pill](https://github.com/medik8s/poison-pill)
+  is a remediator that will reboot the node and make sure all statefull workloads are rescheduled. NHC supports conditionally remediating if the cluster
+  has enough healthy capacity, or manually pausing any action to minimze cluster disruption.
 
 # Testing
 

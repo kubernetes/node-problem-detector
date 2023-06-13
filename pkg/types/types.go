@@ -63,7 +63,7 @@ type Condition struct {
 	Transition time.Time `json:"transition"`
 	// Reason is a short reason of why node goes into this condition.
 	Reason string `json:"reason"`
-	// Message is a human readable message of why node goes into this condition.
+	// Message is a human-readable message of why node goes into this condition.
 	Message string `json:"message"`
 	// TaintEnabled is a boolean flag to taint node on specific node problems
 	TaintEnabled bool `json:"taintEnabled"`
@@ -83,7 +83,7 @@ type Event struct {
 	Timestamp time.Time `json:"timestamp"`
 	// Reason is a short reason of why the event is generated.
 	Reason string `json:"reason"`
-	// Message is a human readable message of why the event is generated.
+	// Message is a human-readable message of why the event is generated.
 	Message string `json:"message"`
 }
 
@@ -121,7 +121,7 @@ type Monitor interface {
 
 // Exporter exports machine health data to certain control plane.
 type Exporter interface {
-	// Export problems to the control plane.
+	// ExportProblems Export problems to the control plane.
 	ExportProblems(*Status)
 }
 

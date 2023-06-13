@@ -93,6 +93,7 @@ func (p *Plugin) runRules() {
 	glog.V(3).Info("Start to run custom plugins")
 
 	for _, rule := range p.config.Rules {
+		// syncChan limits concurrent goroutines to configured PluginGlobalConfig.Concurrency value
 		p.syncChan <- struct{}{}
 		p.Add(1)
 		go func(rule *cpmtypes.CustomRule) {
@@ -103,8 +104,12 @@ func (p *Plugin) runRules() {
 
 			start := time.Now()
 			exitStatus, message := p.run(*rule)
+			level := glog.Level(3)
+			if exitStatus != 0 {
+				level = glog.Level(2)
+			}
 
-			glog.V(3).Infof("Rule: %+v. Start time: %v. End time: %v. Duration: %v", rule, start, time.Now(), time.Since(start))
+			glog.V(level).Infof("Rule: %+v. Start time: %v. End time: %v. Duration: %v", rule, start, time.Now(), time.Since(start))
 
 			result := cpmtypes.Result{
 				Rule:       rule,
@@ -112,10 +117,11 @@ func (p *Plugin) runRules() {
 				Message:    message,
 			}
 
+			// pipes result into resultChan which customPluginMonitor instance generates status from
 			p.resultChan <- result
 
 			// Let the result be logged at a higher verbosity level. If there is a change in status it is logged later.
-			glog.V(3).Infof("Add check result %+v for rule %+v", result, rule)
+			glog.V(level).Infof("Add check result %+v for rule %+v", result, rule)
 		}(rule)
 	}
 

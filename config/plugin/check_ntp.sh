@@ -20,8 +20,7 @@ if systemctl -q is-active "$SERVICE"; then
   echo "$SERVICE is running"
   exit $OK
 else
-  # Does not differenciate stopped/failed service from non-existent
+  # Does not differentiate stopped/failed service from non-existent
   echo "$SERVICE is not running"
   exit $NONOK
 fi
-

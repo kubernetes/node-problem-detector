@@ -33,6 +33,7 @@ var (
 	defaultConcurrency                       = 3
 	defaultMessageChangeBasedConditionUpdate = false
 	defaultEnableMetricsReporting            = true
+	defaultSkipInitialStatus                 = false
 
 	customPluginName = "custom"
 )
@@ -52,6 +53,8 @@ type pluginGlobalConfig struct {
 	Concurrency *int `json:"concurrency,omitempty"`
 	// EnableMessageChangeBasedConditionUpdate indicates whether NPD should enable message change based condition update.
 	EnableMessageChangeBasedConditionUpdate *bool `json:"enable_message_change_based_condition_update,omitempty"`
+	// SkipInitialStatus prevents the first status update with default conditions
+	SkipInitialStatus *bool `json:"skip_initial_status,omitempty"`
 }
 
 // Custom plugin config is the configuration of custom plugin monitor.
@@ -103,6 +106,10 @@ func (cpc *CustomPluginConfig) ApplyConfiguration() error {
 	}
 	if cpc.PluginGlobalConfig.EnableMessageChangeBasedConditionUpdate == nil {
 		cpc.PluginGlobalConfig.EnableMessageChangeBasedConditionUpdate = &defaultMessageChangeBasedConditionUpdate
+	}
+
+	if cpc.PluginGlobalConfig.SkipInitialStatus == nil {
+		cpc.PluginGlobalConfig.SkipInitialStatus = &defaultSkipInitialStatus
 	}
 
 	for _, rule := range cpc.Rules {

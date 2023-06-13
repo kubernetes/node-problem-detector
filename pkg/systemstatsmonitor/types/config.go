@@ -18,7 +18,7 @@ package types
 
 import (
 	"fmt"
-	"os"
+	"regexp"
 	"time"
 )
 
@@ -26,7 +26,6 @@ var (
 	defaultInvokeIntervalString   = (60 * time.Second).String()
 	defaultlsblkTimeoutString     = (5 * time.Second).String()
 	defaultKnownModulesConfigPath = "guestosconfig/known-modules.json"
-	defaultProcPath               = "/proc"
 )
 
 type MetricConfig struct {
@@ -58,8 +57,35 @@ type OSFeatureStatsConfig struct {
 	KnownModulesConfigPath string                  `json:"knownModulesConfigPath"`
 }
 
+// In order to marshal/unmarshal regexp, we need to implement
+// MarshalText/UnmarshalText methods in a wrapper struct
+type NetStatsInterfaceRegexp struct {
+	R *regexp.Regexp
+}
+
+func (r *NetStatsInterfaceRegexp) UnmarshalText(data []byte) error {
+	// We don't build Regexp if data is empty
+	if len(data) == 0 {
+		return nil
+	}
+	regex, err := regexp.Compile(string(data))
+	if err != nil {
+		return err
+	}
+	r.R = regex
+	return nil
+}
+
+func (r NetStatsInterfaceRegexp) MarshalText() ([]byte, error) {
+	if r.R == nil {
+		return nil, nil
+	}
+	return []byte(r.R.String()), nil
+}
+
 type NetStatsConfig struct {
-	MetricsConfigs map[string]MetricConfig `json:"metricsConfigs"`
+	MetricsConfigs         map[string]MetricConfig `json:"metricsConfigs"`
+	ExcludeInterfaceRegexp NetStatsInterfaceRegexp `json:"excludeInterfaceRegexp"`
 }
 
 type SystemStatsConfig struct {
@@ -107,7 +133,7 @@ func (ssc *SystemStatsConfig) Validate() error {
 	if ssc.InvokeInterval <= time.Duration(0) {
 		return fmt.Errorf("InvokeInterval %v must be above 0s", ssc.InvokeInterval)
 	}
-	if _, err := os.Stat(ssc.ProcPath); err != nil {
+	if err := ssc.validateProcPath(); err != nil {
 		return fmt.Errorf("ProcPath %v check failed: %s", ssc.ProcPath, err)
 	}
 	if ssc.DiskConfig.LsblkTimeout <= time.Duration(0) {

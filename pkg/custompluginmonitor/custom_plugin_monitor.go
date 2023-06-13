@@ -47,7 +47,6 @@ type customPluginMonitor struct {
 	config     cpmtypes.CustomPluginConfig
 	conditions []types.Condition
 	plugin     *plugin.Plugin
-	resultChan <-chan cpmtypes.Result
 	statusChan chan *types.Status
 	tomb       *tomb.Tomb
 }
@@ -121,8 +120,12 @@ func (c *customPluginMonitor) Stop() {
 }
 
 // monitorLoop is the main loop of customPluginMonitor.
+// there is one customPluginMonitor, one plugin instance for each configPath.
+// each runs rules in parallel at pre-configured concurrency, and interval.
 func (c *customPluginMonitor) monitorLoop() {
-	c.initializeStatus()
+	if !*c.config.PluginGlobalConfig.SkipInitialStatus {
+		c.initializeStatus()
+	}
 
 	resultChan := c.plugin.GetResultChan()
 
@@ -232,6 +235,7 @@ func (c *customPluginMonitor) generateStatus(result cpmtypes.Result) *types.Stat
 						condition.Type,
 						status,
 						newReason,
+						newMessage,
 						timestamp,
 					)
 

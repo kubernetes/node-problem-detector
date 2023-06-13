@@ -33,6 +33,7 @@ func TestCustomPluginConfigApplyConfiguration(t *testing.T) {
 	concurrency := 2
 	messageChangeBasedConditionUpdate := true
 	disableMetricsReporting := false
+	disableInitialStatusUpdate := true
 
 	ruleTimeout := 1 * time.Second
 	ruleTimeoutString := ruleTimeout.String()
@@ -62,6 +63,7 @@ func TestCustomPluginConfigApplyConfiguration(t *testing.T) {
 					MaxOutputLength:                         &defaultMaxOutputLength,
 					Concurrency:                             &defaultConcurrency,
 					EnableMessageChangeBasedConditionUpdate: &defaultMessageChangeBasedConditionUpdate,
+					SkipInitialStatus:                       &defaultSkipInitialStatus,
 				},
 				EnableMetricsReporting: &defaultEnableMetricsReporting,
 				Rules: []*CustomRule{
@@ -91,6 +93,7 @@ func TestCustomPluginConfigApplyConfiguration(t *testing.T) {
 					MaxOutputLength:                         &defaultMaxOutputLength,
 					Concurrency:                             &defaultConcurrency,
 					EnableMessageChangeBasedConditionUpdate: &defaultMessageChangeBasedConditionUpdate,
+					SkipInitialStatus:                       &defaultSkipInitialStatus,
 				},
 				EnableMetricsReporting: &defaultEnableMetricsReporting,
 			},
@@ -110,6 +113,7 @@ func TestCustomPluginConfigApplyConfiguration(t *testing.T) {
 					MaxOutputLength:                         &defaultMaxOutputLength,
 					Concurrency:                             &defaultConcurrency,
 					EnableMessageChangeBasedConditionUpdate: &defaultMessageChangeBasedConditionUpdate,
+					SkipInitialStatus:                       &defaultSkipInitialStatus,
 				},
 				EnableMetricsReporting: &defaultEnableMetricsReporting,
 			},
@@ -129,6 +133,7 @@ func TestCustomPluginConfigApplyConfiguration(t *testing.T) {
 					MaxOutputLength:                         &maxOutputLength,
 					Concurrency:                             &defaultConcurrency,
 					EnableMessageChangeBasedConditionUpdate: &defaultMessageChangeBasedConditionUpdate,
+					SkipInitialStatus:                       &defaultSkipInitialStatus,
 				},
 				EnableMetricsReporting: &defaultEnableMetricsReporting,
 			},
@@ -148,6 +153,7 @@ func TestCustomPluginConfigApplyConfiguration(t *testing.T) {
 					MaxOutputLength:                         &defaultMaxOutputLength,
 					Concurrency:                             &concurrency,
 					EnableMessageChangeBasedConditionUpdate: &defaultMessageChangeBasedConditionUpdate,
+					SkipInitialStatus:                       &defaultSkipInitialStatus,
 				},
 				EnableMetricsReporting: &defaultEnableMetricsReporting,
 			},
@@ -167,6 +173,7 @@ func TestCustomPluginConfigApplyConfiguration(t *testing.T) {
 					MaxOutputLength:                         &defaultMaxOutputLength,
 					Concurrency:                             &defaultConcurrency,
 					EnableMessageChangeBasedConditionUpdate: &messageChangeBasedConditionUpdate,
+					SkipInitialStatus:                       &defaultSkipInitialStatus,
 				},
 				EnableMetricsReporting: &defaultEnableMetricsReporting,
 			},
@@ -184,8 +191,28 @@ func TestCustomPluginConfigApplyConfiguration(t *testing.T) {
 					MaxOutputLength:                         &defaultMaxOutputLength,
 					Concurrency:                             &defaultConcurrency,
 					EnableMessageChangeBasedConditionUpdate: &defaultMessageChangeBasedConditionUpdate,
+					SkipInitialStatus:                       &defaultSkipInitialStatus,
 				},
 				EnableMetricsReporting: &disableMetricsReporting,
+			},
+		},
+		"disable status update during initialization": {
+			Orig: CustomPluginConfig{PluginGlobalConfig: pluginGlobalConfig{
+				SkipInitialStatus: &disableInitialStatusUpdate,
+			},
+			},
+			Wanted: CustomPluginConfig{
+				PluginGlobalConfig: pluginGlobalConfig{
+					InvokeIntervalString:                    &defaultInvokeIntervalString,
+					InvokeInterval:                          &defaultInvokeInterval,
+					TimeoutString:                           &defaultGlobalTimeoutString,
+					Timeout:                                 &defaultGlobalTimeout,
+					MaxOutputLength:                         &defaultMaxOutputLength,
+					Concurrency:                             &defaultConcurrency,
+					EnableMessageChangeBasedConditionUpdate: &defaultMessageChangeBasedConditionUpdate,
+					SkipInitialStatus:                       &disableInitialStatusUpdate,
+				},
+				EnableMetricsReporting: &defaultEnableMetricsReporting,
 			},
 		},
 	}

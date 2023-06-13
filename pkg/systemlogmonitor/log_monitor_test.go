@@ -84,6 +84,7 @@ func TestGenerateStatusForConditions(t *testing.T) {
 					testConditionA,
 					types.True,
 					"test reason",
+					"test message 1\ntest message 2",
 					time.Unix(1000, 1000),
 				)},
 				Conditions: []types.Condition{

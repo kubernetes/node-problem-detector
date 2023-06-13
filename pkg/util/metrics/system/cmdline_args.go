@@ -56,7 +56,7 @@ func CmdlineArgs(cmdlineFilePath string) ([]CmdlineArg, error) {
 		return nil, fmt.Errorf("error reading the file %s, %v", cmdlineFilePath, err)
 	}
 	if len(lines) < 1 {
-		return nil, fmt.Errorf("no lines are retured")
+		return nil, fmt.Errorf("no lines are returned")
 	}
 	cmdlineArgs := strings.FieldsFunc(lines[0], splitAfterSpace)
 	var result = make([]CmdlineArg, 0, len(cmdlineArgs))

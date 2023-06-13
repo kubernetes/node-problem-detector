@@ -14,11 +14,11 @@ itself.
    viewing the changes on GitHub ([example:
    https://github.com/kubernetes/node-problem-detector/compare/v0.8.6...master](https://github.com/kubernetes/node-problem-detector/compare/v0.8.6...master)).
 
-1. Based on the changes to be included in the release, determine what the next
+2. Based on the changes to be included in the release, determine what the next
    release number should be. We strive to follow [SemVer](https://semver.org/)
    as much as possible.
 
-1. Update [CHANGELOG](https://github.com/kubernetes/node-problem-detector/blob/master/CHANGELOG.md)
+3. Update [CHANGELOG](https://github.com/kubernetes/node-problem-detector/blob/master/CHANGELOG.md)
    with all significant changes.
 
 ## Create release
@@ -31,12 +31,12 @@ body of the release:
    release (e.g.
    [https://github.com/kubernetes/node-problem-detector/compare/v0.8.5...v0.8.6](https://github.com/kubernetes/node-problem-detector/compare/v0.8.5...v0.8.6)).
 
-1. There is no need to duplicate everything from the CHANGELOG, but include the
+2. There is no need to duplicate everything from the CHANGELOG, but include the
    most significant things so someone just viewing the release entry will have
    an idea of what it includes.
 
-1. Provide a link to the new image release (e.g. `Image:
-   k8s.gcr.io/node-problem-detector/node-problem-detector:v0.8.6`)
+3. Provide a link to the new image release (e.g. `Image:
+   registry.k8s.io/node-problem-detector/node-problem-detector:v0.8.6`)
 
 ## Post release steps
 

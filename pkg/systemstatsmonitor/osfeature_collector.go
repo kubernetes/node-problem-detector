@@ -38,7 +38,7 @@ func NewOsFeatureCollectorOrDie(osFeatureConfig *ssmtypes.OSFeatureStatsConfig, 
 		procPath: procPath,
 	}
 	var err error
-	// Use metrics.Last aggregation method to ensure the metric is a guage metric.
+	// Use metrics.Last aggregation method to ensure the metric is a gauge metric.
 	if osFeatureConfig.MetricsConfigs["system/os_feature"].DisplayName != "" {
 		oc.osFeature, err = metrics.NewInt64Metric(
 			metrics.OSFeatureID,

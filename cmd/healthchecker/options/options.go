@@ -39,6 +39,7 @@ type HealthCheckerOptions struct {
 	EnableRepair       bool
 	CriCtlPath         string
 	CriSocketPath      string
+	CriTimeout         time.Duration
 	CoolDownTime       time.Duration
 	LoopBackTime       time.Duration
 	HealthCheckTimeout time.Duration
@@ -62,6 +63,8 @@ func (hco *HealthCheckerOptions) AddFlags(fs *pflag.FlagSet) {
 		"The path to the crictl binary. This is used to check health of cri component.")
 	fs.StringVar(&hco.CriSocketPath, "cri-socket-path", types.DefaultCriSocketPath,
 		"The path to the cri socket. Used with crictl to specify the socket path.")
+	fs.DurationVar(&hco.CriTimeout, "cri-timeout", types.DefaultCriTimeout,
+		"The duration to wait for crictl to run.")
 	fs.DurationVar(&hco.CoolDownTime, "cooldown-time", types.DefaultCoolDownTime,
 		"The duration to wait for the service to be up before attempting repair.")
 	fs.DurationVar(&hco.LoopBackTime, "loopback-time", types.DefaultLoopBackTime,

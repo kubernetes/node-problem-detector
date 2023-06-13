@@ -14,24 +14,15 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package makers
+package types
 
 import (
-	"io/ioutil"
-
-	"github.com/golang/glog"
+	"os"
 )
 
-func init() {
-	ProblemGenerators["Ext4FilesystemError"] = makeFilesystemError
-}
+const defaultProcPath = "/proc"
 
-const ext4ErrorTrigger = "/sys/fs/ext4/sda1/trigger_fs_error"
-
-func makeFilesystemError() {
-	msg := []byte("fake filesystem error from problem-maker")
-	err := ioutil.WriteFile(ext4ErrorTrigger, msg, 0200)
-	if err != nil {
-		glog.Fatalf("Failed writing log to %q: %v", ext4ErrorTrigger, err)
-	}
+func (ssc *SystemStatsConfig) validateProcPath() error {
+	_, err := os.Stat(ssc.ProcPath)
+	return err
 }
