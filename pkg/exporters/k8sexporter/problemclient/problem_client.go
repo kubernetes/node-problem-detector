@@ -138,15 +138,16 @@ func (c *nodeProblemClient) TaintNode(condition types2.Condition) error {
 	}
 
 	for _, v := range node.Spec.Taints {
+		// skipping tainting process since our target node is already tainted
 		if v.Key == condition.TaintKey && v.Value == condition.TaintValue && v.Effect == v1.TaintEffect(condition.TaintEffect) {
 			return nil
 		}
 	}
 
 	node.Spec.Taints = append(node.Spec.Taints, v1.Taint{
-		Key:       condition.TaintKey,
-		Value:     condition.TaintValue,
-		Effect:    v1.TaintEffect(condition.TaintEffect),
+		Key:    condition.TaintKey,
+		Value:  condition.TaintValue,
+		Effect: v1.TaintEffect(condition.TaintEffect),
 	})
 
 	_, err = c.client.Nodes().Update(node)
