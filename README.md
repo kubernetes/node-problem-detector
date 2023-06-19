@@ -137,20 +137,19 @@ For example, to run without auth, use the following config:
 
 ### Tainting Nodes
 You can enable node tainting feature to the response of permanent node problems. For example, on the file [config/kernel-monitor.json](config/kernel-monitor.json), 
-set boolean flag `taintEnabled` as `true` if you wish to taint your nodes when `ReadOnlyFileSystem` problem and untaint the node when the 
-problem is resolved. This feature is disabled by default but you can enable it like below:
+put a `TaintConfig` object as following for required `Condition` as you need. You can omit the `TaintConfig` or disable it by setting `enabled` as false. By default, it is disabled and will not be enabled until you need it.
 ```json
-...omitted for brevity...
       {
         "type": "ReadonlyFilesystem",
         "reason": "FilesystemIsNotReadOnly",
         "message": "Filesystem is not read-only",
-        "taintEnabled": true,
-        "taintKey": "node-problem-detector",
-        "taintValue": "ReadonlyFilesystem",
-        "taintEffect": "NoSchedule"
+        "taintConfig": {
+          "enabled": false,
+          "key": "node-problem-detector/read-only-filesystem",
+          "value": "true",
+          "effect": "NoSchedule"
+        }
       }
-...omitted for brevity...
 ```
 
 ## Build Image

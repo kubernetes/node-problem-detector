@@ -65,14 +65,8 @@ type Condition struct {
 	Reason string `json:"reason"`
 	// Message is a human-readable message of why node goes into this condition.
 	Message string `json:"message"`
-	// TaintEnabled is a boolean flag to taint node on specific node problems
-	TaintEnabled bool `json:"taintEnabled"`
-	// TaintKey is a key of taint when taintEnabled is true and relevant problem occured
-	TaintKey string `json:"taintKey"`
-	// TaintValue is a value of taint when taintEnabled is true and relevant problem occured
-	TaintValue string `json:"taintValue"`
-	// TaintEffect is a effect of taint when taintEnabled is true and relevant problem occured
-	TaintEffect string `json:"taintEffect"`
+	// TaintConfig is the per Condition configuration that can be enabled, disabled or ignored
+	*TaintConfig `json:"taintConfig"`
 }
 
 // Event is the event used internally by node problem detector.
@@ -155,4 +149,16 @@ type ExporterHandler struct {
 
 type CommandLineOptions interface {
 	SetFlags(*pflag.FlagSet)
+}
+
+// TaintConfig is the per Condition configuration that can be enabled, disabled or ignored
+type TaintConfig struct {
+	// Enabled specifies that tainting should occur on node problems or not
+	Enabled bool `json:"enabled,omitempty"`
+	// Key is the key field of your desired taint if you wish to taint your nodes on specific problems
+	Key string `json:"key,omitempty"`
+	// Value is the value field of your desired taint if you wish to taint your nodes on specific problems
+	Value string `json:"value,omitempty"`
+	// Effect is the effect field of your desired taint if you wish to taint your nodes on specific problems
+	Effect string `json:"effect,omitempty"`
 }

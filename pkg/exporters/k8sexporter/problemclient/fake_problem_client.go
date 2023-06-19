@@ -18,11 +18,10 @@ package problemclient
 
 import (
 	"fmt"
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/node-problem-detector/pkg/types"
 	"reflect"
 	"sync"
-
-	v1 "k8s.io/api/core/v1"
 )
 
 // FakeProblemClient is a fake problem client for debug.
@@ -30,6 +29,7 @@ type FakeProblemClient struct {
 	sync.Mutex
 	conditions map[v1.NodeConditionType]v1.NodeCondition
 	errors     map[string]error
+	nodes      map[string]*v1.Node
 }
 
 // NewFakeProblemClient creates a new fake problem client.
@@ -37,6 +37,7 @@ func NewFakeProblemClient() *FakeProblemClient {
 	return &FakeProblemClient{
 		conditions: make(map[v1.NodeConditionType]v1.NodeCondition),
 		errors:     make(map[string]error),
+		nodes:      make(map[string]*v1.Node),
 	}
 }
 
@@ -45,6 +46,13 @@ func (f *FakeProblemClient) InjectError(fun string, err error) {
 	f.Lock()
 	defer f.Unlock()
 	f.errors[fun] = err
+}
+
+// InjectNode injects node to specific function.
+func (f *FakeProblemClient) InjectNode(fun string, node *v1.Node) {
+	f.Lock()
+	defer f.Unlock()
+	f.nodes[fun] = node
 }
 
 // AssertConditions asserts that the internal conditions in fake problem client should match
@@ -74,13 +82,21 @@ func (f *FakeProblemClient) SetConditions(conditions []v1.NodeCondition) error {
 }
 
 // TaintNode taints the node if tainting is enabled and problem occurred
-func (f *FakeProblemClient) TaintNode(condition types.Condition) error {
-	return fmt.Errorf("TaintNode() not implemented")
+func (f *FakeProblemClient) TaintNode(node *v1.Node, condition types.Condition) error {
+	if err, ok := f.errors["TaintNode"]; ok {
+		return err
+	}
+
+	return nil
 }
 
 // UntaintNode removes taint from node if tainting is enabled and problem resolved
-func (f *FakeProblemClient) UntaintNode(condition types.Condition) error {
-	return fmt.Errorf("UntaintNode() not implemented")
+func (f *FakeProblemClient) UntaintNode(node *v1.Node, condition types.Condition) error {
+	if err, ok := f.errors["UntaintNode"]; ok {
+		return err
+	}
+
+	return nil
 }
 
 // GetConditions is a fake mimic of GetConditions, it returns the conditions cached internally.
@@ -105,5 +121,9 @@ func (f *FakeProblemClient) Eventf(eventType string, source, reason, messageFmt 
 }
 
 func (f *FakeProblemClient) GetNode() (*v1.Node, error) {
-	return nil, fmt.Errorf("GetNode() not implemented")
+	if err, ok := f.errors["GetNode"]; ok {
+		return nil, err
+	}
+
+	return f.nodes["mynode"], nil
 }

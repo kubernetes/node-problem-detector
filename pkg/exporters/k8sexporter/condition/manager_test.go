@@ -18,6 +18,7 @@ package condition
 
 import (
 	"fmt"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"testing"
 	"time"
 
@@ -123,6 +124,220 @@ func TestResync(t *testing.T) {
 	assert.False(t, m.needResync(), "Should not resync before resync period")
 	fakeClock.Step(resyncPeriod)
 	assert.True(t, m.needResync(), "Should resync after resync period and resync is needed")
+}
+
+func TestSync(t *testing.T) {
+	cases := []struct {
+		caseName    string
+		condition   types.Condition
+		node        *v1.Node
+		injectError bool
+		errorKey    string
+	}{
+		{"Sync success with Status True and nil taint config",
+			types.Condition{
+				Type:   "ReadonlyFilesystem",
+				Status: "True",
+			}, &v1.Node{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "my-node",
+				},
+				Spec: v1.NodeSpec{
+					Taints: []v1.Taint{
+						{
+							Key:    "node-problem-detector/read-only-filesystem",
+							Value:  "true",
+							Effect: v1.TaintEffectNoSchedule,
+						},
+					},
+				},
+			}, false, "TaintNode",
+		},
+		{"Sync success with Status True and disabled taint config",
+			types.Condition{
+				Type:   "ReadonlyFilesystem",
+				Status: "True",
+				TaintConfig: &types.TaintConfig{
+					Enabled: false,
+					Key:     "node-problem-detector/read-only-filesystem",
+					Value:   "true",
+					Effect:  string(v1.TaintEffectNoSchedule),
+				},
+			}, &v1.Node{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "my-node",
+				},
+				Spec: v1.NodeSpec{
+					Taints: []v1.Taint{
+						{
+							Key:    "node-problem-detector/read-only-filesystem",
+							Value:  "true",
+							Effect: v1.TaintEffectNoSchedule,
+						},
+					},
+				},
+			}, false, "",
+		},
+		{"Sync failure with Status True and TaintNode error",
+			types.Condition{
+				Type:   "ReadonlyFilesystem",
+				Status: "True",
+				TaintConfig: &types.TaintConfig{
+					Enabled: true,
+					Key:     "node-problem-detector/read-only-filesystem",
+					Value:   "true",
+					Effect:  string(v1.TaintEffectNoSchedule),
+				},
+			}, &v1.Node{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "my-node",
+				},
+				Spec: v1.NodeSpec{},
+			}, true, "TaintNode"},
+		{"Sync failure with Status True and GetNode error",
+			types.Condition{
+				Type:   "ReadonlyFilesystem",
+				Status: "True",
+				TaintConfig: &types.TaintConfig{
+					Enabled: true,
+					Key:     "node-problem-detector/read-only-filesystem",
+					Value:   "true",
+					Effect:  string(v1.TaintEffectNoSchedule),
+				},
+			}, nil, true, "GetNode"},
+		{"Sync success with Status True and non-nil and enabled taint config",
+			types.Condition{
+				Type:   "ReadonlyFilesystem",
+				Status: "True",
+				TaintConfig: &types.TaintConfig{
+					Enabled: true,
+					Key:     "node-problem-detector/read-only",
+					Value:   "true",
+					Effect:  string(v1.TaintEffectNoSchedule),
+				},
+			}, &v1.Node{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "my-node",
+				},
+				Spec: v1.NodeSpec{
+					Taints: []v1.Taint{
+						{
+							Key:    "node-problem-detector/read-only-filesystem",
+							Value:  "true",
+							Effect: v1.TaintEffectNoSchedule,
+						},
+					},
+				},
+			}, false, "",
+		},
+		{"Sync success with Status True and already tainted node",
+			types.Condition{
+				Type:   "ReadonlyFilesystem",
+				Status: "True",
+				TaintConfig: &types.TaintConfig{
+					Enabled: true,
+					Key:     "node-problem-detector/read-only-filesystem",
+					Value:   "true",
+					Effect:  string(v1.TaintEffectNoSchedule),
+				},
+			}, &v1.Node{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "my-node",
+				},
+				Spec: v1.NodeSpec{
+					Taints: []v1.Taint{
+						{
+							Key:    "node-problem-detector/read-only-filesystem",
+							Value:  "true",
+							Effect: v1.TaintEffectNoSchedule,
+						},
+					},
+				},
+			}, false, "",
+		},
+		{"Sync success with Status False",
+			types.Condition{
+				Type:   "ReadonlyFilesystem",
+				Status: "False",
+				TaintConfig: &types.TaintConfig{
+					Enabled: true,
+					Key:     "node-problem-detector/read-only-filesystem",
+					Value:   "true",
+					Effect:  string(v1.TaintEffectNoSchedule),
+				},
+			}, &v1.Node{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "my-node",
+				},
+				Spec: v1.NodeSpec{
+					Taints: []v1.Taint{
+						{
+							Key:    "node-problem-detector/read-only-filesystem",
+							Value:  "true",
+							Effect: v1.TaintEffectNoSchedule,
+						},
+					},
+				},
+			}, false, "",
+		},
+		{"Sync success with Status False and taint not exists",
+			types.Condition{
+				Type:   "ReadonlyFilesystem",
+				Status: "False",
+				TaintConfig: &types.TaintConfig{
+					Enabled: true,
+					Key:     "node-problem-detector/read-only-filesystem",
+					Value:   "true",
+					Effect:  string(v1.TaintEffectNoSchedule),
+				},
+			}, &v1.Node{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "my-node",
+				},
+				Spec: v1.NodeSpec{},
+			}, false, "",
+		},
+		{"Sync failure with Status False",
+			types.Condition{
+				Type:   "ReadonlyFilesystem",
+				Status: "False",
+				TaintConfig: &types.TaintConfig{
+					Enabled: true,
+					Key:     "node-problem-detector/read-only-filesystem",
+					Value:   "true",
+					Effect:  string(v1.TaintEffectNoSchedule),
+				},
+			}, &v1.Node{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "my-node",
+				},
+				Spec: v1.NodeSpec{
+					Taints: []v1.Taint{
+						{
+							Key:    "node-problem-detector/read-only-filesystem",
+							Value:  "true",
+							Effect: v1.TaintEffectNoSchedule,
+						},
+					},
+				},
+			}, true, "UntaintNode",
+		},
+	}
+
+	for _, tc := range cases {
+		m, fakeClient, _ := newTestManager()
+		m.conditions = map[string]types.Condition{tc.condition.Type: tc.condition}
+
+		if tc.node != nil {
+			fakeClient.InjectNode("mynode", tc.node)
+		}
+
+		if tc.injectError {
+			fakeClient.InjectError(tc.errorKey, fmt.Errorf("injected error"))
+		}
+
+		m.sync()
+	}
 }
 
 func TestHeartbeat(t *testing.T) {

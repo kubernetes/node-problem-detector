@@ -158,24 +158,57 @@ func (c *conditionManager) sync() {
 	for i := range c.conditions {
 		conditions = append(conditions, problemutil.ConvertToAPICondition(c.conditions[i]))
 
-		if c.conditions[i].TaintEnabled && c.conditions[i].Status == types.True {
-			taintString := fmt.Sprintf("%s=%s:%s", c.conditions[i].TaintKey, c.conditions[i].TaintValue,
-				c.conditions[i].TaintEffect)
-			glog.Infof("tainting is enabled and condition status is True, tainting with %s\n", taintString)
-			if err := c.client.TaintNode(c.conditions[i]); err != nil {
-				glog.Errorf("failed to add taint %v to node: %v", taintString, err)
-				return
+		condition := c.conditions[i]
+		if condition.TaintConfig == nil || !condition.TaintConfig.Enabled {
+			// we are skipping tainting since TaintConfig of our condition is nil or disabled
+			continue
+		}
+
+		taintStr := fmt.Sprintf("%s=%s:%s", c.conditions[i].TaintConfig.Key, c.conditions[i].TaintConfig.Value,
+			c.conditions[i].TaintConfig.Effect)
+
+		node, err := c.client.GetNode()
+		if err != nil {
+			glog.Errorf("failed to get node: %v", err)
+			continue
+		}
+
+		taintExists := problemclient.CheckIfTaintAlreadyExists(node, *condition.TaintConfig)
+
+		switch condition.Status {
+		case types.True:
+			if taintExists {
+				// we are skipping here since node is already tainted with our TaintConfig
+				continue
 			}
-		} else if c.conditions[i].TaintEnabled && c.conditions[i].Status == types.False {
-			taintString := fmt.Sprintf("%s=%s:%s", c.conditions[i].TaintKey, c.conditions[i].TaintValue,
-				c.conditions[i].TaintEffect)
-			glog.Infof("tainting is enabled and condition status is False, removing taint %s\n", taintString)
-			if err := c.client.UntaintNode(c.conditions[i]); err != nil {
-				glog.Errorf("failed to remove taint %v from node: %v", taintString, err)
-				return
+
+			glog.Infof("for condition %s, tainting is enabled and status is True, tainting with %s",
+				condition.Type, taintStr)
+
+			if err := c.client.TaintNode(node, condition); err != nil {
+				glog.Errorf("failed to add taint %v: %v", taintStr, err)
+				continue
 			}
+
+			glog.Infof("successfully tainted node with %s", taintStr)
+		case types.False:
+			if !taintExists {
+				// we are skipping here since node is not tainted with our TaintConfig
+				continue
+			}
+
+			glog.Infof("for condition %s, tainting is enabled and condition status is False, removing taint %s",
+				condition.Type, taintStr)
+
+			if err := c.client.UntaintNode(node, condition); err != nil {
+				glog.Errorf("failed to remove taint %v: %v", taintStr, err)
+				continue
+			}
+
+			glog.Infof("successfully removed taint %s from node", taintStr)
 		}
 	}
+
 	if err := c.client.SetConditions(conditions); err != nil {
 		// The conditions will be updated again in future sync
 		glog.Errorf("failed to update node conditions: %v", err)
