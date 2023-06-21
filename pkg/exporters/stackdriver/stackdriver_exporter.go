@@ -18,7 +18,7 @@ package stackdriverexporter
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 	"reflect"
 	"time"
@@ -209,7 +209,7 @@ func NewExporterOrDie(clo types.CommandLineOptions) types.Exporter {
 	se := stackdriverExporter{}
 
 	// Apply configurations.
-	f, err := ioutil.ReadFile(options.configPath)
+	f, err := os.ReadFile(options.configPath)
 	if err != nil {
 		glog.Fatalf("Failed to read configuration file %q: %v", options.configPath, err)
 	}
