@@ -20,7 +20,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os/exec"
 	"strings"
 	"sync"
@@ -132,12 +131,12 @@ func (p *Plugin) runRules() {
 // readFromReader reads the maxBytes from the reader and drains the rest.
 func readFromReader(reader io.ReadCloser, maxBytes int64) ([]byte, error) {
 	limitReader := io.LimitReader(reader, maxBytes)
-	data, err := ioutil.ReadAll(limitReader)
+	data, err := io.ReadAll(limitReader)
 	if err != nil {
 		return []byte{}, err
 	}
 	// Drain the reader
-	if _, err := io.Copy(ioutil.Discard, reader); err != nil {
+	if _, err := io.Copy(io.Discard, reader); err != nil {
 		return []byte{}, err
 	}
 	return data, nil

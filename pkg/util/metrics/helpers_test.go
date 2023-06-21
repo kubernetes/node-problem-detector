@@ -16,7 +16,7 @@ limitations under the License.
 package metrics
 
 import (
-	"io/ioutil"
+	"os"
 	"testing"
 )
 
@@ -121,7 +121,7 @@ func TestPrometheusMetricsParsingAndMatching(t *testing.T) {
 
 	for _, test := range testCases {
 		t.Run(test.name, func(t *testing.T) {
-			b, err := ioutil.ReadFile(test.metricsTextPath)
+			b, err := os.ReadFile(test.metricsTextPath)
 			if err != nil {
 				t.Errorf("Unexpected error reading file %s: %v", test.metricsTextPath, err)
 			}

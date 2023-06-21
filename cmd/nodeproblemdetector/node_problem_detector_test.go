@@ -1,3 +1,4 @@
+//go:build !disable_system_log_monitor
 // +build !disable_system_log_monitor
 
 /*
@@ -21,7 +22,6 @@ package main
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"strings"
 	"testing"
@@ -91,14 +91,14 @@ func TestNPDMain(t *testing.T) {
 }
 
 func writeTempFile(t *testing.T, ext string, contents string) (string, error) {
-	f, err := ioutil.TempFile("", "*."+ext)
+	f, err := os.CreateTemp("", "*."+ext)
 	if err != nil {
 		return "", fmt.Errorf("cannot create temp file, %v", err)
 	}
 
 	fileName := f.Name()
 
-	if err := ioutil.WriteFile(fileName, []byte(contents), 0644); err != nil {
+	if err := os.WriteFile(fileName, []byte(contents), 0644); err != nil {
 		os.Remove(fileName)
 		return "", fmt.Errorf("cannot write config to temp file %s, %v", fileName, err)
 	}

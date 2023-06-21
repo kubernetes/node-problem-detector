@@ -18,7 +18,7 @@ package systemstatsmonitor
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 	"time"
 
@@ -58,7 +58,7 @@ func NewSystemStatsMonitorOrDie(configPath string) types.Monitor {
 	}
 
 	// Apply configurations.
-	f, err := ioutil.ReadFile(configPath)
+	f, err := os.ReadFile(configPath)
 	if err != nil {
 		glog.Fatalf("Failed to read configuration file %q: %v", configPath, err)
 	}

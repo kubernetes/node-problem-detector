@@ -17,7 +17,7 @@ limitations under the License.
 package makers
 
 import (
-	"io/ioutil"
+	"os"
 
 	"github.com/golang/glog"
 )
@@ -30,7 +30,7 @@ const ext4ErrorTrigger = "/sys/fs/ext4/sda1/trigger_fs_error"
 
 func makeFilesystemError() {
 	msg := []byte("fake filesystem error from problem-maker")
-	err := ioutil.WriteFile(ext4ErrorTrigger, msg, 0200)
+	err := os.WriteFile(ext4ErrorTrigger, msg, 0200)
 	if err != nil {
 		glog.Fatalf("Failed writing log to %q: %v", ext4ErrorTrigger, err)
 	}

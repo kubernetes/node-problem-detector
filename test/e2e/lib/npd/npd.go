@@ -18,7 +18,7 @@ package npd
 
 import (
 	"fmt"
-	"io/ioutil"
+	"os"
 	"path"
 	"strings"
 	"time"
@@ -32,11 +32,11 @@ import (
 // SetupNPD installs NPD from the test tarball onto the provided GCE instance.
 //
 // Here is how it works:
-// 1. SetupNPD will SCP the NPD build tarball onto the VM.
-// 2. SetupNPD will extract the tarball in the VM, to expose the test/e2e-install.sh on the VM.
-// 3. SetupNPD will then call the e2e-install.sh script, and feed the NPD build tarball as input.
-// 4. Finally, the e2e-install.sh script will do the heavy lifting of installing NPD (setting up
-//    binary/config directories, setting up systemd config file, etc).
+//  1. SetupNPD will SCP the NPD build tarball onto the VM.
+//  2. SetupNPD will extract the tarball in the VM, to expose the test/e2e-install.sh on the VM.
+//  3. SetupNPD will then call the e2e-install.sh script, and feed the NPD build tarball as input.
+//  4. Finally, the e2e-install.sh script will do the heavy lifting of installing NPD (setting up
+//     binary/config directories, setting up systemd config file, etc).
 func SetupNPD(ins gce.Instance, npdBuildTar string) error {
 	tmpDirCmd := ins.RunCommand("mktemp -d")
 	if tmpDirCmd.SSHError != nil || tmpDirCmd.Code != 0 {
@@ -152,7 +152,7 @@ func saveCommandResultAsArtifact(ins gce.Instance, artifactDirectory string, tes
 	if result.SSHError != nil || result.Code != 0 {
 		return fmt.Errorf("Error running command: %v\n", result)
 	}
-	if err := ioutil.WriteFile(artifactPath, []byte(result.Stdout), 0644); err != nil {
+	if err := os.WriteFile(artifactPath, []byte(result.Stdout), 0644); err != nil {
 		return fmt.Errorf("Error writing artifact to %v: %v\n", artifactPath, err)
 	}
 	return nil
