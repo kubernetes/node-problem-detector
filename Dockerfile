@@ -29,8 +29,6 @@ RUN make bin/node-problem-detector bin/health-checker bin/log-counter
 ARG BASEIMAGE
 FROM ${BASEIMAGE}
 
-RUN echo foo
-
 LABEL maintainer="Random Liu <lantaol@google.com>"
 
 RUN clean-install util-linux bash libsystemd-dev
