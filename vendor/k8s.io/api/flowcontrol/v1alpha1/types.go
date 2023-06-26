@@ -33,7 +33,10 @@ const (
 
 // System preset priority level names
 const (
-	PriorityLevelConfigurationNameExempt = "exempt"
+	PriorityLevelConfigurationNameExempt   = "exempt"
+	PriorityLevelConfigurationNameCatchAll = "catch-all"
+	FlowSchemaNameExempt                   = "exempt"
+	FlowSchemaNameCatchAll                 = "catch-all"
 )
 
 // Conditions
@@ -43,40 +46,58 @@ const (
 	PriorityLevelConfigurationConditionConcurrencyShared = "ConcurrencyShared"
 )
 
+// Constants used by api validation.
+const (
+	FlowSchemaMaxMatchingPrecedence int32 = 10000
+)
+
+// Constants for apiserver response headers.
+const (
+	ResponseHeaderMatchedPriorityLevelConfigurationUID = "X-Kubernetes-PF-PriorityLevel-UID"
+	ResponseHeaderMatchedFlowSchemaUID                 = "X-Kubernetes-PF-FlowSchema-UID"
+)
+
 // +genclient
 // +genclient:nonNamespaced
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+// +k8s:prerelease-lifecycle-gen:introduced=1.18
+// +k8s:prerelease-lifecycle-gen:deprecated=1.20
+// +k8s:prerelease-lifecycle-gen:removed=1.21
+// +k8s:prerelease-lifecycle-gen:replacement=flowcontrol.apiserver.k8s.io,v1beta2,FlowSchema
 
 // FlowSchema defines the schema of a group of flows. Note that a flow is made up of a set of inbound API requests with
 // similar attributes and is identified by a pair of strings: the name of the FlowSchema and a "flow distinguisher".
 type FlowSchema struct {
 	metav1.TypeMeta `json:",inline"`
 	// `metadata` is the standard object's metadata.
-	// More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#metadata
+	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
 	// +optional
 	metav1.ObjectMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
 	// `spec` is the specification of the desired behavior of a FlowSchema.
-	// More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#spec-and-status
+	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#spec-and-status
 	// +optional
 	Spec FlowSchemaSpec `json:"spec,omitempty" protobuf:"bytes,2,opt,name=spec"`
 	// `status` is the current status of a FlowSchema.
-	// More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#spec-and-status
+	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#spec-and-status
 	// +optional
 	Status FlowSchemaStatus `json:"status,omitempty" protobuf:"bytes,3,opt,name=status"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+// +k8s:prerelease-lifecycle-gen:introduced=1.18
+// +k8s:prerelease-lifecycle-gen:deprecated=1.20
+// +k8s:prerelease-lifecycle-gen:removed=1.21
+// +k8s:prerelease-lifecycle-gen:replacement=flowcontrol.apiserver.k8s.io,v1beta2,FlowSchemaList
 
 // FlowSchemaList is a list of FlowSchema objects.
 type FlowSchemaList struct {
 	metav1.TypeMeta `json:",inline"`
 	// `metadata` is the standard list metadata.
-	// More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#metadata
+	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
 	// +optional
 	metav1.ListMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
 
 	// `items` is a list of FlowSchemas.
-	// +listType=set
 	Items []FlowSchema `json:"items" protobuf:"bytes,2,rep,name=items"`
 }
 
@@ -88,8 +109,8 @@ type FlowSchemaSpec struct {
 	PriorityLevelConfiguration PriorityLevelConfigurationReference `json:"priorityLevelConfiguration" protobuf:"bytes,1,opt,name=priorityLevelConfiguration"`
 	// `matchingPrecedence` is used to choose among the FlowSchemas that match a given request. The chosen
 	// FlowSchema is among those with the numerically lowest (which we take to be logically highest)
-	// MatchingPrecedence.  Each MatchingPrecedence value must be non-negative.
-	// Note that if the precedence is not specified or zero, it will be set to 1000 as default.
+	// MatchingPrecedence.  Each MatchingPrecedence value must be ranged in [1,10000].
+	// Note that if the precedence is not specified, it will be set to 1000 as default.
 	// +optional
 	MatchingPrecedence int32 `json:"matchingPrecedence" protobuf:"varint,2,opt,name=matchingPrecedence"`
 	// `distinguisherMethod` defines how to compute the flow distinguisher for requests that match this schema.
@@ -99,7 +120,7 @@ type FlowSchemaSpec struct {
 	// `rules` describes which requests will match this flow schema. This FlowSchema matches a request if and only if
 	// at least one member of rules matches the request.
 	// if it is an empty slice, there will be no requests matching the FlowSchema.
-	// +listType=set
+	// +listType=atomic
 	// +optional
 	Rules []PolicyRulesWithSubjects `json:"rules,omitempty" protobuf:"bytes,4,rep,name=rules"`
 }
@@ -144,18 +165,18 @@ type PolicyRulesWithSubjects struct {
 	// subjects is the list of normal user, serviceaccount, or group that this rule cares about.
 	// There must be at least one member in this slice.
 	// A slice that includes both the system:authenticated and system:unauthenticated user groups matches every request.
-	// +listType=set
+	// +listType=atomic
 	// Required.
 	Subjects []Subject `json:"subjects" protobuf:"bytes,1,rep,name=subjects"`
 	// `resourceRules` is a slice of ResourcePolicyRules that identify matching requests according to their verb and the
 	// target resource.
 	// At least one of `resourceRules` and `nonResourceRules` has to be non-empty.
-	// +listType=set
+	// +listType=atomic
 	// +optional
 	ResourceRules []ResourcePolicyRule `json:"resourceRules,omitempty" protobuf:"bytes,2,opt,name=resourceRules"`
 	// `nonResourceRules` is a list of NonResourcePolicyRules that identify matching requests according to their verb
 	// and the target non-resource URL.
-	// +listType=set
+	// +listType=atomic
 	// +optional
 	NonResourceRules []NonResourcePolicyRule `json:"nonResourceRules,omitempty" protobuf:"bytes,3,opt,name=nonResourceRules"`
 }
@@ -164,13 +185,17 @@ type PolicyRulesWithSubjects struct {
 // ways of matching an originator; by user, group, or service account.
 // +union
 type Subject struct {
+	// `kind` indicates which one of the other fields is non-empty.
 	// Required
 	// +unionDiscriminator
 	Kind SubjectKind `json:"kind" protobuf:"bytes,1,opt,name=kind"`
+	// `user` matches based on username.
 	// +optional
 	User *UserSubject `json:"user,omitempty" protobuf:"bytes,2,opt,name=user"`
+	// `group` matches based on user group name.
 	// +optional
 	Group *GroupSubject `json:"group,omitempty" protobuf:"bytes,3,opt,name=group"`
+	// `serviceAccount` matches ServiceAccounts.
 	// +optional
 	ServiceAccount *ServiceAccountSubject `json:"serviceAccount,omitempty" protobuf:"bytes,4,opt,name=serviceAccount"`
 }
@@ -216,8 +241,10 @@ type ServiceAccountSubject struct {
 // ResourcePolicyRule matches a resource request if and only if: (a)
 // at least one member of verbs matches the request, (b) at least one
 // member of apiGroups matches the request, (c) at least one member of
-// resources matches the request, and (d) least one member of
-// namespaces matches the request.
+// resources matches the request, and (d) either (d1) the request does
+// not specify a namespace (i.e., `Namespace==""`) and clusterScope is
+// true or (d2) the request specifies a namespace and least one member
+// of namespaces matches the request's namespace.
 type ResourcePolicyRule struct {
 	// `verbs` is a list of matching verbs and may not be empty.
 	// "*" matches all verbs and, if present, must be the only entry.
@@ -314,35 +341,42 @@ type FlowSchemaConditionType string
 // +genclient
 // +genclient:nonNamespaced
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+// +k8s:prerelease-lifecycle-gen:introduced=1.18
+// +k8s:prerelease-lifecycle-gen:deprecated=1.20
+// +k8s:prerelease-lifecycle-gen:removed=1.21
+// +k8s:prerelease-lifecycle-gen:replacement=flowcontrol.apiserver.k8s.io,v1beta2,PriorityLevelConfiguration
 
 // PriorityLevelConfiguration represents the configuration of a priority level.
 type PriorityLevelConfiguration struct {
 	metav1.TypeMeta `json:",inline"`
 	// `metadata` is the standard object's metadata.
-	// More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#metadata
+	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
 	// +optional
 	metav1.ObjectMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
 	// `spec` is the specification of the desired behavior of a "request-priority".
-	// More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#spec-and-status
+	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#spec-and-status
 	// +optional
 	Spec PriorityLevelConfigurationSpec `json:"spec,omitempty" protobuf:"bytes,2,opt,name=spec"`
 	// `status` is the current status of a "request-priority".
-	// More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#spec-and-status
+	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#spec-and-status
 	// +optional
 	Status PriorityLevelConfigurationStatus `json:"status,omitempty" protobuf:"bytes,3,opt,name=status"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+// +k8s:prerelease-lifecycle-gen:introduced=1.18
+// +k8s:prerelease-lifecycle-gen:deprecated=1.20
+// +k8s:prerelease-lifecycle-gen:removed=1.21
+// +k8s:prerelease-lifecycle-gen:replacement=flowcontrol.apiserver.k8s.io,v1beta2,PriorityLevelConfigurationList
 
 // PriorityLevelConfigurationList is a list of PriorityLevelConfiguration objects.
 type PriorityLevelConfigurationList struct {
 	metav1.TypeMeta `json:",inline"`
 	// `metadata` is the standard object's metadata.
-	// More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#metadata
+	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
 	// +optional
 	metav1.ListMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
 	// `items` is a list of request-priorities.
-	// +listType=set
 	Items []PriorityLevelConfiguration `json:"items" protobuf:"bytes,2,rep,name=items"`
 }
 
@@ -381,8 +415,8 @@ const (
 
 // LimitedPriorityLevelConfiguration specifies how to handle requests that are subject to limits.
 // It addresses two issues:
-//  * How are requests for this priority level limited?
-//  * What should be done with requests that exceed the limit?
+//   - How are requests for this priority level limited?
+//   - What should be done with requests that exceed the limit?
 type LimitedPriorityLevelConfiguration struct {
 	// `assuredConcurrencyShares` (ACS) configures the execution
 	// limit, which is a limit on the number of requests of this

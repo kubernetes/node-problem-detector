@@ -27,13 +27,13 @@ import (
 
 	"k8s.io/node-problem-detector/pkg/util/tomb"
 	"k8s.io/node-problem-detector/test/e2e/lib/gce"
-	"k8s.io/test-infra/boskos/client"
 
 	"github.com/onsi/ginkgo"
 	"github.com/onsi/ginkgo/config"
 	"github.com/onsi/ginkgo/reporters"
 	. "github.com/onsi/gomega"
 	compute "google.golang.org/api/compute/v1"
+	client "sigs.k8s.io/boskos/client"
 )
 
 var zone = flag.String("zone", "", "gce zone the hosts live in")
@@ -101,7 +101,8 @@ func rentBoskosProjectIfNeededOnNode1() []byte {
 	}
 
 	fmt.Printf("Renting project from Boskos\n")
-	boskosClient = client.NewClient(*jobName, *boskosServerURL)
+	boskosClient, err := client.NewClient(*jobName, *boskosServerURL, "", "")
+	Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("Unable to create Boskos client: %v\n", err))
 	boskosRenewingTomb = tomb.NewTomb()
 
 	ctx, cancel := context.WithTimeout(context.Background(), *boskosWaitDuration)
@@ -157,7 +158,6 @@ func releaseBoskosResourcesOnNode1() {
 	err := boskosClient.ReleaseAll("dirty")
 	Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("Failed to release project to Boskos: %v", err))
 }
-
 func TestMain(m *testing.M) {
 	RegisterFailHandler(ginkgo.Fail)
 	flag.Parse()

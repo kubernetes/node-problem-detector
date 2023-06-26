@@ -17,6 +17,7 @@ limitations under the License.
 package k8sexporter
 
 import (
+	"context"
 	"net"
 	"net/http"
 	_ "net/http/pprof"
@@ -44,7 +45,7 @@ type k8sExporter struct {
 //
 // Note that this function may be blocked (until a timeout occurs) before
 // kube-apiserver becomes ready.
-func NewExporterOrDie(npdo *options.NodeProblemDetectorOptions) types.Exporter {
+func NewExporterOrDie(ctx context.Context, npdo *options.NodeProblemDetectorOptions) types.Exporter {
 	if !npdo.EnableK8sExporter {
 		return nil
 	}
@@ -52,7 +53,7 @@ func NewExporterOrDie(npdo *options.NodeProblemDetectorOptions) types.Exporter {
 	c := problemclient.NewClientOrDie(npdo)
 
 	glog.Infof("Waiting for kube-apiserver to be ready (timeout %v)...", npdo.APIServerWaitTimeout)
-	if err := waitForAPIServerReadyWithTimeout(c, npdo); err != nil {
+	if err := waitForAPIServerReadyWithTimeout(ctx, c, npdo); err != nil {
 		glog.Warningf("kube-apiserver did not become ready: timed out on waiting for kube-apiserver to return the node object: %v", err)
 	}
 
@@ -62,7 +63,7 @@ func NewExporterOrDie(npdo *options.NodeProblemDetectorOptions) types.Exporter {
 	}
 
 	ke.startHTTPReporting(npdo)
-	ke.conditionManager.Start()
+	ke.conditionManager.Start(ctx)
 
 	return &ke
 }
@@ -103,11 +104,11 @@ func (ke *k8sExporter) startHTTPReporting(npdo *options.NodeProblemDetectorOptio
 	}()
 }
 
-func waitForAPIServerReadyWithTimeout(c problemclient.Client, npdo *options.NodeProblemDetectorOptions) error {
+func waitForAPIServerReadyWithTimeout(ctx context.Context, c problemclient.Client, npdo *options.NodeProblemDetectorOptions) error {
 	return wait.PollImmediate(npdo.APIServerWaitInterval, npdo.APIServerWaitTimeout, func() (done bool, err error) {
 		// If NPD can get the node object from kube-apiserver, the server is
 		// ready and the RBAC permission is set correctly.
-		if _, err := c.GetNode(); err != nil {
+		if _, err := c.GetNode(ctx); err != nil {
 			glog.Errorf("Can't get node object: %v", err)
 			return false, nil
 		}

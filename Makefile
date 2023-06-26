@@ -228,7 +228,7 @@ e2e-test: vet fmt build-tar
 	-image=$(VM_IMAGE) -image-family=$(IMAGE_FAMILY) -image-project=$(IMAGE_PROJECT) \
 	-ssh-user=$(SSH_USER) -ssh-key=$(SSH_KEY) \
 	-npd-build-tar=`pwd`/$(TARBALL) \
-	-boskos-project-type=$(BOSKOS_PROJECT_TYPE) -job-name=$(JOB_NAME) \
+	-job-name=$(JOB_NAME) \
 	-artifacts-dir=$(ARTIFACTS)
 
 $(NPD_NAME_VERSION)-%.tar.gz: $(ALL_BINARIES) test/e2e-install.sh

@@ -20,6 +20,7 @@ limitations under the License.
 package main
 
 import (
+	"context"
 	"testing"
 
 	"golang.org/x/sys/windows/svc"

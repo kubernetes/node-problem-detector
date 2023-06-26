@@ -19,7 +19,7 @@ package metrics
 import (
 	"fmt"
 
-	"github.com/blang/semver"
+	"github.com/blang/semver/v4"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -37,15 +37,22 @@ type StableCollector interface {
 
 	// Create will initialize all Desc and it intends to be called by registry.
 	Create(version *semver.Version, self StableCollector) bool
+
+	// ClearState will clear all the states marked by Create.
+	ClearState()
+
+	// HiddenMetrics tells the list of hidden metrics with fqName.
+	HiddenMetrics() []string
 }
 
 // BaseStableCollector which implements almost all of the methods defined by StableCollector
 // is a convenient assistant for custom collectors.
 // It is recommend that inherit BaseStableCollector when implementing custom collectors.
 type BaseStableCollector struct {
-	descriptors []*Desc // stores all Desc collected from DescribeWithStability().
-	registrable []*Desc // stores registrable Desc(not be hidden), is a subset of descriptors.
-	self        StableCollector
+	descriptors  map[string]*Desc // stores all descriptors by pair<fqName, Desc>, these are collected from DescribeWithStability().
+	registerable map[string]*Desc // stores registerable descriptors by pair<fqName, Desc>, is a subset of descriptors.
+	hidden       map[string]*Desc // stores hidden descriptors by pair<fqName, Desc>, is a subset of descriptors.
+	self         StableCollector
 }
 
 // DescribeWithStability sends all descriptors to the provided channel.
@@ -57,7 +64,7 @@ func (bsc *BaseStableCollector) DescribeWithStability(ch chan<- *Desc) {
 // Describe sends all descriptors to the provided channel.
 // It intend to be called by prometheus registry.
 func (bsc *BaseStableCollector) Describe(ch chan<- *prometheus.Desc) {
-	for _, d := range bsc.registrable {
+	for _, d := range bsc.registerable {
 		ch <- d.toPrometheusDesc()
 	}
 }
@@ -88,7 +95,19 @@ func (bsc *BaseStableCollector) Collect(ch chan<- prometheus.Metric) {
 }
 
 func (bsc *BaseStableCollector) add(d *Desc) {
-	bsc.descriptors = append(bsc.descriptors, d)
+	if len(d.fqName) == 0 {
+		panic("nameless metrics will be not allowed")
+	}
+
+	if bsc.descriptors == nil {
+		bsc.descriptors = make(map[string]*Desc)
+	}
+
+	if _, exist := bsc.descriptors[d.fqName]; exist {
+		panic(fmt.Sprintf("duplicate metrics (%s) will be not allowed", d.fqName))
+	}
+
+	bsc.descriptors[d.fqName] = d
 }
 
 // Init intends to be called by registry.
@@ -108,6 +127,22 @@ func (bsc *BaseStableCollector) init(self StableCollector) {
 	}
 }
 
+func (bsc *BaseStableCollector) trackRegistrableDescriptor(d *Desc) {
+	if bsc.registerable == nil {
+		bsc.registerable = make(map[string]*Desc)
+	}
+
+	bsc.registerable[d.fqName] = d
+}
+
+func (bsc *BaseStableCollector) trackHiddenDescriptor(d *Desc) {
+	if bsc.hidden == nil {
+		bsc.hidden = make(map[string]*Desc)
+	}
+
+	bsc.hidden[d.fqName] = d
+}
+
 // Create intends to be called by registry.
 // Create will return true as long as there is one or more metrics not be hidden.
 // Otherwise return false, that means the whole collector will be ignored by registry.
@@ -115,33 +150,40 @@ func (bsc *BaseStableCollector) Create(version *semver.Version, self StableColle
 	bsc.init(self)
 
 	for _, d := range bsc.descriptors {
-		if version != nil {
-			d.determineDeprecationStatus(*version)
+		d.create(version)
+		if d.IsHidden() {
+			bsc.trackHiddenDescriptor(d)
+		} else {
+			bsc.trackRegistrableDescriptor(d)
 		}
-
-		d.createOnce.Do(func() {
-			d.createLock.Lock()
-			defer d.createLock.Unlock()
-
-			if d.IsHidden() {
-				// do nothing for hidden metrics
-			} else if d.IsDeprecated() {
-				d.initializeDeprecatedDesc()
-				bsc.registrable = append(bsc.registrable, d)
-				d.isCreated = true
-			} else {
-				d.initialize()
-				bsc.registrable = append(bsc.registrable, d)
-				d.isCreated = true
-			}
-		})
 	}
 
-	if len(bsc.registrable) > 0 {
+	if len(bsc.registerable) > 0 {
 		return true
 	}
 
 	return false
+}
+
+// ClearState will clear all the states marked by Create.
+// It intends to be used for re-register a hidden metric.
+func (bsc *BaseStableCollector) ClearState() {
+	for _, d := range bsc.descriptors {
+		d.ClearState()
+	}
+
+	bsc.descriptors = nil
+	bsc.registerable = nil
+	bsc.hidden = nil
+	bsc.self = nil
+}
+
+// HiddenMetrics tells the list of hidden metrics with fqName.
+func (bsc *BaseStableCollector) HiddenMetrics() (fqNames []string) {
+	for i := range bsc.hidden {
+		fqNames = append(fqNames, bsc.hidden[i].fqName)
+	}
+	return
 }
 
 // Check if our BaseStableCollector implements necessary interface

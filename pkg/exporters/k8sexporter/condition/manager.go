@@ -17,6 +17,7 @@ limitations under the License.
 package condition
 
 import (
+	"context"
 	"reflect"
 	"sync"
 	"time"
@@ -25,7 +26,7 @@ import (
 	"k8s.io/node-problem-detector/pkg/types"
 	problemutil "k8s.io/node-problem-detector/pkg/util"
 
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/clock"
 
 	"github.com/golang/glog"
@@ -49,7 +50,7 @@ const (
 // not. This addresses 3).
 type ConditionManager interface {
 	// Start starts the condition manager.
-	Start()
+	Start(ctx context.Context)
 	// UpdateCondition updates a specific condition.
 	UpdateCondition(types.Condition)
 	// GetConditions returns all current conditions.
@@ -88,8 +89,8 @@ func NewConditionManager(client problemclient.Client, clock clock.Clock, heartbe
 	}
 }
 
-func (c *conditionManager) Start() {
-	go c.syncLoop()
+func (c *conditionManager) Start(ctx context.Context) {
+	go c.syncLoop(ctx)
 }
 
 func (c *conditionManager) UpdateCondition(condition types.Condition) {
@@ -110,15 +111,17 @@ func (c *conditionManager) GetConditions() []types.Condition {
 	return conditions
 }
 
-func (c *conditionManager) syncLoop() {
+func (c *conditionManager) syncLoop(ctx context.Context) {
 	ticker := c.clock.NewTicker(updatePeriod)
 	defer ticker.Stop()
 	for {
 		select {
 		case <-ticker.C():
 			if c.needUpdates() || c.needResync() || c.needHeartbeat() {
-				c.sync()
+				c.sync(ctx)
 			}
+		case <-ctx.Done():
+			break
 		}
 	}
 }
@@ -150,14 +153,14 @@ func (c *conditionManager) needHeartbeat() bool {
 }
 
 // sync synchronizes node conditions with the apiserver.
-func (c *conditionManager) sync() {
+func (c *conditionManager) sync(ctx context.Context) {
 	c.latestTry = c.clock.Now()
 	c.resyncNeeded = false
 	conditions := []v1.NodeCondition{}
 	for i := range c.conditions {
 		conditions = append(conditions, problemutil.ConvertToAPICondition(c.conditions[i]))
 	}
-	if err := c.client.SetConditions(conditions); err != nil {
+	if err := c.client.SetConditions(ctx, conditions); err != nil {
 		// The conditions will be updated again in future sync
 		glog.Errorf("failed to update node conditions: %v", err)
 		c.resyncNeeded = true

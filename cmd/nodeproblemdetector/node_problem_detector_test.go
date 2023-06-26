@@ -20,7 +20,7 @@ limitations under the License.
 package main
 
 import (
-	"errors"
+	"context"
 	"fmt"
 	"os"
 	"strings"
@@ -81,11 +81,9 @@ func TestNPDMain(t *testing.T) {
 	npdo, cleanup := setupNPD(t)
 	defer cleanup()
 
-	termCh := make(chan error, 2)
-	termCh <- errors.New("close")
-	defer close(termCh)
-
-	if err := npdMain(npdo, termCh); err != nil {
+	ctx, cancelFunc := context.WithCancel(context.Background())
+	cancelFunc()
+	if err := npdMain(ctx, npdo); err != nil {
 		t.Errorf("termination signal should not return error got, %v", err)
 	}
 }
