@@ -28,7 +28,6 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	mathrand "math/rand"
 	"net"
 	"net/http"
@@ -234,7 +233,7 @@ func runSSHCommand(dialer sshDialer, cmd, user, host string, signer ssh.Signer, 
 
 func MakePrivateKeySignerFromFile(key string) (ssh.Signer, error) {
 	// Create an actual signer.
-	buffer, err := ioutil.ReadFile(key)
+	buffer, err := os.ReadFile(key)
 	if err != nil {
 		return nil, fmt.Errorf("error reading SSH key %s: '%v'", key, err)
 	}
@@ -250,7 +249,7 @@ func MakePrivateKeySignerFromBytes(buffer []byte) (ssh.Signer, error) {
 }
 
 func ParsePublicKeyFromFile(keyFile string) (*rsa.PublicKey, error) {
-	buffer, err := ioutil.ReadFile(keyFile)
+	buffer, err := os.ReadFile(keyFile)
 	if err != nil {
 		return nil, fmt.Errorf("error reading SSH key %s: '%v'", keyFile, err)
 	}
