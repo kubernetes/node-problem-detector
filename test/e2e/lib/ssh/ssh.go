@@ -20,8 +20,6 @@ import (
 	"fmt"
 	"net"
 	"os"
-
-	k8s_ssh "k8s.io/kubernetes/pkg/ssh"
 )
 
 // Result holds the execution result of SSH command.
@@ -48,13 +46,13 @@ func Run(cmd, ip, sshUser, sshKey string) Result {
 		return result
 	}
 
-	signer, err := k8s_ssh.MakePrivateKeySignerFromFile(sshKey)
+	signer, err := MakePrivateKeySignerFromFile(sshKey)
 	if err != nil {
 		result.SSHError = fmt.Errorf("error getting signer from key file %s: %v", sshKey, err)
 		return result
 	}
 
-	stdout, stderr, code, err := k8s_ssh.RunSSHCommand(cmd, result.User, net.JoinHostPort(ip, "22"), signer)
+	stdout, stderr, code, err := RunSSHCommand(cmd, result.User, net.JoinHostPort(ip, "22"), signer)
 	result.Stdout = stdout
 	result.Stderr = stderr
 	result.Code = code

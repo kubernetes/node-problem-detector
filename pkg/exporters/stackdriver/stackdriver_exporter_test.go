@@ -1,3 +1,4 @@
+//go:build !disable_stackdriver_exporter
 // +build !disable_stackdriver_exporter
 
 /*
