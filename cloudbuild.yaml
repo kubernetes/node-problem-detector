@@ -9,6 +9,7 @@ steps:
     - PROW_GIT_TAG=$_GIT_TAG
     - PULL_BASE_REF=$_PULL_BASE_REF
     - VERSION=$_PULL_BASE_REF
+    - DOCKER_CLI_EXPERIMENTAL=enabled
     args:
     - -c
     - |
