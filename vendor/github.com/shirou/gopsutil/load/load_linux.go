@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"strconv"
 	"strings"
+	"syscall"
 
 	"github.com/shirou/gopsutil/internal/common"
 )
@@ -16,6 +17,28 @@ func Avg() (*AvgStat, error) {
 }
 
 func AvgWithContext(ctx context.Context) (*AvgStat, error) {
+	stat, err := fileAvgWithContext(ctx)
+	if err != nil {
+		stat, err = sysinfoAvgWithContext(ctx)
+	}
+	return stat, err
+}
+
+func sysinfoAvgWithContext(ctx context.Context) (*AvgStat, error) {
+	var info syscall.Sysinfo_t
+	if err := syscall.Sysinfo(&info); err != nil {
+		return nil, err
+	}
+
+	const siLoadShift = 16
+	return &AvgStat{
+		Load1:  float64(info.Loads[0]) / float64(1<<siLoadShift),
+		Load5:  float64(info.Loads[1]) / float64(1<<siLoadShift),
+		Load15: float64(info.Loads[2]) / float64(1<<siLoadShift),
+	}, nil
+}
+
+func fileAvgWithContext(ctx context.Context) (*AvgStat, error) {
 	values, err := readLoadAvgFromFile()
 	if err != nil {
 		return nil, err
@@ -68,6 +91,8 @@ func MiscWithContext(ctx context.Context) (*MiscStat, error) {
 			continue
 		}
 		switch fields[0] {
+		case "processes":
+			ret.ProcsCreated = int(v)
 		case "procs_running":
 			ret.ProcsRunning = int(v)
 		case "procs_blocked":
@@ -77,7 +102,6 @@ func MiscWithContext(ctx context.Context) (*MiscStat, error) {
 		default:
 			continue
 		}
-
 	}
 
 	procsTotal, err := getProcsTotal()

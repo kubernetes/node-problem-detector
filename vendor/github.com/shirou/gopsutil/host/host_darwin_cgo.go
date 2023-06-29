@@ -4,15 +4,9 @@
 package host
 
 // #cgo LDFLAGS: -framework IOKit
-// #include <stdio.h>
-// #include <string.h>
-// #include "include/smc.c"
+// #include "smc_darwin.h"
 import "C"
 import "context"
-
-func SensorsTemperatures() ([]TemperatureStat, error) {
-	return SensorsTemperaturesWithContext(context.Background())
-}
 
 func SensorsTemperaturesWithContext(ctx context.Context) ([]TemperatureStat, error) {
 	temperatureKeys := []string{
