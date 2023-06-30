@@ -17,6 +17,7 @@ limitations under the License.
 package problemdetector
 
 import (
+	"context"
 	"testing"
 
 	"k8s.io/node-problem-detector/pkg/types"
@@ -24,7 +25,7 @@ import (
 
 func TestEmpty(t *testing.T) {
 	pd := NewProblemDetector([]types.Monitor{}, []types.Exporter{})
-	if err := pd.Run(nil); err == nil {
+	if err := pd.Run(context.Background()); err == nil {
 		t.Error("expected error when running an empty problem detector")
 	}
 }

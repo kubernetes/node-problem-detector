@@ -17,6 +17,9 @@ limitations under the License.
 package main
 
 import (
+	"context"
+
+	"github.com/golang/glog"
 	"github.com/spf13/pflag"
 	"k8s.io/node-problem-detector/cmd/options"
 )
@@ -26,5 +29,7 @@ func main() {
 	npdo.AddFlags(pflag.CommandLine)
 
 	pflag.Parse()
-	npdInteractive(npdo)
+	if err := npdMain(context.Background(), npdo); err != nil {
+		glog.Fatalf("Problem detector failed with error: %v", err)
+	}
 }
