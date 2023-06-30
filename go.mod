@@ -5,7 +5,7 @@ go 1.20
 require (
 	cloud.google.com/go/compute/metadata v0.2.3
 	code.cloudfoundry.org/clock v1.1.0
-	contrib.go.opencensus.io/exporter/prometheus v0.0.0-20190427222117-f6cda26f80a3
+	contrib.go.opencensus.io/exporter/prometheus v0.1.0
 	contrib.go.opencensus.io/exporter/stackdriver v0.13.4
 	github.com/acobaugh/osrelease v0.1.0
 	github.com/avast/retry-go v3.0.0+incompatible
@@ -28,12 +28,12 @@ require (
 	golang.org/x/oauth2 v0.9.0
 	golang.org/x/sys v0.9.0
 	google.golang.org/api v0.114.0
-	k8s.io/api v0.17.2
-	k8s.io/apimachinery v0.17.2
+	k8s.io/api v0.17.3
+	k8s.io/apimachinery v0.17.3
 	k8s.io/client-go v11.0.1-0.20190805182717-6502b5e7b1b5+incompatible
 	k8s.io/component-base v0.17.2
 	k8s.io/klog v1.0.0
-	k8s.io/test-infra v0.0.0-20190914015041-e1cbc3ccd91c
+	sigs.k8s.io/boskos v0.0.0-20200515170311-7d36bde8cdf6
 )
 
 require (
@@ -54,14 +54,14 @@ require (
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/google/go-cmp v0.5.9 // indirect
-	github.com/google/gofuzz v1.0.0 // indirect
+	github.com/google/gofuzz v1.1.0 // indirect
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.2.5 // indirect
 	github.com/googleapis/gax-go/v2 v2.8.0 // indirect
 	github.com/googleapis/gnostic v0.3.1 // indirect
-	github.com/hashicorp/errwrap v0.0.0-20141028054710-7554cd9344ce // indirect
-	github.com/hashicorp/go-multierror v0.0.0-20171204182908-b7773ae21874 // indirect
-	github.com/imdario/mergo v0.3.7 // indirect
+	github.com/hashicorp/errwrap v1.0.0 // indirect
+	github.com/hashicorp/go-multierror v1.0.0 // indirect
+	github.com/imdario/mergo v0.3.8 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.2 // indirect
@@ -94,8 +94,9 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20191107075043-30be4d16710a // indirect
-	k8s.io/utils v0.0.0-20211116205334-6203023598ed // indirect
-	sigs.k8s.io/yaml v1.1.0 // indirect
+	k8s.io/test-infra v0.0.0-20200514184223-ba32c8aae783 // indirect
+	k8s.io/utils v0.0.0-20200122174043-1e243dd1a584 // indirect
+	sigs.k8s.io/yaml v1.2.0 // indirect
 )
 
 replace (
