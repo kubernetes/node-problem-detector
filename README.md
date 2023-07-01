@@ -7,7 +7,7 @@ layers in the cluster management stack.
 It is a daemon that runs on each node, detects node
 problems and reports them to apiserver.
 node-problem-detector can either run as a
-[DaemonSet](http://kubernetes.io/docs/admin/daemons/) or run standalone.
+[DaemonSet](https://kubernetes.io/docs/concepts/workloads/controllers/daemonset/) or run standalone.
 Now it is running as a
 [Kubernetes Addon](https://github.com/kubernetes/kubernetes/tree/master/cluster/addons)
 enabled by default in the GKE cluster. It is also enabled by default in AKS as part of the
