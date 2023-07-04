@@ -119,10 +119,10 @@ fmt:
 version:
 	@echo $(VERSION)
 
-BINARIES = bin/node-problem-detector bin/health-checker test/bin/problem-maker
+BINARIES = bin/node-problem-detector test/bin/problem-maker
 BINARIES_LINUX_ONLY =
 ifeq ($(ENABLE_JOURNALD), 1)
-	BINARIES_LINUX_ONLY += bin/log-counter
+	BINARIES_LINUX_ONLY += bin/log-counter bin/health-checker # Health checker requires CGO
 endif
 
 ALL_BINARIES = $(foreach binary, $(BINARIES) $(BINARIES_LINUX_ONLY), ./$(binary)) \
