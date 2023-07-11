@@ -22,8 +22,8 @@ set -o nounset
 set -o pipefail
 
 
-NPD_STAGING_PATH=${NPD_STAGING_PATH:-"gs://node-problem-detector-staging"}
-NPD_STAGING_REGISTRY=${NPD_STAGING_REGISTRY:-"gcr.io/node-problem-detector-staging"}
+NPD_STAGING_PATH=${NPD_STAGING_PATH:-"gs://k8s-staging-npd"}
+NPD_STAGING_REGISTRY=${NPD_STAGING_REGISTRY:-"gcr.io/k8s-staging-npd"}
 PR_ENV_FILENAME=${PR_ENV_FILENAME:-"pr.env"}
 CI_ENV_FILENAME=${CI_ENV_FILENAME:-"ci.env"}
 CI_CUSTOM_FLAGS_ENV_FILENAME=${CI_CUSTOM_FLAGS_ENV_FILENAME:-"ci-custom-flags.env"}
@@ -75,22 +75,22 @@ function write-env-file() {
     exit 1
   fi
 
-  cat > ${ROOT_PATH}/${env_file} <<EOF
+  cat > "${ROOT_PATH}/${env_file}" <<EOF
 export KUBE_ENABLE_NODE_PROBLEM_DETECTOR=standalone
 export NODE_PROBLEM_DETECTOR_RELEASE_PATH=${UPLOAD_PATH/gs:\/\//${GCS_URL_PREFIX}}
 export NODE_PROBLEM_DETECTOR_VERSION=${VERSION}
-export NODE_PROBLEM_DETECTOR_TAR_HASH=$(sha1sum ${ROOT_PATH}/node-problem-detector-${VERSION}-linux_amd64.tar.gz | cut -d ' ' -f1)
+export NODE_PROBLEM_DETECTOR_TAR_HASH=$(sha1sum "${ROOT_PATH}/node-problem-detector-${VERSION}-linux_amd64.tar.gz" | cut -d ' ' -f1)
 export EXTRA_ENVS=NODE_PROBLEM_DETECTOR_IMAGE=${REGISTRY}/node-problem-detector:${TAG}
 EOF
 
   if [[ -n "${NODE_PROBLEM_DETECTOR_CUSTOM_FLAGS:-}" ]]; then
-    cat >> ${ROOT_PATH}/${env_file} <<EOF
+    cat >> "${ROOT_PATH}/${env_file}" <<EOF
 export NODE_PROBLEM_DETECTOR_CUSTOM_FLAGS="${NODE_PROBLEM_DETECTOR_CUSTOM_FLAGS}"
 EOF
   fi
 
   echo "Written env file ${ROOT_PATH}/${env_file}:"
-  cat ${ROOT_PATH}/${env_file}
+  cat "${ROOT_PATH}/${env_file}"
 }
 
 function build-npd-custom-flags() {
@@ -129,7 +129,7 @@ function build-pr() {
   export VERSION=$(get-version)
   export TAG="${VERSION}"
   make push
-  write-env-file ${PR_ENV_FILENAME}
+  write-env-file "${PR_ENV_FILENAME}"
 }
 
 function build-ci() {
@@ -152,13 +152,13 @@ function build-ci() {
 
 function get-ci-env() {
   if [[ "${USE_CUSTOM_FLAGS}" == "true" ]]; then
-    gsutil cp ${NPD_STAGING_PATH}/ci/${CI_CUSTOM_FLAGS_ENV_FILENAME} ${ROOT_PATH}/${CI_CUSTOM_FLAGS_ENV_FILENAME}
+    gsutil cp "${NPD_STAGING_PATH}/ci/${CI_CUSTOM_FLAGS_ENV_FILENAME}" "${ROOT_PATH}/${CI_CUSTOM_FLAGS_ENV_FILENAME}"
     echo "Using env file ${ROOT_PATH}/${CI_CUSTOM_FLAGS_ENV_FILENAME}:"
-    cat ${ROOT_PATH}/${CI_CUSTOM_FLAGS_ENV_FILENAME}
+    cat "${ROOT_PATH}/${CI_CUSTOM_FLAGS_ENV_FILENAME}"
   else
-    gsutil cp ${NPD_STAGING_PATH}/ci/${CI_ENV_FILENAME} ${ROOT_PATH}/${CI_ENV_FILENAME}
+    gsutil cp "${NPD_STAGING_PATH}/ci/${CI_ENV_FILENAME}" "${ROOT_PATH}/${CI_ENV_FILENAME}"
     echo "Using env file ${ROOT_PATH}/${CI_ENV_FILENAME}:"
-    cat ${ROOT_PATH}/${CI_ENV_FILENAME}
+    cat "${ROOT_PATH}/${CI_ENV_FILENAME}"
   fi
 }
 
@@ -189,7 +189,7 @@ USE_CUSTOM_FLAGS="false"
 PR_NUMBER=""
 
 while getopts "fp:" opt; do
-  case ${opt} in
+  case "${opt}" in
     f) USE_CUSTOM_FLAGS="true";;
     p) PR_NUMBER="${OPTARG}";;
   esac
