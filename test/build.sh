@@ -22,8 +22,8 @@ set -o nounset
 set -o pipefail
 
 
-NPD_STAGING_PATH=${NPD_STAGING_PATH:-"gs://node-problem-detector-staging"}
-NPD_STAGING_REGISTRY=${NPD_STAGING_REGISTRY:-"gcr.io/node-problem-detector-staging"}
+NPD_STAGING_PATH=${NPD_STAGING_PATH:-"gs://k8s-staging-npd-gcb"}
+NPD_STAGING_REGISTRY=${NPD_STAGING_REGISTRY:-"gcr.io/k8s-staging-npd/node-problem-detector"}
 PR_ENV_FILENAME=${PR_ENV_FILENAME:-"pr.env"}
 CI_ENV_FILENAME=${CI_ENV_FILENAME:-"ci.env"}
 CI_CUSTOM_FLAGS_ENV_FILENAME=${CI_CUSTOM_FLAGS_ENV_FILENAME:-"ci-custom-flags.env"}

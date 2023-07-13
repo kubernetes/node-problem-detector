@@ -33,7 +33,7 @@ VERSION?=$(shell if [ -d .git ]; then echo `git describe --tags --dirty`; else e
 TAG?=$(VERSION)
 
 # REGISTRY is the container registry to push into.
-REGISTRY?=gcr.io/k8s-staging-npd
+REGISTRY?=gcr.io/k8s-staging-npd/node-problem-detector
 
 # UPLOAD_PATH is the cloud storage path to upload release tar.
 UPLOAD_PATH?=gs://kubernetes-release
@@ -241,8 +241,8 @@ $(NPD_NAME_VERSION)-%.tar.gz: $(ALL_BINARIES) test/e2e-install.sh
 build-binaries: $(ALL_BINARIES)
 
 build-container: clean Dockerfile
-	docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
 	docker buildx create --use
+	docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
 	docker buildx build --platform $(DOCKER_PLATFORMS) -t $(IMAGE) --build-arg BASEIMAGE=$(BASEIMAGE) --build-arg LOGCOUNTER=$(LOGCOUNTER) .
 
 $(TARBALL): ./bin/node-problem-detector ./bin/log-counter ./bin/health-checker ./test/bin/problem-maker
@@ -254,6 +254,14 @@ build-tar: $(TARBALL) $(ALL_TARBALLS)
 
 build: build-container build-tar
 
+docker-login:
+	ifneq (,$(findstring gcr.io,$(REGISTRY)))
+	gcloud auth activate-service-account --key-file $(GOOGLE_APPLICATION_CREDENTIALS)
+	gcloud auth configure-docker
+	docker login -u oauth2accesstoken --password-stdin https://gcr.io < $(GOOGLE_APPLICATION_CREDENTIALS)
+	echo "docker credential updated"
+	endif
+
 docker-builder:
 	docker build -t npd-builder . --target=builder
 
@@ -262,13 +270,8 @@ build-in-docker: clean docker-builder
 		-v `pwd`:/gopath/src/k8s.io/node-problem-detector/ npd-builder:latest bash \
 		-c 'cd /gopath/src/k8s.io/node-problem-detector/ && make build-binaries'
 
-push-container: build-container
-	# So we can push to docker hub by setting REGISTRY
-ifneq (,$(findstring gcr.io,$(REGISTRY)))
-	gcloud auth configure-docker
-endif
+push-container: docker-login build-container
 	# Build should be cached from build-container
-	docker buildx create --use
 	docker buildx build --push --platform $(DOCKER_PLATFORMS) -t $(IMAGE) --build-arg BASEIMAGE=$(BASEIMAGE) --build-arg LOGCOUNTER=$(LOGCOUNTER) .
 
 push-tar: build-tar
