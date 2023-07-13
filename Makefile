@@ -263,12 +263,12 @@ build-in-docker: clean docker-builder
 		-c 'cd /gopath/src/k8s.io/node-problem-detector/ && make build-binaries'
 
 push-container: build-container
-	# So we can push to docker hub by setting REGISTRY
-ifneq (,$(findstring gcr.io,$(REGISTRY)))
-	gcloud auth configure-docker
-endif
 	# Build should be cached from build-container
 	docker buildx create --use
+	# So we can push to docker hub by setting REGISTRY
+ifeq (,$(findstring gcr.io,$(REGISTRY)))
+	gcloud auth configure-docker
+endif
 	docker buildx build --push --platform $(DOCKER_PLATFORMS) -t $(IMAGE) --build-arg BASEIMAGE=$(BASEIMAGE) --build-arg LOGCOUNTER=$(LOGCOUNTER) .
 
 push-tar: build-tar
