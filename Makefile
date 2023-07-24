@@ -62,7 +62,8 @@ NPD_NAME_VERSION?=node-problem-detector-$(VERSION)
 TARBALL=$(NPD_NAME_VERSION).tar.gz
 
 # IMAGE is the image name of the node problem detector container image.
-IMAGE:=$(REGISTRY)/node-problem-detector:$(TAG)
+#IMAGE:=$(REGISTRY)/node-problem-detector:$(TAG)
+IMAGE:=$(REGISTRY)/ecf-edge/node-problem-detector/node-problem-detector:$(TAG)
 
 # ENABLE_JOURNALD enables build journald support or not. Building journald
 # support needs libsystemd-dev or libsystemd-journal-dev.
