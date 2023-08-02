@@ -255,7 +255,7 @@ build-tar: $(TARBALL) $(ALL_TARBALLS)
 build: build-container build-tar
 
 docker-builder:
-	docker build -t npd-builder . --target=builder
+	docker build -t npd-builder . --target=builder --build-arg BASEIMAGE=$(BASEIMAGE)
 
 build-in-docker: clean docker-builder
 	docker run \
