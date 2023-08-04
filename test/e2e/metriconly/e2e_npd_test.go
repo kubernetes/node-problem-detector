@@ -27,7 +27,7 @@ import (
 
 	"k8s.io/node-problem-detector/pkg/util/tomb"
 	"k8s.io/node-problem-detector/test/e2e/lib/gce"
-	"k8s.io/test-infra/boskos/client"
+	"sigs.k8s.io/boskos/client"
 
 	"github.com/onsi/ginkgo"
 	"github.com/onsi/ginkgo/config"
@@ -101,7 +101,9 @@ func rentBoskosProjectIfNeededOnNode1() []byte {
 	}
 
 	fmt.Printf("Renting project from Boskos\n")
-	boskosClient = client.NewClient(*jobName, *boskosServerURL)
+	var err error
+	boskosClient, err = client.NewClient(*jobName, *boskosServerURL, "", "")
+	Expect(err).NotTo(HaveOccurred())
 	boskosRenewingTomb = tomb.NewTomb()
 
 	ctx, cancel := context.WithTimeout(context.Background(), *boskosWaitDuration)
