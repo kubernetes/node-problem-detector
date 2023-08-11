@@ -28,8 +28,8 @@ require (
 	golang.org/x/oauth2 v0.9.0
 	golang.org/x/sys v0.9.0
 	google.golang.org/api v0.114.0
-	k8s.io/api v0.17.3
-	k8s.io/apimachinery v0.17.3
+	k8s.io/api v0.17.17
+	k8s.io/apimachinery v0.17.17
 	k8s.io/client-go v11.0.1-0.20190805182717-6502b5e7b1b5+incompatible
 	k8s.io/component-base v0.17.2
 	k8s.io/klog v1.0.0
@@ -93,15 +93,15 @@ require (
 	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	k8s.io/kube-openapi v0.0.0-20191107075043-30be4d16710a // indirect
+	k8s.io/kube-openapi v0.0.0-20200410145947-bcb3869e6f29 // indirect
 	k8s.io/test-infra v0.0.0-20200514184223-ba32c8aae783 // indirect
 	k8s.io/utils v0.0.0-20200122174043-1e243dd1a584 // indirect
 	sigs.k8s.io/yaml v1.2.0 // indirect
 )
 
 replace (
-	k8s.io/api => k8s.io/api v0.17.2
-	k8s.io/apimachinery => k8s.io/apimachinery v0.17.2
-	k8s.io/client-go => k8s.io/client-go v0.17.2
-	k8s.io/component-base => k8s.io/component-base v0.17.2
+	k8s.io/api => k8s.io/api v0.17.17
+	k8s.io/apimachinery => k8s.io/apimachinery v0.17.17
+	k8s.io/client-go => k8s.io/client-go v0.17.17
+	k8s.io/component-base => k8s.io/component-base v0.17.17
 )
