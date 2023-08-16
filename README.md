@@ -102,9 +102,13 @@ certain backends. Some of them can be disabled at compile-time using a build tag
 
 * `--config.custom-plugin-monitor`: List of paths to custom plugin monitor config files, comma-separated, e.g.
   [config/custom-plugin-monitor.json](https://github.com/kubernetes/node-problem-detector/blob/master/config/custom-plugin-monitor.json).
-  Node problem detector will start a separate custom plugin monitor for each configuration. You can
-  use different custom plugin monitors to monitor different node problems.  This is also used to set up the health checkers using
-  the configs/health-checker*.json config files.
+  Node problem detector will start a separate custom plugin monitor for each configuration.  You can
+  use different custom plugin monitors to monitor different node problems.
+  
+  
+#### For Health Checkers
+
+  Health checkers are configured as custom plugins, using the config/health-checker-*.json config files.
 
 #### For Kubernetes exporter
 
