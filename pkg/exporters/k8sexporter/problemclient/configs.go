@@ -16,8 +16,8 @@ package problemclient
 
 import (
 	"fmt"
-	"io/ioutil"
 	"net/url"
+	"os"
 	"strconv"
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -137,7 +137,7 @@ func getKubeClientConfig(uri *url.URL) (*kube_rest.Config, error) {
 
 	if useServiceAccount {
 		// If a readable service account token exists, then use it
-		if contents, err := ioutil.ReadFile(defaultServiceAccountFile); err == nil {
+		if contents, err := os.ReadFile(defaultServiceAccountFile); err == nil {
 			kubeConfig.BearerToken = string(contents)
 		}
 	}

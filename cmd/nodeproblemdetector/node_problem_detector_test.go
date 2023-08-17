@@ -1,3 +1,4 @@
+//go:build !disable_system_log_monitor
 // +build !disable_system_log_monitor
 
 /*
@@ -19,9 +20,8 @@ limitations under the License.
 package main
 
 import (
-	"errors"
+	"context"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"strings"
 	"testing"
@@ -81,24 +81,22 @@ func TestNPDMain(t *testing.T) {
 	npdo, cleanup := setupNPD(t)
 	defer cleanup()
 
-	termCh := make(chan error, 2)
-	termCh <- errors.New("close")
-	defer close(termCh)
-
-	if err := npdMain(npdo, termCh); err != nil {
+	ctx, cancelFunc := context.WithCancel(context.Background())
+	cancelFunc()
+	if err := npdMain(ctx, npdo); err != nil {
 		t.Errorf("termination signal should not return error got, %v", err)
 	}
 }
 
 func writeTempFile(t *testing.T, ext string, contents string) (string, error) {
-	f, err := ioutil.TempFile("", "*."+ext)
+	f, err := os.CreateTemp("", "*."+ext)
 	if err != nil {
 		return "", fmt.Errorf("cannot create temp file, %v", err)
 	}
 
 	fileName := f.Name()
 
-	if err := ioutil.WriteFile(fileName, []byte(contents), 0644); err != nil {
+	if err := os.WriteFile(fileName, []byte(contents), 0644); err != nil {
 		os.Remove(fileName)
 		return "", fmt.Errorf("cannot write config to temp file %s, %v", fileName, err)
 	}

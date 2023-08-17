@@ -18,7 +18,7 @@ package systemlogmonitor
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"os"
 	"time"
 
 	"github.com/golang/glog"
@@ -27,7 +27,6 @@ import (
 	"k8s.io/node-problem-detector/pkg/problemmetrics"
 	"k8s.io/node-problem-detector/pkg/systemlogmonitor/logwatchers"
 	watchertypes "k8s.io/node-problem-detector/pkg/systemlogmonitor/logwatchers/types"
-	logtypes "k8s.io/node-problem-detector/pkg/systemlogmonitor/types"
 	systemlogtypes "k8s.io/node-problem-detector/pkg/systemlogmonitor/types"
 	"k8s.io/node-problem-detector/pkg/types"
 	"k8s.io/node-problem-detector/pkg/util"
@@ -50,7 +49,7 @@ type logMonitor struct {
 	buffer     LogBuffer
 	config     MonitorConfig
 	conditions []types.Condition
-	logCh      <-chan *logtypes.Log
+	logCh      <-chan *systemlogtypes.Log
 	output     chan *types.Status
 	tomb       *tomb.Tomb
 }
@@ -62,7 +61,7 @@ func NewLogMonitorOrDie(configPath string) types.Monitor {
 		tomb:       tomb.NewTomb(),
 	}
 
-	f, err := ioutil.ReadFile(configPath)
+	f, err := os.ReadFile(configPath)
 	if err != nil {
 		glog.Fatalf("Failed to read configuration file %q: %v", configPath, err)
 	}
@@ -147,7 +146,7 @@ func (l *logMonitor) monitorLoop() {
 }
 
 // parseLog parses one log line.
-func (l *logMonitor) parseLog(log *logtypes.Log) {
+func (l *logMonitor) parseLog(log *systemlogtypes.Log) {
 	// Once there is new log, log monitor will push it into the log buffer and try
 	// to match each rule. If any rule is matched, log monitor will report a status.
 	l.buffer.Push(log)
@@ -163,7 +162,7 @@ func (l *logMonitor) parseLog(log *logtypes.Log) {
 }
 
 // generateStatus generates status from the logs.
-func (l *logMonitor) generateStatus(logs []*logtypes.Log, rule systemlogtypes.Rule) *types.Status {
+func (l *logMonitor) generateStatus(logs []*systemlogtypes.Log, rule systemlogtypes.Rule) *types.Status {
 	// We use the timestamp of the first log line as the timestamp of the status.
 	timestamp := logs[0].Timestamp
 	message := generateMessage(logs)
@@ -251,7 +250,7 @@ func initialConditions(defaults []types.Condition) []types.Condition {
 	return conditions
 }
 
-func generateMessage(logs []*logtypes.Log) string {
+func generateMessage(logs []*systemlogtypes.Log) string {
 	messages := []string{}
 	for _, log := range logs {
 		messages = append(messages, log.Message)

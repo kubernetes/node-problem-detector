@@ -15,7 +15,7 @@ package systemstatsmonitor
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -102,7 +102,7 @@ func (ofc *osFeatureCollector) recordFeaturesFromCmdline(cmdlineArgs []system.Cm
 func (ofc *osFeatureCollector) recordFeaturesFromModules(modules []system.Module) {
 	// Collect known modules (default modules based on guest OS present in known-modules.json)
 	var knownModules []system.Module
-	f, err := ioutil.ReadFile(ofc.config.KnownModulesConfigPath)
+	f, err := os.ReadFile(ofc.config.KnownModulesConfigPath)
 	if err != nil {
 		glog.Warningf("Failed to read configuration file %s: %v",
 			ofc.config.KnownModulesConfigPath, err)

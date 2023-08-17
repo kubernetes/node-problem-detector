@@ -43,7 +43,13 @@ SEE ALSO
 
 * [matryer/try](https://github.com/matryer/try) - very popular package, nonintuitive interface (for me)
 
+
 BREAKING CHANGES
+
+3.0.0
+
+* `DelayTypeFunc` accepts a new parameter `err` - this breaking change affects only your custom Delay Functions. This change allow [make delay functions based on error](examples/delay_based_on_error_test.go).
+
 
 1.0.2 -> 2.0.0
 
@@ -65,6 +71,7 @@ BREAKING CHANGES
 package retry
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"time"
@@ -73,17 +80,30 @@ import (
 // Function signature of retryable function
 type RetryableFunc func() error
 
+var (
+	DefaultAttempts      = uint(10)
+	DefaultDelay         = 100 * time.Millisecond
+	DefaultMaxJitter     = 100 * time.Millisecond
+	DefaultOnRetry       = func(n uint, err error) {}
+	DefaultRetryIf       = IsRecoverable
+	DefaultDelayType     = CombineDelay(BackOffDelay, RandomDelay)
+	DefaultLastErrorOnly = false
+	DefaultContext       = context.Background()
+)
+
 func Do(retryableFunc RetryableFunc, opts ...Option) error {
 	var n uint
 
 	//default
 	config := &Config{
-		attempts:      10,
-		delay:         100 * time.Millisecond,
-		onRetry:       func(n uint, err error) {},
-		retryIf:       IsRecoverable,
-		delayType:     BackOffDelay,
-		lastErrorOnly: false,
+		attempts:      DefaultAttempts,
+		delay:         DefaultDelay,
+		maxJitter:     DefaultMaxJitter,
+		onRetry:       DefaultOnRetry,
+		retryIf:       DefaultRetryIf,
+		delayType:     DefaultDelayType,
+		lastErrorOnly: DefaultLastErrorOnly,
+		context:       DefaultContext,
 	}
 
 	//apply opts
@@ -91,35 +111,58 @@ func Do(retryableFunc RetryableFunc, opts ...Option) error {
 		opt(config)
 	}
 
-	errorLog := make(Error, config.attempts)
+	if err := config.context.Err(); err != nil {
+		return err
+	}
 
+	var errorLog Error
+	if !config.lastErrorOnly {
+		errorLog = make(Error, config.attempts)
+	} else {
+		errorLog = make(Error, 1)
+	}
+
+	lastErrIndex := n
 	for n < config.attempts {
 		err := retryableFunc()
 
 		if err != nil {
-			config.onRetry(n, err)
-			errorLog[n] = unpackUnrecoverable(err)
+			errorLog[lastErrIndex] = unpackUnrecoverable(err)
 
 			if !config.retryIf(err) {
 				break
 			}
+
+			config.onRetry(n, err)
 
 			// if this is last attempt - don't wait
 			if n == config.attempts-1 {
 				break
 			}
 
-			delayTime := config.delayType(n, config)
-			time.Sleep(delayTime)
+			delayTime := config.delayType(n, err, config)
+			if config.maxDelay > 0 && delayTime > config.maxDelay {
+				delayTime = config.maxDelay
+			}
+
+			select {
+			case <-time.After(delayTime):
+			case <-config.context.Done():
+				return config.context.Err()
+			}
+
 		} else {
 			return nil
 		}
 
 		n++
+		if !config.lastErrorOnly {
+			lastErrIndex = n
+		}
 	}
 
 	if config.lastErrorOnly {
-		return errorLog[n]
+		return errorLog[lastErrIndex]
 	}
 	return errorLog
 }

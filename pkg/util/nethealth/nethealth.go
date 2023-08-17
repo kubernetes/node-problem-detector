@@ -28,7 +28,7 @@ import (
 	"crypto/sha512"
 	"encoding/hex"
 	"flag"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"strings"
@@ -92,7 +92,7 @@ func main() {
 	if res.ContentLength != objectLength {
 		log.Fatalf("Length reported (%d) is not equal to expected length (%d)", res.ContentLength, objectLength)
 	}
-	blobData, err := ioutil.ReadAll(res.Body)
+	blobData, err := io.ReadAll(res.Body)
 	res.Body.Close()
 	if err != nil {
 		log.Fatal("Failed to read full content", err)
@@ -110,7 +110,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failure (%s) while reading %s", err, objectHashUrl)
 	}
-	content, err := ioutil.ReadAll(res.Body)
+	content, err := io.ReadAll(res.Body)
 	res.Body.Close()
 	if err != nil {
 		log.Fatal("Failed to read full content of hash file", err)

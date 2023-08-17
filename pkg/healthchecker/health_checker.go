@@ -138,9 +138,9 @@ func healthCheckEndpointOKFunc(endpoint string, timeout time.Duration) func() (b
 func getHealthCheckFunc(hco *options.HealthCheckerOptions) func() (bool, error) {
 	switch hco.Component {
 	case types.KubeletComponent:
-		return healthCheckEndpointOKFunc(types.KubeletHealthCheckEndpoint, hco.HealthCheckTimeout)
+		return healthCheckEndpointOKFunc(types.KubeletHealthCheckEndpoint(), hco.HealthCheckTimeout)
 	case types.KubeProxyComponent:
-		return healthCheckEndpointOKFunc(types.KubeProxyHealthCheckEndpoint, hco.HealthCheckTimeout)
+		return healthCheckEndpointOKFunc(types.KubeProxyHealthCheckEndpoint(), hco.HealthCheckTimeout)
 	case types.DockerComponent:
 		return func() (bool, error) {
 			if _, err := execCommand(hco.HealthCheckTimeout, getDockerPath(), "ps"); err != nil {

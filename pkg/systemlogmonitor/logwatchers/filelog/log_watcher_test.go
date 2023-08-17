@@ -17,7 +17,6 @@ limitations under the License.
 package filelog
 
 import (
-	"io/ioutil"
 	"os"
 	"testing"
 	"time"
@@ -139,7 +138,7 @@ Jan  2 03:04:05 kernel: [2.000000] 3
 	}
 	for c, test := range testCases {
 		t.Logf("TestCase #%d: %#v", c+1, test)
-		f, err := ioutil.TempFile("", "log_watcher_test")
+		f, err := os.CreateTemp("", "log_watcher_test")
 		assert.NoError(t, err)
 		defer func() {
 			f.Close()

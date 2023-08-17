@@ -18,7 +18,7 @@ package custompluginmonitor
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"os"
 	"time"
 
 	"github.com/golang/glog"
@@ -57,7 +57,7 @@ func NewCustomPluginMonitorOrDie(configPath string) types.Monitor {
 		configPath: configPath,
 		tomb:       tomb.NewTomb(),
 	}
-	f, err := ioutil.ReadFile(configPath)
+	f, err := os.ReadFile(configPath)
 	if err != nil {
 		glog.Fatalf("Failed to read configuration file %q: %v", configPath, err)
 	}

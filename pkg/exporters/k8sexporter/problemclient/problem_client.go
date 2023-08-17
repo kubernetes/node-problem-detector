@@ -17,6 +17,7 @@ limitations under the License.
 package problemclient
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	types2 "k8s.io/node-problem-detector/pkg/types"
@@ -24,17 +25,16 @@ import (
 	"os"
 	"path/filepath"
 
-	typedcorev1 "k8s.io/client-go/kubernetes/typed/core/v1"
-	"k8s.io/kubernetes/pkg/api/legacyscheme"
-
+	"github.com/golang/glog"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/clock"
 	clientset "k8s.io/client-go/kubernetes"
+	typedcorev1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	"k8s.io/client-go/tools/record"
 
-	"github.com/golang/glog"
 	"k8s.io/node-problem-detector/cmd/options"
 	"k8s.io/node-problem-detector/pkg/version"
 )
@@ -42,18 +42,18 @@ import (
 // Client is the interface of problem client
 type Client interface {
 	// GetConditions get all specific conditions of current node.
-	GetConditions(conditionTypes []v1.NodeConditionType) ([]*v1.NodeCondition, error)
+	GetConditions(ctx context.Context, conditionTypes []v1.NodeConditionType) ([]*v1.NodeCondition, error)
 	// SetConditions set or update conditions of current node.
-	SetConditions(conditions []v1.NodeCondition) error
+	SetConditions(ctx context.Context, conditionTypes []v1.NodeCondition) error
 	// Eventf reports the event.
 	Eventf(eventType string, source, reason, messageFmt string, args ...interface{})
 	// GetNode returns the Node object of the node on which the
 	// node-problem-detector runs.
-	GetNode() (*v1.Node, error)
 	// TaintNode taints the node if tainting is enabled on the config file on specific conditions
 	TaintNode(node *v1.Node, condition types2.Condition) error
 	// UntaintNode removes taint from node if tainting is enabled on the config file on specific conditions, and problem recovered
 	UntaintNode(node *v1.Node, condition types2.Condition) error
+	GetNode(ctx context.Context) (*v1.Node, error)
 }
 
 type nodeProblemClient struct {
@@ -87,8 +87,8 @@ func NewClientOrDie(npdo *options.NodeProblemDetectorOptions) Client {
 	return c
 }
 
-func (c *nodeProblemClient) GetConditions(conditionTypes []v1.NodeConditionType) ([]*v1.NodeCondition, error) {
-	node, err := c.GetNode()
+func (c *nodeProblemClient) GetConditions(ctx context.Context, conditionTypes []v1.NodeConditionType) ([]*v1.NodeCondition, error) {
+	node, err := c.GetNode(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -103,7 +103,7 @@ func (c *nodeProblemClient) GetConditions(conditionTypes []v1.NodeConditionType)
 	return conditions, nil
 }
 
-func (c *nodeProblemClient) SetConditions(newConditions []v1.NodeCondition) error {
+func (c *nodeProblemClient) SetConditions(ctx context.Context, newConditions []v1.NodeCondition) error {
 	for i := range newConditions {
 		// Each time we update the conditions, we update the heart beat time
 		newConditions[i].LastHeartbeatTime = metav1.NewTime(c.clock.Now())
@@ -125,7 +125,7 @@ func (c *nodeProblemClient) Eventf(eventType, source, reason, messageFmt string,
 	recorder.Eventf(c.nodeRef, eventType, reason, messageFmt, args...)
 }
 
-func (c *nodeProblemClient) GetNode() (*v1.Node, error) {
+func (c *nodeProblemClient) GetNode(ctx context.Context) (*v1.Node, error) {
 	return c.client.Nodes().Get(c.nodeName, metav1.GetOptions{})
 }
 
@@ -178,7 +178,7 @@ func generatePatch(conditions []v1.NodeCondition) ([]byte, error) {
 func getEventRecorder(c typedcorev1.CoreV1Interface, namespace, nodeName, source string) record.EventRecorder {
 	eventBroadcaster := record.NewBroadcaster()
 	eventBroadcaster.StartLogging(glog.V(4).Infof)
-	recorder := eventBroadcaster.NewRecorder(legacyscheme.Scheme, v1.EventSource{Component: source, Host: nodeName})
+	recorder := eventBroadcaster.NewRecorder(runtime.NewScheme(), v1.EventSource{Component: source, Host: nodeName})
 	eventBroadcaster.StartRecordingToSink(&typedcorev1.EventSinkImpl{Interface: c.Events(namespace)})
 	return recorder
 }

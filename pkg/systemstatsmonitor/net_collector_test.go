@@ -1,7 +1,6 @@
 package systemstatsmonitor
 
 import (
-	"io/ioutil"
 	"os"
 	"path"
 	"regexp"
@@ -48,12 +47,8 @@ func newFakeInt64Metric(metricID metrics.MetricID, viewName string, description 
 // testCollectAux is a test auxiliary function used for testing netCollector.Collect
 func testCollectAux(t *testing.T, name string, excludeInterfaceRegexp ssmtypes.NetStatsInterfaceRegexp, validate func(*testing.T, *netCollector)) {
 	// mkdir /tmp/proc-X
-	procDir, err := ioutil.TempDir(os.TempDir(), "proc-")
-	if err != nil {
-		t.Fatalf("Failed to create temp proc directory: %v", err)
-	}
-	// rm -r /tmp/proc-X
-	defer os.RemoveAll(procDir)
+	procDir := t.TempDir()
+
 	// mkdir -C /tmp/proc-X/net
 	procNetDir := path.Join(procDir, "net")
 	if err := os.Mkdir(procNetDir, 0777); err != nil {

@@ -17,6 +17,7 @@ limitations under the License.
 package condition
 
 import (
+	"context"
 	"fmt"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"testing"
@@ -110,7 +111,7 @@ func TestResync(t *testing.T) {
 	m, fakeClient, fakeClock := newTestManager()
 	condition := newTestCondition("TestCondition")
 	m.conditions = map[string]types.Condition{condition.Type: condition}
-	m.sync()
+	m.sync(context.Background())
 	expected := []v1.NodeCondition{problemutil.ConvertToAPICondition(condition)}
 	assert.Nil(t, fakeClient.AssertConditions(expected), "Condition should be updated via client")
 
@@ -119,7 +120,7 @@ func TestResync(t *testing.T) {
 	assert.False(t, m.needResync(), "Should not resync after resync period without resync needed")
 
 	fakeClient.InjectError("SetConditions", fmt.Errorf("injected error"))
-	m.sync()
+	m.sync(context.Background())
 
 	assert.False(t, m.needResync(), "Should not resync before resync period")
 	fakeClock.Step(resyncPeriod)
@@ -344,7 +345,7 @@ func TestHeartbeat(t *testing.T) {
 	m, fakeClient, fakeClock := newTestManager()
 	condition := newTestCondition("TestCondition")
 	m.conditions = map[string]types.Condition{condition.Type: condition}
-	m.sync()
+	m.sync(context.Background())
 	expected := []v1.NodeCondition{problemutil.ConvertToAPICondition(condition)}
 	assert.Nil(t, fakeClient.AssertConditions(expected), "Condition should be updated via client")
 

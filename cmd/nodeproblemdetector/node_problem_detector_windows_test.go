@@ -1,3 +1,4 @@
+//go:build !disable_system_log_monitor
 // +build !disable_system_log_monitor
 
 /*
@@ -19,6 +20,7 @@ limitations under the License.
 package main
 
 import (
+	"context"
 	"testing"
 
 	"golang.org/x/sys/windows/svc"

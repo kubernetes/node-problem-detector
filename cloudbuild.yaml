@@ -3,12 +3,13 @@
 # this must be specified in seconds. If omitted, defaults to 600s (10 mins)
 timeout: 7200s
 steps:
-  - name: 'gcr.io/k8s-staging-test-infra/gcb-docker-gcloud:v20211118-2f2d816b90'
+  - name: 'gcr.io/k8s-staging-test-infra/gcb-docker-gcloud:v20230623-56e06d7c18'
     entrypoint: bash
     env:
     - PROW_GIT_TAG=$_GIT_TAG
     - PULL_BASE_REF=$_PULL_BASE_REF
     - VERSION=$_PULL_BASE_REF
+    - DOCKER_CLI_EXPERIMENTAL=enabled
     args:
     - -c
     - |

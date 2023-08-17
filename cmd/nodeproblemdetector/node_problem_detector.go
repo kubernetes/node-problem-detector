@@ -17,6 +17,8 @@ limitations under the License.
 package main
 
 import (
+	"context"
+
 	"github.com/golang/glog"
 
 	_ "k8s.io/node-problem-detector/cmd/nodeproblemdetector/exporterplugins"
@@ -31,16 +33,7 @@ import (
 	"k8s.io/node-problem-detector/pkg/version"
 )
 
-func npdInteractive(npdo *options.NodeProblemDetectorOptions) {
-	termCh := make(chan error, 1)
-	defer close(termCh)
-
-	if err := npdMain(npdo, termCh); err != nil {
-		glog.Fatalf("Problem detector failed with error: %v", err)
-	}
-}
-
-func npdMain(npdo *options.NodeProblemDetectorOptions, termCh <-chan error) error {
+func npdMain(ctx context.Context, npdo *options.NodeProblemDetectorOptions) error {
 	if npdo.PrintVersion {
 		version.PrintVersion()
 		return nil
@@ -58,7 +51,7 @@ func npdMain(npdo *options.NodeProblemDetectorOptions, termCh <-chan error) erro
 
 	// Initialize exporters.
 	defaultExporters := []types.Exporter{}
-	if ke := k8sexporter.NewExporterOrDie(npdo); ke != nil {
+	if ke := k8sexporter.NewExporterOrDie(ctx, npdo); ke != nil {
 		defaultExporters = append(defaultExporters, ke)
 		glog.Info("K8s exporter started.")
 	}
@@ -79,5 +72,5 @@ func npdMain(npdo *options.NodeProblemDetectorOptions, termCh <-chan error) erro
 
 	// Initialize NPD core.
 	p := problemdetector.NewProblemDetector(problemDaemons, npdExporters)
-	return p.Run(termCh)
+	return p.Run(ctx)
 }

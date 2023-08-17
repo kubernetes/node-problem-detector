@@ -17,6 +17,7 @@ limitations under the License.
 package problemclient
 
 import (
+	"context"
 	"fmt"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/node-problem-detector/pkg/types"
@@ -69,7 +70,7 @@ func (f *FakeProblemClient) AssertConditions(expected []v1.NodeCondition) error 
 }
 
 // SetConditions is a fake mimic of SetConditions, it only update the internal condition cache.
-func (f *FakeProblemClient) SetConditions(conditions []v1.NodeCondition) error {
+func (f *FakeProblemClient) SetConditions(ctx context.Context, conditions []v1.NodeCondition) error {
 	f.Lock()
 	defer f.Unlock()
 	if err, ok := f.errors["SetConditions"]; ok {
@@ -100,7 +101,7 @@ func (f *FakeProblemClient) UntaintNode(node *v1.Node, condition types.Condition
 }
 
 // GetConditions is a fake mimic of GetConditions, it returns the conditions cached internally.
-func (f *FakeProblemClient) GetConditions(types []v1.NodeConditionType) ([]*v1.NodeCondition, error) {
+func (f *FakeProblemClient) GetConditions(ctx context.Context, types []v1.NodeConditionType) ([]*v1.NodeCondition, error) {
 	f.Lock()
 	defer f.Unlock()
 	if err, ok := f.errors["GetConditions"]; ok {
@@ -120,10 +121,6 @@ func (f *FakeProblemClient) GetConditions(types []v1.NodeConditionType) ([]*v1.N
 func (f *FakeProblemClient) Eventf(eventType string, source, reason, messageFmt string, args ...interface{}) {
 }
 
-func (f *FakeProblemClient) GetNode() (*v1.Node, error) {
-	if err, ok := f.errors["GetNode"]; ok {
-		return nil, err
-	}
-
-	return f.nodes["mynode"], nil
+func (f *FakeProblemClient) GetNode(ctx context.Context) (*v1.Node, error) {
+	return nil, fmt.Errorf("GetNode() not implemented")
 }
