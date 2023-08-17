@@ -304,10 +304,10 @@ Kubernetes cluster to a healthy state. The following remedy systems exist:
 NPD is tested via unit tests, [NPD e2e tests](https://github.com/kubernetes/node-problem-detector/blob/master/test/e2e/README.md), Kubernetes e2e tests and Kubernetes nodes e2e tests. Prow handles the [pre-submit tests](https://github.com/kubernetes/test-infra/blob/master/config/jobs/kubernetes/node-problem-detector/node-problem-detector-presubmits.yaml) and [CI tests](https://github.com/kubernetes/test-infra/blob/master/config/jobs/kubernetes/node-problem-detector/node-problem-detector-ci.yaml).
 
 CI test results can be found below:
-1. [Unit tests](https://k8s-testgrid.appspot.com/sig-node-node-problem-detector#ci-npd-test)
-2. [NPD e2e tests](https://k8s-testgrid.appspot.com/sig-node-node-problem-detector#ci-npd-e2e-test)
-3. [Kubernetes e2e tests](https://k8s-testgrid.appspot.com/sig-node-node-problem-detector#ci-npd-e2e-kubernetes-gce-gci)
-4. [Kubernetes nodes e2e tests](https://k8s-testgrid.appspot.com/sig-node-node-problem-detector#ci-npd-e2e-node)
+1. [Unit tests](https://testgrid.k8s.io/sig-node-node-problem-detector#ci-npd-test)
+2. [NPD e2e tests](https://testgrid.k8s.io/sig-node-node-problem-detector#ci-npd-e2e-test)
+3. [Kubernetes e2e tests](https://testgrid.k8s.io/sig-node-node-problem-detector#ci-npd-e2e-kubernetes-gce-gci)
+4. [Kubernetes nodes e2e tests](https://testgrid.k8s.io/sig-node-node-problem-detector#ci-npd-e2e-node)
 
 ## Running tests
 
