@@ -67,7 +67,10 @@ import (
 	"go.opencensus.io/trace"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/option"
+	metricpb "google.golang.org/genproto/googleapis/api/metric"
 	monitoredrespb "google.golang.org/genproto/googleapis/api/monitoredres"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	commonpb "github.com/census-instrumentation/opencensus-proto/gen-go/agent/common/v1"
 	metricspb "github.com/census-instrumentation/opencensus-proto/gen-go/metrics/v1"
@@ -252,7 +255,7 @@ type Options struct {
 	// or the unit is not important.
 	SkipCMD bool
 
-	// Timeout for all API calls. If not set, defaults to 5 seconds.
+	// Timeout for all API calls. If not set, defaults to 12 seconds.
 	Timeout time.Duration
 
 	// ReportingInterval sets the interval between reporting metrics.
@@ -286,7 +289,7 @@ type Options struct {
 	UserAgent string
 }
 
-const defaultTimeout = 5 * time.Second
+const defaultTimeout = 12 * time.Second
 
 var defaultDomain = path.Join("custom.googleapis.com", "opencensus")
 
@@ -422,7 +425,7 @@ func (e *Exporter) ExportMetrics(ctx context.Context, metrics []*metricdata.Metr
 //    exporter.StartMetricsExporter()
 //    defer exporter.StopMetricsExporter()
 //
-// Both approach should not be used simultaenously. Otherwise it may result into unknown behavior.
+// Both approach should not be used simultaneously. Otherwise it may result into unknown behavior.
 // Previous approach continues to work as before but will not report newly define metrics such
 // as gauges.
 func (e *Exporter) StartMetricsExporter() error {
@@ -432,6 +435,22 @@ func (e *Exporter) StartMetricsExporter() error {
 // StopMetricsExporter stops exporter from exporting metrics.
 func (e *Exporter) StopMetricsExporter() {
 	e.statsExporter.stopMetricsReader()
+}
+
+// Close closes client connections.
+func (e *Exporter) Close() error {
+	tErr := e.traceExporter.close()
+	mErr := e.statsExporter.close()
+	// If the trace and stats exporter share client connections,
+	// closing the stats exporter will return an error indicating
+	// it is already closed.  Ignore this error.
+	if status.Code(mErr) == codes.Canceled {
+		mErr = nil
+	}
+	if mErr != nil || tErr != nil {
+		return fmt.Errorf("error(s) closing trace client (%v), or metrics client (%v)", tErr, mErr)
+	}
+	return nil
 }
 
 // ExportSpan exports a SpanData to Stackdriver Trace.
@@ -467,6 +486,15 @@ func (e *Exporter) sdWithDefaultTraceAttributes(sd *trace.SpanData) *trace.SpanD
 func (e *Exporter) Flush() {
 	e.statsExporter.Flush()
 	e.traceExporter.Flush()
+}
+
+// ViewToMetricDescriptor converts an OpenCensus view to a MetricDescriptor.
+//
+// This is useful for cases when you want to use your Go code as source of
+// truth of metric descriptors. You can extract or define views in a central
+// place, then call this method to generate MetricDescriptors.
+func (e *Exporter) ViewToMetricDescriptor(ctx context.Context, v *view.View) (*metricpb.MetricDescriptor, error) {
+	return e.statsExporter.viewToMetricDescriptor(ctx, v)
 }
 
 func (o Options) handleError(err error) {

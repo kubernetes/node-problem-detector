@@ -51,6 +51,9 @@ var (
 	// ErrContextRequired is returned by AcquireWait and AcquireByStateWait when
 	// they are invoked with a nil context.
 	ErrContextRequired = errors.New("context required")
+	// ErrTypeNotFound is returned when the requested resource type (rtype) does not exist.
+	// For this error to be returned, you must set DistinguishNotFoundVsTypeNotFound to true.
+	ErrTypeNotFound = errors.New("resource type not found")
 )
 
 // Client defines the public Boskos client object
@@ -58,6 +61,10 @@ type Client struct {
 	// Dialer is the net.Dialer used to establish connections to the remote
 	// boskos endpoint.
 	Dialer DialerWithRetry
+	// DistinguishNotFoundVsTypeNotFound, if set, will make it possible to distinguish between
+	// ErrNotFound and ErrTypeNotFound. For backwards-compatibility, this flag is off by
+	// default.
+	DistinguishNotFoundVsTypeNotFound bool
 
 	// http is the http.Client used to interact with the boskos REST API
 	http http.Client
@@ -93,17 +100,24 @@ func NewClient(owner string, urlString, username, passwordFile string) (*Client,
 			fmt.Printf("[WARNING] should NOT use password without enabling TLS: '%s'\n", urlString)
 		}
 
-		sa := &secret.Agent{}
-		if err := sa.Start([]string{passwordFile}); err != nil {
+		if err := secret.Add(passwordFile); err != nil {
 			logrus.WithError(err).Fatal("Failed to start secrets agent")
 		}
-		getPassword = sa.GetTokenGenerator(passwordFile)
+		getPassword = secret.GetTokenGenerator(passwordFile)
 	}
 
+	return NewClientWithPasswordGetter(owner, urlString, username, getPassword)
+}
+
+// NewClientWithPasswordGetter creates a Boskos client for the specified URL and resource owner.
+//
+// Clients created with this function default to retrying failed connection
+// attempts three times with a ten second pause between each attempt.
+func NewClientWithPasswordGetter(owner string, urlString, username string, passwordGetter func() []byte) (*Client, error) {
 	client := &Client{
 		url:         urlString,
 		username:    username,
-		getPassword: getPassword,
+		getPassword: passwordGetter,
 		owner:       owner,
 		storage:     storage.NewMemoryStorage(),
 	}
@@ -409,6 +423,16 @@ func (c *Client) acquire(rtype, state, dest, requestID string) (*common.Resource
 		case http.StatusUnauthorized:
 			return false, ErrAlreadyInUse
 		case http.StatusNotFound:
+			// The only way to distinguish between all reasources being busy and a request for a non-existent
+			// resource type is to check the text of the accompanying error message.
+			if c.DistinguishNotFoundVsTypeNotFound {
+				if bytes, err := io.ReadAll(resp.Body); err == nil {
+					errorMsg := string(bytes)
+					if strings.Contains(errorMsg, common.ResourceTypeNotFoundMessage(rtype)) {
+						return false, ErrTypeNotFound
+					}
+				}
+			}
 			return false, ErrNotFound
 		default:
 			*retriedErrs = append(*retriedErrs, fmt.Errorf("status %s, status code %v", resp.Status, resp.StatusCode))
@@ -661,10 +685,10 @@ func (d *DialerWithRetry) DialContext(ctx context.Context, network, address stri
 // isDialErrorRetriable determines whether or not a dialer should retry
 // a failed connection attempt by examining the connection error to see
 // if it is one of the following error types:
-//  * Timeout
-//  * Temporary
-//  * ECONNREFUSED
-//  * ECONNRESET
+//   - Timeout
+//   - Temporary
+//   - ECONNREFUSED
+//   - ECONNRESET
 func isDialErrorRetriable(err error) bool {
 	opErr, isOpErr := err.(*net.OpError)
 	if !isOpErr {

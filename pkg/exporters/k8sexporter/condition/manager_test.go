@@ -29,14 +29,14 @@ import (
 	problemutil "k8s.io/node-problem-detector/pkg/util"
 
 	v1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/util/clock"
+	testclock "k8s.io/utils/clock/testing"
 )
 
 const heartbeatPeriod = 1 * time.Minute
 
-func newTestManager() (*conditionManager, *problemclient.FakeProblemClient, *clock.FakeClock) {
+func newTestManager() (*conditionManager, *problemclient.FakeProblemClient, *testclock.FakeClock) {
 	fakeClient := problemclient.NewFakeProblemClient()
-	fakeClock := clock.NewFakeClock(time.Now())
+	fakeClock := testclock.NewFakeClock(time.Now())
 	manager := NewConditionManager(fakeClient, fakeClock, heartbeatPeriod)
 	return manager.(*conditionManager), fakeClient, fakeClock
 }

@@ -261,9 +261,9 @@ func (ud *UserData) Set(id string, in interface{}) error {
 
 // Update updates existing UserData with new UserData.
 // If a key as an empty string, the key will be deleted
-func (ud *UserData) Update(new *UserData) {
+func (ud *UserData) Update(new *UserData) *UserData {
 	if new == nil {
-		return
+		return ud
 	}
 	new.Range(func(key, value interface{}) bool {
 		if value.(string) != "" {
@@ -273,10 +273,14 @@ func (ud *UserData) Update(new *UserData) {
 		}
 		return true
 	})
+	return ud
 }
 
 // ToMap converts a UserData to UserDataMap
 func (ud *UserData) ToMap() UserDataMap {
+	if ud == nil {
+		return nil
+	}
 	m := UserDataMap{}
 	ud.Range(func(key, value interface{}) bool {
 		m[key.(string)] = value.(string)
@@ -290,4 +294,8 @@ func (ud *UserData) FromMap(m UserDataMap) {
 	for key, value := range m {
 		ud.Store(key, value)
 	}
+}
+
+func ResourceTypeNotFoundMessage(rType string) string {
+	return fmt.Sprintf("resource type %q does not exist", rType)
 }
