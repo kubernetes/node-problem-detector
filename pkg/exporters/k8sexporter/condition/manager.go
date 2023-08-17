@@ -18,6 +18,7 @@ package condition
 
 import (
 	"context"
+	"fmt"
 	"reflect"
 	"sync"
 	"time"
@@ -169,7 +170,7 @@ func (c *conditionManager) sync(ctx context.Context) {
 		taintStr := fmt.Sprintf("%s=%s:%s", c.conditions[i].TaintConfig.Key, c.conditions[i].TaintConfig.Value,
 			c.conditions[i].TaintConfig.Effect)
 
-		node, err := c.client.GetNode()
+		node, err := c.client.GetNode(ctx)
 		if err != nil {
 			glog.Errorf("failed to get node: %v", err)
 			continue
@@ -211,7 +212,7 @@ func (c *conditionManager) sync(ctx context.Context) {
 		}
 	}
 
-  if err := c.client.SetConditions(ctx, conditions); err != nil {
+	if err := c.client.SetConditions(ctx, conditions); err != nil {
 		// The conditions will be updated again in future sync
 		glog.Errorf("failed to update node conditions: %v", err)
 		c.resyncNeeded = true

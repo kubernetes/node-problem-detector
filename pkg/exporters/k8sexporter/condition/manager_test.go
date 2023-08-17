@@ -337,7 +337,7 @@ func TestSync(t *testing.T) {
 			fakeClient.InjectError(tc.errorKey, fmt.Errorf("injected error"))
 		}
 
-		m.sync()
+		m.sync(context.Background())
 	}
 }
 
