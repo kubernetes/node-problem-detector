@@ -1,16 +1,13 @@
 reviewers:
-  - Random-Liu
-  - dchen1107
+  - sig-node-reviewers
   - andyxning
   - wangzhen127
   - xueweiz
   - vteratipally
   - mmiranda96
 approvers:
-  - Random-Liu
-  - dchen1107
+  - sig-node-approvers
   - andyxning
   - wangzhen127
   - xueweiz
   - vteratipally
-
