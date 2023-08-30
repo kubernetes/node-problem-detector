@@ -68,7 +68,7 @@ type conditionManager struct {
 	// No lock is needed in `sync`, because it is in the same goroutine with the
 	// write operation.
 	sync.RWMutex
-	clock        clock.Clock
+	clock        clock.WithTicker
 	latestTry    time.Time
 	resyncNeeded bool
 	client       problemclient.Client
@@ -79,7 +79,7 @@ type conditionManager struct {
 }
 
 // NewConditionManager creates a condition manager.
-func NewConditionManager(client problemclient.Client, clock clock.Clock, heartbeatPeriod time.Duration) ConditionManager {
+func NewConditionManager(client problemclient.Client, clock clock.WithTicker, heartbeatPeriod time.Duration) ConditionManager {
 	return &conditionManager{
 		client:          client,
 		clock:           clock,
@@ -112,7 +112,7 @@ func (c *conditionManager) GetConditions() []types.Condition {
 }
 
 func (c *conditionManager) syncLoop(ctx context.Context) {
-	ticker := c.clock.NewTimer(updatePeriod)
+	ticker := c.clock.NewTicker(updatePeriod)
 	defer ticker.Stop()
 	for {
 		select {
