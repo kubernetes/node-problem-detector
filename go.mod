@@ -33,6 +33,7 @@ require (
 	k8s.io/client-go v11.0.1-0.20190805182717-6502b5e7b1b5+incompatible
 	k8s.io/component-base v0.17.2
 	k8s.io/klog v1.0.0
+	k8s.io/utils v0.0.0-20200122174043-1e243dd1a584
 	sigs.k8s.io/boskos v0.0.0-20200515170311-7d36bde8cdf6
 )
 
@@ -95,7 +96,6 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20200410145947-bcb3869e6f29 // indirect
 	k8s.io/test-infra v0.0.0-20200514184223-ba32c8aae783 // indirect
-	k8s.io/utils v0.0.0-20200122174043-1e243dd1a584 // indirect
 	sigs.k8s.io/yaml v1.2.0 // indirect
 )
 

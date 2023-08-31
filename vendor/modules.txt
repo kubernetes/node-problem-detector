@@ -731,6 +731,8 @@ k8s.io/test-infra/prow/logrusutil
 k8s.io/test-infra/prow/version
 # k8s.io/utils v0.0.0-20200122174043-1e243dd1a584
 ## explicit; go 1.12
+k8s.io/utils/clock
+k8s.io/utils/clock/testing
 k8s.io/utils/inotify
 k8s.io/utils/integer
 # sigs.k8s.io/boskos v0.0.0-20200515170311-7d36bde8cdf6
