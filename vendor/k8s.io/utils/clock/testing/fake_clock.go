@@ -24,14 +24,20 @@ import (
 )
 
 var (
-	_ = clock.Clock(&FakeClock{})
+	_ = clock.PassiveClock(&FakePassiveClock{})
+	_ = clock.WithTicker(&FakeClock{})
 	_ = clock.Clock(&IntervalClock{})
 )
 
-// FakeClock implements clock.Clock, but returns an arbitrary time.
-type FakeClock struct {
+// FakePassiveClock implements PassiveClock, but returns an arbitrary time.
+type FakePassiveClock struct {
 	lock sync.RWMutex
 	time time.Time
+}
+
+// FakeClock implements clock.Clock, but returns an arbitrary time.
+type FakeClock struct {
+	FakePassiveClock
 
 	// waiters are waiting for the fake time to pass their specified time
 	waiters []*fakeClockWaiter
@@ -43,27 +49,42 @@ type fakeClockWaiter struct {
 	skipIfBlocked bool
 	destChan      chan time.Time
 	fired         bool
+	afterFunc     func()
+}
+
+// NewFakePassiveClock returns a new FakePassiveClock.
+func NewFakePassiveClock(t time.Time) *FakePassiveClock {
+	return &FakePassiveClock{
+		time: t,
+	}
 }
 
 // NewFakeClock constructs a fake clock set to the provided time.
 func NewFakeClock(t time.Time) *FakeClock {
 	return &FakeClock{
-		time: t,
+		FakePassiveClock: *NewFakePassiveClock(t),
 	}
 }
 
 // Now returns f's time.
-func (f *FakeClock) Now() time.Time {
+func (f *FakePassiveClock) Now() time.Time {
 	f.lock.RLock()
 	defer f.lock.RUnlock()
 	return f.time
 }
 
 // Since returns time since the time in f.
-func (f *FakeClock) Since(ts time.Time) time.Duration {
+func (f *FakePassiveClock) Since(ts time.Time) time.Duration {
 	f.lock.RLock()
 	defer f.lock.RUnlock()
 	return f.time.Sub(ts)
+}
+
+// SetTime sets the time on the FakePassiveClock.
+func (f *FakePassiveClock) SetTime(t time.Time) {
+	f.lock.Lock()
+	defer f.lock.Unlock()
+	f.time = t
 }
 
 // After is the fake version of time.After(d).
@@ -96,6 +117,25 @@ func (f *FakeClock) NewTimer(d time.Duration) clock.Timer {
 	return timer
 }
 
+// AfterFunc is the Fake version of time.AfterFunc(d, cb).
+func (f *FakeClock) AfterFunc(d time.Duration, cb func()) clock.Timer {
+	f.lock.Lock()
+	defer f.lock.Unlock()
+	stopTime := f.time.Add(d)
+	ch := make(chan time.Time, 1) // Don't block!
+
+	timer := &fakeTimer{
+		fakeClock: f,
+		waiter: fakeClockWaiter{
+			targetTime: stopTime,
+			destChan:   ch,
+			afterFunc:  cb,
+		},
+	}
+	f.waiters = append(f.waiters, &timer.waiter)
+	return timer
+}
+
 // Tick constructs a fake ticker, akin to time.Tick
 func (f *FakeClock) Tick(d time.Duration) <-chan time.Time {
 	if d <= 0 {
@@ -113,6 +153,24 @@ func (f *FakeClock) Tick(d time.Duration) <-chan time.Time {
 	})
 
 	return ch
+}
+
+// NewTicker returns a new Ticker.
+func (f *FakeClock) NewTicker(d time.Duration) clock.Ticker {
+	f.lock.Lock()
+	defer f.lock.Unlock()
+	tickTime := f.time.Add(d)
+	ch := make(chan time.Time, 1) // hold one tick
+	f.waiters = append(f.waiters, &fakeClockWaiter{
+		targetTime:    tickTime,
+		stepInterval:  d,
+		skipIfBlocked: true,
+		destChan:      ch,
+	})
+
+	return &fakeTicker{
+		c: ch,
+	}
 }
 
 // Step moves the clock by Duration and notifies anyone that's called After,
@@ -137,7 +195,6 @@ func (f *FakeClock) setTimeLocked(t time.Time) {
 	for i := range f.waiters {
 		w := f.waiters[i]
 		if !w.targetTime.After(t) {
-
 			if w.skipIfBlocked {
 				select {
 				case w.destChan <- t:
@@ -147,6 +204,10 @@ func (f *FakeClock) setTimeLocked(t time.Time) {
 			} else {
 				w.destChan <- t
 				w.fired = true
+			}
+
+			if w.afterFunc != nil {
+				w.afterFunc()
 			}
 
 			if w.stepInterval > 0 {
@@ -163,7 +224,7 @@ func (f *FakeClock) setTimeLocked(t time.Time) {
 	f.waiters = newWaiters
 }
 
-// HasWaiters returns true if After has been called on f but not yet satisfied (so you can
+// HasWaiters returns true if After or AfterFunc has been called on f but not yet satisfied (so you can
 // write race-free tests).
 func (f *FakeClock) HasWaiters() bool {
 	f.lock.RLock()
@@ -176,7 +237,10 @@ func (f *FakeClock) Sleep(d time.Duration) {
 	f.Step(d)
 }
 
-// IntervalClock implements clock.Clock, but each invocation of Now steps the clock forward the specified duration
+// IntervalClock implements clock.PassiveClock, but each invocation of Now steps the clock forward the specified duration.
+// IntervalClock technically implements the other methods of clock.Clock, but each implementation is just a panic.
+//
+// Deprecated: See SimpleIntervalClock for an alternative that only has the methods of PassiveClock.
 type IntervalClock struct {
 	Time     time.Time
 	Duration time.Duration
@@ -205,10 +269,22 @@ func (*IntervalClock) NewTimer(d time.Duration) clock.Timer {
 	panic("IntervalClock doesn't implement NewTimer")
 }
 
+// AfterFunc is unimplemented, will panic.
+// TODO: make interval clock use FakeClock so this can be implemented.
+func (*IntervalClock) AfterFunc(d time.Duration, f func()) clock.Timer {
+	panic("IntervalClock doesn't implement AfterFunc")
+}
+
 // Tick is unimplemented, will panic.
 // TODO: make interval clock use FakeClock so this can be implemented.
 func (*IntervalClock) Tick(d time.Duration) <-chan time.Time {
 	panic("IntervalClock doesn't implement Tick")
+}
+
+// NewTicker has no implementation yet and is omitted.
+// TODO: make interval clock use FakeClock so this can be implemented.
+func (*IntervalClock) NewTicker(d time.Duration) clock.Ticker {
+	panic("IntervalClock doesn't implement NewTicker")
 }
 
 // Sleep is unimplemented, will panic.
@@ -271,4 +347,15 @@ func (f *fakeTimer) Reset(d time.Duration) bool {
 	}
 
 	return active
+}
+
+type fakeTicker struct {
+	c <-chan time.Time
+}
+
+func (t *fakeTicker) C() <-chan time.Time {
+	return t.c
+}
+
+func (t *fakeTicker) Stop() {
 }

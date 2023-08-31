@@ -52,6 +52,12 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 
 		&CSINode{},
 		&CSINodeList{},
+
+		&CSIDriver{},
+		&CSIDriverList{},
+
+		&CSIStorageCapacity{},
+		&CSIStorageCapacityList{},
 	)
 
 	metav1.AddToGroupVersion(scheme, SchemeGroupVersion)
