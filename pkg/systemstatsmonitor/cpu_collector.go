@@ -18,7 +18,7 @@ package systemstatsmonitor
 
 import (
 	"github.com/golang/glog"
-	"github.com/shirou/gopsutil/cpu"
+	"github.com/shirou/gopsutil/v3/cpu"
 
 	ssmtypes "k8s.io/node-problem-detector/pkg/systemstatsmonitor/types"
 	"k8s.io/node-problem-detector/pkg/util/metrics"

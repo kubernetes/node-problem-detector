@@ -23,7 +23,7 @@ import (
 	"time"
 
 	"github.com/golang/glog"
-	"github.com/shirou/gopsutil/disk"
+	"github.com/shirou/gopsutil/v3/disk"
 
 	ssmtypes "k8s.io/node-problem-detector/pkg/systemstatsmonitor/types"
 	"k8s.io/node-problem-detector/pkg/util/metrics"
@@ -288,7 +288,7 @@ func (dc *diskCollector) collect() {
 		}
 		deviceName := strings.TrimPrefix(partition.Device, "/dev/")
 		fstype := partition.Fstype
-		opttypes := partition.Opts
+		opttypes := strings.Join(partition.Opts, ",")
 		dc.mBytesUsed.Record(map[string]string{deviceNameLabel: deviceName, fsTypeLabel: fstype, mountOptionLabel: opttypes, stateLabel: "free"}, int64(usageStat.Free))
 		dc.mBytesUsed.Record(map[string]string{deviceNameLabel: deviceName, fsTypeLabel: fstype, mountOptionLabel: opttypes, stateLabel: "used"}, int64(usageStat.Used))
 	}
