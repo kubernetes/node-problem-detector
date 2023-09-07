@@ -17,7 +17,7 @@ limitations under the License.
 package systemstatsmonitor
 
 import (
-	"github.com/golang/glog"
+	"k8s.io/klog/v2"
 
 	"github.com/shirou/gopsutil/v3/mem"
 )
@@ -29,7 +29,7 @@ func (mc *memoryCollector) collect() {
 
 	meminfo, err := mem.VirtualMemory()
 	if err != nil {
-		glog.Errorf("cannot get windows memory metrics from GlobalMemoryStatusEx: %v", err)
+		klog.Errorf("cannot get windows memory metrics from GlobalMemoryStatusEx: %v", err)
 		return
 	}
 

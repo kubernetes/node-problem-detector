@@ -20,7 +20,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/golang/glog"
+	"k8s.io/klog/v2"
 
 	"k8s.io/node-problem-detector/pkg/types"
 )
@@ -53,7 +53,7 @@ func (p *problemDetector) Run(ctx context.Context) error {
 		ch, err := m.Start()
 		if err != nil {
 			// Do not return error and keep on trying the following config files.
-			glog.Errorf("Failed to start problem daemon %v: %v", m, err)
+			klog.Errorf("Failed to start problem daemon %v: %v", m, err)
 			failureCount++
 			continue
 		}
@@ -74,7 +74,7 @@ func (p *problemDetector) Run(ctx context.Context) error {
 	}()
 
 	ch := groupChannel(chans)
-	glog.Info("Problem detector started")
+	klog.Info("Problem detector started")
 
 	for {
 		select {

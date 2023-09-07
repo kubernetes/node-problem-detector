@@ -25,10 +25,10 @@ import (
 
 	"contrib.go.opencensus.io/exporter/stackdriver"
 	monitoredres "contrib.go.opencensus.io/exporter/stackdriver/monitoredresource"
-	"github.com/golang/glog"
 	"github.com/spf13/pflag"
 	"go.opencensus.io/stats/view"
 	"google.golang.org/api/option"
+	"k8s.io/klog/v2"
 
 	"github.com/avast/retry-go"
 	"k8s.io/node-problem-detector/pkg/exporters"
@@ -137,12 +137,12 @@ func (se *stackdriverExporter) setupOpenCensusViewExporterOrDie() {
 		DefaultMonitoringLabels: &globalLabels,
 	})
 	if err != nil {
-		glog.Fatalf("Failed to create Stackdriver OpenCensus view exporter: %v", err)
+		klog.Fatalf("Failed to create Stackdriver OpenCensus view exporter: %v", err)
 	}
 
 	exportPeriod, err := time.ParseDuration(se.config.ExportPeriod)
 	if err != nil {
-		glog.Fatalf("Failed to parse ExportPeriod %q: %v", se.config.ExportPeriod, err)
+		klog.Fatalf("Failed to parse ExportPeriod %q: %v", se.config.ExportPeriod, err)
 	}
 
 	view.SetReportingPeriod(exportPeriod)
@@ -151,33 +151,33 @@ func (se *stackdriverExporter) setupOpenCensusViewExporterOrDie() {
 
 func (se *stackdriverExporter) populateMetadataOrDie() {
 	if !se.config.GCEMetadata.HasMissingField() {
-		glog.Infof("Using GCE metadata specified in the config file: %+v", se.config.GCEMetadata)
+		klog.Infof("Using GCE metadata specified in the config file: %+v", se.config.GCEMetadata)
 		return
 	}
 
 	metadataFetchTimeout, err := time.ParseDuration(se.config.MetadataFetchTimeout)
 	if err != nil {
-		glog.Fatalf("Failed to parse MetadataFetchTimeout %q: %v", se.config.MetadataFetchTimeout, err)
+		klog.Fatalf("Failed to parse MetadataFetchTimeout %q: %v", se.config.MetadataFetchTimeout, err)
 	}
 
 	metadataFetchInterval, err := time.ParseDuration(se.config.MetadataFetchInterval)
 	if err != nil {
-		glog.Fatalf("Failed to parse MetadataFetchInterval %q: %v", se.config.MetadataFetchInterval, err)
+		klog.Fatalf("Failed to parse MetadataFetchInterval %q: %v", se.config.MetadataFetchInterval, err)
 	}
 
-	glog.Infof("Populating GCE metadata by querying GCE metadata server.")
+	klog.Infof("Populating GCE metadata by querying GCE metadata server.")
 	err = retry.Do(se.config.GCEMetadata.PopulateFromGCE,
 		retry.Delay(metadataFetchInterval),
 		retry.Attempts(uint(metadataFetchTimeout/metadataFetchInterval)),
 		retry.DelayType(retry.FixedDelay))
 	if err == nil {
-		glog.Infof("Using GCE metadata: %+v", se.config.GCEMetadata)
+		klog.Infof("Using GCE metadata: %+v", se.config.GCEMetadata)
 		return
 	}
 	if se.config.PanicOnMetadataFetchFailure {
-		glog.Fatalf("Failed to populate GCE metadata: %v", err)
+		klog.Fatalf("Failed to populate GCE metadata: %v", err)
 	} else {
-		glog.Errorf("Failed to populate GCE metadata: %v", err)
+		klog.Errorf("Failed to populate GCE metadata: %v", err)
 	}
 }
 
@@ -200,7 +200,7 @@ func (clo *commandLineOptions) SetFlags(fs *pflag.FlagSet) {
 func NewExporterOrDie(clo types.CommandLineOptions) types.Exporter {
 	options, ok := clo.(*commandLineOptions)
 	if !ok {
-		glog.Fatalf("Wrong type for the command line options of Stackdriver Exporter: %s.", reflect.TypeOf(clo))
+		klog.Fatalf("Wrong type for the command line options of Stackdriver Exporter: %s.", reflect.TypeOf(clo))
 	}
 	if options.configPath == "" {
 		return nil
@@ -211,15 +211,15 @@ func NewExporterOrDie(clo types.CommandLineOptions) types.Exporter {
 	// Apply configurations.
 	f, err := os.ReadFile(options.configPath)
 	if err != nil {
-		glog.Fatalf("Failed to read configuration file %q: %v", options.configPath, err)
+		klog.Fatalf("Failed to read configuration file %q: %v", options.configPath, err)
 	}
 	err = json.Unmarshal(f, &se.config)
 	if err != nil {
-		glog.Fatalf("Failed to unmarshal configuration file %q: %v", options.configPath, err)
+		klog.Fatalf("Failed to unmarshal configuration file %q: %v", options.configPath, err)
 	}
 	se.config.ApplyConfiguration()
 
-	glog.Infof("Starting Stackdriver exporter %s", options.configPath)
+	klog.Infof("Starting Stackdriver exporter %s", options.configPath)
 
 	se.populateMetadataOrDie()
 	se.setupOpenCensusViewExporterOrDie()

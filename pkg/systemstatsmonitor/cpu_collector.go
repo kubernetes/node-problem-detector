@@ -17,8 +17,8 @@ limitations under the License.
 package systemstatsmonitor
 
 import (
-	"github.com/golang/glog"
 	"github.com/shirou/gopsutil/v3/cpu"
+	"k8s.io/klog/v2"
 
 	ssmtypes "k8s.io/node-problem-detector/pkg/systemstatsmonitor/types"
 	"k8s.io/node-problem-detector/pkg/util/metrics"
@@ -67,7 +67,7 @@ func NewCPUCollectorOrDie(cpuConfig *ssmtypes.CPUStatsConfig, procPath string) *
 		metrics.LastValue,
 		[]string{})
 	if err != nil {
-		glog.Fatalf("Error initializing metric for %q: %v", metrics.CPURunnableTaskCountID, err)
+		klog.Fatalf("Error initializing metric for %q: %v", metrics.CPURunnableTaskCountID, err)
 	}
 
 	cc.mUsageTime, err = metrics.NewFloat64Metric(
@@ -78,7 +78,7 @@ func NewCPUCollectorOrDie(cpuConfig *ssmtypes.CPUStatsConfig, procPath string) *
 		metrics.Sum,
 		[]string{stateLabel})
 	if err != nil {
-		glog.Fatalf("Error initializing metric for %q: %v", metrics.CPUUsageTimeID, err)
+		klog.Fatalf("Error initializing metric for %q: %v", metrics.CPUUsageTimeID, err)
 	}
 
 	cc.mCpuLoad1m, err = metrics.NewFloat64Metric(
@@ -89,7 +89,7 @@ func NewCPUCollectorOrDie(cpuConfig *ssmtypes.CPUStatsConfig, procPath string) *
 		metrics.LastValue,
 		[]string{})
 	if err != nil {
-		glog.Fatalf("Error initializing metric for %q: %v", metrics.CPULoad1m, err)
+		klog.Fatalf("Error initializing metric for %q: %v", metrics.CPULoad1m, err)
 	}
 
 	cc.mCpuLoad5m, err = metrics.NewFloat64Metric(
@@ -100,7 +100,7 @@ func NewCPUCollectorOrDie(cpuConfig *ssmtypes.CPUStatsConfig, procPath string) *
 		metrics.LastValue,
 		[]string{})
 	if err != nil {
-		glog.Fatalf("Error initializing metric for %q: %v", metrics.CPULoad5m, err)
+		klog.Fatalf("Error initializing metric for %q: %v", metrics.CPULoad5m, err)
 	}
 
 	cc.mCpuLoad15m, err = metrics.NewFloat64Metric(
@@ -111,7 +111,7 @@ func NewCPUCollectorOrDie(cpuConfig *ssmtypes.CPUStatsConfig, procPath string) *
 		metrics.LastValue,
 		[]string{})
 	if err != nil {
-		glog.Fatalf("Error initializing metric for %q: %v", metrics.CPULoad15m, err)
+		klog.Fatalf("Error initializing metric for %q: %v", metrics.CPULoad15m, err)
 	}
 
 	cc.mSystemProcessesTotal, err = metrics.NewInt64Metric(
@@ -122,7 +122,7 @@ func NewCPUCollectorOrDie(cpuConfig *ssmtypes.CPUStatsConfig, procPath string) *
 		metrics.Sum,
 		[]string{})
 	if err != nil {
-		glog.Fatalf("Error initializing metric for %q: %v", metrics.SystemProcessesTotal, err)
+		klog.Fatalf("Error initializing metric for %q: %v", metrics.SystemProcessesTotal, err)
 	}
 
 	cc.mSystemProcsRunning, err = metrics.NewInt64Metric(
@@ -133,7 +133,7 @@ func NewCPUCollectorOrDie(cpuConfig *ssmtypes.CPUStatsConfig, procPath string) *
 		metrics.LastValue,
 		[]string{})
 	if err != nil {
-		glog.Fatalf("Error initializing metric for %q: %v", metrics.SystemProcsRunning, err)
+		klog.Fatalf("Error initializing metric for %q: %v", metrics.SystemProcsRunning, err)
 	}
 
 	cc.mSystemProcsBlocked, err = metrics.NewInt64Metric(
@@ -144,7 +144,7 @@ func NewCPUCollectorOrDie(cpuConfig *ssmtypes.CPUStatsConfig, procPath string) *
 		metrics.LastValue,
 		[]string{})
 	if err != nil {
-		glog.Fatalf("Error initializing metric for %q: %v", metrics.SystemProcsBlocked, err)
+		klog.Fatalf("Error initializing metric for %q: %v", metrics.SystemProcsBlocked, err)
 	}
 
 	cc.mSystemInterruptsTotal, err = metrics.NewInt64Metric(
@@ -155,7 +155,7 @@ func NewCPUCollectorOrDie(cpuConfig *ssmtypes.CPUStatsConfig, procPath string) *
 		metrics.Sum,
 		[]string{})
 	if err != nil {
-		glog.Fatalf("Error initializing metric for %q: %v", metrics.SystemInterruptsTotal, err)
+		klog.Fatalf("Error initializing metric for %q: %v", metrics.SystemInterruptsTotal, err)
 	}
 
 	cc.mSystemCPUStat, err = metrics.NewFloat64Metric(
@@ -166,7 +166,7 @@ func NewCPUCollectorOrDie(cpuConfig *ssmtypes.CPUStatsConfig, procPath string) *
 		metrics.Sum,
 		[]string{cpuLabel, stageLabel})
 	if err != nil {
-		glog.Fatalf("Error initializing metric for %q: %v", metrics.SystemCPUStat, err)
+		klog.Fatalf("Error initializing metric for %q: %v", metrics.SystemCPUStat, err)
 	}
 
 	cc.lastUsageTime = make(map[string]float64)
@@ -182,7 +182,7 @@ func (cc *cpuCollector) recordUsage() {
 	// Set percpu=false to get aggregated usage from all CPUs.
 	timersStats, err := cpu.Times(false)
 	if err != nil {
-		glog.Errorf("Failed to retrieve CPU timers stat: %v", err)
+		klog.Errorf("Failed to retrieve CPU timers stat: %v", err)
 		return
 	}
 	timersStat := timersStats[0]

@@ -22,7 +22,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/golang/glog"
+	"k8s.io/klog/v2"
 
 	"k8s.io/node-problem-detector/cmd/healthchecker/options"
 	"k8s.io/node-problem-detector/pkg/healthchecker/types"
@@ -90,7 +90,7 @@ func checkForPattern(service, logStartTime, logPattern string, logCountThreshold
 		return true, err
 	}
 	if occurrences >= logCountThreshold {
-		glog.Infof("%s failed log pattern check, %s occurrences: %v", service, logPattern, occurrences)
+		klog.Infof("%s failed log pattern check, %s occurrences: %v", service, logPattern, occurrences)
 		return false, nil
 	}
 	return true, nil

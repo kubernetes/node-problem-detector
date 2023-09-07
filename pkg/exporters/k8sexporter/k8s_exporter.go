@@ -23,7 +23,7 @@ import (
 	_ "net/http/pprof"
 	"strconv"
 
-	"github.com/golang/glog"
+	"k8s.io/klog/v2"
 
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/utils/clock"
@@ -52,9 +52,9 @@ func NewExporterOrDie(ctx context.Context, npdo *options.NodeProblemDetectorOpti
 
 	c := problemclient.NewClientOrDie(npdo)
 
-	glog.Infof("Waiting for kube-apiserver to be ready (timeout %v)...", npdo.APIServerWaitTimeout)
+	klog.Infof("Waiting for kube-apiserver to be ready (timeout %v)...", npdo.APIServerWaitTimeout)
 	if err := waitForAPIServerReadyWithTimeout(ctx, c, npdo); err != nil {
-		glog.Warningf("kube-apiserver did not become ready: timed out on waiting for kube-apiserver to return the node object: %v", err)
+		klog.Warningf("kube-apiserver did not become ready: timed out on waiting for kube-apiserver to return the node object: %v", err)
 	}
 
 	ke := k8sExporter{
@@ -99,7 +99,7 @@ func (ke *k8sExporter) startHTTPReporting(npdo *options.NodeProblemDetectorOptio
 	go func() {
 		err := http.ListenAndServe(addr, mux)
 		if err != nil {
-			glog.Fatalf("Failed to start server: %v", err)
+			klog.Fatalf("Failed to start server: %v", err)
 		}
 	}()
 }
@@ -109,7 +109,7 @@ func waitForAPIServerReadyWithTimeout(ctx context.Context, c problemclient.Clien
 		// If NPD can get the node object from kube-apiserver, the server is
 		// ready and the RBAC permission is set correctly.
 		if _, err := c.GetNode(ctx); err != nil {
-			glog.Errorf("Can't get node object: %v", err)
+			klog.Errorf("Can't get node object: %v", err)
 			return false, nil
 		}
 		return true, nil

@@ -21,7 +21,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/golang/glog"
+	"k8s.io/klog/v2"
 
 	"k8s.io/node-problem-detector/pkg/custompluginmonitor/plugin"
 	cpmtypes "k8s.io/node-problem-detector/pkg/custompluginmonitor/types"
@@ -59,25 +59,25 @@ func NewCustomPluginMonitorOrDie(configPath string) types.Monitor {
 	}
 	f, err := os.ReadFile(configPath)
 	if err != nil {
-		glog.Fatalf("Failed to read configuration file %q: %v", configPath, err)
+		klog.Fatalf("Failed to read configuration file %q: %v", configPath, err)
 	}
 	err = json.Unmarshal(f, &c.config)
 	if err != nil {
-		glog.Fatalf("Failed to unmarshal configuration file %q: %v", configPath, err)
+		klog.Fatalf("Failed to unmarshal configuration file %q: %v", configPath, err)
 	}
 	// Apply configurations
 	err = (&c.config).ApplyConfiguration()
 	if err != nil {
-		glog.Fatalf("Failed to apply configuration for %q: %v", configPath, err)
+		klog.Fatalf("Failed to apply configuration for %q: %v", configPath, err)
 	}
 
 	// Validate configurations
 	err = c.config.Validate()
 	if err != nil {
-		glog.Fatalf("Failed to validate custom plugin config %+v: %v", c.config, err)
+		klog.Fatalf("Failed to validate custom plugin config %+v: %v", c.config, err)
 	}
 
-	glog.Infof("Finish parsing custom plugin monitor config file %s: %+v", c.configPath, c.config)
+	klog.Infof("Finish parsing custom plugin monitor config file %s: %+v", c.configPath, c.config)
 
 	c.plugin = plugin.NewPlugin(c.config)
 	// A 1000 size channel should be big enough.
@@ -96,26 +96,26 @@ func initializeProblemMetricsOrDie(rules []*cpmtypes.CustomRule) {
 		if rule.Type == types.Perm {
 			err := problemmetrics.GlobalProblemMetricsManager.SetProblemGauge(rule.Condition, rule.Reason, false)
 			if err != nil {
-				glog.Fatalf("Failed to initialize problem gauge metrics for problem %q, reason %q: %v",
+				klog.Fatalf("Failed to initialize problem gauge metrics for problem %q, reason %q: %v",
 					rule.Condition, rule.Reason, err)
 			}
 		}
 		err := problemmetrics.GlobalProblemMetricsManager.IncrementProblemCounter(rule.Reason, 0)
 		if err != nil {
-			glog.Fatalf("Failed to initialize problem counter metrics for %q: %v", rule.Reason, err)
+			klog.Fatalf("Failed to initialize problem counter metrics for %q: %v", rule.Reason, err)
 		}
 	}
 }
 
 func (c *customPluginMonitor) Start() (<-chan *types.Status, error) {
-	glog.Infof("Start custom plugin monitor %s", c.configPath)
+	klog.Infof("Start custom plugin monitor %s", c.configPath)
 	go c.plugin.Run()
 	go c.monitorLoop()
 	return c.statusChan, nil
 }
 
 func (c *customPluginMonitor) Stop() {
-	glog.Infof("Stop custom plugin monitor %s", c.configPath)
+	klog.Infof("Stop custom plugin monitor %s", c.configPath)
 	c.tomb.Stop()
 }
 
@@ -133,16 +133,16 @@ func (c *customPluginMonitor) monitorLoop() {
 		select {
 		case result, ok := <-resultChan:
 			if !ok {
-				glog.Errorf("Result channel closed: %s", c.configPath)
+				klog.Errorf("Result channel closed: %s", c.configPath)
 				return
 			}
-			glog.V(3).Infof("Receive new plugin result for %s: %+v", c.configPath, result)
+			klog.V(3).Infof("Receive new plugin result for %s: %+v", c.configPath, result)
 			status := c.generateStatus(result)
-			glog.V(3).Infof("New status generated: %+v", status)
+			klog.V(3).Infof("New status generated: %+v", status)
 			c.statusChan <- status
 		case <-c.tomb.Stopping():
 			c.plugin.Stop()
-			glog.Infof("Custom plugin monitor stopped: %s", c.configPath)
+			klog.Infof("Custom plugin monitor stopped: %s", c.configPath)
 			c.tomb.Done()
 			return
 		}
@@ -256,7 +256,7 @@ func (c *customPluginMonitor) generateStatus(result cpmtypes.Result) *types.Stat
 			err := problemmetrics.GlobalProblemMetricsManager.IncrementProblemCounter(
 				event.Reason, 1)
 			if err != nil {
-				glog.Errorf("Failed to update problem counter metrics for %q: %v",
+				klog.Errorf("Failed to update problem counter metrics for %q: %v",
 					event.Reason, err)
 			}
 		}
@@ -264,7 +264,7 @@ func (c *customPluginMonitor) generateStatus(result cpmtypes.Result) *types.Stat
 			err := problemmetrics.GlobalProblemMetricsManager.SetProblemGauge(
 				condition.Type, condition.Reason, condition.Status == types.True)
 			if err != nil {
-				glog.Errorf("Failed to update problem gauge metrics for problem %q, reason %q: %v",
+				klog.Errorf("Failed to update problem gauge metrics for problem %q, reason %q: %v",
 					condition.Type, condition.Reason, err)
 			}
 		}
@@ -277,7 +277,7 @@ func (c *customPluginMonitor) generateStatus(result cpmtypes.Result) *types.Stat
 	}
 	// Log only if condition has changed
 	if len(activeProblemEvents) != 0 || len(inactiveProblemEvents) != 0 {
-		glog.V(0).Infof("New status generated: %+v", status)
+		klog.V(0).Infof("New status generated: %+v", status)
 	}
 	return status
 }
@@ -297,7 +297,7 @@ func toConditionStatus(s cpmtypes.Status) types.ConditionStatus {
 func (c *customPluginMonitor) initializeStatus() {
 	// Initialize the default node conditions
 	c.conditions = initialConditions(c.config.DefaultConditions)
-	glog.Infof("Initialize condition generated: %+v", c.conditions)
+	klog.Infof("Initialize condition generated: %+v", c.conditions)
 	// Update the initial status
 	c.statusChan <- &types.Status{
 		Source:     c.config.Source,

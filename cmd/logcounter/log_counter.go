@@ -26,13 +26,16 @@ import (
 
 	"github.com/spf13/pflag"
 
+	"k8s.io/klog/v2"
 	"k8s.io/node-problem-detector/cmd/logcounter/options"
 	"k8s.io/node-problem-detector/pkg/custompluginmonitor/types"
 	"k8s.io/node-problem-detector/pkg/logcounter"
 )
 
 func main() {
-	// Set glog flag so that it does not log to files.
+	// Set klog flag so that it does not log to files.
+	klog.InitFlags(nil)
+
 	if err := flag.Set("logtostderr", "true"); err != nil {
 		fmt.Printf("Failed to set logtostderr=true: %v", err)
 		os.Exit(int(types.Unknown))

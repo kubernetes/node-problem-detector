@@ -23,8 +23,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/golang/glog"
 	"github.com/spf13/pflag"
+	"k8s.io/klog/v2"
 
 	"k8s.io/node-problem-detector/test/e2e/problemmaker/makers"
 )
@@ -54,7 +54,8 @@ func (o *options) AddFlags(fs *pflag.FlagSet) {
 }
 
 func main() {
-	// Set glog flag so that it does not log to files.
+	// Set klog flag so that it does not log to files.
+	klog.InitFlags(nil)
 	if err := flag.Set("logtostderr", "true"); err != nil {
 		fmt.Printf("Failed to set logtostderr=true: %v\n", err)
 		os.Exit(1)
@@ -65,12 +66,12 @@ func main() {
 	pflag.Parse()
 
 	if o.Problem == "" {
-		glog.Fatalf("Please specify the type of problem to make using the --problem argument.")
+		klog.Fatalf("Please specify the type of problem to make using the --problem argument.")
 	}
 
 	problemGenerator, ok := makers.ProblemGenerators[o.Problem]
 	if !ok {
-		glog.Fatalf("Expected to see a problem type of one of %q, but got %q.",
+		klog.Fatalf("Expected to see a problem type of one of %q, but got %q.",
 			makers.GetProblemTypes(), o.Problem)
 	}
 
@@ -89,7 +90,7 @@ func main() {
 		case <-done:
 			return
 		case <-ticker.C:
-			glog.Infof("Generating problem: %q", o.Problem)
+			klog.Infof("Generating problem: %q", o.Problem)
 			problemGenerator()
 		}
 	}

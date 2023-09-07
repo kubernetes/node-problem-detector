@@ -19,13 +19,13 @@ package kmsg
 import (
 	"runtime"
 
-	"github.com/golang/glog"
+	"k8s.io/klog/v2"
 
 	"k8s.io/node-problem-detector/pkg/systemlogmonitor/logwatchers/types"
 )
 
 // NewKmsgWatcher creates a watcher which will read messages from /dev/kmsg
 func NewKmsgWatcher(cfg types.WatcherConfig) types.LogWatcher {
-	glog.Fatalf("kmsg parser is not supported in %s", runtime.GOOS)
+	klog.Fatalf("kmsg parser is not supported in %s", runtime.GOOS)
 	return nil
 }

@@ -22,11 +22,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/golang/glog"
 	"github.com/spf13/pflag"
 	"golang.org/x/sys/windows/svc"
 	"golang.org/x/sys/windows/svc/debug"
 	"golang.org/x/sys/windows/svc/eventlog"
+	"k8s.io/klog/v2"
 	"k8s.io/node-problem-detector/cmd/options"
 )
 
@@ -62,7 +62,7 @@ func main() {
 func isRunningAsWindowsService() bool {
 	runningAsService, err := svc.IsWindowsService()
 	if err != nil {
-		glog.Errorf("cannot determine if running as Windows Service assuming standalone, %v", err)
+		klog.Errorf("cannot determine if running as Windows Service assuming standalone, %v", err)
 		return false
 	}
 	return runningAsService

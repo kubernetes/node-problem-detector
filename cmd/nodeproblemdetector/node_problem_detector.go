@@ -19,7 +19,7 @@ package main
 import (
 	"context"
 
-	"github.com/golang/glog"
+	"k8s.io/klog/v2"
 
 	_ "k8s.io/node-problem-detector/cmd/nodeproblemdetector/exporterplugins"
 	_ "k8s.io/node-problem-detector/cmd/nodeproblemdetector/problemdaemonplugins"
@@ -46,18 +46,18 @@ func npdMain(ctx context.Context, npdo *options.NodeProblemDetectorOptions) erro
 	// Initialize problem daemons.
 	problemDaemons := problemdaemon.NewProblemDaemons(npdo.MonitorConfigPaths)
 	if len(problemDaemons) == 0 {
-		glog.Fatalf("No problem daemon is configured")
+		klog.Fatalf("No problem daemon is configured")
 	}
 
 	// Initialize exporters.
 	defaultExporters := []types.Exporter{}
 	if ke := k8sexporter.NewExporterOrDie(ctx, npdo); ke != nil {
 		defaultExporters = append(defaultExporters, ke)
-		glog.Info("K8s exporter started.")
+		klog.Info("K8s exporter started.")
 	}
 	if pe := prometheusexporter.NewExporterOrDie(npdo); pe != nil {
 		defaultExporters = append(defaultExporters, pe)
-		glog.Info("Prometheus exporter started.")
+		klog.Info("Prometheus exporter started.")
 	}
 
 	plugableExporters := exporters.NewExporters()
@@ -67,7 +67,7 @@ func npdMain(ctx context.Context, npdo *options.NodeProblemDetectorOptions) erro
 	npdExporters = append(npdExporters, plugableExporters...)
 
 	if len(npdExporters) == 0 {
-		glog.Fatalf("No exporter is successfully setup")
+		klog.Fatalf("No exporter is successfully setup")
 	}
 
 	// Initialize NPD core.

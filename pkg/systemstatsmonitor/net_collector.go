@@ -22,8 +22,8 @@ import (
 	ssmtypes "k8s.io/node-problem-detector/pkg/systemstatsmonitor/types"
 	"k8s.io/node-problem-detector/pkg/util/metrics"
 
-	"github.com/golang/glog"
 	"github.com/prometheus/procfs"
+	"k8s.io/klog/v2"
 )
 
 type newInt64MetricFn func(metricID metrics.MetricID, viewName string, description string, unit string, aggregation metrics.Aggregation, tagNames []string) (metrics.Int64MetricInterface, error)
@@ -208,12 +208,12 @@ func (nc *netCollector) mustRegisterMetric(metricID metrics.MetricID, descriptio
 	aggregation metrics.Aggregation, exporter func(stat procfs.NetDevLine) int64) {
 	metricConfig, ok := nc.config.MetricsConfigs[string(metricID)]
 	if !ok {
-		glog.Fatalf("Metric config `%q` not found", metricID)
+		klog.Fatalf("Metric config `%q` not found", metricID)
 	}
 	err := nc.recorder.Register(metricID, metricConfig.DisplayName, description, unit,
 		aggregation, []string{interfaceNameLabel}, exporter)
 	if err != nil {
-		glog.Fatalf("Failed to initialize metric %q: %v", metricID, err)
+		klog.Fatalf("Failed to initialize metric %q: %v", metricID, err)
 	}
 }
 
@@ -221,14 +221,14 @@ func (nc *netCollector) recordNetDev() {
 	fs, err := procfs.NewFS(nc.procPath)
 	stats, err := fs.NetDev()
 	if err != nil {
-		glog.Errorf("Failed to retrieve net dev stat: %v", err)
+		klog.Errorf("Failed to retrieve net dev stat: %v", err)
 		return
 	}
 
 	excludeInterfaceRegexp := nc.config.ExcludeInterfaceRegexp.R
 	for iface, ifaceStats := range stats {
 		if excludeInterfaceRegexp != nil && excludeInterfaceRegexp.MatchString(iface) {
-			glog.V(6).Infof("Network interface %s matched exclude regexp %q, skipping recording", iface, excludeInterfaceRegexp)
+			klog.V(6).Infof("Network interface %s matched exclude regexp %q, skipping recording", iface, excludeInterfaceRegexp)
 			continue
 		}
 		tags := map[string]string{}
@@ -282,7 +282,7 @@ func (r ifaceStatRecorder) RecordWithSameTags(stat procfs.NetDevLine, tags map[s
 	for metricID, collector := range r.collectors {
 		measurement := collector.exporter(stat)
 		collector.metric.Record(tags, measurement)
-		glog.V(6).Infof("Metric %q record measurement %d with tags %v", metricID, measurement, tags)
+		klog.V(6).Infof("Metric %q record measurement %d with tags %v", metricID, measurement, tags)
 	}
 }
 

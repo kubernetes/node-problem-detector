@@ -24,7 +24,7 @@ import (
 	"time"
 
 	utilclock "code.cloudfoundry.org/clock"
-	"github.com/golang/glog"
+	"k8s.io/klog/v2"
 
 	"k8s.io/node-problem-detector/pkg/systemlogmonitor/logwatchers/types"
 	logtypes "k8s.io/node-problem-detector/pkg/systemlogmonitor/types"
@@ -48,11 +48,11 @@ type filelogWatcher struct {
 func NewSyslogWatcherOrDie(cfg types.WatcherConfig) types.LogWatcher {
 	uptime, err := util.GetUptimeDuration()
 	if err != nil {
-		glog.Fatalf("failed to get uptime: %v", err)
+		klog.Fatalf("failed to get uptime: %v", err)
 	}
 	startTime, err := util.GetStartTime(time.Now(), uptime, cfg.Lookback, cfg.Delay)
 	if err != nil {
-		glog.Fatalf("failed to get start time: %v", err)
+		klog.Fatalf("failed to get start time: %v", err)
 	}
 
 	return &filelogWatcher{
@@ -77,7 +77,7 @@ func (s *filelogWatcher) Watch() (<-chan *logtypes.Log, error) {
 	}
 	s.reader = bufio.NewReader(r)
 	s.closer = r
-	glog.Info("Start watching filelog")
+	klog.Info("Start watching filelog")
 	go s.watchLoop()
 	return s.logCh, nil
 }
@@ -102,14 +102,14 @@ func (s *filelogWatcher) watchLoop() {
 	for {
 		select {
 		case <-s.tomb.Stopping():
-			glog.Infof("Stop watching filelog")
+			klog.Infof("Stop watching filelog")
 			return
 		default:
 		}
 
 		line, err := s.reader.ReadString('\n')
 		if err != nil && err != io.EOF {
-			glog.Errorf("Exiting filelog watch with error: %v", err)
+			klog.Errorf("Exiting filelog watch with error: %v", err)
 			return
 		}
 		buffer.WriteString(line)
@@ -121,12 +121,12 @@ func (s *filelogWatcher) watchLoop() {
 		buffer.Reset()
 		log, err := s.translator.translate(strings.TrimSuffix(line, "\n"))
 		if err != nil {
-			glog.Warningf("Unable to parse line: %q, %v", line, err)
+			klog.Warningf("Unable to parse line: %q, %v", line, err)
 			continue
 		}
 		// Discard messages before start time.
 		if log.Timestamp.Before(s.startTime) {
-			glog.V(5).Infof("Throwing away msg %q before start time: %v < %v", log.Message, log.Timestamp, s.startTime)
+			klog.V(5).Infof("Throwing away msg %q before start time: %v < %v", log.Message, log.Timestamp, s.startTime)
 			continue
 		}
 		s.logCh <- log
