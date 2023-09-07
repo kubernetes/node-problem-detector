@@ -19,8 +19,8 @@ package main
 import (
 	"context"
 
-	"github.com/golang/glog"
 	"github.com/spf13/pflag"
+	"k8s.io/klog/v2"
 	"k8s.io/node-problem-detector/cmd/options"
 )
 
@@ -30,6 +30,6 @@ func main() {
 
 	pflag.Parse()
 	if err := npdMain(context.Background(), npdo); err != nil {
-		glog.Fatalf("Problem detector failed with error: %v", err)
+		klog.Fatalf("Problem detector failed with error: %v", err)
 	}
 }

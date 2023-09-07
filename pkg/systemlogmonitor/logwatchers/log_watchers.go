@@ -19,7 +19,7 @@ package logwatchers
 import (
 	"k8s.io/node-problem-detector/pkg/systemlogmonitor/logwatchers/types"
 
-	"github.com/golang/glog"
+	"k8s.io/klog/v2"
 )
 
 // createFuncs is a table of createFuncs for all supported log watchers.
@@ -35,8 +35,8 @@ func registerLogWatcher(name string, create types.WatcherCreateFunc) {
 func GetLogWatcherOrDie(config types.WatcherConfig) types.LogWatcher {
 	create, ok := createFuncs[config.Plugin]
 	if !ok {
-		glog.Fatalf("No create function found for plugin %q", config.Plugin)
+		klog.Fatalf("No create function found for plugin %q", config.Plugin)
 	}
-	glog.Infof("Use log watcher of plugin %q", config.Plugin)
+	klog.Infof("Use log watcher of plugin %q", config.Plugin)
 	return create(config)
 }

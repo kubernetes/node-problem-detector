@@ -22,7 +22,7 @@ import (
 
 	logtypes "k8s.io/node-problem-detector/pkg/systemlogmonitor/types"
 
-	"github.com/golang/glog"
+	"k8s.io/klog/v2"
 )
 
 // translator translates log line into internal log type based on user defined
@@ -46,7 +46,7 @@ const (
 
 func newTranslatorOrDie(pluginConfig map[string]string) *translator {
 	if err := validatePluginConfig(pluginConfig); err != nil {
-		glog.Errorf("Failed to validate plugin configuration %+v: %v", pluginConfig, err)
+		klog.Errorf("Failed to validate plugin configuration %+v: %v", pluginConfig, err)
 	}
 	return &translator{
 		timestampRegexp: regexp.MustCompile(pluginConfig[timestampKey]),

@@ -22,8 +22,8 @@ import (
 	"strconv"
 
 	"contrib.go.opencensus.io/exporter/prometheus"
-	"github.com/golang/glog"
 	"go.opencensus.io/stats/view"
+	"k8s.io/klog/v2"
 
 	"k8s.io/node-problem-detector/cmd/options"
 	"k8s.io/node-problem-detector/pkg/types"
@@ -40,13 +40,13 @@ func NewExporterOrDie(npdo *options.NodeProblemDetectorOptions) types.Exporter {
 	addr := net.JoinHostPort(npdo.PrometheusServerAddress, strconv.Itoa(npdo.PrometheusServerPort))
 	pe, err := prometheus.NewExporter(prometheus.Options{})
 	if err != nil {
-		glog.Fatalf("Failed to create Prometheus exporter: %v", err)
+		klog.Fatalf("Failed to create Prometheus exporter: %v", err)
 	}
 	go func() {
 		mux := http.NewServeMux()
 		mux.Handle("/metrics", pe)
 		if err := http.ListenAndServe(addr, mux); err != nil {
-			glog.Fatalf("Failed to start Prometheus scrape endpoint: %v", err)
+			klog.Fatalf("Failed to start Prometheus scrape endpoint: %v", err)
 		}
 	}()
 	view.RegisterExporter(pe)

@@ -19,9 +19,9 @@ package systemstatsmonitor
 import (
 	"fmt"
 
-	"github.com/golang/glog"
 	"github.com/prometheus/procfs"
 	"github.com/shirou/gopsutil/v3/load"
+	"k8s.io/klog/v2"
 )
 
 func (cc *cpuCollector) recordLoad() {
@@ -33,7 +33,7 @@ func (cc *cpuCollector) recordLoad() {
 
 	loadAvg, err := load.Avg()
 	if err != nil {
-		glog.Errorf("Failed to retrieve average CPU load: %v", err)
+		klog.Errorf("Failed to retrieve average CPU load: %v", err)
 		return
 	}
 
@@ -62,7 +62,7 @@ func (cc *cpuCollector) recordSystemStats() {
 	fs, err := procfs.NewFS(cc.procPath)
 	stats, err := fs.Stat()
 	if err != nil {
-		glog.Errorf("Failed to retrieve cpu/process stats: %v", err)
+		klog.Errorf("Failed to retrieve cpu/process stats: %v", err)
 		return
 	}
 

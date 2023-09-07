@@ -17,8 +17,8 @@ limitations under the License.
 package systemstatsmonitor
 
 import (
-	"github.com/golang/glog"
 	"github.com/shirou/gopsutil/v3/host"
+	"k8s.io/klog/v2"
 
 	ssmtypes "k8s.io/node-problem-detector/pkg/systemstatsmonitor/types"
 	"k8s.io/node-problem-detector/pkg/util"
@@ -35,13 +35,13 @@ func NewHostCollectorOrDie(hostConfig *ssmtypes.HostStatsConfig) *hostCollector 
 
 	kernelVersion, err := host.KernelVersion()
 	if err != nil {
-		glog.Fatalf("Failed to retrieve kernel version: %v", err)
+		klog.Fatalf("Failed to retrieve kernel version: %v", err)
 	}
 	hc.tags["kernel_version"] = kernelVersion
 
 	osVersion, err := util.GetOSVersion()
 	if err != nil {
-		glog.Fatalf("Failed to retrieve OS version: %v", err)
+		klog.Fatalf("Failed to retrieve OS version: %v", err)
 	}
 	hc.tags["os_version"] = osVersion
 
@@ -55,7 +55,7 @@ func NewHostCollectorOrDie(hostConfig *ssmtypes.HostStatsConfig) *hostCollector 
 			metrics.LastValue,
 			[]string{"kernel_version", "os_version"})
 		if err != nil {
-			glog.Fatalf("Error initializing metric for host/uptime: %v", err)
+			klog.Fatalf("Error initializing metric for host/uptime: %v", err)
 		}
 	}
 
@@ -69,7 +69,7 @@ func (hc *hostCollector) collect() {
 
 	uptime, err := host.Uptime()
 	if err != nil {
-		glog.Errorf("Failed to retrieve uptime of the host: %v", err)
+		klog.Errorf("Failed to retrieve uptime of the host: %v", err)
 		return
 	}
 

@@ -29,7 +29,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/utils/clock"
 
-	"github.com/golang/glog"
+	"k8s.io/klog/v2"
 )
 
 const (
@@ -162,7 +162,7 @@ func (c *conditionManager) sync(ctx context.Context) {
 	}
 	if err := c.client.SetConditions(ctx, conditions); err != nil {
 		// The conditions will be updated again in future sync
-		glog.Errorf("failed to update node conditions: %v", err)
+		klog.Errorf("failed to update node conditions: %v", err)
 		c.resyncNeeded = true
 		return
 	}

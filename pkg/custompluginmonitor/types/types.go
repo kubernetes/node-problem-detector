@@ -17,8 +17,9 @@ limitations under the License.
 package types
 
 import (
-	"k8s.io/node-problem-detector/pkg/types"
 	"time"
+
+	"k8s.io/node-problem-detector/pkg/types"
 )
 
 type Status int

@@ -11,7 +11,6 @@ require (
 	github.com/avast/retry-go v3.0.0+incompatible
 	github.com/coreos/go-systemd v0.0.0-20191104093116-d3cd4ed1dbcf
 	github.com/euank/go-kmsg-parser v2.0.0+incompatible
-	github.com/golang/glog v1.1.1
 	github.com/hpcloud/tail v1.0.0
 	github.com/onsi/ginkgo v1.16.5
 	github.com/onsi/gomega v1.27.8
@@ -32,6 +31,7 @@ require (
 	k8s.io/client-go v9.0.0+incompatible
 	k8s.io/component-base v0.28.1
 	k8s.io/klog v1.0.0
+	k8s.io/klog/v2 v2.100.1
 	k8s.io/utils v0.0.0-20230406110748-d93618cff8a2
 	sigs.k8s.io/boskos v0.0.0-20200515170311-7d36bde8cdf6
 )
@@ -103,7 +103,6 @@ require (
 	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	k8s.io/klog/v2 v2.100.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20230717233707-2695361300d9 // indirect
 	k8s.io/test-infra v0.0.0-20200514184223-ba32c8aae783 // indirect
 	sigs.k8s.io/json v0.0.0-20221116044647-bc3834ca7abd // indirect

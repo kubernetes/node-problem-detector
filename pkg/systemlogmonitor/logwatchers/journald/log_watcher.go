@@ -26,7 +26,7 @@ import (
 	"time"
 
 	"github.com/coreos/go-systemd/sdjournal"
-	"github.com/golang/glog"
+	"k8s.io/klog/v2"
 
 	"k8s.io/node-problem-detector/pkg/systemlogmonitor/logwatchers/types"
 	logtypes "k8s.io/node-problem-detector/pkg/systemlogmonitor/types"
@@ -52,11 +52,11 @@ type journaldWatcher struct {
 func NewJournaldWatcher(cfg types.WatcherConfig) types.LogWatcher {
 	uptime, err := util.GetUptimeDuration()
 	if err != nil {
-		glog.Fatalf("failed to get uptime: %v", err)
+		klog.Fatalf("failed to get uptime: %v", err)
 	}
 	startTime, err := util.GetStartTime(time.Now(), uptime, cfg.Lookback, cfg.Delay)
 	if err != nil {
-		glog.Fatalf("failed to get start time: %v", err)
+		klog.Fatalf("failed to get start time: %v", err)
 	}
 
 	return &journaldWatcher{
@@ -95,21 +95,21 @@ func (j *journaldWatcher) watchLoop() {
 	startTimestamp := timeToJournalTimestamp(j.startTime)
 	defer func() {
 		if err := j.journal.Close(); err != nil {
-			glog.Errorf("Failed to close journal client: %v", err)
+			klog.Errorf("Failed to close journal client: %v", err)
 		}
 		j.tomb.Done()
 	}()
 	for {
 		select {
 		case <-j.tomb.Stopping():
-			glog.Infof("Stop watching journald")
+			klog.Infof("Stop watching journald")
 			return
 		default:
 		}
 		// Get next log entry.
 		n, err := j.journal.Next()
 		if err != nil {
-			glog.Errorf("Failed to get next journal entry: %v", err)
+			klog.Errorf("Failed to get next journal entry: %v", err)
 			continue
 		}
 		// If next reaches the end, wait for waitLogTimeout.
@@ -120,12 +120,12 @@ func (j *journaldWatcher) watchLoop() {
 
 		entry, err := j.journal.GetEntry()
 		if err != nil {
-			glog.Errorf("failed to get journal entry: %v", err)
+			klog.Errorf("failed to get journal entry: %v", err)
 			continue
 		}
 
 		if entry.RealtimeTimestamp < startTimestamp {
-			glog.V(5).Infof("Throwing away journal entry %q before start time: %v < %v",
+			klog.V(5).Infof("Throwing away journal entry %q before start time: %v < %v",
 				entry.Fields[sdjournal.SD_JOURNAL_FIELD_MESSAGE], entry.RealtimeTimestamp, startTimestamp)
 			continue
 		}
@@ -148,7 +148,7 @@ func getJournal(cfg types.WatcherConfig, startTime time.Time) (*sdjournal.Journa
 		if err != nil {
 			return nil, fmt.Errorf("failed to create journal client from default log path: %v", err)
 		}
-		glog.Info("unspecified log path so using systemd default")
+		klog.Info("unspecified log path so using systemd default")
 	} else {
 		// If the path doesn't exist, NewJournalFromDir will
 		// create it instead of returning error. So check the

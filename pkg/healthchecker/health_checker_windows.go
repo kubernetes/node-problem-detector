@@ -23,7 +23,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/golang/glog"
+	"k8s.io/klog/v2"
 
 	"k8s.io/node-problem-detector/cmd/healthchecker/options"
 	"k8s.io/node-problem-detector/pkg/healthchecker/types"
@@ -80,7 +80,7 @@ func powershell(args ...string) (string, error) {
 func extractCommandOutput(cmd *exec.Cmd) (string, error) {
 	out, err := cmd.Output()
 	if err != nil {
-		glog.Infof("command %v failed: %v, %v\n", cmd, err, out)
+		klog.Infof("command %v failed: %v, %v\n", cmd, err, out)
 		return "", err
 	}
 	return strings.TrimSuffix(string(out), "\r\n"), nil
@@ -101,7 +101,7 @@ func checkForPattern(service, logStartTime, logPattern string, logCountThreshold
 		return true, err
 	}
 	if occurrences >= logCountThreshold {
-		glog.Infof("%s failed log pattern check, %s occurrences: %v", service, logPattern, occurrences)
+		klog.Infof("%s failed log pattern check, %s occurrences: %v", service, logPattern, occurrences)
 		return false, nil
 	}
 	return true, nil

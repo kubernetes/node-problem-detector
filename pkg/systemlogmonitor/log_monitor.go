@@ -21,7 +21,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/golang/glog"
+	"k8s.io/klog/v2"
 
 	"k8s.io/node-problem-detector/pkg/problemdaemon"
 	"k8s.io/node-problem-detector/pkg/problemmetrics"
@@ -63,19 +63,19 @@ func NewLogMonitorOrDie(configPath string) types.Monitor {
 
 	f, err := os.ReadFile(configPath)
 	if err != nil {
-		glog.Fatalf("Failed to read configuration file %q: %v", configPath, err)
+		klog.Fatalf("Failed to read configuration file %q: %v", configPath, err)
 	}
 	err = json.Unmarshal(f, &l.config)
 	if err != nil {
-		glog.Fatalf("Failed to unmarshal configuration file %q: %v", configPath, err)
+		klog.Fatalf("Failed to unmarshal configuration file %q: %v", configPath, err)
 	}
 	// Apply default configurations
 	(&l.config).ApplyDefaultConfiguration()
 	err = l.config.ValidateRules()
 	if err != nil {
-		glog.Fatalf("Failed to validate %s matching rules %+v: %v", l.configPath, l.config.Rules, err)
+		klog.Fatalf("Failed to validate %s matching rules %+v: %v", l.configPath, l.config.Rules, err)
 	}
-	glog.Infof("Finish parsing log monitor config file %s: %+v", l.configPath, l.config)
+	klog.Infof("Finish parsing log monitor config file %s: %+v", l.configPath, l.config)
 
 	l.watcher = logwatchers.GetLogWatcherOrDie(l.config.WatcherConfig)
 	l.buffer = NewLogBuffer(l.config.BufferSize)
@@ -95,19 +95,19 @@ func initializeProblemMetricsOrDie(rules []systemlogtypes.Rule) {
 		if rule.Type == types.Perm {
 			err := problemmetrics.GlobalProblemMetricsManager.SetProblemGauge(rule.Condition, rule.Reason, false)
 			if err != nil {
-				glog.Fatalf("Failed to initialize problem gauge metrics for problem %q, reason %q: %v",
+				klog.Fatalf("Failed to initialize problem gauge metrics for problem %q, reason %q: %v",
 					rule.Condition, rule.Reason, err)
 			}
 		}
 		err := problemmetrics.GlobalProblemMetricsManager.IncrementProblemCounter(rule.Reason, 0)
 		if err != nil {
-			glog.Fatalf("Failed to initialize problem counter metrics for %q: %v", rule.Reason, err)
+			klog.Fatalf("Failed to initialize problem counter metrics for %q: %v", rule.Reason, err)
 		}
 	}
 }
 
 func (l *logMonitor) Start() (<-chan *types.Status, error) {
-	glog.Infof("Start log monitor %s", l.configPath)
+	klog.Infof("Start log monitor %s", l.configPath)
 	var err error
 	l.logCh, err = l.watcher.Watch()
 	if err != nil {
@@ -118,7 +118,7 @@ func (l *logMonitor) Start() (<-chan *types.Status, error) {
 }
 
 func (l *logMonitor) Stop() {
-	glog.Infof("Stop log monitor %s", l.configPath)
+	klog.Infof("Stop log monitor %s", l.configPath)
 	l.tomb.Stop()
 }
 
@@ -133,13 +133,13 @@ func (l *logMonitor) monitorLoop() {
 		select {
 		case log, ok := <-l.logCh:
 			if !ok {
-				glog.Errorf("Log channel closed: %s", l.configPath)
+				klog.Errorf("Log channel closed: %s", l.configPath)
 				return
 			}
 			l.parseLog(log)
 		case <-l.tomb.Stopping():
 			l.watcher.Stop()
-			glog.Infof("Log monitor stopped: %s", l.configPath)
+			klog.Infof("Log monitor stopped: %s", l.configPath)
 			return
 		}
 	}
@@ -156,7 +156,7 @@ func (l *logMonitor) parseLog(log *systemlogtypes.Log) {
 			continue
 		}
 		status := l.generateStatus(matched, rule)
-		glog.Infof("New status generated: %+v", status)
+		klog.Infof("New status generated: %+v", status)
 		l.output <- status
 	}
 }
@@ -207,14 +207,14 @@ func (l *logMonitor) generateStatus(logs []*systemlogtypes.Log, rule systemlogty
 		for _, event := range events {
 			err := problemmetrics.GlobalProblemMetricsManager.IncrementProblemCounter(event.Reason, 1)
 			if err != nil {
-				glog.Errorf("Failed to update problem counter metrics for %q: %v", event.Reason, err)
+				klog.Errorf("Failed to update problem counter metrics for %q: %v", event.Reason, err)
 			}
 		}
 		for _, condition := range changedConditions {
 			err := problemmetrics.GlobalProblemMetricsManager.SetProblemGauge(
 				condition.Type, condition.Reason, condition.Status == types.True)
 			if err != nil {
-				glog.Errorf("Failed to update problem gauge metrics for problem %q, reason %q: %v",
+				klog.Errorf("Failed to update problem gauge metrics for problem %q, reason %q: %v",
 					condition.Type, condition.Reason, err)
 			}
 		}
@@ -232,7 +232,7 @@ func (l *logMonitor) generateStatus(logs []*systemlogtypes.Log, rule systemlogty
 func (l *logMonitor) initializeStatus() {
 	// Initialize the default node conditions
 	l.conditions = initialConditions(l.config.DefaultConditions)
-	glog.Infof("Initialize condition generated: %+v", l.conditions)
+	klog.Infof("Initialize condition generated: %+v", l.conditions)
 	// Update the initial status
 	l.output <- &types.Status{
 		Source:     l.config.Source,

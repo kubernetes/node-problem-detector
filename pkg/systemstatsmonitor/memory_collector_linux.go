@@ -17,8 +17,8 @@ limitations under the License.
 package systemstatsmonitor
 
 import (
-	"github.com/golang/glog"
 	"github.com/prometheus/procfs"
+	"k8s.io/klog/v2"
 )
 
 func (mc *memoryCollector) collect() {
@@ -28,12 +28,12 @@ func (mc *memoryCollector) collect() {
 
 	proc, err := procfs.NewDefaultFS()
 	if err != nil {
-		glog.Errorf("Failed to find /proc mount point: %v", err)
+		klog.Errorf("Failed to find /proc mount point: %v", err)
 		return
 	}
 	meminfo, err := proc.Meminfo()
 	if err != nil {
-		glog.Errorf("Failed to retrieve memory stats: %v", err)
+		klog.Errorf("Failed to retrieve memory stats: %v", err)
 		return
 	}
 
