@@ -22,10 +22,10 @@ import (
 	"testing"
 	"time"
 
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/clock"
 	"k8s.io/client-go/tools/record"
+	testclock "k8s.io/utils/clock/testing"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -40,7 +40,7 @@ func newFakeProblemClient() *nodeProblemClient {
 		nodeName: testNode,
 		// There is no proper fake for *client.Client for now
 		// TODO(random-liu): Add test for SetConditions when we have good fake for *client.Client
-		clock:     &clock.FakeClock{},
+		clock:     testclock.NewFakeClock(time.Now()),
 		recorders: make(map[string]record.EventRecorder),
 		nodeRef:   getNodeRef("", testNode),
 	}

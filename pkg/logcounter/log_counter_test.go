@@ -23,16 +23,16 @@ import (
 	"testing"
 	"time"
 
-	"k8s.io/apimachinery/pkg/util/clock"
+	testclock "k8s.io/utils/clock/testing"
 
 	"k8s.io/node-problem-detector/pkg/logcounter/types"
 	"k8s.io/node-problem-detector/pkg/systemlogmonitor"
 	systemtypes "k8s.io/node-problem-detector/pkg/systemlogmonitor/types"
 )
 
-func NewTestLogCounter(pattern string, startTime time.Time) (types.LogCounter, *clock.FakeClock, chan *systemtypes.Log) {
+func NewTestLogCounter(pattern string, startTime time.Time) (types.LogCounter, *testclock.FakeClock, chan *systemtypes.Log) {
 	logCh := make(chan *systemtypes.Log)
-	clock := clock.NewFakeClock(startTime)
+	clock := testclock.NewFakeClock(startTime)
 	return &logCounter{
 		logCh:   logCh,
 		buffer:  systemlogmonitor.NewLogBuffer(bufferSize),
