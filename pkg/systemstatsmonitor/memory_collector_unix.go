@@ -1,3 +1,5 @@
+//go:build unix
+
 /*
 Copyright 2020 The Kubernetes Authors All rights reserved.
 
