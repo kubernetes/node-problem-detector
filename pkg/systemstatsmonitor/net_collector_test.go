@@ -11,22 +11,22 @@ import (
 )
 
 var defaultMetricsConfig = map[string]ssmtypes.MetricConfig{
-	string(metrics.NetDevRxBytes):      ssmtypes.MetricConfig{DisplayName: string(metrics.NetDevRxBytes)},
-	string(metrics.NetDevRxPackets):    ssmtypes.MetricConfig{DisplayName: string(metrics.NetDevRxPackets)},
-	string(metrics.NetDevRxErrors):     ssmtypes.MetricConfig{DisplayName: string(metrics.NetDevRxErrors)},
-	string(metrics.NetDevRxDropped):    ssmtypes.MetricConfig{DisplayName: string(metrics.NetDevRxDropped)},
-	string(metrics.NetDevRxFifo):       ssmtypes.MetricConfig{DisplayName: string(metrics.NetDevRxFifo)},
-	string(metrics.NetDevRxFrame):      ssmtypes.MetricConfig{DisplayName: string(metrics.NetDevRxFrame)},
-	string(metrics.NetDevRxCompressed): ssmtypes.MetricConfig{DisplayName: string(metrics.NetDevRxCompressed)},
-	string(metrics.NetDevRxMulticast):  ssmtypes.MetricConfig{DisplayName: string(metrics.NetDevRxMulticast)},
-	string(metrics.NetDevTxBytes):      ssmtypes.MetricConfig{DisplayName: string(metrics.NetDevTxBytes)},
-	string(metrics.NetDevTxPackets):    ssmtypes.MetricConfig{DisplayName: string(metrics.NetDevTxPackets)},
-	string(metrics.NetDevTxErrors):     ssmtypes.MetricConfig{DisplayName: string(metrics.NetDevTxErrors)},
-	string(metrics.NetDevTxDropped):    ssmtypes.MetricConfig{DisplayName: string(metrics.NetDevTxDropped)},
-	string(metrics.NetDevTxFifo):       ssmtypes.MetricConfig{DisplayName: string(metrics.NetDevTxFifo)},
-	string(metrics.NetDevTxCollisions): ssmtypes.MetricConfig{DisplayName: string(metrics.NetDevTxCollisions)},
-	string(metrics.NetDevTxCarrier):    ssmtypes.MetricConfig{DisplayName: string(metrics.NetDevTxCarrier)},
-	string(metrics.NetDevTxCompressed): ssmtypes.MetricConfig{DisplayName: string(metrics.NetDevTxCompressed)},
+	string(metrics.NetDevRxBytes):      {DisplayName: string(metrics.NetDevRxBytes)},
+	string(metrics.NetDevRxPackets):    {DisplayName: string(metrics.NetDevRxPackets)},
+	string(metrics.NetDevRxErrors):     {DisplayName: string(metrics.NetDevRxErrors)},
+	string(metrics.NetDevRxDropped):    {DisplayName: string(metrics.NetDevRxDropped)},
+	string(metrics.NetDevRxFifo):       {DisplayName: string(metrics.NetDevRxFifo)},
+	string(metrics.NetDevRxFrame):      {DisplayName: string(metrics.NetDevRxFrame)},
+	string(metrics.NetDevRxCompressed): {DisplayName: string(metrics.NetDevRxCompressed)},
+	string(metrics.NetDevRxMulticast):  {DisplayName: string(metrics.NetDevRxMulticast)},
+	string(metrics.NetDevTxBytes):      {DisplayName: string(metrics.NetDevTxBytes)},
+	string(metrics.NetDevTxPackets):    {DisplayName: string(metrics.NetDevTxPackets)},
+	string(metrics.NetDevTxErrors):     {DisplayName: string(metrics.NetDevTxErrors)},
+	string(metrics.NetDevTxDropped):    {DisplayName: string(metrics.NetDevTxDropped)},
+	string(metrics.NetDevTxFifo):       {DisplayName: string(metrics.NetDevTxFifo)},
+	string(metrics.NetDevTxCollisions): {DisplayName: string(metrics.NetDevTxCollisions)},
+	string(metrics.NetDevTxCarrier):    {DisplayName: string(metrics.NetDevTxCarrier)},
+	string(metrics.NetDevTxCompressed): {DisplayName: string(metrics.NetDevTxCompressed)},
 }
 
 // To get a similar output, run `cat /proc/net/dev` on a Linux machine
@@ -96,13 +96,13 @@ func TestCollect(t *testing.T) {
 			Validate: func(t *testing.T, nc *netCollector) {
 				// We just validate two metrics, no need to check all of them
 				expectedValues := map[metrics.MetricID]map[string]int64{
-					metrics.NetDevRxBytes: map[string]int64{
+					metrics.NetDevRxBytes: {
 						"eth0":    5000,
 						"docker0": 1000,
 						"docker1": 500,
 						"docker2": 0,
 					},
-					metrics.NetDevTxBytes: map[string]int64{
+					metrics.NetDevTxBytes: {
 						"eth0":    2500,
 						"docker0": 0,
 						"docker1": 3000,
@@ -141,10 +141,10 @@ func TestCollect(t *testing.T) {
 			Validate: func(t *testing.T, nc *netCollector) {
 				// We just validate two metrics, no need to check all of them
 				expectedValues := map[metrics.MetricID]map[string]int64{
-					metrics.NetDevRxBytes: map[string]int64{
+					metrics.NetDevRxBytes: {
 						"eth0": 5000,
 					},
-					metrics.NetDevTxBytes: map[string]int64{
+					metrics.NetDevTxBytes: {
 						"eth0": 2500,
 					},
 				}
