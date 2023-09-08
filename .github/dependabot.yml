@@ -1,0 +1,25 @@
+version: 2
+updates:
+  - package-ecosystem: "gomod"
+    directory: "/"
+    open-pull-requests-limit: 1
+    schedule:
+      interval: weekly
+      time: "01:00"
+    labels:
+      - "area/dependency"
+      - "ok-to-test"
+      - "lgtm"
+      - "approved"
+
+  - package-ecosystem: "gomod"
+    directory: "/test"
+    open-pull-requests-limit: 1
+    schedule:
+      interval: weekly
+      time: "01:00"
+    labels:
+      - "area/dependency"
+      - "ok-to-test"
+      - "lgtm"
+      - "approved"
