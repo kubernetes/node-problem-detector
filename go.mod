@@ -12,7 +12,6 @@ require (
 	github.com/coreos/go-systemd v0.0.0-20191104093116-d3cd4ed1dbcf
 	github.com/euank/go-kmsg-parser v2.0.0+incompatible
 	github.com/golang/glog v1.1.1
-	github.com/google/cadvisor v0.36.0
 	github.com/hpcloud/tail v1.0.0
 	github.com/onsi/ginkgo v1.16.5
 	github.com/onsi/gomega v1.27.8
