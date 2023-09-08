@@ -62,21 +62,11 @@ func (gke *GKEContainer) MonitoredResource() (resType string, labels map[string]
 		"project_id":     gke.ProjectID,
 		"cluster_name":   gke.ClusterName,
 		"container_name": gke.ContainerName,
+		"pod_name":       gke.PodID,
+		"namespace_name": gke.NamespaceID,
+		"location":       gke.Zone,
 	}
-	var typ string
-	if gke.LoggingMonitoringV2Enabled {
-		typ = "k8s_container"
-		labels["pod_name"] = gke.PodID
-		labels["namespace_name"] = gke.NamespaceID
-		labels["location"] = gke.Zone
-	} else {
-		typ = "gke_container"
-		labels["pod_id"] = gke.PodID
-		labels["namespace_id"] = gke.NamespaceID
-		labels["zone"] = gke.Zone
-		labels["instance_id"] = gke.InstanceID
-	}
-	return typ, labels
+	return "k8s_container", labels
 }
 
 // GCEInstance represents gce_instance type monitored resource.
