@@ -18,7 +18,6 @@ package main
 
 import (
 	"github.com/golang/glog"
-
 	_ "k8s.io/node-problem-detector/cmd/nodeproblemdetector/exporterplugins"
 	_ "k8s.io/node-problem-detector/cmd/nodeproblemdetector/problemdaemonplugins"
 	"k8s.io/node-problem-detector/cmd/options"
@@ -78,11 +77,14 @@ func npdMain(npdo *options.NodeProblemDetectorOptions, termCh <-chan error) erro
 		glog.Fatalf("No exporter is successfully setup")
 	}
 
+	//go controller.NewSelfHealingTaskInstanceCache()
 	// Initialize cronjob
+	//循环监听任务
 	c := healingsync.NewCronService(problemDaemonMap, npdo.SyncInterval, npdo.SyncUrl)
 	go c.Run(termCh)
 
 	// Initialize NPD core.
 	p := problemdetector.NewProblemDetector(problemDaemonMap, npdExporters)
+	//c.GetChn() 获取任务的通道
 	return p.Run(termCh, c.GetChn())
 }

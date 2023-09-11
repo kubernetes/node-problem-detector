@@ -18,6 +18,7 @@ package custompluginmonitor
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"time"
 
@@ -147,6 +148,9 @@ func (c *customPluginMonitor) monitorLoop() {
 	}
 }
 
+//
+//{"plugin":"custom","pluginConfig":{"invoke_interval":"10s","timeout":"60s"},"source":"60","conditions":[{"type":"customError-kubevirtGuZhangZiYuZuiXin","status":"","transition":"0001-01-01T00:00:00Z","reason":"","message":""}],"rules":[{"type":"permanent","condition":"customError-kubevirtGuZhangZiYuZuiXin","reason":"customError-kubevirtGuZhangZiYuZuiXin","path":"/npd/60","args":[],"timeout":"60s"}]}
+
 // generateStatus generates status from the plugin check result.
 func (c *customPluginMonitor) generateStatus(result cpmtypes.Result) *types.Status {
 	timestamp := time.Now()
@@ -167,6 +171,7 @@ func (c *customPluginMonitor) generateStatus(result cpmtypes.Result) *types.Stat
 		for i := range c.conditions {
 			condition := &c.conditions[i]
 			if condition.Type == result.Rule.Condition {
+				fmt.Println(fmt.Sprintf("condition: %v", condition))
 				// The condition reason specified in the rule and the result message
 				// represent the problem happened. We need to know the default condition
 				// from the config, so that we can set the new condition reason/message
@@ -224,6 +229,7 @@ func (c *customPluginMonitor) generateStatus(result cpmtypes.Result) *types.Stat
 				}
 
 				if needToUpdateCondition {
+					fmt.Println("needToUpdateCondition....")
 					condition.Transition = timestamp
 					condition.Status = status
 					condition.Reason = newReason
@@ -248,6 +254,7 @@ func (c *customPluginMonitor) generateStatus(result cpmtypes.Result) *types.Stat
 			}
 		}
 	}
+	//如果打开了metrice
 	if *c.config.EnableMetricsReporting {
 		// Increment problem counter only for active problems which just got detected.
 		for _, event := range activeProblemEvents {

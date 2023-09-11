@@ -10,7 +10,10 @@ package healingsync
 import (
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
+	controller "k8s.io/node-problem-detector/pkg/watchdog"
+	v12 "k8s.io/node-problem-detector/pkg/watchdog/api/ecx/v1"
 	"os"
 	"strconv"
 	"time"
@@ -75,6 +78,8 @@ func (c *CronService) Run(termCh <-chan error) error {
 		case <-termCh:
 			return nil
 		case <-timer.C:
+
+			//c.getMonitorConfig2()
 			c.getMonitorConfig()
 		}
 	}
@@ -134,9 +139,58 @@ func (c *CronService) getMonitorConfig() {
 				continue
 			}
 		}
+		//设置监控任务.
 		c.curMonitors[tasks.Works[k].MonitorId] = &tasks.Works[k]
 	}
 
+	//回收已删除的监控任务。
+	for k, v := range c.curMonitors {
+		if _, ok := extra[k]; !ok && v != nil {
+			delTask := &problemdetector.ProblemSync{
+				ConfigName: strconv.FormatInt(v.MonitorId, 10),
+				IsDelete:   true,
+			}
+
+			glog.V(3).Infof("delete monitor task. id:%d", v.MonitorId)
+			c.taskChn <- delTask
+			delete(c.curMonitors, k)
+		}
+	}
+	glog.V(5).Infof("curMonitors infos:%+v", c.curMonitors)
+}
+
+func (c *CronService) getMonitorConfig2() {
+	glog.V(3).Infof("start get monitor config. url:%s", c.url)
+
+	instances := controller.GetActiveSelfHealingTaskInstance()
+	extra := make(map[int64]int64)
+	for _, instance := range instances {
+		task := SetHealingTasks(instance)
+		glog.V(4).Infof("tasks detail:%+v", task)
+
+		extra[task.MonitorId] = task.MonitorId
+		if cur, ok := c.curMonitors[task.MonitorId]; ok {
+			if cur != nil && cur.Version == task.Version {
+				continue
+			}
+		}
+
+		if task.MonitorType == LogMode {
+			if er := c.genLogMonitor(&task); er != nil {
+				glog.Errorf("genLogMonitor failed, err:%s", er.Error())
+				continue
+			}
+		} else if task.MonitorType == CustomPluginMode {
+			if er := c.genCustomPlugin(&task); er != nil {
+				glog.Errorf("genCustomPlugin failed, err:%s", er.Error())
+				continue
+			}
+		}
+		//设置监控任务.
+		c.curMonitors[task.MonitorId] = &task
+	}
+
+	//回收已删除的监控任务。
 	for k, v := range c.curMonitors {
 		if _, ok := extra[k]; !ok && v != nil {
 			delTask := &problemdetector.ProblemSync{
@@ -258,4 +312,21 @@ func (c *CronService) genCustomPlugin(one *Healing) error {
 
 	c.taskChn <- task
 	return nil
+}
+
+func SetHealingTasks(instance *v12.SelfHealingTaskInstance) Healing {
+	healing := Healing{
+		MonitorId:   int64(instance.Spec.SelfHealingCheckSpec.ID),
+		Interval:    fmt.Sprintf("%ds", instance.Spec.SelfHealingCheckSpec.Intervals),
+		MonitorType: MonitorType(instance.Spec.SelfHealingCheckSpec.MonitorType),
+		LogPath:     instance.Spec.SelfHealingCheckSpec.LogPath,
+		Pattern:     base64.StdEncoding.EncodeToString([]byte(instance.Spec.SelfHealingCheckSpec.Pattern)),
+		Script:      base64.StdEncoding.EncodeToString([]byte(instance.Spec.SelfHealingCheckSpec.Script)),
+		Version:     instance.Spec.SelfHealingCheckSpec.Version,
+		RulesType:   "permanent",
+		RulesReason: fmt.Sprintf("customError-%s", instance.Spec.SelfHealingCheckSpec.ItemName),
+		Args:        []string{},
+	}
+
+	return healing
 }

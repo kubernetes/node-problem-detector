@@ -84,6 +84,7 @@ func (p *problemDetector) Run(termCh <-chan error, sync <-chan *ProblemSync) err
 			return nil
 		case status := <-p.statuses:
 			for _, exporter := range p.exporters {
+				//输出指标
 				exporter.ExportProblems(status)
 			}
 		case task := <-sync:
