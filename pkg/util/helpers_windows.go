@@ -19,7 +19,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/shirou/gopsutil/host"
+	"github.com/shirou/gopsutil/v3/host"
 	"golang.org/x/sys/windows"
 	"golang.org/x/sys/windows/registry"
 )

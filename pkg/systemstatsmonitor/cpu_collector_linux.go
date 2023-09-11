@@ -21,7 +21,7 @@ import (
 
 	"github.com/golang/glog"
 	"github.com/prometheus/procfs"
-	"github.com/shirou/gopsutil/load"
+	"github.com/shirou/gopsutil/v3/load"
 )
 
 func (cc *cpuCollector) recordLoad() {

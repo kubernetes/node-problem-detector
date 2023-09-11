@@ -19,7 +19,7 @@ package systemstatsmonitor
 import (
 	"github.com/golang/glog"
 
-	"github.com/shirou/gopsutil/mem"
+	"github.com/shirou/gopsutil/v3/mem"
 )
 
 func (mc *memoryCollector) collect() {

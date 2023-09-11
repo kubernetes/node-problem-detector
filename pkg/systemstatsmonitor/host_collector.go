@@ -18,7 +18,7 @@ package systemstatsmonitor
 
 import (
 	"github.com/golang/glog"
-	"github.com/shirou/gopsutil/host"
+	"github.com/shirou/gopsutil/v3/host"
 
 	ssmtypes "k8s.io/node-problem-detector/pkg/systemstatsmonitor/types"
 	"k8s.io/node-problem-detector/pkg/util"
