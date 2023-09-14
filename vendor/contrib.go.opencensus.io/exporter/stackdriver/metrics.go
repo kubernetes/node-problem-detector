@@ -24,10 +24,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes/any"
 	"github.com/golang/protobuf/ptypes/timestamp"
 	"go.opencensus.io/trace"
+	"google.golang.org/protobuf/proto"
 
 	distributionpb "google.golang.org/genproto/googleapis/api/distribution"
 	labelpb "google.golang.org/genproto/googleapis/api/label"
@@ -111,11 +111,24 @@ func (se *statsExporter) uploadMetrics(metrics []*metricdata.Metric) error {
 			end = len(allTimeSeries)
 		}
 		batch := allTimeSeries[start:end]
-		ctsreql := se.combineTimeSeriesToCreateTimeSeriesRequest(batch)
-		for _, ctsreq := range ctsreql {
-			if err := createTimeSeries(ctx, se.c, ctsreq); err != nil {
-				span.SetStatus(trace.Status{Code: trace.StatusCodeUnknown, Message: err.Error()})
-				errors = append(errors, err)
+		serviceTsBatch, nonServiceTsBatch := splitTimeSeries(batch)
+
+		if len(nonServiceTsBatch) > 0 {
+			nonServiceReql := se.combineTimeSeriesToCreateTimeSeriesRequest(nonServiceTsBatch)
+			for _, ctsreq := range nonServiceReql {
+				if err := createTimeSeries(ctx, se.c, ctsreq); err != nil {
+					span.SetStatus(trace.Status{Code: trace.StatusCodeUnknown, Message: err.Error()})
+					errors = append(errors, err)
+				}
+			}
+		}
+		if len(serviceTsBatch) > 0 {
+			serviceReql := se.combineTimeSeriesToCreateTimeSeriesRequest(serviceTsBatch)
+			for _, ctsreq := range serviceReql {
+				if err := createServiceTimeSeries(ctx, se.c, ctsreq); err != nil {
+					span.SetStatus(trace.Status{Code: trace.StatusCodeUnknown, Message: err.Error()})
+					errors = append(errors, err)
+				}
 			}
 		}
 	}

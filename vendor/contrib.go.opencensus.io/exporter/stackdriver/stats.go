@@ -31,7 +31,7 @@ import (
 	"go.opencensus.io/tag"
 	"go.opencensus.io/trace"
 
-	monitoring "cloud.google.com/go/monitoring/apiv3"
+	monitoring "cloud.google.com/go/monitoring/apiv3/v2"
 	"github.com/golang/protobuf/ptypes/timestamp"
 	"go.opencensus.io/metric/metricdata"
 	"go.opencensus.io/metric/metricexport"
@@ -39,11 +39,10 @@ import (
 	"google.golang.org/api/support/bundler"
 	distributionpb "google.golang.org/genproto/googleapis/api/distribution"
 	labelpb "google.golang.org/genproto/googleapis/api/label"
-	"google.golang.org/genproto/googleapis/api/metric"
-	googlemetricpb "google.golang.org/genproto/googleapis/api/metric"
 	metricpb "google.golang.org/genproto/googleapis/api/metric"
 	monitoredrespb "google.golang.org/genproto/googleapis/api/monitoredres"
 	monitoringpb "google.golang.org/genproto/googleapis/monitoring/v3"
+	"google.golang.org/protobuf/proto"
 )
 
 const (
@@ -147,7 +146,12 @@ func (e *statsExporter) startMetricsReader() error {
 func (e *statsExporter) stopMetricsReader() {
 	if e.ir != nil {
 		e.ir.Stop()
+		e.ir.Flush()
 	}
+}
+
+func (e *statsExporter) close() error {
+	return e.c.Close()
 }
 
 func (e *statsExporter) getMonitoredResource(v *view.View, tags []tag.Tag) ([]tag.Tag, *monitoredrespb.MonitoredResource) {
@@ -433,7 +437,7 @@ func (e *statsExporter) combineTimeSeriesToCreateTimeSeriesRequest(ts []*monitor
 // metricSignature creates a unique signature consisting of a
 // metric's type and its lexicographically sorted label values
 // See https://github.com/census-ecosystem/opencensus-go-exporter-stackdriver/issues/120
-func metricSignature(metric *googlemetricpb.Metric) string {
+func metricSignature(metric *metricpb.Metric) string {
 	labels := metric.GetLabels()
 	labelValues := make([]string, 0, len(labels))
 
@@ -453,19 +457,29 @@ func newPoint(v *view.View, row *view.Row, start, end time.Time) *monitoringpb.P
 	}
 }
 
+func toValidTimeIntervalpb(start, end time.Time) *monitoringpb.TimeInterval {
+	// The end time of a new interval must be at least a millisecond after the end time of the
+	// previous interval, for all non-gauge types.
+	// https://cloud.google.com/monitoring/api/ref_v3/rpc/google.monitoring.v3#timeinterval
+	if end.Sub(start).Milliseconds() <= 1 {
+		end = start.Add(time.Millisecond)
+	}
+	return &monitoringpb.TimeInterval{
+		StartTime: &timestamp.Timestamp{
+			Seconds: start.Unix(),
+			Nanos:   int32(start.Nanosecond()),
+		},
+		EndTime: &timestamp.Timestamp{
+			Seconds: end.Unix(),
+			Nanos:   int32(end.Nanosecond()),
+		},
+	}
+}
+
 func newCumulativePoint(v *view.View, row *view.Row, start, end time.Time) *monitoringpb.Point {
 	return &monitoringpb.Point{
-		Interval: &monitoringpb.TimeInterval{
-			StartTime: &timestamp.Timestamp{
-				Seconds: start.Unix(),
-				Nanos:   int32(start.Nanosecond()),
-			},
-			EndTime: &timestamp.Timestamp{
-				Seconds: end.Unix(),
-				Nanos:   int32(end.Nanosecond()),
-			},
-		},
-		Value: newTypedValue(v, row),
+		Interval: toValidTimeIntervalpb(start, end),
+		Value:    newTypedValue(v, row),
 	}
 }
 
@@ -593,7 +607,7 @@ func newLabelDescriptors(defaults map[string]labelValue, keys []tag.Key) []*labe
 	return labelDescriptors
 }
 
-func (e *statsExporter) createMetricDescriptor(ctx context.Context, md *metric.MetricDescriptor) error {
+func (e *statsExporter) createMetricDescriptor(ctx context.Context, md *metricpb.MetricDescriptor) error {
 	ctx, cancel := newContextWithTimeout(ctx, e.o.Timeout)
 	defer cancel()
 	cmrdesc := &monitoringpb.CreateMetricDescriptorRequest{
@@ -604,7 +618,7 @@ func (e *statsExporter) createMetricDescriptor(ctx context.Context, md *metric.M
 	return err
 }
 
-var createMetricDescriptor = func(ctx context.Context, c *monitoring.MetricClient, mdr *monitoringpb.CreateMetricDescriptorRequest) (*metric.MetricDescriptor, error) {
+var createMetricDescriptor = func(ctx context.Context, c *monitoring.MetricClient, mdr *monitoringpb.CreateMetricDescriptorRequest) (*metricpb.MetricDescriptor, error) {
 	return c.CreateMetricDescriptor(ctx, mdr)
 }
 
@@ -612,9 +626,64 @@ var createTimeSeries = func(ctx context.Context, c *monitoring.MetricClient, ts 
 	return c.CreateTimeSeries(ctx, ts)
 }
 
+var createServiceTimeSeries = func(ctx context.Context, c *monitoring.MetricClient, ts *monitoringpb.CreateTimeSeriesRequest) error {
+	return c.CreateServiceTimeSeries(ctx, ts)
+}
+
+// splitCreateTimeSeriesRequest splits a *monitoringpb.CreateTimeSeriesRequest object into two new objects:
+//   * The first object only contains service time series.
+//   * The second object only contains non-service time series.
+// A returned object may be nil if no time series is found in the original request that satisfies the rules
+// above.
+// All other properties of the original CreateTimeSeriesRequest object are kept in the returned objects.
+func splitCreateTimeSeriesRequest(req *monitoringpb.CreateTimeSeriesRequest) (*monitoringpb.CreateTimeSeriesRequest, *monitoringpb.CreateTimeSeriesRequest) {
+	var serviceReq, nonServiceReq *monitoringpb.CreateTimeSeriesRequest
+	serviceTs, nonServiceTs := splitTimeSeries(req.TimeSeries)
+	// reset timeseries as we just split it to avoid cloning it in the calls below
+	req.TimeSeries = nil
+	if len(serviceTs) > 0 {
+		serviceReq = proto.Clone(req).(*monitoringpb.CreateTimeSeriesRequest)
+		serviceReq.TimeSeries = serviceTs
+	}
+	if len(nonServiceTs) > 0 {
+		nonServiceReq = proto.Clone(req).(*monitoringpb.CreateTimeSeriesRequest)
+		nonServiceReq.TimeSeries = nonServiceTs
+	}
+	return serviceReq, nonServiceReq
+}
+
+// splitTimeSeries splits a []*monitoringpb.TimeSeries slice into two:
+//   * The first slice only contains service time series
+//   * The second slice only contains non-service time series
+func splitTimeSeries(timeSeries []*monitoringpb.TimeSeries) ([]*monitoringpb.TimeSeries, []*monitoringpb.TimeSeries) {
+	var serviceTs, nonServiceTs []*monitoringpb.TimeSeries
+	for _, ts := range timeSeries {
+		if serviceMetric(ts.Metric.Type) {
+			serviceTs = append(serviceTs, ts)
+		} else {
+			nonServiceTs = append(nonServiceTs, ts)
+		}
+	}
+	return serviceTs, nonServiceTs
+}
+
+var knownServiceMetricPrefixes = []string{
+	"kubernetes.io/",
+}
+
+func serviceMetric(metricType string) bool {
+	for _, knownServiceMetricPrefix := range knownServiceMetricPrefixes {
+		if strings.HasPrefix(metricType, knownServiceMetricPrefix) {
+			return true
+		}
+	}
+	return false
+}
+
 var knownExternalMetricPrefixes = []string{
 	"custom.googleapis.com/",
 	"external.googleapis.com/",
+	"workload.googleapis.com/",
 }
 
 // builtinMetric returns true if a MetricType is a heuristically known
