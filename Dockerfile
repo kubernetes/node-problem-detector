@@ -13,8 +13,10 @@
 # limitations under the License.
 ARG BASEIMAGE
 
-FROM golang:1.20.3@sha256:bcc311ec9655c350df3899611fdf134806f97a3e3b2c06c2b5c0696428503814 as builder
+FROM golang:1.20.8-bookworm@sha256:81e1690c528627eeb6314f2fbd15964608e6769746459ce9727c77ec988cb28d as builder
 LABEL maintainer="Andy Xie <andy.xning@gmail.com>"
+
+ARG TARGETARCH
 
 ENV GOPATH /gopath/
 ENV PATH $GOPATH/bin:$PATH
@@ -24,10 +26,10 @@ RUN go version
 
 COPY . /gopath/src/k8s.io/node-problem-detector/
 WORKDIR /gopath/src/k8s.io/node-problem-detector
-RUN make bin/node-problem-detector bin/health-checker bin/log-counter
+RUN GOARCH=${TARGETARCH} make bin/node-problem-detector bin/health-checker bin/log-counter
 
 ARG BASEIMAGE
-FROM ${BASEIMAGE}
+FROM --platform=${TARGETPLATFORM} ${BASEIMAGE}
 
 LABEL maintainer="Random Liu <lantaol@google.com>"
 
