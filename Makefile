@@ -140,11 +140,11 @@ output/windows_amd64/bin/%.exe: $(PKG_SOURCES)
 	touch $@
 
 output/windows_amd64/test/bin/%.exe: $(PKG_SOURCES)
+	cd test && \
 	GOOS=windows GOARCH=amd64 CGO_ENABLED=$(CGO_ENABLED) GO111MODULE=on go build \
-		-mod vendor \
-		-o $@ \
+		-o ../$@ \
 		-tags "$(WINDOWS_BUILD_TAGS)" \
-		./test/e2e/$(subst -,,$*)
+		./e2e/$(subst -,,$*)
 
 output/linux_amd64/bin/%: $(PKG_SOURCES)
 	GOOS=linux GOARCH=amd64 CGO_ENABLED=$(CGO_ENABLED) GO111MODULE=on \
@@ -157,12 +157,12 @@ output/linux_amd64/bin/%: $(PKG_SOURCES)
 	touch $@
 
 output/linux_amd64/test/bin/%: $(PKG_SOURCES)
+	cd test && \
 	GOOS=linux GOARCH=amd64 CGO_ENABLED=$(CGO_ENABLED) GO111MODULE=on \
 	  CC=x86_64-linux-gnu-gcc go build \
-		-mod vendor \
-		-o $@ \
+		-o ../$@ \
 		-tags "$(LINUX_BUILD_TAGS)" \
-		./test/e2e/$(subst -,,$*)
+		./e2e/$(subst -,,$*)
 
 output/linux_arm64/bin/%: $(PKG_SOURCES)
 	GOOS=linux GOARCH=arm64 CGO_ENABLED=$(CGO_ENABLED) GO111MODULE=on \
@@ -175,12 +175,12 @@ output/linux_arm64/bin/%: $(PKG_SOURCES)
 	touch $@
 
 output/linux_arm64/test/bin/%: $(PKG_SOURCES)
+	cd test && \
 	GOOS=linux GOARCH=arm64 CGO_ENABLED=$(CGO_ENABLED) GO111MODULE=on \
 	  CC=aarch64-linux-gnu-gcc go build \
-		-mod vendor \
-		-o $@ \
+		-o ../$@ \
 		-tags "$(LINUX_BUILD_TAGS)" \
-		./test/e2e/$(subst -,,$*)
+		./e2e/$(subst -,,$*)
 
 # In the future these targets should be deprecated.
 ./bin/log-counter: $(PKG_SOURCES)
@@ -204,11 +204,11 @@ endif
 		./cmd/nodeproblemdetector
 
 ./test/bin/problem-maker: $(PKG_SOURCES)
+	cd test && \
 	CGO_ENABLED=$(CGO_ENABLED) GOOS=linux GO111MODULE=on go build \
-		-mod vendor \
-		-o test/bin/problem-maker \
+		-o bin/problem-maker \
 		-tags "$(LINUX_BUILD_TAGS)" \
-		./test/e2e/problemmaker/problem_maker.go
+		./e2e/problemmaker/problem_maker.go
 
 ./bin/health-checker: $(PKG_SOURCES)
 	CGO_ENABLED=$(CGO_ENABLED) GOOS=linux GO111MODULE=on go build \
@@ -222,12 +222,13 @@ test: vet fmt
 	GO111MODULE=on go test -mod vendor -timeout=1m -v -race -short -tags "$(HOST_PLATFORM_BUILD_TAGS)" ./...
 
 e2e-test: vet fmt build-tar
-	GO111MODULE=on go run github.com/onsi/ginkgo/ginkgo -nodes=$(PARALLEL) -mod vendor -timeout=10m -v -tags "$(HOST_PLATFORM_BUILD_TAGS)" -stream \
-	./test/e2e/metriconly/... -- \
+	cd test && \
+	GO111MODULE=on go run github.com/onsi/ginkgo/ginkgo -nodes=$(PARALLEL) -timeout=10m -v -tags "$(HOST_PLATFORM_BUILD_TAGS)" -stream \
+	./e2e/metriconly/... -- \
 	-project=$(PROJECT) -zone=$(ZONE) \
 	-image=$(VM_IMAGE) -image-family=$(IMAGE_FAMILY) -image-project=$(IMAGE_PROJECT) \
 	-ssh-user=$(SSH_USER) -ssh-key=$(SSH_KEY) \
-	-npd-build-tar=`pwd`/$(TARBALL) \
+	-npd-build-tar=`pwd`/../$(TARBALL) \
 	-boskos-project-type=$(BOSKOS_PROJECT_TYPE) -job-name=$(JOB_NAME) \
 	-artifacts-dir=$(ARTIFACTS)
 
