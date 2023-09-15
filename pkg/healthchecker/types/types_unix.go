@@ -1,3 +1,5 @@
+//go:build unix
+
 /*
 Copyright 2021 The Kubernetes Authors All rights reserved.
 
@@ -14,29 +16,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package util
+package types
 
-import (
-	"fmt"
-	"os/exec"
-	"syscall"
+const (
+	DefaultCriCtl        = "/usr/bin/crictl"
+	DefaultCriSocketPath = "unix:///var/run/containerd/containerd.sock"
+	UptimeTimeLayout     = "Mon 2006-01-02 15:04:05 MST"
 )
-
-// Exec creates a new process with the specified arguments.
-func Exec(name string, arg ...string) *exec.Cmd {
-	// create a process group
-	sysProcAttr := &syscall.SysProcAttr{
-		Setpgid: true,
-	}
-	cmd := exec.Command(name, arg...)
-	cmd.SysProcAttr = sysProcAttr
-	return cmd
-}
-
-// Kill the process and subprocesses.
-func Kill(cmd *exec.Cmd) error {
-	if cmd.Process == nil {
-		return fmt.Errorf("%v does not have a process handle", cmd)
-	}
-	return syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
-}

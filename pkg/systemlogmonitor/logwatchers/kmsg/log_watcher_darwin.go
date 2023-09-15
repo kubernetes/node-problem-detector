@@ -1,5 +1,5 @@
 /*
-Copyright 2021 The Kubernetes Authors All rights reserved.
+Copyright 2023 The Kubernetes Authors All rights reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,10 +14,18 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package types
+package kmsg
 
-const (
-	DefaultCriCtl        = "/usr/bin/crictl"
-	DefaultCriSocketPath = "unix:///var/run/containerd/containerd.sock"
-	UptimeTimeLayout     = "Mon 2006-01-02 15:04:05 MST"
+import (
+	"runtime"
+
+	"github.com/golang/glog"
+
+	"k8s.io/node-problem-detector/pkg/systemlogmonitor/logwatchers/types"
 )
+
+// NewKmsgWatcher creates a watcher which will read messages from /dev/kmsg
+func NewKmsgWatcher(cfg types.WatcherConfig) types.LogWatcher {
+	glog.Fatalf("kmsg parser is not supported in %s", runtime.GOOS)
+	return nil
+}
