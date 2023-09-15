@@ -270,7 +270,7 @@ to manage dependencies. Therefore, building node-problem-detector requires
 golang 1.11+. It still uses vendoring. See the
 [Kubernetes go modules KEP](https://github.com/kubernetes/enhancements/tree/master/keps/sig-architecture/917-go-modules#alternatives-to-vendoring-using-go-modules)
 for the design decisions. To add a new dependency, update [go.mod](go.mod) and
-run `GO111MODULE=on go mod vendor`.
+run `go mod vendor`.
 
 # Remedy Systems
 

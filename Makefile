@@ -109,9 +109,9 @@ else
 endif
 
 vet:
-	GO111MODULE=on go list -mod vendor -tags "$(HOST_PLATFORM_BUILD_TAGS)" ./... | \
+	go list -tags "$(HOST_PLATFORM_BUILD_TAGS)" ./... | \
 		grep -v "./vendor/*" | \
-		GO111MODULE=on xargs go vet -mod vendor -tags "$(HOST_PLATFORM_BUILD_TAGS)"
+		xargs go vet -tags "$(HOST_PLATFORM_BUILD_TAGS)"
 
 fmt:
 	find . -type f -name "*.go" | grep -v "./vendor/*" | xargs gofmt -s -w -l
@@ -131,8 +131,7 @@ ALL_BINARIES = $(foreach binary, $(BINARIES) $(BINARIES_LINUX_ONLY), ./$(binary)
 ALL_TARBALLS = $(foreach platform, $(PLATFORMS), $(NPD_NAME_VERSION)-$(platform).tar.gz)
 
 output/windows_amd64/bin/%.exe: $(PKG_SOURCES)
-	GOOS=windows GOARCH=amd64 CGO_ENABLED=$(CGO_ENABLED) GO111MODULE=on go build \
-		-mod vendor \
+	GOOS=windows GOARCH=amd64 CGO_ENABLED=$(CGO_ENABLED) go build \
 		-o $@ \
 		-ldflags '-X $(PKG)/pkg/version.version=$(VERSION)' \
 		-tags "$(WINDOWS_BUILD_TAGS)" \
@@ -141,15 +140,14 @@ output/windows_amd64/bin/%.exe: $(PKG_SOURCES)
 
 output/windows_amd64/test/bin/%.exe: $(PKG_SOURCES)
 	cd test && \
-	GOOS=windows GOARCH=amd64 CGO_ENABLED=$(CGO_ENABLED) GO111MODULE=on go build \
+	GOOS=windows GOARCH=amd64 CGO_ENABLED=$(CGO_ENABLED) go build \
 		-o ../$@ \
 		-tags "$(WINDOWS_BUILD_TAGS)" \
 		./e2e/$(subst -,,$*)
 
 output/linux_amd64/bin/%: $(PKG_SOURCES)
-	GOOS=linux GOARCH=amd64 CGO_ENABLED=$(CGO_ENABLED) GO111MODULE=on \
+	GOOS=linux GOARCH=amd64 CGO_ENABLED=$(CGO_ENABLED) \
 	  CC=x86_64-linux-gnu-gcc go build \
-		-mod vendor \
 		-o $@ \
 		-ldflags '-X $(PKG)/pkg/version.version=$(VERSION)' \
 		-tags "$(LINUX_BUILD_TAGS)" \
@@ -158,16 +156,15 @@ output/linux_amd64/bin/%: $(PKG_SOURCES)
 
 output/linux_amd64/test/bin/%: $(PKG_SOURCES)
 	cd test && \
-	GOOS=linux GOARCH=amd64 CGO_ENABLED=$(CGO_ENABLED) GO111MODULE=on \
+	GOOS=linux GOARCH=amd64 CGO_ENABLED=$(CGO_ENABLED) \
 	  CC=x86_64-linux-gnu-gcc go build \
 		-o ../$@ \
 		-tags "$(LINUX_BUILD_TAGS)" \
 		./e2e/$(subst -,,$*)
 
 output/linux_arm64/bin/%: $(PKG_SOURCES)
-	GOOS=linux GOARCH=arm64 CGO_ENABLED=$(CGO_ENABLED) GO111MODULE=on \
+	GOOS=linux GOARCH=arm64 CGO_ENABLED=$(CGO_ENABLED) \
 	  CC=aarch64-linux-gnu-gcc go build \
-		-mod vendor \
 		-o $@ \
 		-ldflags '-X $(PKG)/pkg/version.version=$(VERSION)' \
 		-tags "$(LINUX_BUILD_TAGS)" \
@@ -176,7 +173,7 @@ output/linux_arm64/bin/%: $(PKG_SOURCES)
 
 output/linux_arm64/test/bin/%: $(PKG_SOURCES)
 	cd test && \
-	GOOS=linux GOARCH=arm64 CGO_ENABLED=$(CGO_ENABLED) GO111MODULE=on \
+	GOOS=linux GOARCH=arm64 CGO_ENABLED=$(CGO_ENABLED) \
 	  CC=aarch64-linux-gnu-gcc go build \
 		-o ../$@ \
 		-tags "$(LINUX_BUILD_TAGS)" \
@@ -185,8 +182,7 @@ output/linux_arm64/test/bin/%: $(PKG_SOURCES)
 # In the future these targets should be deprecated.
 ./bin/log-counter: $(PKG_SOURCES)
 ifeq ($(ENABLE_JOURNALD), 1)
-	CGO_ENABLED=$(CGO_ENABLED) GOOS=linux GOARCH=$(GOARCH) GO111MODULE=on go build \
-		-mod vendor \
+	CGO_ENABLED=$(CGO_ENABLED) GOOS=linux GOARCH=$(GOARCH) go build \
 		-o bin/log-counter \
 		-ldflags '-X $(PKG)/pkg/version.version=$(VERSION)' \
 		-tags "$(LINUX_BUILD_TAGS)" \
@@ -196,8 +192,7 @@ else
 endif
 
 ./bin/node-problem-detector: $(PKG_SOURCES)
-	CGO_ENABLED=$(CGO_ENABLED) GOOS=linux GOARCH=$(GOARCH) GO111MODULE=on go build \
-		-mod vendor \
+	CGO_ENABLED=$(CGO_ENABLED) GOOS=linux GOARCH=$(GOARCH) go build \
 		-o bin/node-problem-detector \
 		-ldflags '-X $(PKG)/pkg/version.version=$(VERSION)' \
 		-tags "$(LINUX_BUILD_TAGS)" \
@@ -205,25 +200,24 @@ endif
 
 ./test/bin/problem-maker: $(PKG_SOURCES)
 	cd test && \
-	CGO_ENABLED=$(CGO_ENABLED) GOOS=linux GOARCH=$(GOARCH) GO111MODULE=on go build \
+	CGO_ENABLED=$(CGO_ENABLED) GOOS=linux GOARCH=$(GOARCH) go build \
 		-o bin/problem-maker \
 		-tags "$(LINUX_BUILD_TAGS)" \
 		./e2e/problemmaker/problem_maker.go
 
 ./bin/health-checker: $(PKG_SOURCES)
-	CGO_ENABLED=$(CGO_ENABLED) GOOS=linux GOARCH=$(GOARCH) GO111MODULE=on go build \
-		-mod vendor \
+	CGO_ENABLED=$(CGO_ENABLED) GOOS=linux GOARCH=$(GOARCH) go build \
 		-o bin/health-checker \
 		-ldflags '-X $(PKG)/pkg/version.version=$(VERSION)' \
 		-tags "$(LINUX_BUILD_TAGS)" \
 		cmd/healthchecker/health_checker.go
 
 test: vet fmt
-	GO111MODULE=on go test -mod vendor -timeout=1m -v -race -short -tags "$(HOST_PLATFORM_BUILD_TAGS)" ./...
+	go test -timeout=1m -v -race -short -tags "$(HOST_PLATFORM_BUILD_TAGS)" ./...
 
 e2e-test: vet fmt build-tar
 	cd test && \
-	GO111MODULE=on go run github.com/onsi/ginkgo/ginkgo -nodes=$(PARALLEL) -timeout=10m -v -tags "$(HOST_PLATFORM_BUILD_TAGS)" -stream \
+	go run github.com/onsi/ginkgo/ginkgo -nodes=$(PARALLEL) -timeout=10m -v -tags "$(HOST_PLATFORM_BUILD_TAGS)" -stream \
 	./e2e/metriconly/... -- \
 	-project=$(PROJECT) -zone=$(ZONE) \
 	-image=$(VM_IMAGE) -image-family=$(IMAGE_FAMILY) -image-project=$(IMAGE_PROJECT) \
@@ -278,7 +272,7 @@ push: push-container push-tar
 
 coverage.out:
 	rm -f coverage.out
-	go test -coverprofile=coverage.out -mod vendor -timeout=1m -v -short ./...
+	go test -coverprofile=coverage.out -timeout=1m -v -short ./...
 
 clean:
 	rm -rf bin/
