@@ -30,13 +30,17 @@ import (
 )
 
 func main() {
-	// Set klog flag so that it does not log to files.
-	klog.InitFlags(nil)
-	if err := flag.Set("logtostderr", "true"); err != nil {
-		fmt.Printf("Failed to set logtostderr=true: %v", err)
-		os.Exit(int(types.Unknown))
-	}
-
+	klogFlags := flag.NewFlagSet("klog", flag.ExitOnError)
+	klog.InitFlags(klogFlags)
+	klogFlags.VisitAll(func(f *flag.Flag) {
+		switch f.Name {
+		case "v", "vmodule", "logtostderr":
+			flag.CommandLine.Var(f.Value, f.Name, f.Usage)
+		}
+	})
+	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
+	pflag.CommandLine.MarkHidden("vmodule")
+	pflag.CommandLine.MarkHidden("logtostderr")
 
 	hco := options.NewHealthCheckerOptions()
 	hco.AddFlags(pflag.CommandLine)

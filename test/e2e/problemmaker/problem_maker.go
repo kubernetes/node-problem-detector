@@ -19,7 +19,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"os"
 	"strings"
 	"time"
 
@@ -28,10 +27,6 @@ import (
 
 	"k8s.io/node-problem-detector/test/e2e/problemmaker/makers"
 )
-
-func init() {
-	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
-}
 
 type options struct {
 	// Command line options. See flag descriptions for the description
@@ -54,12 +49,17 @@ func (o *options) AddFlags(fs *pflag.FlagSet) {
 }
 
 func main() {
-	// Set klog flag so that it does not log to files.
-	klog.InitFlags(nil)
-	if err := flag.Set("logtostderr", "true"); err != nil {
-		fmt.Printf("Failed to set logtostderr=true: %v\n", err)
-		os.Exit(1)
-	}
+	klogFlags := flag.NewFlagSet("klog", flag.ExitOnError)
+	klog.InitFlags(klogFlags)
+	klogFlags.VisitAll(func(f *flag.Flag) {
+		switch f.Name {
+		case "v", "vmodule", "logtostderr":
+			flag.CommandLine.Var(f.Value, f.Name, f.Usage)
+		}
+	})
+	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
+	pflag.CommandLine.MarkHidden("vmodule")
+	pflag.CommandLine.MarkHidden("logtostderr")
 
 	o := options{}
 	o.AddFlags(pflag.CommandLine)
