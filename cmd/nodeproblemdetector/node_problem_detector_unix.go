@@ -1,3 +1,5 @@
+//go:build unix
+
 /*
 Copyright 2021 The Kubernetes Authors All rights reserved.
 
@@ -18,18 +20,31 @@ package main
 
 import (
 	"context"
+	"flag"
 
-	"github.com/golang/glog"
 	"github.com/spf13/pflag"
+	"k8s.io/klog/v2"
 	"k8s.io/node-problem-detector/cmd/options"
 )
 
 func main() {
+	klogFlags := flag.NewFlagSet("klog", flag.ExitOnError)
+	klog.InitFlags(klogFlags)
+	klogFlags.VisitAll(func(f *flag.Flag) {
+		switch f.Name {
+		case "v", "vmodule", "logtostderr":
+			flag.CommandLine.Var(f.Value, f.Name, f.Usage)
+		}
+	})
+	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
+	pflag.CommandLine.MarkHidden("vmodule")
+	pflag.CommandLine.MarkHidden("logtostderr")
+
 	npdo := options.NewNodeProblemDetectorOptions()
 	npdo.AddFlags(pflag.CommandLine)
 
 	pflag.Parse()
 	if err := npdMain(context.Background(), npdo); err != nil {
-		glog.Fatalf("Problem detector failed with error: %v", err)
+		klog.Fatalf("Problem detector failed with error: %v", err)
 	}
 }

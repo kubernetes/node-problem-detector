@@ -20,31 +20,30 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/golang/glog"
-
+	"k8s.io/klog/v2"
 	"k8s.io/node-problem-detector/cmd/healthchecker/options"
 )
 
 // getUptimeFunc returns the time for which the given service has been running.
 func getUptimeFunc(service string) func() (time.Duration, error) {
-	glog.Fatalf("getUptimeFunc is not supported in %s", runtime.GOOS)
+	klog.Fatalf("getUptimeFunc is not supported in %s", runtime.GOOS)
 	return func() (time.Duration, error) { return time.Second, nil }
 }
 
 // getRepairFunc returns the repair function based on the component.
 func getRepairFunc(hco *options.HealthCheckerOptions) func() {
-	glog.Fatalf("getRepairFunc is not supported in %s", runtime.GOOS)
+	klog.Fatalf("getRepairFunc is not supported in %s", runtime.GOOS)
 	return func() {}
 }
 
 // checkForPattern returns (true, nil) if logPattern occurs less than logCountThreshold number of times since last
 // service restart. (false, nil) otherwise.
 func checkForPattern(service, logStartTime, logPattern string, logCountThreshold int) (bool, error) {
-	glog.Fatalf("checkForPattern is not supported in %s", runtime.GOOS)
+	klog.Fatalf("checkForPattern is not supported in %s", runtime.GOOS)
 	return false, nil
 }
 
 func getDockerPath() string {
-	glog.Fatalf("getDockerPath is not supported in %s", runtime.GOOS)
+	klog.Fatalf("getDockerPath is not supported in %s", runtime.GOOS)
 	return ""
 }

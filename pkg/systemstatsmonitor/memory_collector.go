@@ -17,7 +17,7 @@ limitations under the License.
 package systemstatsmonitor
 
 import (
-	"github.com/golang/glog"
+	"k8s.io/klog/v2"
 
 	ssmtypes "k8s.io/node-problem-detector/pkg/systemstatsmonitor/types"
 	"k8s.io/node-problem-detector/pkg/util/metrics"
@@ -46,7 +46,7 @@ func NewMemoryCollectorOrDie(memoryConfig *ssmtypes.MemoryStatsConfig) *memoryCo
 		metrics.LastValue,
 		[]string{stateLabel})
 	if err != nil {
-		glog.Fatalf("Error initializing metric for %q: %v", metrics.MemoryBytesUsedID, err)
+		klog.Fatalf("Error initializing metric for %q: %v", metrics.MemoryBytesUsedID, err)
 	}
 
 	mc.mAnonymousUsed, err = metrics.NewInt64Metric(
@@ -57,7 +57,7 @@ func NewMemoryCollectorOrDie(memoryConfig *ssmtypes.MemoryStatsConfig) *memoryCo
 		metrics.LastValue,
 		[]string{stateLabel})
 	if err != nil {
-		glog.Fatalf("Error initializing metric for %q: %v", metrics.MemoryAnonymousUsedID, err)
+		klog.Fatalf("Error initializing metric for %q: %v", metrics.MemoryAnonymousUsedID, err)
 	}
 
 	mc.mPageCacheUsed, err = metrics.NewInt64Metric(
@@ -68,7 +68,7 @@ func NewMemoryCollectorOrDie(memoryConfig *ssmtypes.MemoryStatsConfig) *memoryCo
 		metrics.LastValue,
 		[]string{stateLabel})
 	if err != nil {
-		glog.Fatalf("Error initializing metric for %q: %v", metrics.MemoryPageCacheUsedID, err)
+		klog.Fatalf("Error initializing metric for %q: %v", metrics.MemoryPageCacheUsedID, err)
 	}
 
 	mc.mUnevictableUsed, err = metrics.NewInt64Metric(
@@ -79,7 +79,7 @@ func NewMemoryCollectorOrDie(memoryConfig *ssmtypes.MemoryStatsConfig) *memoryCo
 		metrics.LastValue,
 		[]string{})
 	if err != nil {
-		glog.Fatalf("Error initializing metric for %q: %v", metrics.MemoryUnevictableUsedID, err)
+		klog.Fatalf("Error initializing metric for %q: %v", metrics.MemoryUnevictableUsedID, err)
 	}
 
 	mc.mDirtyUsed, err = metrics.NewInt64Metric(
@@ -90,7 +90,7 @@ func NewMemoryCollectorOrDie(memoryConfig *ssmtypes.MemoryStatsConfig) *memoryCo
 		metrics.LastValue,
 		[]string{stateLabel})
 	if err != nil {
-		glog.Fatalf("Error initializing metric for %q: %v", metrics.MemoryDirtyUsedID, err)
+		klog.Fatalf("Error initializing metric for %q: %v", metrics.MemoryDirtyUsedID, err)
 	}
 
 	return &mc

@@ -21,7 +21,7 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/golang/glog"
+	"k8s.io/klog/v2"
 
 	"k8s.io/node-problem-detector/pkg/util/metrics"
 )
@@ -56,7 +56,7 @@ func NewProblemMetricsManagerOrDie() *ProblemMetricsManager {
 		metrics.Sum,
 		[]string{"reason"})
 	if err != nil {
-		glog.Fatalf("Failed to create problem_counter metric: %v", err)
+		klog.Fatalf("Failed to create problem_counter metric: %v", err)
 	}
 
 	pmm.problemGauge, err = metrics.NewInt64Metric(
@@ -67,7 +67,7 @@ func NewProblemMetricsManagerOrDie() *ProblemMetricsManager {
 		metrics.LastValue,
 		[]string{"type", "reason"})
 	if err != nil {
-		glog.Fatalf("Failed to create problem_gauge metric: %v", err)
+		klog.Fatalf("Failed to create problem_gauge metric: %v", err)
 	}
 
 	pmm.problemTypeToReason = make(map[string]string)

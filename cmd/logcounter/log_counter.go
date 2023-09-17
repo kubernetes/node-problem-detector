@@ -26,17 +26,24 @@ import (
 
 	"github.com/spf13/pflag"
 
+	"k8s.io/klog/v2"
 	"k8s.io/node-problem-detector/cmd/logcounter/options"
 	"k8s.io/node-problem-detector/pkg/custompluginmonitor/types"
 	"k8s.io/node-problem-detector/pkg/logcounter"
 )
 
 func main() {
-	// Set glog flag so that it does not log to files.
-	if err := flag.Set("logtostderr", "true"); err != nil {
-		fmt.Printf("Failed to set logtostderr=true: %v", err)
-		os.Exit(int(types.Unknown))
-	}
+	klogFlags := flag.NewFlagSet("klog", flag.ExitOnError)
+	klog.InitFlags(klogFlags)
+	klogFlags.VisitAll(func(f *flag.Flag) {
+		switch f.Name {
+		case "v", "vmodule", "logtostderr":
+			flag.CommandLine.Var(f.Value, f.Name, f.Usage)
+		}
+	})
+	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
+	pflag.CommandLine.MarkHidden("vmodule")
+	pflag.CommandLine.MarkHidden("logtostderr")
 
 	fedo := options.NewLogCounterOptions()
 	fedo.AddFlags(pflag.CommandLine)

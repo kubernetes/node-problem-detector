@@ -18,7 +18,7 @@ package gce
 
 import (
 	"cloud.google.com/go/compute/metadata"
-	"github.com/golang/glog"
+	"k8s.io/klog/v2"
 )
 
 type Metadata struct {
@@ -37,7 +37,7 @@ func (md *Metadata) HasMissingField() bool {
 
 func (md *Metadata) PopulateFromGCE() error {
 	var err error
-	glog.Info("Fetching GCE metadata from metadata server")
+	klog.Info("Fetching GCE metadata from metadata server")
 	if md.ProjectID == "" {
 		md.ProjectID, err = metadata.ProjectID()
 		if err != nil {

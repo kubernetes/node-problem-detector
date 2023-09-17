@@ -18,15 +18,16 @@ package main
 
 import (
 	"context"
+	"flag"
 	"fmt"
 	"sync"
 	"time"
 
-	"github.com/golang/glog"
 	"github.com/spf13/pflag"
 	"golang.org/x/sys/windows/svc"
 	"golang.org/x/sys/windows/svc/debug"
 	"golang.org/x/sys/windows/svc/eventlog"
+	"k8s.io/klog/v2"
 	"k8s.io/node-problem-detector/cmd/options"
 )
 
@@ -43,6 +44,18 @@ var (
 )
 
 func main() {
+	klogFlags := flag.NewFlagSet("klog", flag.ExitOnError)
+	klog.InitFlags(klogFlags)
+	klogFlags.VisitAll(func(f *flag.Flag) {
+		switch f.Name {
+		case "v", "vmodule", "logtostderr":
+			flag.CommandLine.Var(f.Value, f.Name, f.Usage)
+		}
+	})
+	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
+	pflag.CommandLine.MarkHidden("vmodule")
+	pflag.CommandLine.MarkHidden("logtostderr")
+
 	npdo := options.NewNodeProblemDetectorOptions()
 	npdo.AddFlags(pflag.CommandLine)
 
@@ -62,7 +75,7 @@ func main() {
 func isRunningAsWindowsService() bool {
 	runningAsService, err := svc.IsWindowsService()
 	if err != nil {
-		glog.Errorf("cannot determine if running as Windows Service assuming standalone, %v", err)
+		klog.Errorf("cannot determine if running as Windows Service assuming standalone, %v", err)
 		return false
 	}
 	return runningAsService

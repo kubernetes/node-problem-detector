@@ -19,7 +19,7 @@ package problemdaemon
 import (
 	"fmt"
 
-	"github.com/golang/glog"
+	"k8s.io/klog/v2"
 
 	"k8s.io/node-problem-detector/pkg/types"
 )
@@ -58,7 +58,7 @@ func NewProblemDaemons(monitorConfigPaths types.ProblemDaemonConfigPathMap) []ty
 		for _, config := range *configs {
 			if _, ok := problemDaemonMap[config]; ok {
 				// Skip the config if it's duplicated.
-				glog.Warningf("Duplicated problem daemon configuration %q", config)
+				klog.Warningf("Duplicated problem daemon configuration %q", config)
 				continue
 			}
 			problemDaemonMap[config] = handlers[problemDaemonType].CreateProblemDaemonOrDie(config)

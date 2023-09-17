@@ -22,7 +22,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/golang/glog"
+	"k8s.io/klog/v2"
 
 	"k8s.io/node-problem-detector/pkg/problemdaemon"
 	ssmtypes "k8s.io/node-problem-detector/pkg/systemstatsmonitor/types"
@@ -60,21 +60,21 @@ func NewSystemStatsMonitorOrDie(configPath string) types.Monitor {
 	// Apply configurations.
 	f, err := os.ReadFile(configPath)
 	if err != nil {
-		glog.Fatalf("Failed to read configuration file %q: %v", configPath, err)
+		klog.Fatalf("Failed to read configuration file %q: %v", configPath, err)
 	}
 	err = json.Unmarshal(f, &ssm.config)
 	if err != nil {
-		glog.Fatalf("Failed to unmarshal configuration file %q: %v", configPath, err)
+		klog.Fatalf("Failed to unmarshal configuration file %q: %v", configPath, err)
 	}
 
 	err = ssm.config.ApplyConfiguration()
 	if err != nil {
-		glog.Fatalf("Failed to apply configuration for %q: %v", configPath, err)
+		klog.Fatalf("Failed to apply configuration for %q: %v", configPath, err)
 	}
 
 	err = ssm.config.Validate()
 	if err != nil {
-		glog.Fatalf("Failed to validate %s configuration %+v: %v", ssm.configPath, ssm.config, err)
+		klog.Fatalf("Failed to validate %s configuration %+v: %v", ssm.configPath, ssm.config, err)
 	}
 
 	if len(ssm.config.CPUConfig.MetricsConfigs) > 0 {
@@ -105,7 +105,7 @@ func NewSystemStatsMonitorOrDie(configPath string) types.Monitor {
 }
 
 func (ssm *systemStatsMonitor) Start() (<-chan *types.Status, error) {
-	glog.Infof("Start system stats monitor %s", ssm.configPath)
+	klog.Infof("Start system stats monitor %s", ssm.configPath)
 	go ssm.monitorLoop()
 	return nil, nil
 }
@@ -118,7 +118,7 @@ func (ssm *systemStatsMonitor) monitorLoop() {
 
 	select {
 	case <-ssm.tomb.Stopping():
-		glog.Infof("System stats monitor stopped: %s", ssm.configPath)
+		klog.Infof("System stats monitor stopped: %s", ssm.configPath)
 		return
 	default:
 		ssm.cpuCollector.collect()
@@ -139,13 +139,13 @@ func (ssm *systemStatsMonitor) monitorLoop() {
 			ssm.osFeatureCollector.collect()
 			ssm.netCollector.collect()
 		case <-ssm.tomb.Stopping():
-			glog.Infof("System stats monitor stopped: %s", ssm.configPath)
+			klog.Infof("System stats monitor stopped: %s", ssm.configPath)
 			return
 		}
 	}
 }
 
 func (ssm *systemStatsMonitor) Stop() {
-	glog.Infof("Stop system stats monitor %s", ssm.configPath)
+	klog.Infof("Stop system stats monitor %s", ssm.configPath)
 	ssm.tomb.Stop()
 }

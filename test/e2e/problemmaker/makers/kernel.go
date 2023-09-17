@@ -20,7 +20,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/golang/glog"
+	"k8s.io/klog/v2"
 )
 
 func init() {
@@ -40,7 +40,7 @@ func writeKernelMessageOrDie(msg string) {
 	for _, line := range strings.Split(msg, "\n") {
 		err := os.WriteFile(kmsgPath, []byte(line), 0644)
 		if err != nil {
-			glog.Fatalf("Failed writing to %q: %v", kmsgPath, err)
+			klog.Fatalf("Failed writing to %q: %v", kmsgPath, err)
 		}
 	}
 }

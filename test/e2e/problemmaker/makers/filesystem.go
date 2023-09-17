@@ -19,7 +19,7 @@ package makers
 import (
 	"os"
 
-	"github.com/golang/glog"
+	"k8s.io/klog/v2"
 )
 
 func init() {
@@ -32,6 +32,6 @@ func makeFilesystemError() {
 	msg := []byte("fake filesystem error from problem-maker")
 	err := os.WriteFile(ext4ErrorTrigger, msg, 0200)
 	if err != nil {
-		glog.Fatalf("Failed writing log to %q: %v", ext4ErrorTrigger, err)
+		klog.Fatalf("Failed writing log to %q: %v", ext4ErrorTrigger, err)
 	}
 }
