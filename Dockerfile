@@ -13,7 +13,7 @@
 # limitations under the License.
 ARG BASEIMAGE
 
-FROM golang:1.20.8-bookworm@sha256:81e1690c528627eeb6314f2fbd15964608e6769746459ce9727c77ec988cb28d as builder
+FROM golang:1.21.1-bookworm@sha256:d3114db136e7f2d9b08c3fcd374381ba3f8d85c17b80c48dbc53cd938cfb2b64 as builder
 LABEL maintainer="Andy Xie <andy.xning@gmail.com>"
 
 ARG TARGETARCH
