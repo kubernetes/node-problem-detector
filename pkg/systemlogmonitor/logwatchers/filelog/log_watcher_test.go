@@ -25,8 +25,8 @@ import (
 	logtypes "k8s.io/node-problem-detector/pkg/systemlogmonitor/types"
 	"k8s.io/node-problem-detector/pkg/util"
 
-	"code.cloudfoundry.org/clock/fakeclock"
 	"github.com/stretchr/testify/assert"
+	testclock "k8s.io/utils/clock/testing"
 )
 
 // getTestPluginConfig returns a plugin config for test. Use configuration for
@@ -42,7 +42,7 @@ func getTestPluginConfig() map[string]string {
 func TestWatch(t *testing.T) {
 	// now is a fake time
 	now := time.Date(time.Now().Year(), time.January, 2, 3, 4, 5, 0, time.Local)
-	fakeClock := fakeclock.NewFakeClock(now)
+	fakeClock := testclock.NewFakeClock(now)
 	testCases := []struct {
 		uptime   time.Duration
 		lookback string
@@ -155,8 +155,6 @@ Jan  2 03:04:05 kernel: [2.000000] 3
 		})
 		// Set the startTime.
 		w.(*filelogWatcher).startTime, _ = util.GetStartTime(fakeClock.Now(), test.uptime, test.lookback, test.delay)
-		// Set the fake clock.
-		w.(*filelogWatcher).clock = fakeClock
 		logCh, err := w.Watch()
 		assert.NoError(t, err)
 		defer w.Stop()

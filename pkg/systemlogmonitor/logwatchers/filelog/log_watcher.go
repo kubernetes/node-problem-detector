@@ -23,7 +23,6 @@ import (
 	"strings"
 	"time"
 
-	utilclock "code.cloudfoundry.org/clock"
 	"k8s.io/klog/v2"
 
 	"k8s.io/node-problem-detector/pkg/systemlogmonitor/logwatchers/types"
@@ -40,7 +39,6 @@ type filelogWatcher struct {
 	logCh      chan *logtypes.Log
 	startTime  time.Time
 	tomb       *tomb.Tomb
-	clock      utilclock.Clock
 }
 
 // NewSyslogWatcherOrDie creates a new log watcher. The function panics
@@ -62,7 +60,6 @@ func NewSyslogWatcherOrDie(cfg types.WatcherConfig) types.LogWatcher {
 		tomb:       tomb.NewTomb(),
 		// A capacity 1000 buffer should be enough
 		logCh: make(chan *logtypes.Log, 1000),
-		clock: utilclock.NewClock(),
 	}
 }
 
