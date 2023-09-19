@@ -17,12 +17,11 @@ limitations under the License.
 package kmsg
 
 import (
+	testclock "k8s.io/utils/clock/testing"
 	"testing"
 
-	"code.cloudfoundry.org/clock/fakeclock"
 	"github.com/euank/go-kmsg-parser/kmsgparser"
 	"github.com/stretchr/testify/assert"
-
 	"time"
 
 	"k8s.io/node-problem-detector/pkg/systemlogmonitor/logwatchers/types"
@@ -49,7 +48,7 @@ func (m *mockKmsgParser) SeekEnd() error { return nil }
 
 func TestWatch(t *testing.T) {
 	now := time.Date(time.Now().Year(), time.January, 2, 3, 4, 5, 0, time.Local)
-	fakeClock := fakeclock.NewFakeClock(now)
+	fakeClock := testclock.NewFakeClock(now)
 	testCases := []struct {
 		uptime   time.Duration
 		lookback string
@@ -150,7 +149,6 @@ func TestWatch(t *testing.T) {
 	for _, test := range testCases {
 		w := NewKmsgWatcher(types.WatcherConfig{Lookback: test.lookback})
 		w.(*kernelLogWatcher).startTime, _ = util.GetStartTime(fakeClock.Now(), test.uptime, test.lookback, test.delay)
-		w.(*kernelLogWatcher).clock = fakeClock
 		w.(*kernelLogWatcher).kmsgParser = test.log
 		logCh, err := w.Watch()
 		if err != nil {

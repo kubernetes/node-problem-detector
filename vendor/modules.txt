@@ -14,10 +14,6 @@ cloud.google.com/go/monitoring/internal
 cloud.google.com/go/trace/apiv2
 cloud.google.com/go/trace/apiv2/tracepb
 cloud.google.com/go/trace/internal
-# code.cloudfoundry.org/clock v1.1.0
-## explicit; go 1.20
-code.cloudfoundry.org/clock
-code.cloudfoundry.org/clock/fakeclock
 # contrib.go.opencensus.io/exporter/prometheus v0.4.2
 ## explicit; go 1.13
 contrib.go.opencensus.io/exporter/prometheus

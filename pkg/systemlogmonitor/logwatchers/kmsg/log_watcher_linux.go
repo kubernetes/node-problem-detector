@@ -21,7 +21,6 @@ import (
 	"strings"
 	"time"
 
-	utilclock "code.cloudfoundry.org/clock"
 	"github.com/euank/go-kmsg-parser/kmsgparser"
 	"k8s.io/klog/v2"
 
@@ -38,7 +37,6 @@ type kernelLogWatcher struct {
 	tomb      *tomb.Tomb
 
 	kmsgParser kmsgparser.Parser
-	clock      utilclock.Clock
 }
 
 // NewKmsgWatcher creates a watcher which will read messages from /dev/kmsg
@@ -58,7 +56,6 @@ func NewKmsgWatcher(cfg types.WatcherConfig) types.LogWatcher {
 		tomb:      tomb.NewTomb(),
 		// Arbitrary capacity
 		logCh: make(chan *logtypes.Log, 100),
-		clock: utilclock.NewClock(),
 	}
 }
 

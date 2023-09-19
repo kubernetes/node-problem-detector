@@ -4,7 +4,6 @@ go 1.20
 
 require (
 	cloud.google.com/go/compute/metadata v0.2.3
-	code.cloudfoundry.org/clock v1.1.0
 	contrib.go.opencensus.io/exporter/prometheus v0.4.2
 	contrib.go.opencensus.io/exporter/stackdriver v0.13.14
 	github.com/acobaugh/osrelease v0.1.0
