@@ -10,7 +10,6 @@ updates:
     labels:
       - "area/dependency"
       - "ok-to-test"
-      - "lgtm"
       - "approved"
 
   - package-ecosystem: "gomod"
