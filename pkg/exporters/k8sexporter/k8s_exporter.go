@@ -105,12 +105,12 @@ func (ke *k8sExporter) startHTTPReporting(npdo *options.NodeProblemDetectorOptio
 }
 
 func waitForAPIServerReadyWithTimeout(ctx context.Context, c problemclient.Client, npdo *options.NodeProblemDetectorOptions) error {
-	return wait.PollImmediate(npdo.APIServerWaitInterval, npdo.APIServerWaitTimeout, func() (done bool, err error) {
+	return wait.PollUntilContextTimeout(ctx, npdo.APIServerWaitInterval, npdo.APIServerWaitTimeout, true, func(ctx context.Context) (done bool, err error) {
 		// If NPD can get the node object from kube-apiserver, the server is
 		// ready and the RBAC permission is set correctly.
 		if _, err := c.GetNode(ctx); err != nil {
 			klog.Errorf("Can't get node object: %v", err)
-			return false, nil
+			return false, err
 		}
 		return true, nil
 	})
