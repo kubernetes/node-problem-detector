@@ -31,6 +31,7 @@ import (
 	clientset "k8s.io/client-go/kubernetes"
 	typedcorev1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	"k8s.io/client-go/tools/record"
+	"k8s.io/client-go/util/retry"
 	"k8s.io/klog/v2"
 	"k8s.io/utils/clock"
 
@@ -107,7 +108,15 @@ func (c *nodeProblemClient) SetConditions(ctx context.Context, newConditions []v
 	if err != nil {
 		return err
 	}
-	return c.client.RESTClient().Patch(types.StrategicMergePatchType).Resource("nodes").Name(c.nodeName).SubResource("status").Body(patch).Do(ctx).Error()
+	return retry.OnError(retry.DefaultRetry,
+		func(error) bool {
+			return true
+		},
+		func() error {
+			_, err := c.client.Nodes().PatchStatus(ctx, c.nodeName, patch)
+			return err
+		},
+	)
 }
 
 func (c *nodeProblemClient) Eventf(eventType, source, reason, messageFmt string, args ...interface{}) {
