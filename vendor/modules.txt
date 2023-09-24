@@ -26,9 +26,9 @@ contrib.go.opencensus.io/exporter/stackdriver/monitoredresource/gcp
 # github.com/acobaugh/osrelease v0.1.0
 ## explicit; go 1.17
 github.com/acobaugh/osrelease
-# github.com/avast/retry-go v3.0.0+incompatible
-## explicit
-github.com/avast/retry-go
+# github.com/avast/retry-go/v4 v4.5.0
+## explicit; go 1.18
+github.com/avast/retry-go/v4
 # github.com/aws/aws-sdk-go v1.44.72
 ## explicit; go 1.11
 github.com/aws/aws-sdk-go/aws

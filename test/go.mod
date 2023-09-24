@@ -5,7 +5,7 @@ go 1.20
 replace k8s.io/node-problem-detector => ../.
 
 require (
-	github.com/avast/retry-go v3.0.0+incompatible
+	github.com/avast/retry-go/v4 v4.5.0
 	github.com/onsi/ginkgo v1.16.5
 	github.com/onsi/gomega v1.27.10
 	github.com/pborman/uuid v1.2.1

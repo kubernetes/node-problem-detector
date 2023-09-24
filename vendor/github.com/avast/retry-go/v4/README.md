@@ -2,8 +2,7 @@
 
 [![Release](https://img.shields.io/github/release/avast/retry-go.svg?style=flat-square)](https://github.com/avast/retry-go/releases/latest)
 [![Software License](https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat-square)](LICENSE.md)
-[![Travis](https://img.shields.io/travis/avast/retry-go.svg?style=flat-square)](https://travis-ci.org/avast/retry-go)
-[![AppVeyor](https://ci.appveyor.com/api/projects/status/fieg9gon3qlq0a9a?svg=true)](https://ci.appveyor.com/project/JaSei/retry-go)
+![GitHub Actions](https://github.com/avast/retry-go/actions/workflows/workflow.yaml/badge.svg)
 [![Go Report Card](https://goreportcard.com/badge/github.com/avast/retry-go?style=flat-square)](https://goreportcard.com/report/github.com/avast/retry-go)
 [![GoDoc](https://godoc.org/github.com/avast/retry-go?status.svg&style=flat-square)](http://godoc.org/github.com/avast/retry-go)
 [![codecov.io](https://codecov.io/github/avast/retry-go/coverage.svg?branch=master)](https://codecov.io/github/avast/retry-go?branch=master)
@@ -14,8 +13,7 @@ Simple library for retry mechanism
 slightly inspired by
 [Try::Tiny::Retry](https://metacpan.org/pod/Try::Tiny::Retry)
 
-
-### SYNOPSIS
+# SYNOPSIS
 
 http get with retry:
 
@@ -37,13 +35,40 @@ http get with retry:
     		return nil
     	},
     )
+    if err != nil {
+    	// handle error
+    }
 
-    fmt.Println(body)
+    fmt.Println(string(body))
+
+http get with retry with data:
+
+    url := "http://example.com"
+
+    body, err := retry.DoWithData(
+    	func() ([]byte, error) {
+    		resp, err := http.Get(url)
+    		if err != nil {
+    			return nil, err
+    		}
+    		defer resp.Body.Close()
+    		body, err := ioutil.ReadAll(resp.Body)
+    		if err != nil {
+    			return nil, err
+    		}
+
+    		return body, nil
+    	},
+    )
+    if err != nil {
+    	// handle error
+    }
+
+    fmt.Println(string(body))
 
 [next examples](https://github.com/avast/retry-go/tree/master/examples)
 
-
-### SEE ALSO
+# SEE ALSO
 
 * [giantswarm/retry-go](https://github.com/giantswarm/retry-go) - slightly
 complicated interface.
@@ -61,45 +86,28 @@ slightly similar as this package, don't have 'simple' `Retry` method
 * [matryer/try](https://github.com/matryer/try) - very popular package,
 nonintuitive interface (for me)
 
+# BREAKING CHANGES
 
-### BREAKING CHANGES
+* 4.0.0
 
-3.0.0
+    - infinity retry is possible by set `Attempts(0)` by PR [#49](https://github.com/avast/retry-go/pull/49)
 
-* `DelayTypeFunc` accepts a new parameter `err` - this breaking change affects
-only your custom Delay Functions. This change allow [make delay functions based
-on error](examples/delay_based_on_error_test.go).
+* 3.0.0
 
-1.0.2 -> 2.0.0
+    - `DelayTypeFunc` accepts a new parameter `err` - this breaking change affects only your custom Delay Functions. This change allow [make delay functions based on error](examples/delay_based_on_error_test.go).
 
-* argument of `retry.Delay` is final delay (no multiplication by `retry.Units`
-anymore)
+* 1.0.2 -> 2.0.0
 
-* function `retry.Units` are removed
+    - argument of `retry.Delay` is final delay (no multiplication by `retry.Units` anymore)
+    - function `retry.Units` are removed
+    - [more about this breaking change](https://github.com/avast/retry-go/issues/7)
 
-* [more about this breaking change](https://github.com/avast/retry-go/issues/7)
+* 0.3.0 -> 1.0.0
 
-0.3.0 -> 1.0.0
-
-* `retry.Retry` function are changed to `retry.Do` function
-
-* `retry.RetryCustom` (OnRetry) and `retry.RetryCustomWithOpts` functions are
-now implement via functions produces Options (aka `retry.OnRetry`)
+    - `retry.Retry` function are changed to `retry.Do` function
+    - `retry.RetryCustom` (OnRetry) and `retry.RetryCustomWithOpts` functions are now implement via functions produces Options (aka `retry.OnRetry`)
 
 ## Usage
-
-```go
-var (
-	DefaultAttempts      = uint(10)
-	DefaultDelay         = 100 * time.Millisecond
-	DefaultMaxJitter     = 100 * time.Millisecond
-	DefaultOnRetry       = func(n uint, err error) {}
-	DefaultRetryIf       = IsRecoverable
-	DefaultDelayType     = CombineDelay(BackOffDelay, RandomDelay)
-	DefaultLastErrorOnly = false
-	DefaultContext       = context.Background()
-)
-```
 
 #### func  BackOffDelay
 
@@ -112,6 +120,12 @@ BackOffDelay is a DelayType which increases delay between consecutive retries
 
 ```go
 func Do(retryableFunc RetryableFunc, opts ...Option) error
+```
+
+#### func  DoWithData
+
+```go
+func DoWithData[T any](retryableFunc RetryableFuncWithData[T], opts ...Option) (T, error)
 ```
 
 #### func  FixedDelay
@@ -175,6 +189,12 @@ type Error []error
 
 Error type represents list of errors in retry
 
+#### func (Error) As
+
+```go
+func (e Error) As(target interface{}) bool
+```
+
 #### func (Error) Error
 
 ```go
@@ -182,6 +202,31 @@ func (e Error) Error() string
 ```
 Error method return string representation of Error It is an implementation of
 error interface
+
+#### func (Error) Is
+
+```go
+func (e Error) Is(target error) bool
+```
+
+#### func (Error) Unwrap
+
+```go
+func (e Error) Unwrap() error
+```
+Unwrap the last error for compatibility with `errors.Unwrap()`. When you need to
+unwrap all errors, you should use `WrappedErrors()` instead.
+
+    err := Do(
+    	func() error {
+    		return errors.New("original error")
+    	},
+    	Attempts(1),
+    )
+
+    fmt.Println(errors.Unwrap(err)) # "original error" is printed
+
+Added in version 4.2.0.
 
 #### func (Error) WrappedErrors
 
@@ -214,7 +259,19 @@ Option represents an option for retry.
 ```go
 func Attempts(attempts uint) Option
 ```
-Attempts set count of retry default is 10
+Attempts set count of retry. Setting to 0 will retry until the retried function
+succeeds. default is 10
+
+#### func  AttemptsForError
+
+```go
+func AttemptsForError(attempts uint, err error) Option
+```
+AttemptsForError sets count of retry in case execution results in given `err`
+Retries for the given `err` are also counted against total retries. The retry
+will stop if any of given retries is exhausted.
+
+added in 4.3.0
 
 #### func  Context
 
@@ -321,6 +378,53 @@ By default RetryIf stops execution if the error is wrapped using
     	}
     )
 
+#### func  WithTimer
+
+```go
+func WithTimer(t Timer) Option
+```
+WithTimer provides a way to swap out timer module implementations. This
+primarily is useful for mocking/testing, where you may not want to explicitly
+wait for a set duration for retries.
+
+example of augmenting time.After with a print statement
+
+    type struct MyTimer {}
+
+    func (t *MyTimer) After(d time.Duration) <- chan time.Time {
+        fmt.Print("Timer called!")
+        return time.After(d)
+    }
+
+    retry.Do(
+        func() error { ... },
+    	   retry.WithTimer(&MyTimer{})
+    )
+
+#### func  WrapContextErrorWithLastError
+
+```go
+func WrapContextErrorWithLastError(wrapContextErrorWithLastError bool) Option
+```
+WrapContextErrorWithLastError allows the context error to be returned wrapped
+with the last error that the retried function returned. This is only applicable
+when Attempts is set to 0 to retry indefinitly and when using a context to
+cancel / timeout
+
+default is false
+
+    ctx, cancel := context.WithCancel(context.Background())
+    defer cancel()
+
+    retry.Do(
+    	func() error {
+    		...
+    	},
+    	retry.Context(ctx),
+    	retry.Attempts(0),
+    	retry.WrapContextErrorWithLastError(true),
+    )
+
 #### type RetryIfFunc
 
 ```go
@@ -337,6 +441,24 @@ type RetryableFunc func() error
 
 Function signature of retryable function
 
+#### type RetryableFuncWithData
+
+```go
+type RetryableFuncWithData[T any] func() (T, error)
+```
+
+Function signature of retryable function with data
+
+#### type Timer
+
+```go
+type Timer interface {
+	After(time.Duration) <-chan time.Time
+}
+```
+
+Timer represents the timer used to track time for a retry.
+
 ## Contributing
 
 Contributions are very much welcome.
@@ -348,6 +470,8 @@ Makefile provides several handy rules, like README.md `generator` , `setup` for 
 Try `make help` for more information.
 
 ### Before pull request
+
+> maybe you need `make setup` in order to setup environment
 
 please try:
 * run tests (`make test`)

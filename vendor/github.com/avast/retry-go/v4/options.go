@@ -17,22 +17,32 @@ type OnRetryFunc func(n uint, err error)
 // DelayTypeFunc is called to return the next delay to wait after the retriable function fails on `err` after `n` attempts.
 type DelayTypeFunc func(n uint, err error, config *Config) time.Duration
 
+// Timer represents the timer used to track time for a retry.
+type Timer interface {
+	After(time.Duration) <-chan time.Time
+}
+
 type Config struct {
-	attempts      uint
-	delay         time.Duration
-	maxDelay      time.Duration
-	maxJitter     time.Duration
-	onRetry       OnRetryFunc
-	retryIf       RetryIfFunc
-	delayType     DelayTypeFunc
-	lastErrorOnly bool
-	context       context.Context
+	attempts                      uint
+	attemptsForError              map[error]uint
+	delay                         time.Duration
+	maxDelay                      time.Duration
+	maxJitter                     time.Duration
+	onRetry                       OnRetryFunc
+	retryIf                       RetryIfFunc
+	delayType                     DelayTypeFunc
+	lastErrorOnly                 bool
+	context                       context.Context
+	timer                         Timer
+	wrapContextErrorWithLastError bool
 
 	maxBackOffN uint
 }
 
 // Option represents an option for retry.
 type Option func(*Config)
+
+func emptyOption(c *Config) {}
 
 // return the direct last error that came from the retried function
 // default is false (return wrapped errors with everything)
@@ -42,11 +52,22 @@ func LastErrorOnly(lastErrorOnly bool) Option {
 	}
 }
 
-// Attempts set count of retry
+// Attempts set count of retry. Setting to 0 will retry until the retried function succeeds.
 // default is 10
 func Attempts(attempts uint) Option {
 	return func(c *Config) {
 		c.attempts = attempts
+	}
+}
+
+// AttemptsForError sets count of retry in case execution results in given `err`
+// Retries for the given `err` are also counted against total retries.
+// The retry will stop if any of given retries is exhausted.
+//
+// added in 4.3.0
+func AttemptsForError(attempts uint, err error) Option {
+	return func(c *Config) {
+		c.attemptsForError[err] = attempts
 	}
 }
 
@@ -76,6 +97,9 @@ func MaxJitter(maxJitter time.Duration) Option {
 // DelayType set type of the delay between retries
 // default is BackOff
 func DelayType(delayType DelayTypeFunc) Option {
+	if delayType == nil {
+		return emptyOption
+	}
 	return func(c *Config) {
 		c.delayType = delayType
 	}
@@ -141,6 +165,9 @@ func CombineDelay(delays ...DelayTypeFunc) DelayTypeFunc {
 //		}),
 //	)
 func OnRetry(onRetry OnRetryFunc) Option {
+	if onRetry == nil {
+		return emptyOption
+	}
 	return func(c *Config) {
 		c.onRetry = onRetry
 	}
@@ -172,6 +199,9 @@ func OnRetry(onRetry OnRetryFunc) Option {
 //		}
 //	)
 func RetryIf(retryIf RetryIfFunc) Option {
+	if retryIf == nil {
+		return emptyOption
+	}
 	return func(c *Config) {
 		c.retryIf = retryIf
 	}
@@ -194,5 +224,51 @@ func RetryIf(retryIf RetryIfFunc) Option {
 func Context(ctx context.Context) Option {
 	return func(c *Config) {
 		c.context = ctx
+	}
+}
+
+// WithTimer provides a way to swap out timer module implementations.
+// This primarily is useful for mocking/testing, where you may not want to explicitly wait for a set duration
+// for retries.
+//
+// example of augmenting time.After with a print statement
+//
+//	type struct MyTimer {}
+//
+//	func (t *MyTimer) After(d time.Duration) <- chan time.Time {
+//	    fmt.Print("Timer called!")
+//	    return time.After(d)
+//	}
+//
+//	retry.Do(
+//	    func() error { ... },
+//		   retry.WithTimer(&MyTimer{})
+//	)
+func WithTimer(t Timer) Option {
+	return func(c *Config) {
+		c.timer = t
+	}
+}
+
+// WrapContextErrorWithLastError allows the context error to be returned wrapped with the last error that the
+// retried function returned. This is only applicable when Attempts is set to 0 to retry indefinitly and when
+// using a context to cancel / timeout
+//
+// default is false
+//
+//	ctx, cancel := context.WithCancel(context.Background())
+//	defer cancel()
+//
+//	retry.Do(
+//		func() error {
+//			...
+//		},
+//		retry.Context(ctx),
+//		retry.Attempts(0),
+//		retry.WrapContextErrorWithLastError(true),
+//	)
+func WrapContextErrorWithLastError(wrapContextErrorWithLastError bool) Option {
+	return func(c *Config) {
+		c.wrapContextErrorWithLastError = wrapContextErrorWithLastError
 	}
 }
