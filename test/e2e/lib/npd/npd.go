@@ -26,7 +26,7 @@ import (
 	"k8s.io/node-problem-detector/pkg/util/metrics"
 	"k8s.io/node-problem-detector/test/e2e/lib/gce"
 
-	"github.com/avast/retry-go"
+	"github.com/avast/retry-go/v4"
 )
 
 // SetupNPD installs NPD from the test tarball onto the provided GCE instance.

@@ -30,7 +30,7 @@ import (
 	"google.golang.org/api/option"
 	"k8s.io/klog/v2"
 
-	"github.com/avast/retry-go"
+	"github.com/avast/retry-go/v4"
 	"k8s.io/node-problem-detector/pkg/exporters"
 	seconfig "k8s.io/node-problem-detector/pkg/exporters/stackdriver/config"
 	"k8s.io/node-problem-detector/pkg/types"
