@@ -16,17 +16,17 @@
 
 VERSION=$(cat version.txt)
 
-if [[ ! "${VERSION}" =~ ^([0-9]+[.][0-9]+)[.]([0-9]+)(-(alpha|beta)[.]([0-9]+))?$ ]]; then
+if [[ ! "${VERSION}" =~ ^v([0-9]+[.][0-9]+)[.]([0-9]+)(-(alpha|beta)[.]([0-9]+))?$ ]]; then
   echo "Version ${VERSION} must be 'X.Y.Z', 'X.Y.Z-alpha.N', or 'X.Y.Z-beta.N'"
   exit 1
 fi
 
-if [ "$(git tag -l "v${VERSION}")" ]; then
-  echo "Tag v${VERSION} already exists"
+if [ "$(git tag -l "${VERSION}")" ]; then
+  echo "Tag ${VERSION} already exists"
   exit 1
 fi
 
-git tag -a -m "Release ${VERSION}" "v${VERSION}"
-git push origin "v${VERSION}"
+git tag -a -m "Release ${VERSION}" "${VERSION}"
+git push origin "${VERSION}"
 
-echo "release_tag=refs/tags/v${VERSION}" >> $GITHUB_OUTPUT
+echo "release_tag=refs/tags/${VERSION}" >> $GITHUB_OUTPUT
