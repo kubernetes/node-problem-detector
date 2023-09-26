@@ -37,4 +37,8 @@ func (mc *memoryCollector) collect() {
 		mc.mBytesUsed.Record(map[string]string{stateLabel: "free"}, int64(meminfo.Available)*1024)
 		mc.mBytesUsed.Record(map[string]string{stateLabel: "used"}, int64(meminfo.Used)*1024)
 	}
+
+	if mc.mPercentUsed != nil {
+		mc.mPercentUsed.Record(map[string]string{stateLabel: "used"}, float64(meminfo.UsedPercent))
+	}
 }

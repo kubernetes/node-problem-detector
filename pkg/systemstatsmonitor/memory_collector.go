@@ -25,6 +25,7 @@ import (
 
 type memoryCollector struct {
 	mBytesUsed       *metrics.Int64Metric
+	mPercentUsed     *metrics.Float64Metric
 	mAnonymousUsed   *metrics.Int64Metric
 	mPageCacheUsed   *metrics.Int64Metric
 	mUnevictableUsed *metrics.Int64Metric
@@ -47,6 +48,17 @@ func NewMemoryCollectorOrDie(memoryConfig *ssmtypes.MemoryStatsConfig) *memoryCo
 		[]string{stateLabel})
 	if err != nil {
 		klog.Fatalf("Error initializing metric for %q: %v", metrics.MemoryBytesUsedID, err)
+	}
+
+	mc.mPercentUsed, err = metrics.NewFloat64Metric(
+		metrics.MemoryPercentUsedID,
+		memoryConfig.MetricsConfigs[string(metrics.MemoryPercentUsedID)].DisplayName,
+		"Memory usage in percentage of total memory.",
+		"%",
+		metrics.LastValue,
+		[]string{stateLabel})
+	if err != nil {
+		klog.Fatalf("Error initializing metric for %q: %v", metrics.MemoryPercentUsedID, err)
 	}
 
 	mc.mAnonymousUsed, err = metrics.NewInt64Metric(
