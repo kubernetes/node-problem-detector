@@ -12,6 +12,7 @@ type MonitorType int
 const (
 	LogMode MonitorType = iota + 1
 	CustomPluginMode
+	AxeScriptMode
 )
 
 type HealingTasks struct {

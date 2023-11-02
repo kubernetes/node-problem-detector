@@ -133,7 +133,7 @@ func (c *CronService) getMonitorConfig() {
 				glog.Errorf("genLogMonitor failed, err:%s", er.Error())
 				continue
 			}
-		} else if tasks.Works[k].MonitorType == CustomPluginMode {
+		} else if tasks.Works[k].MonitorType == CustomPluginMode || tasks.Works[k].MonitorType == AxeScriptMode {
 			if er := c.genCustomPlugin(&tasks.Works[k]); er != nil {
 				glog.Errorf("genCustomPlugin failed, err:%s", er.Error())
 				continue
