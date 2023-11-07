@@ -22,7 +22,7 @@
 all: build
 
 # PLATFORMS is the set of OS_ARCH that NPD can build against.
-LINUX_PLATFORMS=linux_amd64 linux_arm64
+LINUX_PLATFORMS=linux_amd64
 DOCKER_PLATFORMS=linux/amd64,linux/arm64
 PLATFORMS=$(LINUX_PLATFORMS) windows_amd64
 
@@ -75,7 +75,7 @@ endif
 BASEIMAGE:=registry.k8s.io/build-image/debian-base:bookworm-v1.0.0
 
 # Disable cgo by default to make the binary statically linked.
-CGO_ENABLED:=0
+CGO_ENABLED:=1
 
 # Set default Go architecture to AMD64.
 GOARCH ?= amd64
@@ -147,7 +147,7 @@ output/windows_amd64/test/bin/%.exe: $(PKG_SOURCES)
 
 output/linux_amd64/bin/%: $(PKG_SOURCES)
 	GOOS=linux GOARCH=amd64 CGO_ENABLED=$(CGO_ENABLED) \
-	  CC=x86_64-linux-gnu-gcc go build \
+	  CC=x86_64-redhat-linux-gcc go build \
 		-o $@ \
 		-ldflags '-X $(PKG)/pkg/version.version=$(VERSION)' \
 		-tags "$(LINUX_BUILD_TAGS)" \
@@ -157,14 +157,14 @@ output/linux_amd64/bin/%: $(PKG_SOURCES)
 output/linux_amd64/test/bin/%: $(PKG_SOURCES)
 	cd test && \
 	GOOS=linux GOARCH=amd64 CGO_ENABLED=$(CGO_ENABLED) \
-	  CC=x86_64-linux-gnu-gcc go build \
+	  CC=x86_64-redhat-linux-gcc go build \
 		-o ../$@ \
 		-tags "$(LINUX_BUILD_TAGS)" \
 		./e2e/$(subst -,,$*)
 
 output/linux_arm64/bin/%: $(PKG_SOURCES)
 	GOOS=linux GOARCH=arm64 CGO_ENABLED=$(CGO_ENABLED) \
-	  CC=aarch64-linux-gnu-gcc go build \
+	  CC=x86_64-redhat-linux-gcc go build \
 		-o $@ \
 		-ldflags '-X $(PKG)/pkg/version.version=$(VERSION)' \
 		-tags "$(LINUX_BUILD_TAGS)" \
@@ -174,7 +174,7 @@ output/linux_arm64/bin/%: $(PKG_SOURCES)
 output/linux_arm64/test/bin/%: $(PKG_SOURCES)
 	cd test && \
 	GOOS=linux GOARCH=arm64 CGO_ENABLED=$(CGO_ENABLED) \
-	  CC=aarch64-linux-gnu-gcc go build \
+	  CC=x86_64-redhat-linux-gcc go build \
 		-o ../$@ \
 		-tags "$(LINUX_BUILD_TAGS)" \
 		./e2e/$(subst -,,$*)
