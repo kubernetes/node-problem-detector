@@ -44,6 +44,9 @@
       "disk/bytes_used": {
         "displayName": "disk/bytes_used"
       },
+      "disk/percent_used": {
+        "displayName": "disk/percent_used"
+      },
       "disk/io_time": {
         "displayName": "disk/io_time"
       },

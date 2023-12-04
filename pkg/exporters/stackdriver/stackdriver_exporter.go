@@ -54,6 +54,7 @@ var NPDMetricToSDMetric = map[metrics.MetricID]string{
 	metrics.CPULoad15m:              "compute.googleapis.com/guest/cpu/load_15m",
 	metrics.DiskAvgQueueLenID:       "compute.googleapis.com/guest/disk/queue_length",
 	metrics.DiskBytesUsedID:         "compute.googleapis.com/guest/disk/bytes_used",
+	metrics.DiskPercentUsedID:       "custom.googleapis.com/guest/disk/percent_used",
 	metrics.DiskIOTimeID:            "compute.googleapis.com/guest/disk/io_time",
 	metrics.DiskMergedOpsCountID:    "compute.googleapis.com/guest/disk/merged_operation_count",
 	metrics.DiskOpsBytesID:          "compute.googleapis.com/guest/disk/operation_bytes_count",
