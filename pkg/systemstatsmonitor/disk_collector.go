@@ -38,6 +38,7 @@ type diskCollector struct {
 	mOpsBytes       *metrics.Int64Metric
 	mOpsTime        *metrics.Int64Metric
 	mBytesUsed      *metrics.Int64Metric
+	mPercentUsed    *metrics.Float64Metric
 
 	config *ssmtypes.DiskStatsConfig
 
@@ -148,6 +149,17 @@ func NewDiskCollectorOrDie(diskConfig *ssmtypes.DiskStatsConfig) *diskCollector 
 		[]string{deviceNameLabel, fsTypeLabel, mountOptionLabel, stateLabel})
 	if err != nil {
 		klog.Fatalf("Error initializing metric for %q: %v", metrics.DiskBytesUsedID, err)
+	}
+
+	dc.mPercentUsed, err = metrics.NewFloat64Metric(
+		metrics.DiskPercentUsedID,
+		diskConfig.MetricsConfigs[string(metrics.DiskPercentUsedID)].DisplayName,
+		"Disk usage in percentage of total space",
+		"%",
+		metrics.LastValue,
+		[]string{deviceNameLabel})
+	if err != nil {
+		klog.Fatalf("Error initializing metric for %q: %v", metrics.DiskPercentUsedID, err)
 	}
 
 	dc.lastIOTime = make(map[string]uint64)
@@ -291,6 +303,9 @@ func (dc *diskCollector) collect() {
 		opttypes := strings.Join(partition.Opts, ",")
 		dc.mBytesUsed.Record(map[string]string{deviceNameLabel: deviceName, fsTypeLabel: fstype, mountOptionLabel: opttypes, stateLabel: "free"}, int64(usageStat.Free))
 		dc.mBytesUsed.Record(map[string]string{deviceNameLabel: deviceName, fsTypeLabel: fstype, mountOptionLabel: opttypes, stateLabel: "used"}, int64(usageStat.Used))
+		if dc.mPercentUsed != nil {
+			dc.mPercentUsed.Record(map[string]string{deviceNameLabel: deviceName, fsTypeLabel: fstype, mountOptionLabel: opttypes, stateLabel: "used"}, float64(usageStat.UsedPercent))
+		}
 	}
 
 }
