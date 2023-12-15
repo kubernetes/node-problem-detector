@@ -20,7 +20,7 @@ import (
 	"context"
 	"net"
 	"net/http"
-	_ "net/http/pprof"
+	"net/http/pprof"
 	"strconv"
 
 	"k8s.io/klog/v2"
@@ -94,6 +94,13 @@ func (ke *k8sExporter) startHTTPReporting(npdo *options.NodeProblemDetectorOptio
 	mux.HandleFunc("/conditions", func(w http.ResponseWriter, r *http.Request) {
 		util.ReturnHTTPJson(w, ke.conditionManager.GetConditions())
 	})
+
+	// register pprof
+	mux.HandleFunc("/debug/pprof/", pprof.Index)
+	mux.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)
+	mux.HandleFunc("/debug/pprof/profile", pprof.Profile)
+	mux.HandleFunc("/debug/pprof/symbol", pprof.Symbol)
+	mux.HandleFunc("/debug/pprof/trace", pprof.Trace)
 
 	addr := net.JoinHostPort(npdo.ServerAddress, strconv.Itoa(npdo.ServerPort))
 	go func() {
