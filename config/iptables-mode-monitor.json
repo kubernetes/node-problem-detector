@@ -1,0 +1,20 @@
+{
+  "plugin": "custom",
+  "pluginConfig": {
+    "invoke_interval": "86400s",
+    "timeout": "5s",
+    "max_output_length": 80,
+    "concurrency": 1
+  },
+  "source": "iptables-mode-monitor",
+  "metricsReporting": true,
+  "conditions": [],
+  "rules": [
+    {
+      "type": "temporary",
+      "reason": "IPTablesVersionsMismatch",
+      "path": "./config/plugin/iptables_mode.sh",
+      "timeout": "5s"
+    }
+  ]
+}
