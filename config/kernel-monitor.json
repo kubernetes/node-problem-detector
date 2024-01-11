@@ -15,6 +15,11 @@
 			"type": "XfsShutdown",
 			"reason": "XfsHasNotShutDown",
 			"message": "XFS has not shutdown"
+		},
+		{
+			"type": "CperHardwareErrorFatal",
+			"reason": "CperHardwareHasNoFatalError",
+			"message": "UEFI CPER has no fatal error"
 		}
 	],
 	"rules": [
@@ -68,6 +73,22 @@
 			"type": "temporary",
 			"reason": "MemoryReadError",
 			"pattern": "CE memory read error .*"
+		},
+		{
+			"type": "temporary",
+			"reason": "CperHardwareErrorCorrected",
+			"pattern": ".*\\[Hardware Error\\]: event severity: corrected$"
+		},
+		{
+			"type": "temporary",
+			"reason": "CperHardwareErrorRecoverable",
+			"pattern": ".*\\[Hardware Error\\]: event severity: recoverable$"
+		},
+		{
+			"type": "permanent",
+			"condition": "CperHardwareErrorFatal",
+			"reason": "CperHardwareErrorFatal",
+			"pattern": ".*\\[Hardware Error\\]: event severity: fatal$"
 		},
 		{
 			"type": "permanent",
