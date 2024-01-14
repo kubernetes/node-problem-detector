@@ -40,10 +40,11 @@ const (
 )
 
 type logCounter struct {
-	logCh   <-chan *systemtypes.Log
-	buffer  systemlogmonitor.LogBuffer
-	pattern string
-	clock   clock.Clock
+	logCh         <-chan *systemtypes.Log
+	buffer        systemlogmonitor.LogBuffer
+	pattern       string
+	revertPattern string
+	clock         clock.Clock
 }
 
 func NewJournaldLogCounter(options *options.LogCounterOptions) (types.LogCounter, error) {
@@ -59,10 +60,11 @@ func NewJournaldLogCounter(options *options.LogCounterOptions) (types.LogCounter
 		return nil, fmt.Errorf("error watching journald: %v", err)
 	}
 	return &logCounter{
-		logCh:   logCh,
-		buffer:  systemlogmonitor.NewLogBuffer(bufferSize),
-		pattern: options.Pattern,
-		clock:   clock.RealClock{},
+		logCh:         logCh,
+		buffer:        systemlogmonitor.NewLogBuffer(bufferSize),
+		pattern:       options.Pattern,
+		revertPattern: options.RevertPattern,
+		clock:         clock.RealClock{},
 	}, nil
 }
 
@@ -83,6 +85,9 @@ func (e *logCounter) Count() (count int, err error) {
 			e.buffer.Push(log)
 			if len(e.buffer.Match(e.pattern)) != 0 {
 				count++
+			}
+			if len(e.buffer.Match(e.revertPattern)) != 0 {
+				count--
 			}
 		case <-e.clock.After(timeout):
 			// Don't block forever if we do not get any new messages
