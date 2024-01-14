@@ -86,7 +86,7 @@ func (e *logCounter) Count() (count int, err error) {
 			if len(e.buffer.Match(e.pattern)) != 0 {
 				count++
 			}
-			if len(e.buffer.Match(e.revertPattern)) != 0 {
+			if e.revertPattern != "" && len(e.buffer.Match(e.revertPattern)) != 0 {
 				count--
 			}
 		case <-e.clock.After(timeout):
