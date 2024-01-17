@@ -34,6 +34,7 @@ type LogCounterOptions struct {
 	Lookback       string
 	Delay          string
 	Pattern        string
+	RevertPattern  string
 	Count          int
 }
 
@@ -46,6 +47,8 @@ func (fedo *LogCounterOptions) AddFlags(fs *pflag.FlagSet) {
 		"The time duration log watcher delays after node boot time. This is useful when log watcher needs to wait for some time until the node is stable.")
 	fs.StringVar(&fedo.Pattern, "pattern", "",
 		"The regular expression to match the problem in log. The pattern must match to the end of the line.")
+	fs.StringVar(&fedo.RevertPattern, "revert-pattern", "",
+		"Similar to --pattern but conversely it decreases count value for every match. This is useful to discount a log when another log occurs.")
 	fs.IntVar(&fedo.Count, "count", 1,
 		"The number of times the pattern must be found to trigger the condition")
 }
