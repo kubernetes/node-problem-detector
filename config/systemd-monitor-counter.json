@@ -37,7 +37,7 @@
         "--lookback=20m",
         "--delay=5m",
         "--count=5",
-        "--pattern=Started Kubernetes kubelet."
+        "--pattern=Started (Kubernetes kubelet|kubelet.service|kubelet.service - Kubernetes kubelet)."
       ],
       "timeout": "1m"
     },
@@ -51,7 +51,7 @@
         "--log-path=/var/log/journal",
         "--lookback=20m",
         "--count=5",
-        "--pattern=Starting Docker Application Container Engine..."
+        "--pattern=Starting (Docker Application Container Engine|docker.service|docker.service - Docker Application Container Engine)..."
       ],
       "timeout": "1m"
     },
@@ -65,7 +65,7 @@
         "--log-path=/var/log/journal",
         "--lookback=20m",
         "--count=5",
-        "--pattern=Starting containerd container runtime..."
+        "--pattern=Starting (containerd container runtime|containerd.service|containerd.service - containerd container runtime)..."
       ],
       "timeout": "1m"
     }
