@@ -13,17 +13,17 @@
 		{
 			"type": "temporary",
 			"reason": "KubeletStart",
-			"pattern": "Started Kubernetes kubelet."
+			"pattern": "Started (Kubernetes kubelet|kubelet.service|kubelet.service - Kubernetes kubelet)."
 		},
 		{
 			"type": "temporary",
 			"reason": "DockerStart",
-			"pattern": "Starting Docker Application Container Engine..."
+			"pattern": "Starting (Docker Application Container Engine|docker.service|docker.service - Docker Application Container Engine)..."
 		},
 		{
 			"type": "temporary",
 			"reason": "ContainerdStart",
-			"pattern": "Starting containerd container runtime..."
+			"pattern": "Starting (containerd container runtime|containerd.service|containerd.service - containerd container runtime)..."
 		}
 	]
 }
