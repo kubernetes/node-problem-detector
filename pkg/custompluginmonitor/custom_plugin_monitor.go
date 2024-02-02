@@ -125,6 +125,9 @@ func (c *customPluginMonitor) Stop() {
 func (c *customPluginMonitor) monitorLoop() {
 	if !*c.config.PluginGlobalConfig.SkipInitialStatus {
 		c.initializeStatus()
+	} else {
+		c.conditions = initialConditions(c.config.DefaultConditions)
+		klog.Infof("Skipping condition initialization: %+v", c.conditions)
 	}
 
 	resultChan := c.plugin.GetResultChan()
