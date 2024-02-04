@@ -281,8 +281,15 @@ clean:
 	rm -rf output/
 	rm -f coverage.out
 
-depup:
-	go get $(shell go list -f '{{if not (or .Main .Indirect)}}{{.Path}}{{end}}' -mod=mod -m all)
+.PHONY: gomod
+gomod:
 	go mod tidy
 	go mod vendor
 	cd test; go mod tidy
+
+.PHONY: goget
+goget:
+	go get $(shell go list -f '{{if not (or .Main .Indirect)}}{{.Path}}{{end}}' -mod=mod -m all)
+
+.PHONY: depup
+depup: goget gomod
