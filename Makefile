@@ -17,7 +17,7 @@
 .PHONY: all \
         vet fmt version test e2e-test \
         build-binaries build-container build-tar build \
-        docker-builder build-in-docker push-container push-tar push clean
+        docker-builder build-in-docker push-container push-tar push clean depup
 
 all: build
 
@@ -280,3 +280,16 @@ clean:
 	rm -f node-problem-detector-*.tar.gz*
 	rm -rf output/
 	rm -f coverage.out
+
+.PHONY: gomod
+gomod:
+	go mod tidy
+	go mod vendor
+	cd test; go mod tidy
+
+.PHONY: goget
+goget:
+	go get $(shell go list -f '{{if not (or .Main .Indirect)}}{{.Path}}{{end}}' -mod=mod -m all)
+
+.PHONY: depup
+depup: goget gomod

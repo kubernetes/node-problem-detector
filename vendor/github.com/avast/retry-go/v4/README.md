@@ -366,7 +366,7 @@ skip retry if special error example:
     			return false
     		}
     		return true
-    	})
+    	}),
     )
 
 By default RetryIf stops execution if the error is wrapped using

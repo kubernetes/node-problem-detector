@@ -5,7 +5,6 @@ package load
 
 import (
 	"context"
-	"log"
 	"math"
 	"sync"
 	"time"
@@ -37,7 +36,6 @@ func loadAvgGoroutine(ctx context.Context) {
 
 	counter, err := common.ProcessorQueueLengthCounter()
 	if err != nil || counter == nil {
-		log.Printf("unexpected processor queue length counter error, %v\n", err)
 		return
 	}
 
@@ -45,8 +43,8 @@ func loadAvgGoroutine(ctx context.Context) {
 
 	f := func() {
 		currentLoad, err = counter.GetValue()
-		loadErr = err
 		loadAvgMutex.Lock()
+		loadErr = err
 		loadAvg1M = loadAvg1M*loadAvgFactor1M + currentLoad*(1-loadAvgFactor1M)
 		loadAvg5M = loadAvg5M*loadAvgFactor5M + currentLoad*(1-loadAvgFactor5M)
 		loadAvg15M = loadAvg15M*loadAvgFactor15M + currentLoad*(1-loadAvgFactor15M)
