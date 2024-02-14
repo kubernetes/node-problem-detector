@@ -177,7 +177,7 @@ func execCommand(timeout time.Duration, command string, args ...string) (string,
 	cmd := exec.CommandContext(ctx, command, args...)
 	out, err := cmd.CombinedOutput()
 	if err != nil {
-		klog.Infof("command %v failed: %v, %v\n", cmd, err, out)
+		klog.Infof("command %v failed: %v, %s\n", cmd, err, string(out))
 		return "", err
 	}
 
