@@ -17,7 +17,7 @@
 .PHONY: all \
         vet fmt version test e2e-test \
         build-binaries build-container build-tar build \
-        docker-builder build-in-docker push-container push-tar push clean depup
+        docker-builder build-in-docker push-container push clean depup
 
 all: build
 
@@ -34,11 +34,6 @@ TAG?=$(VERSION)
 
 # REGISTRY is the container registry to push into.
 REGISTRY?=gcr.io/k8s-staging-npd
-
-# UPLOAD_PATH is the cloud storage path to upload release tar.
-UPLOAD_PATH?=gs://kubernetes-release
-# Trim the trailing '/' in the path
-UPLOAD_PATH:=$(shell echo $(UPLOAD_PATH) | sed '$$s/\/*$$//')
 
 # PKG is the package name of node problem detector repo.
 PKG:=k8s.io/node-problem-detector
@@ -264,11 +259,7 @@ endif
 	# Build should be cached from build-container
 	docker buildx build --push --platform $(DOCKER_PLATFORMS) -t $(IMAGE) --build-arg BASEIMAGE=$(BASEIMAGE) --build-arg LOGCOUNTER=$(LOGCOUNTER) .
 
-push-tar: build-tar
-	gsutil cp $(TARBALL) $(UPLOAD_PATH)/node-problem-detector/
-	gsutil cp node-problem-detector-$(VERSION)-*.tar.gz* $(UPLOAD_PATH)/node-problem-detector/
-
-push: push-container push-tar
+push: push-container build-tar
 
 coverage.out:
 	rm -f coverage.out
