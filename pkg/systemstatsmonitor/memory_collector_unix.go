@@ -60,7 +60,7 @@ func (mc *memoryCollector) collect() {
 
 	if mc.mPercentUsed != nil && meminfo.MemTotal != nil && *meminfo.MemTotal > 0 &&
 		meminfo.MemFree != nil && meminfo.Buffers != nil && meminfo.Cached != nil && meminfo.Slab != nil {
-		ratio := float64(*meminfo.MemTotal-*meminfo.MemFree-*meminfo.Buffers-*meminfo.Cached-*meminfo.Slab) / float64(*meminfo.MemTotal)
+		ratio := float64(*meminfo.MemTotal - *meminfo.MemFree - *meminfo.Buffers - *meminfo.Cached - *meminfo.Slab) / float64(*meminfo.MemTotal)
 		mc.mPercentUsed.Record(map[string]string{stateLabel: "used"}, float64(ratio*100.0))
 	}
 
