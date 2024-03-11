@@ -17,7 +17,8 @@
 .PHONY: all \
         vet fmt version test e2e-test \
         build-binaries build-container build-tar build \
-        docker-builder build-in-docker push-container push-tar push clean depup
+        docker-builder build-in-docker \
+        push-container push-tar push release clean depup
 
 all: build
 
@@ -268,7 +269,11 @@ push-tar: build-tar
 	gsutil cp $(TARBALL) $(UPLOAD_PATH)/node-problem-detector/
 	gsutil cp node-problem-detector-$(VERSION)-*.tar.gz* $(UPLOAD_PATH)/node-problem-detector/
 
+# `make push` is used by presubmit and CI jobs.
 push: push-container push-tar
+
+# `make release` is used when releasing a new NPD version.
+release: push-container build-tar
 
 coverage.out:
 	rm -f coverage.out
