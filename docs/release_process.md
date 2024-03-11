@@ -58,7 +58,7 @@ section to perform steps in this section.**
 sudo  apt-get install libsystemd-dev gcc-aarch64-linux-gnu
 
 cd node-problem-detector
-make push
+make release
 
 # Get SHA256 of the tar files. For example
 sha256sum node-problem-detector-v0.8.17-linux_amd64.tar.gz
