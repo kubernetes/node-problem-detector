@@ -68,6 +68,7 @@ function install-lib() {
   apt-get install -y libsystemd-dev gcc-aarch64-linux-gnu
 }
 
+
 function write-env-file() {
   local -r env_file="${1}"
   if [[ -z "${env_file}" ]]; then
@@ -77,10 +78,6 @@ function write-env-file() {
 
   cat > ${ROOT_PATH}/${env_file} <<EOF
 export KUBE_ENABLE_NODE_PROBLEM_DETECTOR=standalone
-export NODE_PROBLEM_DETECTOR_RELEASE_PATH=${UPLOAD_PATH/gs:\/\//${GCS_URL_PREFIX}}
-export NODE_PROBLEM_DETECTOR_VERSION=${VERSION}
-export NODE_PROBLEM_DETECTOR_TAR_HASH=$(sha1sum ${ROOT_PATH}/node-problem-detector-${VERSION}-linux_amd64.tar.gz | cut -d ' ' -f1)
-export EXTRA_ENVS=NODE_PROBLEM_DETECTOR_IMAGE=${REGISTRY}/node-problem-detector:${TAG}
 EOF
 
   if [[ -n "${NODE_PROBLEM_DETECTOR_CUSTOM_FLAGS:-}" ]]; then
