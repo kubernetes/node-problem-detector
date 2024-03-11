@@ -17,6 +17,7 @@
 # This script build node problem detector for presubmit and CI jobs and push to
 # staging, so that kubernetes E2E tests have access to the build.
 
+
 set -o errexit
 set -o nounset
 set -o pipefail
