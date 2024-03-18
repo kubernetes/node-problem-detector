@@ -13,7 +13,15 @@
 # limitations under the License.
 ARG BASEIMAGE
 
-FROM golang:1.22.1-bookworm@sha256:6699d2852712f090399ccd4e8dfd079b4d55376f3ab3aff5b2dc8b7b1c11e27e as builder
+# "builder-base" can be overriden using dockerb buildx's --build-context flag,
+# by users who want to use a different images for the builder. E.g. if you need to use an older OS 
+# to avoid dependencies on very recent glibc versions.
+# E.g. of the param: --build-context builder-base=docker-image://golang:<something>@sha256:<something>
+# Must override builder-base, not builder, since the latter is referred to later in the file and so must not be
+# directly replaced. See here, and note that "stage" parameter mentioned there has been renamed to 
+# "build-context": https://github.com/docker/buildx/pull/904#issuecomment-1005871838
+FROM golang:1.22.1-bookworm@sha256:6699d2852712f090399ccd4e8dfd079b4d55376f3ab3aff5b2dc8b7b1c11e27e as builder-base
+FROM builder-base as builder
 LABEL maintainer="Andy Xie <andy.xning@gmail.com>"
 
 ARG TARGETARCH
