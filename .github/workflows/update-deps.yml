@@ -1,0 +1,45 @@
+name: 'Update Dependencies'
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 6 * * 5'
+
+env:
+  GOPROXY: https://proxy.golang.org
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update-deps:
+    if: ${{ github.repository == 'kubernetes/node-problem-detector' }}
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.22.1'
+      - uses: actions/checkout@v4
+      - name: Update Dependencies
+        id: update_deps
+        run: |
+          make depup
+          echo 'changes<<EOF' >> $GITHUB_OUTPUT
+          git status --porcelain >> $GITHUB_OUTPUT
+          echo 'EOF' >> $GITHUB_OUTPUT
+      - name: Create PR
+        if: ${{ steps.update_deps.outputs.changes != '' }}
+        uses: peter-evans/create-pull-request@v6
+        with:
+          title: 'Update dependencies'
+          commit-message: Update dependencies
+          committer: github-actions <actions@github.com>
+          author: github-actions <actions@github.com>
+          branch: dependencies/update
+          branch-suffix: timestamp
+          base: master
+          delete-branch: true
+          labels: ok-to-test
+          body: |
+            Updating go.mod with latest dependencies...
