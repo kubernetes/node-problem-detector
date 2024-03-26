@@ -52,6 +52,7 @@ type logMonitor struct {
 	logCh      <-chan *systemlogtypes.Log
 	output     chan *types.Status
 	tomb       *tomb.Tomb
+	countBuffer map[string]*CountRingBuffer
 }
 
 // NewLogMonitorOrDie create a new LogMonitor, panic if error occurs.
@@ -81,6 +82,7 @@ func NewLogMonitorOrDie(configPath string) types.Monitor {
 	l.buffer = NewLogBuffer(l.config.BufferSize)
 	// A 1000 size channel should be big enough.
 	l.output = make(chan *types.Status, 1000)
+	l.countBuffer = NewCountBuffer(l.config.Rules)
 
 	if *l.config.EnableMetricsReporting {
 		initializeProblemMetricsOrDie(l.config.Rules)
@@ -153,6 +155,10 @@ func (l *logMonitor) parseLog(log *systemlogtypes.Log) {
 	for _, rule := range l.config.Rules {
 		matched := l.buffer.Match(rule.Pattern)
 		if len(matched) == 0 {
+			continue
+		}
+		if l.countBuffer[rule.Reason] != nil && !l.countBuffer[rule.Reason].IsThresholdMatched() {
+			glog.V(3).Infof("Found the error message according the rule %s, but not exceed the threshold", rule.Reason)
 			continue
 		}
 		status := l.generateStatus(matched, rule)
@@ -257,3 +263,4 @@ func generateMessage(logs []*systemlogtypes.Log) string {
 	}
 	return concatLogs(messages)
 }
+
