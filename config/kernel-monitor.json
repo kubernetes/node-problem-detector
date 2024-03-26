@@ -15,6 +15,11 @@
 			"type": "ReadonlyFilesystem",
 			"reason": "FilesystemIsNotReadOnly",
 			"message": "Filesystem is not read-only"
+		},
+		{
+			"type": "XfsShutdown",
+			"reason": "XfsHasNotShutDown",
+			"message": "XFS has not shutdown"
 		}
 	],
 	"rules": [
@@ -57,6 +62,12 @@
 			"type": "temporary",
 			"reason": "IOError",
 			"pattern": "Buffer I/O error .*"
+		},
+		{
+			"type": "permanent",
+			"condition": "XfsShutdown",
+			"reason": "XfsHasShutdown",
+			"pattern": "XFS .* Shutting down filesystem.?"
 		},
 		{
 			"type": "temporary",
