@@ -9,12 +9,24 @@
 		{
 			"type": "KernelDeadlock",
 			"reason": "KernelHasNoDeadlock",
-			"message": "kernel has no deadlock"
+			"message": "kernel has no deadlock",
+			"taintConfig": {
+				"enabled": false,
+				"key": "node-problem-detector/kernel-deadlock",
+				"value": "true",
+				"effect": "NoSchedule"
+			}
 		},
 		{
 			"type": "ReadonlyFilesystem",
 			"reason": "FilesystemIsNotReadOnly",
-			"message": "Filesystem is not read-only"
+			"message": "Filesystem is not read-only",
+			"taintConfig": {
+				"enabled": false,
+				"key": "node-problem-detector/read-only-filesystem",
+				"value": "true",
+				"effect": "NoSchedule"
+			}
 		}
 	],
 	"rules": [

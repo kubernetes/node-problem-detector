@@ -11,12 +11,24 @@ data:
             {
                 "type": "KernelDeadlock",
                 "reason": "KernelHasNoDeadlock",
-                "message": "kernel has no deadlock"
+                "message": "kernel has no deadlock",
+                "taintConfig": {
+                    "enabled": false,
+                    "key": "node-problem-detector/kernel-deadlock",
+                    "value": "true",
+                    "effect": "NoSchedule"
+                }
             },
             {
                 "type": "ReadonlyFilesystem",
                 "reason": "FilesystemIsNotReadOnly",
-                "message": "Filesystem is not read-only"
+                "message": "Filesystem is not read-only",
+                "taintConfig": {
+                    "enabled": true,
+                    "key": "node-problem-detector/read-only-filesystem",
+                    "value": "true",
+                    "effect": "NoSchedule"
+                }
             }
         ],
         "rules": [
@@ -49,6 +61,12 @@ data:
     			"type": "temporary",
     			"reason": "MemoryReadError",
     			"pattern": "CE memory read error .*"
+            },
+            {
+                "type": "permanent",
+                "condition": "KernelDeadlock",
+                "reason": "AUFSUmountHung",
+                "pattern": "task umount\\.aufs:\\w+ blocked for more than \\w+ seconds\\."
             },
             {
                 "type": "permanent",

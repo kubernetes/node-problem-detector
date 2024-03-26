@@ -20,6 +20,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	types2 "k8s.io/node-problem-detector/pkg/types"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -49,6 +50,10 @@ type Client interface {
 	Eventf(eventType string, source, reason, messageFmt string, args ...interface{})
 	// GetNode returns the Node object of the node on which the
 	// node-problem-detector runs.
+	// TaintNode taints the node if tainting is enabled on the config file on specific conditions
+	TaintNode(node *v1.Node, condition types2.Condition) error
+	// UntaintNode removes taint from node if tainting is enabled on the config file on specific conditions, and problem recovered
+	UntaintNode(node *v1.Node, condition types2.Condition) error
 	GetNode(ctx context.Context) (*v1.Node, error)
 }
 
@@ -135,6 +140,42 @@ func (c *nodeProblemClient) GetNode(ctx context.Context) (*v1.Node, error) {
 	return c.client.Nodes().Get(ctx, c.nodeName, metav1.GetOptions{ResourceVersion: "0"})
 }
 
+// TaintNode taints the node if tainting is enabled and problem occurred
+func (c *nodeProblemClient) TaintNode(node *v1.Node, condition types2.Condition) (err error) {
+	node.Spec.Taints = append(node.Spec.Taints, v1.Taint{
+		Key:    condition.TaintConfig.Key,
+		Value:  condition.TaintConfig.Value,
+		Effect: v1.TaintEffect(condition.TaintConfig.Effect),
+	})
+
+	_, err = c.client.Nodes().Update(node)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// UntaintNode removes taint from node if tainting is enabled on the config file on specific conditions, and problem recovered
+func (c *nodeProblemClient) UntaintNode(node *v1.Node, condition types2.Condition) (err error) {
+	var taints []v1.Taint
+	for _, v := range node.Spec.Taints {
+		if v.Key == condition.TaintConfig.Key && v.Value == condition.TaintConfig.Value && v.Effect == v1.TaintEffect(condition.TaintConfig.Effect) {
+			continue
+		}
+
+		taints = append(taints, v)
+	}
+
+	node.Spec.Taints = taints
+	_, err = c.client.Nodes().Update(node)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // generatePatch generates condition patch
 func generatePatch(conditions []v1.NodeCondition) ([]byte, error) {
 	raw, err := json.Marshal(&conditions)
@@ -161,4 +202,15 @@ func getNodeRef(namespace, nodeName string) *v1.ObjectReference {
 		UID:       types.UID(nodeName),
 		Namespace: namespace,
 	}
+}
+
+func CheckIfTaintAlreadyExists(node *v1.Node, config types2.TaintConfig) bool {
+	for _, v := range node.Spec.Taints {
+		// returning true since our target node is already tainted
+		if v.Key == config.Key && v.Value == config.Value && v.Effect == v1.TaintEffect(config.Effect) {
+			return true
+		}
+	}
+
+	return false
 }
