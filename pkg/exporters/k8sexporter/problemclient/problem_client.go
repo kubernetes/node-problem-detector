@@ -130,7 +130,9 @@ func (c *nodeProblemClient) Eventf(eventType, source, reason, messageFmt string,
 }
 
 func (c *nodeProblemClient) GetNode(ctx context.Context) (*v1.Node, error) {
-	return c.client.Nodes().Get(ctx, c.nodeName, metav1.GetOptions{})
+	// To reduce the load on APIServer & etcd, we are serving GET operations from
+	// apiserver cache (the data might be slightly delayed).
+	return c.client.Nodes().Get(ctx, c.nodeName, metav1.GetOptions{ResourceVersion: "0"})
 }
 
 // generatePatch generates condition patch
