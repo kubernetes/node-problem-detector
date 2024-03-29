@@ -73,7 +73,7 @@ ENABLE_JOURNALD=0
 endif
 
 # Set default base image to Debian 12 (Bookworm)
-BASEIMAGE:=registry.k8s.io/build-image/debian-base:bookworm-v1.0.1
+BASEIMAGE:=registry.k8s.io/build-image/debian-base:bookworm-v1.0.2
 
 # Disable cgo by default to make the binary statically linked.
 CGO_ENABLED:=0
