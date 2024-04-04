@@ -298,6 +298,7 @@ Kubernetes cluster to a healthy state. The following remedy systems exist:
   node conditions and delegates remediation to external remediators using the Remediation API.[Poison-Pill](https://github.com/medik8s/poison-pill)
   is a remediator that will reboot the node and make sure all statefull workloads are rescheduled. NHC supports conditionally remediating if the cluster
   has enough healthy capacity, or manually pausing any action to minimze cluster disruption.
+* [**MachineHealthCheck**](https://cluster-api.sigs.k8s.io/developer/architecture/controllers/machine-health-check) of [Cluster API](https://cluster-api.sigs.k8s.io/) are responsible for remediating unhealthy Machines.
 
 # Testing
 
