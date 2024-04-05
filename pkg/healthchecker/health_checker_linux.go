@@ -56,6 +56,11 @@ func getUptimeFunc(service string) func() (time.Duration, error) {
 
 // getRepairFunc returns the repair function based on the component.
 func getRepairFunc(hco *options.HealthCheckerOptions) func() {
+	// Use `systemctl kill` instead of `systemctl restart` for the repair function.
+	// We start to rely on the kernel message difference for the two commands to
+	// indicate if the component restart is due to an administrative plan (restart)
+	// or a system issue that needs repair (kill).
+	// See https://github.com/kubernetes/node-problem-detector/issues/847.
 	switch hco.Component {
 	case types.DockerComponent:
 		// Use "docker ps" for docker health check. Not using crictl for docker to remove
