@@ -64,7 +64,7 @@ List of supported problem daemons types:
 | [SystemLogMonitor](https://github.com/kubernetes/node-problem-detector/tree/master/pkg/systemlogmonitor) | KernelDeadlock ReadonlyFilesystem FrequentKubeletRestart FrequentDockerRestart FrequentContainerdRestart | A system log monitor monitors system log and reports problems and metrics according to predefined rules. | [filelog](https://github.com/kubernetes/node-problem-detector/blob/master/config/kernel-monitor-filelog.json), [kmsg](https://github.com/kubernetes/node-problem-detector/blob/master/config/kernel-monitor.json), [kernel](https://github.com/kubernetes/node-problem-detector/blob/master/config/kernel-monitor-counter.json) [abrt](https://github.com/kubernetes/node-problem-detector/blob/master/config/abrt-adaptor.json) [systemd](https://github.com/kubernetes/node-problem-detector/blob/master/config/systemd-monitor-counter.json) | disable_system_log_monitor
 | [SystemStatsMonitor](https://github.com/kubernetes/node-problem-detector/tree/master/pkg/systemstatsmonitor) | None(Could be added in the future) | A system stats monitor for node-problem-detector to collect various health-related system stats as metrics. See the proposal [here](https://docs.google.com/document/d/1SeaUz6kBavI283Dq8GBpoEUDrHA2a795xtw0OvjM568/edit). | [system-stats-monitor](https://github.com/kubernetes/node-problem-detector/blob/master/config/system-stats-monitor.json) | disable_system_stats_monitor
 | [CustomPluginMonitor](https://github.com/kubernetes/node-problem-detector/tree/master/pkg/custompluginmonitor) | On-demand(According to users configuration), existing example: NTPProblem | A custom plugin monitor for node-problem-detector to invoke and check various node problems with user-defined check scripts. See the proposal [here](https://docs.google.com/document/d/1jK_5YloSYtboj-DtfjmYKxfNnUxCAvohLnsH5aGCAYQ/edit#). | [example](https://github.com/kubernetes/node-problem-detector/blob/4ad49bbd84b8ced45ac825eac01ec93d9235935e/config/custom-plugin-monitor.json) | disable_custom_plugin_monitor
-| [HealthChecker](https://github.com/kubernetes/node-problem-detector/tree/master/pkg/healthchecker) | KubeletUnhealthy ContainerRuntimeUnhealthy| A health checker for node-problem-detector to check kubelet and container runtime health. | [kubelet](https://github.com/kubernetes/node-problem-detector/blob/master/config/health-checker-kubelet.json) [docker](https://github.com/kubernetes/node-problem-detector/blob/master/config/health-checker-docker.json) [containerd](https://github.com/kubernetes/node-problem-detector/blob/master/config/health-checker-containerd.json) | 
+| [HealthChecker](https://github.com/kubernetes/node-problem-detector/tree/master/pkg/healthchecker) | KubeletUnhealthy ContainerRuntimeUnhealthy| A health checker for node-problem-detector to check kubelet and container runtime health. | [kubelet](https://github.com/kubernetes/node-problem-detector/blob/master/config/health-checker-kubelet.json) [docker](https://github.com/kubernetes/node-problem-detector/blob/master/config/health-checker-docker.json) [containerd](https://github.com/kubernetes/node-problem-detector/blob/master/config/health-checker-containerd.json) |
 
 # Exporter
 
@@ -104,8 +104,8 @@ certain backends. Some of them can be disabled at compile-time using a build tag
   [config/custom-plugin-monitor.json](https://github.com/kubernetes/node-problem-detector/blob/master/config/custom-plugin-monitor.json).
   Node problem detector will start a separate custom plugin monitor for each configuration.  You can
   use different custom plugin monitors to monitor different node problems.
-  
-  
+
+
 #### For Health Checkers
 
   Health checkers are configured as custom plugins, using the config/health-checker-*.json config files.
@@ -235,7 +235,7 @@ make test
 %CD%\output\windows_amd64\bin\node-problem-detector.exe --logtostderr --enable-k8s-exporter=false --config.system-log-monitor=%CD%\config\windows-containerd-monitor-filelog.json --config.system-stats-monitor=config\windows-system-stats-monitor.json
 
 # Configure NPD to run as a Windows Service
-sc.exe create NodeProblemDetector binpath= "%CD%\node-problem-detector.exe [FLAGS]" start= demand 
+sc.exe create NodeProblemDetector binpath= "%CD%\node-problem-detector.exe [FLAGS]" start= demand
 sc.exe failure NodeProblemDetector reset= 0 actions= restart/10000
 sc.exe start NodeProblemDetector
 ```
@@ -319,6 +319,10 @@ See [NPD e2e test documentation](https://github.com/kubernetes/node-problem-dete
 ## Problem Maker
 
 [Problem maker](https://github.com/kubernetes/node-problem-detector/blob/master/test/e2e/problemmaker/README.md) is a program used in NPD e2e tests to generate/simulate node problems. It is ONLY intended to be used by NPD e2e tests. Please do NOT run it on your workstation, as it could cause real node problems.
+
+# Compatibility
+
+Node problem detector's architecture has been fairly stable. Recent versions (v0.8.13+) should be able to work with any supported kubernetes versions.
 
 # Docs
 
