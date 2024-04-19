@@ -11,8 +11,7 @@ import (
 type RetryIfFunc func(error) bool
 
 // Function signature of OnRetry function
-// n = count of attempts
-type OnRetryFunc func(n uint, err error)
+type OnRetryFunc func(attempt uint, err error)
 
 // DelayTypeFunc is called to return the next delay to wait after the retriable function fails on `err` after `n` attempts.
 type DelayTypeFunc func(n uint, err error, config *Config) time.Duration
@@ -57,6 +56,13 @@ func LastErrorOnly(lastErrorOnly bool) Option {
 func Attempts(attempts uint) Option {
 	return func(c *Config) {
 		c.attempts = attempts
+	}
+}
+
+// UntilSucceeded will retry until the retried function succeeds. Equivalent to setting Attempts(0).
+func UntilSucceeded() Option {
+	return func(c *Config) {
+		c.attempts = 0
 	}
 }
 

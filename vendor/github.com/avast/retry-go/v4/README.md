@@ -10,12 +10,12 @@
 
 Simple library for retry mechanism
 
-slightly inspired by
+Slightly inspired by
 [Try::Tiny::Retry](https://metacpan.org/pod/Try::Tiny::Retry)
 
 # SYNOPSIS
 
-http get with retry:
+HTTP GET with retry:
 
     url := "http://example.com"
     var body []byte
@@ -31,17 +31,17 @@ http get with retry:
     		if err != nil {
     			return err
     		}
-
     		return nil
     	},
     )
+
     if err != nil {
     	// handle error
     }
 
     fmt.Println(string(body))
 
-http get with retry with data:
+HTTP GET with retry with data:
 
     url := "http://example.com"
 
@@ -60,13 +60,14 @@ http get with retry with data:
     		return body, nil
     	},
     )
+
     if err != nil {
     	// handle error
     }
 
     fmt.Println(string(body))
 
-[next examples](https://github.com/avast/retry-go/tree/master/examples)
+[More examples](https://github.com/avast/retry-go/tree/master/examples)
 
 # SEE ALSO
 
@@ -241,10 +242,10 @@ used with that library.
 #### type OnRetryFunc
 
 ```go
-type OnRetryFunc func(n uint, err error)
+type OnRetryFunc func(attempt uint, err error)
 ```
 
-Function signature of OnRetry function n = count of attempts
+Function signature of OnRetry function
 
 #### type Option
 
@@ -366,7 +367,7 @@ skip retry if special error example:
     			return false
     		}
     		return true
-    	}),
+    	})
     )
 
 By default RetryIf stops execution if the error is wrapped using
@@ -377,6 +378,14 @@ By default RetryIf stops execution if the error is wrapped using
     		return retry.Unrecoverable(errors.New("special error"))
     	}
     )
+
+#### func  UntilSucceeded
+
+```go
+func UntilSucceeded() Option
+```
+UntilSucceeded will retry until the retried function succeeds. Equivalent to
+setting Attempts(0).
 
 #### func  WithTimer
 
