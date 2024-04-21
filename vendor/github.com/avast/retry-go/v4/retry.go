@@ -1,11 +1,11 @@
 /*
 Simple library for retry mechanism
 
-slightly inspired by [Try::Tiny::Retry](https://metacpan.org/pod/Try::Tiny::Retry)
+Slightly inspired by [Try::Tiny::Retry](https://metacpan.org/pod/Try::Tiny::Retry)
 
 # SYNOPSIS
 
-http get with retry:
+HTTP GET with retry:
 
 	url := "http://example.com"
 	var body []byte
@@ -21,17 +21,17 @@ http get with retry:
 			if err != nil {
 				return err
 			}
-
 			return nil
 		},
 	)
+
 	if err != nil {
 		// handle error
 	}
 
 	fmt.Println(string(body))
 
-http get with retry with data:
+HTTP GET with retry with data:
 
 	url := "http://example.com"
 
@@ -50,13 +50,14 @@ http get with retry with data:
 			return body, nil
 		},
 	)
+
 	if err != nil {
 		// handle error
 	}
 
 	fmt.Println(string(body))
 
-[next examples](https://github.com/avast/retry-go/tree/master/examples)
+[More examples](https://github.com/avast/retry-go/tree/master/examples)
 
 # SEE ALSO
 
@@ -154,8 +155,8 @@ func DoWithData[T any](retryableFunc RetryableFuncWithData[T], opts ...Option) (
 
 			lastErr = err
 
-			n++
 			config.onRetry(n, err)
+			n++
 			select {
 			case <-config.timer.After(delay(config, n, err)):
 			case <-config.context.Done():
