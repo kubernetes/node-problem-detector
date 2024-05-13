@@ -1,8 +1,6 @@
 module k8s.io/node-problem-detector/test
 
-go 1.22.0
-
-toolchain go1.22.1
+go 1.22.3
 
 replace k8s.io/node-problem-detector => ../.
 
