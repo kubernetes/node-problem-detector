@@ -52,6 +52,12 @@ func TestGetOSVersionLinux(t *testing.T) {
 			expectErr:         false,
 		},
 		{
+			name:              "rocky",
+			fakeOSReleasePath: "testdata/os-release-rocky",
+			expectedOSVersion: "rocky 8.5 (Green Obsidian)",
+			expectErr:         false,
+		},
+		{
 			name:              "rhel",
 			fakeOSReleasePath: "testdata/os-release-rhel",
 			expectedOSVersion: "rhel 7.7 (Maipo)",
