@@ -56,6 +56,8 @@ func getOSVersion(osReleasePath string) (string, error) {
 		return getDebianVersion(osReleaseMap), nil
 	case "centos":
 		return getDebianVersion(osReleaseMap), nil
+	case "rocky":
+		return getDebianVersion(osReleaseMap), nil
 	case "rhel":
 		return getDebianVersion(osReleaseMap), nil
 	case "ol":
