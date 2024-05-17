@@ -72,9 +72,6 @@ else ifeq ($(shell go env GOHOSTOS), windows)
 ENABLE_JOURNALD=0
 endif
 
-# Set default base image to Debian 12 (Bookworm)
-BASEIMAGE:=registry.k8s.io/build-image/debian-base:bookworm-v1.0.3
-
 # Disable cgo by default to make the binary statically linked.
 CGO_ENABLED:=0
 
@@ -238,7 +235,7 @@ build-binaries: $(ALL_BINARIES)
 
 build-container: clean Dockerfile
 	docker buildx create --platform $(DOCKER_PLATFORMS) --use
-	docker buildx build --platform $(DOCKER_PLATFORMS) -t $(IMAGE) --build-arg BASEIMAGE=$(BASEIMAGE) --build-arg LOGCOUNTER=$(LOGCOUNTER) .
+	docker buildx build --platform $(DOCKER_PLATFORMS) -t $(IMAGE) --build-arg LOGCOUNTER=$(LOGCOUNTER) .
 
 $(TARBALL): ./bin/node-problem-detector ./bin/log-counter ./bin/health-checker ./test/bin/problem-maker
 	tar -zcvf $(TARBALL) bin/ config/ test/e2e-install.sh test/bin/problem-maker
@@ -250,7 +247,7 @@ build-tar: $(TARBALL) $(ALL_TARBALLS)
 build: build-container build-tar
 
 docker-builder:
-	docker build -t npd-builder . --target=builder --build-arg BASEIMAGE=$(BASEIMAGE)
+	docker build -t npd-builder . --target=builder
 
 build-in-docker: clean docker-builder
 	docker run \
@@ -263,7 +260,7 @@ ifneq (,$(findstring gcr.io,$(REGISTRY)))
 	gcloud auth configure-docker
 endif
 	# Build should be cached from build-container
-	docker buildx build --push --platform $(DOCKER_PLATFORMS) -t $(IMAGE) --build-arg BASEIMAGE=$(BASEIMAGE) --build-arg LOGCOUNTER=$(LOGCOUNTER) .
+	docker buildx build --push --platform $(DOCKER_PLATFORMS) -t $(IMAGE) --build-arg LOGCOUNTER=$(LOGCOUNTER) .
 
 push-tar: build-tar
 	gsutil cp $(TARBALL) $(UPLOAD_PATH)/node-problem-detector/

@@ -11,16 +11,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-ARG BASEIMAGE
 
 # "builder-base" can be overriden using dockerb buildx's --build-context flag,
-# by users who want to use a different images for the builder. E.g. if you need to use an older OS 
+# by users who want to use a different images for the builder. E.g. if you need to use an older OS
 # to avoid dependencies on very recent glibc versions.
 # E.g. of the param: --build-context builder-base=docker-image://golang:<something>@sha256:<something>
 # Must override builder-base, not builder, since the latter is referred to later in the file and so must not be
-# directly replaced. See here, and note that "stage" parameter mentioned there has been renamed to 
+# directly replaced. See here, and note that "stage" parameter mentioned there has been renamed to
 # "build-context": https://github.com/docker/buildx/pull/904#issuecomment-1005871838
-FROM golang:1.22.3-bookworm@sha256:5c56bd47228dd572d8a82971cf1f946cd8bb1862a8ec6dc9f3d387cc94136976 as builder-base
+FROM golang:1.22-bookworm@sha256:5c56bd47228dd572d8a82971cf1f946cd8bb1862a8ec6dc9f3d387cc94136976 as builder-base
 FROM builder-base as builder
 LABEL maintainer="Andy Xie <andy.xning@gmail.com>"
 
@@ -36,8 +35,7 @@ COPY . /gopath/src/k8s.io/node-problem-detector/
 WORKDIR /gopath/src/k8s.io/node-problem-detector
 RUN GOARCH=${TARGETARCH} make bin/node-problem-detector bin/health-checker bin/log-counter
 
-ARG BASEIMAGE
-FROM --platform=${TARGETPLATFORM} ${BASEIMAGE}
+FROM --platform=${TARGETPLATFORM} registry.k8s.io/build-image/debian-base:bookworm-v1.0.4@sha256:b30608f5a81f8ba99b287322d0bfb77ec506adcce396147aa4a59699d69be3e0 as base
 
 LABEL maintainer="Random Liu <lantaol@google.com>"
 

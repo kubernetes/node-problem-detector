@@ -3,39 +3,53 @@ updates:
   - package-ecosystem: github-actions
     directory: /
     schedule:
-      interval: daily
+      interval: weekly
+    groups:
+      actions-all:
+        patterns:
+        - "*"
 
   - package-ecosystem: docker
     directory: /
     schedule:
-      interval: daily
+      interval: weekly
 
   - package-ecosystem: gomod
     directory: /
     schedule:
-      interval: daily
+      interval: weekly
+    ignore:
+      - dependency-name: "*"
+        update-types:
+        - "version-update:semver-major"
+        - "version-update:semver-minor"
+    groups:
+      k8s:
+        patterns:
+        - "k8s.io/*"
+        - "sigs.k8s.io/*"
 
   - package-ecosystem: docker
     directory: /pkg/util/nethealth
     schedule:
-      interval: daily
+      interval: weekly
 
   - package-ecosystem: gomod
     directory: /test
     schedule:
-      interval: daily
+      interval: weekly
+    ignore:
+      - dependency-name: "*"
+        update-types:
+        - "version-update:semver-major"
+        - "version-update:semver-minor"
+    groups:
+      k8s:
+        patterns:
+        - "k8s.io/*"
+        - "sigs.k8s.io/*"
 
   - package-ecosystem: docker
     directory: /test/kernel_log_generator
     schedule:
-      interval: daily
-
-  - package-ecosystem: docker
-    directory: /vendor/github.com/hpcloud/tail
-    schedule:
-      interval: daily
-
-  - package-ecosystem: pip
-    directory: /vendor/go.opentelemetry.io/otel
-    schedule:
-      interval: daily
+      interval: weekly
