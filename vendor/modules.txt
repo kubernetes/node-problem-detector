@@ -20,12 +20,12 @@ cloud.google.com/go/auth/oauth2adapt
 # cloud.google.com/go/compute/metadata v0.3.0
 ## explicit; go 1.19
 cloud.google.com/go/compute/metadata
-# cloud.google.com/go/monitoring v1.18.0
+# cloud.google.com/go/monitoring v1.18.1
 ## explicit; go 1.19
 cloud.google.com/go/monitoring/apiv3/v2
 cloud.google.com/go/monitoring/apiv3/v2/monitoringpb
 cloud.google.com/go/monitoring/internal
-# cloud.google.com/go/trace v1.10.5
+# cloud.google.com/go/trace v1.10.6
 ## explicit; go 1.19
 cloud.google.com/go/trace/apiv2
 cloud.google.com/go/trace/apiv2/tracepb
@@ -263,7 +263,7 @@ github.com/prometheus/client_model/go
 github.com/prometheus/common/expfmt
 github.com/prometheus/common/internal/bitbucket.org/ww/goautoneg
 github.com/prometheus/common/model
-# github.com/prometheus/procfs v0.14.0
+# github.com/prometheus/procfs v0.15.0
 ## explicit; go 1.21
 github.com/prometheus/procfs
 github.com/prometheus/procfs/internal/fs
@@ -411,8 +411,8 @@ golang.org/x/text/unicode/norm
 # golang.org/x/time v0.5.0
 ## explicit; go 1.18
 golang.org/x/time/rate
-# google.golang.org/api v0.179.0
-## explicit; go 1.19
+# google.golang.org/api v0.181.0
+## explicit; go 1.20
 google.golang.org/api/googleapi
 google.golang.org/api/googleapi/transport
 google.golang.org/api/internal
@@ -426,12 +426,12 @@ google.golang.org/api/support/bundler
 google.golang.org/api/transport/grpc
 google.golang.org/api/transport/http
 google.golang.org/api/transport/http/internal/propagation
-# google.golang.org/genproto v0.0.0-20240227224415-6ceb2ff114de
+# google.golang.org/genproto v0.0.0-20240401170217-c3f982113cda
 ## explicit; go 1.19
 google.golang.org/genproto/googleapis/devtools/cloudtrace/v2
 google.golang.org/genproto/googleapis/monitoring/v3
 google.golang.org/genproto/googleapis/type/calendarperiod
-# google.golang.org/genproto/googleapis/api v0.0.0-20240415180920-8c6c420018be
+# google.golang.org/genproto/googleapis/api v0.0.0-20240506185236-b8a5c65736ae
 ## explicit; go 1.19
 google.golang.org/genproto/googleapis/api
 google.golang.org/genproto/googleapis/api/annotations
@@ -439,7 +439,7 @@ google.golang.org/genproto/googleapis/api/distribution
 google.golang.org/genproto/googleapis/api/label
 google.golang.org/genproto/googleapis/api/metric
 google.golang.org/genproto/googleapis/api/monitoredres
-# google.golang.org/genproto/googleapis/rpc v0.0.0-20240429193739-8cf5692501f6
+# google.golang.org/genproto/googleapis/rpc v0.0.0-20240513163218-0867130af1f8
 ## explicit; go 1.19
 google.golang.org/genproto/googleapis/rpc/code
 google.golang.org/genproto/googleapis/rpc/errdetails
@@ -569,7 +569,7 @@ gopkg.in/yaml.v2
 # gopkg.in/yaml.v3 v3.0.1
 ## explicit
 gopkg.in/yaml.v3
-# k8s.io/api v0.30.0
+# k8s.io/api v0.30.1
 ## explicit; go 1.22.0
 k8s.io/api/admissionregistration/v1
 k8s.io/api/admissionregistration/v1alpha1
@@ -625,7 +625,7 @@ k8s.io/api/storage/v1
 k8s.io/api/storage/v1alpha1
 k8s.io/api/storage/v1beta1
 k8s.io/api/storagemigration/v1alpha1
-# k8s.io/apimachinery v0.30.0
+# k8s.io/apimachinery v0.30.1
 ## explicit; go 1.22.0
 k8s.io/apimachinery/pkg/api/equality
 k8s.io/apimachinery/pkg/api/errors
@@ -670,7 +670,7 @@ k8s.io/apimachinery/pkg/version
 k8s.io/apimachinery/pkg/watch
 k8s.io/apimachinery/third_party/forked/golang/json
 k8s.io/apimachinery/third_party/forked/golang/reflect
-# k8s.io/client-go v0.30.0
+# k8s.io/client-go v0.30.1
 ## explicit; go 1.22.0
 k8s.io/client-go/applyconfigurations/admissionregistration/v1
 k8s.io/client-go/applyconfigurations/admissionregistration/v1alpha1
