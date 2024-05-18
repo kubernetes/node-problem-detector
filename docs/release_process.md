@@ -109,7 +109,7 @@ release note:
 
 1. Update image version in node-problem-detector repo, so anyone deploying
    directly from the repo deployment file will get the newest image deployed.
-   Example https://github.com/kubernetes/node-problem-detector/pull/879.
+   Example https://github.com/kubernetes/node-problem-detector/pull/897.
 
 2. Update the NPD version in [kubernetes/kubernetes](https://github.com/kubernetes/kubernetes)
    repo, so that kubernetes clusters use the new NPD version. Example
