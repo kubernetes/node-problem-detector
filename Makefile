@@ -18,7 +18,8 @@
         vet fmt version test e2e-test \
         build-binaries build-container build-tar build \
         docker-builder build-in-docker \
-        push-container push-tar push release clean depup
+        push-container push-tar push release clean depup \
+        print-tar-sha-md5
 
 all: build
 
@@ -273,7 +274,10 @@ push-tar: build-tar
 push: push-container push-tar
 
 # `make release` is used when releasing a new NPD version.
-release: push-container build-tar
+release: push-container build-tar print-tar-sha-md5
+
+print-tar-sha-md5: build-tar
+	./hack/print-tar-sha-md5.sh $(VERSION)
 
 coverage.out:
 	rm -f coverage.out
