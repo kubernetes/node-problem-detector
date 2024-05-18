@@ -16,7 +16,7 @@ require (
 	k8s.io/apimachinery v0.30.1
 	k8s.io/component-base v0.29.2
 	k8s.io/klog/v2 v2.120.1
-	k8s.io/node-problem-detector v0.8.18
+	k8s.io/node-problem-detector v0.8.19
 	sigs.k8s.io/boskos v0.0.0-20200515170311-7d36bde8cdf6
 )
 
