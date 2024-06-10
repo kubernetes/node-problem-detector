@@ -19,6 +19,7 @@ package problemclient
 import (
 	"encoding/json"
 	"fmt"
+	"k8s.io/node-problem-detector/pkg/types"
 	"testing"
 	"time"
 
@@ -84,5 +85,60 @@ func TestEvent(t *testing.T) {
 	got := <-fakeRecorder.Events
 	if expected != got {
 		t.Errorf("expected event %q, got %q", expected, got)
+	}
+}
+
+func TestCheckIfTaintAlreadyExists(t *testing.T) {
+	cases := []struct {
+		node   *v1.Node
+		conf   types.TaintConfig
+		result bool
+	}{
+		{&v1.Node{
+			Spec: v1.NodeSpec{
+				Taints: []v1.Taint{
+					{
+						Key:    "node-problem-detector/read-only-filesystem",
+						Value:  "true",
+						Effect: v1.TaintEffectNoSchedule,
+					},
+				},
+			},
+		}, types.TaintConfig{
+			Enabled: false,
+			Key:     "node-problem-detector/read-only-filesystem",
+			Value:   "true",
+			Effect:  string(v1.TaintEffectNoSchedule),
+		},
+			true,
+		},
+		{&v1.Node{
+			Spec: v1.NodeSpec{
+				Taints: []v1.Taint{
+					{
+						Key:    "node-problem-detector/read-only-filesystem",
+						Value:  "true",
+						Effect: v1.TaintEffectNoSchedule,
+					},
+				},
+			},
+		}, types.TaintConfig{
+			Enabled: false,
+			Key:     "node-problem-detector/read-write-filesystem",
+			Value:   "true",
+			Effect:  string(v1.TaintEffectNoSchedule),
+		},
+			false,
+		},
+	}
+
+	for _, tc := range cases {
+		exists := CheckIfTaintAlreadyExists(tc.node, tc.conf)
+
+		if tc.result {
+			assert.True(t, exists)
+		} else {
+			assert.False(t, exists)
+		}
 	}
 }

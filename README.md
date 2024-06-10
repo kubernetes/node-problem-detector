@@ -140,6 +140,23 @@ For example, to run without auth, use the following config:
 
 * `--custom-plugin-monitors`: List of paths to custom plugin monitor config files, comma-separated. This option is deprecated, replaced by `--config.custom-plugin-monitor`, and will be removed. NPD will panic if both `--custom-plugin-monitors` and `--config.custom-plugin-monitor` are set.
 
+### Tainting Nodes
+You can enable node tainting feature to the response of permanent node problems. For example, on the file [config/kernel-monitor.json](config/kernel-monitor.json), 
+put a `TaintConfig` object as following for required `Condition` as you need. You can omit the `TaintConfig` or disable it by setting `enabled` as false. By default, it is disabled and will not be enabled until you need it.
+```json
+      {
+        "type": "ReadonlyFilesystem",
+        "reason": "FilesystemIsNotReadOnly",
+        "message": "Filesystem is not read-only",
+        "taintConfig": {
+          "enabled": false,
+          "key": "node-problem-detector/read-only-filesystem",
+          "value": "true",
+          "effect": "NoSchedule"
+        }
+      }
+```
+
 ## Build Image
 
 * Install development dependencies for `libsystemd` and the ARM GCC toolchain
