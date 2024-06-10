@@ -15,6 +15,11 @@
 			"type": "ReadonlyFilesystem",
 			"reason": "FilesystemIsNotReadOnly",
 			"message": "Filesystem is not read-only"
+		},
+		{
+			"type": "HardwareErrorFatal",
+			"reason": "HardwareHasNoFatalError",
+			"message": "Hardware has no fatal error"
 		}
 	],
 	"rules": [
@@ -62,6 +67,22 @@
 			"type": "temporary",
 			"reason": "MemoryReadError",
 			"pattern": "CE memory read error .*"
+		},
+		{
+			"type": "temporary",
+			"reason": "HardwareErrorCorrected",
+			"pattern": ".*\\[Hardware Error\\]: event severity: corrected$"
+		},
+		{
+			"type": "temporary",
+			"reason": "HardwareErrorRecoverable",
+			"pattern": ".*\\[Hardware Error\\]: event severity: recoverable$"
+		},
+		{
+			"type": "permanent",
+			"condition": "HardwareErrorFatal",
+			"reason": "HardwareErrorFatal",
+			"pattern": ".*\\[Hardware Error\\]: event severity: fatal$"
 		},
 		{
 			"type": "permanent",
