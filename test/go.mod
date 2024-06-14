@@ -10,10 +10,10 @@ require (
 	github.com/onsi/gomega v1.31.0
 	github.com/pborman/uuid v1.2.1
 	github.com/spf13/pflag v1.0.5
-	golang.org/x/crypto v0.23.0
+	golang.org/x/crypto v0.24.0
 	golang.org/x/oauth2 v0.21.0
-	google.golang.org/api v0.183.0
-	k8s.io/apimachinery v0.30.1
+	google.golang.org/api v0.184.0
+	k8s.io/apimachinery v0.30.2
 	k8s.io/component-base v0.29.2
 	k8s.io/klog/v2 v2.120.1
 	k8s.io/node-problem-detector v0.8.19
@@ -53,11 +53,11 @@ require (
 	go.opentelemetry.io/otel v1.24.0 // indirect
 	go.opentelemetry.io/otel/metric v1.24.0 // indirect
 	go.opentelemetry.io/otel/trace v1.24.0 // indirect
-	golang.org/x/net v0.25.0 // indirect
+	golang.org/x/net v0.26.0 // indirect
 	golang.org/x/sys v0.21.0 // indirect
-	golang.org/x/text v0.15.0 // indirect
-	golang.org/x/tools v0.18.0 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20240528184218-531527333157 // indirect
+	golang.org/x/text v0.16.0 // indirect
+	golang.org/x/tools v0.21.1-0.20240508182429-e35e4ccd0d2d // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20240604185151-ef581f913117 // indirect
 	google.golang.org/grpc v1.64.0 // indirect
 	google.golang.org/protobuf v1.34.1 // indirect
 	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 // indirect
