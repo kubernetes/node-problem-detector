@@ -128,7 +128,7 @@ function build-pr() {
   export REGISTRY="${NPD_STAGING_REGISTRY}/pr/${PR}"
   export VERSION=$(get-version)
   export TAG="${VERSION}"
-  make push
+  make push-tar
   write-env-file ${PR_ENV_FILENAME}
 }
 
@@ -138,7 +138,10 @@ function build-ci() {
   export REGISTRY="${NPD_STAGING_REGISTRY}/ci"
   export VERSION="$(get-version)-$(date +%Y%m%d.%H%M)"
   export TAG="${VERSION}"
-  make push
+  # e2e tests consume the tarball, not the container
+  # this is simpler to manage in the infra, and we still ensure the container
+  # build works locally
+  make push-tar build-container
 
   # Create the env file with and without custom flags at the same time.
   build-npd-custom-flags
