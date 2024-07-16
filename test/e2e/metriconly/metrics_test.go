@@ -75,7 +75,7 @@ var _ = ginkgo.Describe("NPD should export Prometheus metrics.", func() {
 			gotMetrics, err := npd.FetchNPDMetrics(instance)
 			Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("Error fetching NPD metrics: %v", err))
 
-			assertMetricExist(gotMetrics, "cpu_runnable_task_count", map[string]string{}, true)
+			assertMetricExist(gotMetrics, "cpu_runnable_task_count", map[string]string{"node": instance.Name}, true)
 			assertMetricExist(gotMetrics, "cpu_usage_time", map[string]string{}, false)
 			assertMetricExist(gotMetrics, "cpu_load_1m", map[string]string{}, false)
 			assertMetricExist(gotMetrics, "cpu_load_5m", map[string]string{}, false)
@@ -91,7 +91,7 @@ var _ = ginkgo.Describe("NPD should export Prometheus metrics.", func() {
 			assertMetricExist(gotMetrics, "memory_bytes_used", map[string]string{}, false)
 			assertMetricExist(gotMetrics, "memory_anonymous_used", map[string]string{}, false)
 			assertMetricExist(gotMetrics, "memory_page_cache_used", map[string]string{}, false)
-			assertMetricExist(gotMetrics, "memory_unevictable_used", map[string]string{}, true)
+			assertMetricExist(gotMetrics, "memory_unevictable_used", map[string]string{"node": instance.Name}, true)
 			assertMetricExist(gotMetrics, "memory_dirty_used", map[string]string{}, false)
 			assertMetricExist(gotMetrics, "memory_percent_used", map[string]string{}, false)
 			assertMetricExist(gotMetrics, "host_uptime", map[string]string{}, false)
@@ -103,19 +103,19 @@ var _ = ginkgo.Describe("NPD should export Prometheus metrics.", func() {
 			Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("Expect NPD to become ready in 120s, but hit error: %v", err))
 
 			assertMetricValueInBound(instance,
-				"problem_gauge", map[string]string{"reason": "DockerHung", "type": "KernelDeadlock"},
+				"problem_gauge", map[string]string{"reason": "DockerHung", "type": "KernelDeadlock", "node": instance.Name},
 				0.0, 0.0)
 			assertMetricValueInBound(instance,
-				"problem_counter", map[string]string{"reason": "DockerHung"},
+				"problem_counter", map[string]string{"reason": "DockerHung", "node": instance.Name},
 				0.0, 0.0)
 			assertMetricValueInBound(instance,
-				"problem_counter", map[string]string{"reason": "FilesystemIsReadOnly"},
+				"problem_counter", map[string]string{"reason": "FilesystemIsReadOnly", "node": instance.Name},
 				0.0, 0.0)
 			assertMetricValueInBound(instance,
-				"problem_counter", map[string]string{"reason": "KernelOops"},
+				"problem_counter", map[string]string{"reason": "KernelOops", "node": instance.Name},
 				0.0, 0.0)
 			assertMetricValueInBound(instance,
-				"problem_counter", map[string]string{"reason": "OOMKilling"},
+				"problem_counter", map[string]string{"reason": "OOMKilling", "node": instance.Name},
 				0.0, 0.0)
 		})
 	})
@@ -132,10 +132,10 @@ var _ = ginkgo.Describe("NPD should export Prometheus metrics.", func() {
 		ginkgo.It("NPD should update problem_counter{reason:Ext4Error} and problem_gauge{type:ReadonlyFilesystem}", func() {
 			time.Sleep(5 * time.Second)
 			assertMetricValueAtLeast(instance,
-				"problem_counter", map[string]string{"reason": "Ext4Error"},
+				"problem_counter", map[string]string{"reason": "Ext4Error", "node": instance.Name},
 				1.0)
 			assertMetricValueInBound(instance,
-				"problem_gauge", map[string]string{"reason": "FilesystemIsReadOnly", "type": "ReadonlyFilesystem"},
+				"problem_gauge", map[string]string{"reason": "FilesystemIsReadOnly", "type": "ReadonlyFilesystem", "node": instance.Name},
 				1.0, 1.0)
 		})
 
@@ -158,16 +158,16 @@ var _ = ginkgo.Describe("NPD should export Prometheus metrics.", func() {
 		ginkgo.It("NPD should update problem_counter and problem_gauge", func() {
 			time.Sleep(5 * time.Second)
 			assertMetricValueInBound(instance,
-				"problem_counter", map[string]string{"reason": "DockerHung"},
+				"problem_counter", map[string]string{"reason": "DockerHung", "node": instance.Name},
 				1.0, 1.0)
 			assertMetricValueInBound(instance,
-				"problem_counter", map[string]string{"reason": "TaskHung"},
+				"problem_counter", map[string]string{"reason": "TaskHung", "node": instance.Name},
 				1.0, 1.0)
 			assertMetricValueInBound(instance,
-				"problem_gauge", map[string]string{"reason": "DockerHung", "type": "KernelDeadlock"},
+				"problem_gauge", map[string]string{"reason": "DockerHung", "type": "KernelDeadlock", "node": instance.Name},
 				1.0, 1.0)
 			assertMetricValueInBound(instance,
-				"problem_counter", map[string]string{"reason": "OOMKilling"},
+				"problem_counter", map[string]string{"reason": "OOMKilling", "node": instance.Name},
 				1.0, 1.0)
 		})
 	})

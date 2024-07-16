@@ -22,6 +22,7 @@ import (
 	"strconv"
 
 	"contrib.go.opencensus.io/exporter/prometheus"
+	promcli "github.com/prometheus/client_golang/prometheus"
 	"go.opencensus.io/stats/view"
 	"k8s.io/klog/v2"
 
@@ -38,7 +39,9 @@ func NewExporterOrDie(npdo *options.NodeProblemDetectorOptions) types.Exporter {
 	}
 
 	addr := net.JoinHostPort(npdo.PrometheusServerAddress, strconv.Itoa(npdo.PrometheusServerPort))
-	pe, err := prometheus.NewExporter(prometheus.Options{})
+	pe, err := prometheus.NewExporter(prometheus.Options{
+		ConstLabels: promcli.Labels{"node": npdo.NodeName},
+	})
 	if err != nil {
 		klog.Fatalf("Failed to create Prometheus exporter: %v", err)
 	}
