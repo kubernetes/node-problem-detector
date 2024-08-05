@@ -18,6 +18,7 @@ package condition
 
 import (
 	"context"
+	"fmt"
 	"reflect"
 	"sync"
 	"time"
@@ -159,7 +160,58 @@ func (c *conditionManager) sync(ctx context.Context) {
 	conditions := []v1.NodeCondition{}
 	for i := range c.conditions {
 		conditions = append(conditions, problemutil.ConvertToAPICondition(c.conditions[i]))
+
+		condition := c.conditions[i]
+		if condition.TaintConfig == nil || !condition.TaintConfig.Enabled {
+			// we are skipping tainting since TaintConfig of our condition is nil or disabled
+			continue
+		}
+
+		taintStr := fmt.Sprintf("%s=%s:%s", c.conditions[i].TaintConfig.Key, c.conditions[i].TaintConfig.Value,
+			c.conditions[i].TaintConfig.Effect)
+
+		node, err := c.client.GetNode(ctx)
+		if err != nil {
+			glog.Errorf("failed to get node: %v", err)
+			continue
+		}
+
+		taintExists := problemclient.CheckIfTaintAlreadyExists(node, *condition.TaintConfig)
+
+		switch condition.Status {
+		case types.True:
+			if taintExists {
+				// we are skipping here since node is already tainted with our TaintConfig
+				continue
+			}
+
+			glog.Infof("for condition %s, tainting is enabled and status is True, tainting with %s",
+				condition.Type, taintStr)
+
+			if err := c.client.TaintNode(node, condition); err != nil {
+				glog.Errorf("failed to add taint %v: %v", taintStr, err)
+				continue
+			}
+
+			glog.Infof("successfully tainted node with %s", taintStr)
+		case types.False:
+			if !taintExists {
+				// we are skipping here since node is not tainted with our TaintConfig
+				continue
+			}
+
+			glog.Infof("for condition %s, tainting is enabled and condition status is False, removing taint %s",
+				condition.Type, taintStr)
+
+			if err := c.client.UntaintNode(node, condition); err != nil {
+				glog.Errorf("failed to remove taint %v: %v", taintStr, err)
+				continue
+			}
+
+			glog.Infof("successfully removed taint %s from node", taintStr)
+		}
 	}
+
 	if err := c.client.SetConditions(ctx, conditions); err != nil {
 		// The conditions will be updated again in future sync
 		klog.Errorf("failed to update node conditions: %v", err)
