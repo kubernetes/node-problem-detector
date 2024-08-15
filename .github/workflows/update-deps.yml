@@ -43,3 +43,38 @@ jobs:
           labels: ok-to-test
           body: |
             Updating go.mod with latest dependencies...
+  update-go-version:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Get current Go version from Dockerfile
+        id: current-go-version
+        run: |
+          # Read the Dockerfile content
+          DOCKERFILE_CONTENT=$(cat Dockerfile)
+
+          # Extract the current Go version using regex
+          CURRENT_GO_VERSION=$(echo "$DOCKERFILE_CONTENT" | grep -oP 'FROM golang:\K\d+\.\d+(\.\d+)?')
+          echo "current_go_version=${CURRENT_GO_VERSION}" >> $GITHUB_OUTPUT
+
+      - name: Get latest Go version
+        id: go-version
+        run: |
+          # Fetch the Go download page and extract the latest version
+          LATEST_GO_VERSION=$(curl -s https://go.dev/dl/ | grep -oP 'go1\.22\.\d+' | sort -rV | head -n 1)
+          echo "latest_go_version=${LATEST_GO_VERSION}" >> $GITHUB_OUTPUT
+
+      - name: Update Go version
+        uses: jacobtomlinson/gha-find-replace@v2
+        with:
+          find: "FROM golang:${{ steps.current-go-version.outputs.current_go_version }}-bookworm as builder-base" 
+          replace: "FROM golang:${{ steps.go-version.outputs.latest_go_version }}-bookworm as builder-base"
+          path: "Dockerfile" 
+
+      - name: Commit and push changes (optional)
+        uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: "Update Go version in Dockerfile"
+  
