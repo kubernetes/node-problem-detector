@@ -12,8 +12,8 @@ require (
 	github.com/spf13/pflag v1.0.5
 	golang.org/x/crypto v0.25.0
 	golang.org/x/oauth2 v0.22.0
-	google.golang.org/api v0.191.0
-	k8s.io/apimachinery v0.30.3
+	google.golang.org/api v0.192.0
+	k8s.io/apimachinery v0.31.0
 	k8s.io/component-base v0.29.2
 	k8s.io/klog/v2 v2.130.1
 	k8s.io/node-problem-detector v0.8.19
@@ -21,7 +21,7 @@ require (
 )
 
 require (
-	cloud.google.com/go/auth v0.7.3 // indirect
+	cloud.google.com/go/auth v0.8.1 // indirect
 	cloud.google.com/go/auth/oauth2adapt v0.2.3 // indirect
 	cloud.google.com/go/compute/metadata v0.5.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
@@ -65,5 +65,5 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	k8s.io/test-infra v0.0.0-20200514184223-ba32c8aae783 // indirect
 	k8s.io/utils v0.0.0-20240711033017-18e509b52bc8 // indirect
-	sigs.k8s.io/yaml v1.3.0 // indirect
+	sigs.k8s.io/yaml v1.4.0 // indirect
 )
