@@ -73,8 +73,28 @@ jobs:
           replace: "FROM golang:${{ steps.go-version.outputs.latest_go_version }}-bookworm as builder-base"
           path: "Dockerfile" 
 
-      - name: Commit and push changes (optional)
-        uses: stefanzweifel/git-auto-commit-action@v4
+      - name: Check if Go version was updated
+        id: check-changes
+        run: |
+          if [[ ${{ steps.current-go-version.outputs.current_go_version }} != ${{ steps.go-version.outputs.latest_go_version }} ]]; then
+            echo "changes=true" >> $GITHUB_OUTPUT
+          else
+            echo "changes=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create Pull Request
+        if: ${{ steps.check-changes.outputs.changes == 'true' }} # Only create PR if there were changes
+        uses: peter-evans/create-pull-request@v6
         with:
-          commit_message: "Update Go version in Dockerfile"
+          title: 'Update Go version in Dockerfile'
+          commit-message: 'Update Go version in Dockerfile'
+          committer: github-actions <actions@github.com>
+          author: github-actions <actions@github.com>
+          branch: go-version-update # Choose a suitable branch name
+          branch-suffix: timestamp
+          base: master
+          delete-branch: true
+          labels: ok-to-test
+          body: |
+            This PR updates the Go version in the Dockerfile to ${{ steps.go-version.outputs.latest_go_version }}.
   
