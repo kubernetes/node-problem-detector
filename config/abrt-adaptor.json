@@ -31,7 +31,7 @@
 		},
 		{
 			"type": "temporary",
-			"reason": "Kerneloops",
+			"reason": "KernelOops",
 			"pattern": "System encountered a non-fatal error in \\S+"
 		}
 	]
