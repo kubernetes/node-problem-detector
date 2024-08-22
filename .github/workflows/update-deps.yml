@@ -3,7 +3,7 @@ name: 'Update Dependencies'
 on:
   workflow_dispatch:
   schedule:
-    - cron: '0 5 * * 4'
+    - cron: '0 17 * * 4'
 
 env:
   GOPROXY: https://proxy.golang.org
