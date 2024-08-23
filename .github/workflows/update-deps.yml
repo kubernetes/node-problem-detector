@@ -3,7 +3,7 @@ name: 'Update Dependencies'
 on:
   workflow_dispatch:
   schedule:
-    - cron: '0 6 * * 5'
+    - cron: '0 20 * * 4'
 
 env:
   GOPROXY: https://proxy.golang.org
@@ -44,10 +44,10 @@ jobs:
           body: |
             Updating go.mod with latest dependencies...
   update-go-version:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Get current Go version from Dockerfile
         id: current-go-version
