@@ -7,7 +7,7 @@ replace k8s.io/node-problem-detector => ../.
 require (
 	github.com/avast/retry-go/v4 v4.6.0
 	github.com/onsi/ginkgo v1.16.5
-	github.com/onsi/gomega v1.31.0
+	github.com/onsi/gomega v1.31.1
 	github.com/pborman/uuid v1.2.1
 	github.com/spf13/pflag v1.0.5
 	golang.org/x/crypto v0.25.0
