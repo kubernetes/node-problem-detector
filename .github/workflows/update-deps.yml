@@ -18,14 +18,14 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@a4aa98b93cab29d9b1101a6143fb8bce00e2eac4 # v2.7.1
+        uses: step-security/harden-runner@91182cccc01eb5e619899d80e4e971d6181294a7 # v2.10.1
         with:
           egress-policy: audit
 
-      - uses: actions/setup-go@cdcb36043654635271a94b9a6d1392de5bb323a7 # v5.0.1
+      - uses: actions/setup-go@0a12ed9d6a96ab950c8f026ed9f722fe0da7ef32 # v5.0.2
         with:
           go-version: '1.22.3'
-      - uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4.1.4
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
       - name: Update Dependencies
         id: update_deps
         run: |
@@ -35,7 +35,7 @@ jobs:
           echo 'EOF' >> $GITHUB_OUTPUT
       - name: Create PR
         if: ${{ steps.update_deps.outputs.changes != '' }}
-        uses: peter-evans/create-pull-request@6d6857d36972b65feb161a90e484f2984215f83e # v6.0.5
+        uses: peter-evans/create-pull-request@2f38cd26bfebe301a5ee90bdd6550a69dc3ef23f # v7.0.4
         with:
           title: 'Update dependencies'
           commit-message: Update dependencies
@@ -52,7 +52,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.1.7
 
       - name: Get current Go version from Dockerfile
         id: current-go-version
@@ -72,7 +72,7 @@ jobs:
           echo "latest_go_version=${LATEST_GO_VERSION}" >> $GITHUB_OUTPUT
 
       - name: Update Go version
-        uses: jacobtomlinson/gha-find-replace@v2
+        uses: jacobtomlinson/gha-find-replace@v3
         with:
           find: "FROM golang:${{ steps.current-go-version.outputs.current_go_version }}-bookworm as builder-base" 
           replace: "FROM golang:${{ steps.go-version.outputs.latest_go_version }}-bookworm as builder-base"
@@ -89,7 +89,7 @@ jobs:
 
       - name: Create Pull Request
         if: ${{ steps.check-changes.outputs.changes == 'true' }} # Only create PR if there were changes
-        uses: peter-evans/create-pull-request@v6
+        uses: peter-evans/create-pull-request@v7
         with:
           title: 'Update Go version in Dockerfile'
           commit-message: 'Update Go version in Dockerfile'
