@@ -97,6 +97,7 @@ function build-npd-custom-flags() {
   local -r kube_home="/home/kubernetes"
 
   local -r km_config="${kube_home}/node-problem-detector/config/kernel-monitor.json"
+  local -r rm_config="${kube_home}/node-problem-detector/config/readonly-monitor.json"
   local -r dm_config="${kube_home}/node-problem-detector/config/docker-monitor.json"
   local -r sm_config="${kube_home}/node-problem-detector/config/systemd-monitor.json"
 
@@ -105,7 +106,7 @@ function build-npd-custom-flags() {
 
   flags="--v=2"
   flags+=" --logtostderr"
-  flags+=" --config.system-log-monitor=${km_config},${dm_config},${sm_config}"
+  flags+=" --config.system-log-monitor=${km_config},${rm_config},${dm_config},${sm_config}"
   flags+=" --config.custom-plugin-monitor=${custom_km_config},${custom_sm_config}"
   flags+=" --port=20256"
 
