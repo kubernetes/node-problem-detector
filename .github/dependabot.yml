@@ -30,13 +30,3 @@ updates:
         patterns:
         - "k8s.io/*"
         - "sigs.k8s.io/*"
-
-  - package-ecosystem: docker
-    directory: /pkg/util/nethealth
-    schedule:
-      interval: weekly
-
-  - package-ecosystem: docker
-    directory: /test/kernel_log_generator
-    schedule:
-      interval: weekly
