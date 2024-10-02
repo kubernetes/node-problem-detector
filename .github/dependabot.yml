@@ -8,11 +8,15 @@ updates:
       actions-all:
         patterns:
         - "*"
+    labels:
+    - "ok-to-test"
 
   - package-ecosystem: docker
     directory: /
     schedule:
       interval: weekly
+    labels:
+    - "ok-to-test"
 
   - package-ecosystem: gomod
     directories:
@@ -30,3 +34,5 @@ updates:
         patterns:
         - "k8s.io/*"
         - "sigs.k8s.io/*"
+    labels:
+    - "ok-to-test"
