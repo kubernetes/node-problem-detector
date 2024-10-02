@@ -15,7 +15,9 @@ updates:
       interval: weekly
 
   - package-ecosystem: gomod
-    directory: /
+    directories:
+    - /
+    - /test
     schedule:
       interval: weekly
     ignore:
@@ -33,21 +35,6 @@ updates:
     directory: /pkg/util/nethealth
     schedule:
       interval: weekly
-
-  - package-ecosystem: gomod
-    directory: /test
-    schedule:
-      interval: weekly
-    ignore:
-      - dependency-name: "*"
-        update-types:
-        - "version-update:semver-major"
-        - "version-update:semver-minor"
-    groups:
-      k8s:
-        patterns:
-        - "k8s.io/*"
-        - "sigs.k8s.io/*"
 
   - package-ecosystem: docker
     directory: /test/kernel_log_generator
