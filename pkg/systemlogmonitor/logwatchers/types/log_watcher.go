@@ -36,6 +36,8 @@ type WatcherConfig struct {
 	// PluginConfig is a key/value configuration of a plugin. Valid configurations
 	// are defined in different log watcher plugin.
 	PluginConfig map[string]string `json:"pluginConfig,omitempty"`
+	// Skip the log lines containing any of the strings in the list to avoid running unnecessary regex.
+	SkipList []string `json:"skipList,omitempty"`
 	// LogPath is the path to the log
 	LogPath string `json:"logPath,omitempty"`
 	// Lookback is the time log watcher looks up
