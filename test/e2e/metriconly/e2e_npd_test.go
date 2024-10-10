@@ -37,7 +37,9 @@ import (
 )
 
 var zone = flag.String("zone", "", "gce zone the hosts live in")
-var project = flag.String("project", "", "gce project the hosts live in")
+var projectStr = "k8s-infra-e2e-boskos-157"
+var _ = flag.String("project", "", "gce project the hosts live in")
+var project = &projectStr
 var image = flag.String("image", "", "image to test")
 var imageFamily = flag.String("image-family", "", "image family to pick up the test image. Ignored when -image is set.")
 var imageProject = flag.String("image-project", "", "gce project of the OS image")
