@@ -3,7 +3,7 @@ module k8s.io/node-problem-detector
 go 1.23.1
 
 require (
-	cloud.google.com/go/compute/metadata v0.5.0
+	cloud.google.com/go/compute/metadata v0.5.2
 	contrib.go.opencensus.io/exporter/prometheus v0.4.2
 	contrib.go.opencensus.io/exporter/stackdriver v0.13.14
 	github.com/acobaugh/osrelease v0.1.0
@@ -18,7 +18,7 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.9.0
 	go.opencensus.io v0.24.0
-	golang.org/x/sys v0.24.0
+	golang.org/x/sys v0.25.0
 	google.golang.org/api v0.192.0
 	k8s.io/api v0.31.1
 	k8s.io/apimachinery v0.31.1
