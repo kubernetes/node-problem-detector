@@ -21,6 +21,7 @@ import (
 	"os/exec"
 	"time"
 
+	"k8s.io/klog/v2"
 	"k8s.io/node-problem-detector/test/e2e/lib/ssh"
 
 	. "github.com/onsi/gomega"
@@ -148,6 +149,7 @@ func (ins *Instance) RunCommand(cmd string) ssh.Result {
 
 // RunCommand runs a command on the GCE instance and returns the command result, and fails the test when the command failed.
 func (ins *Instance) RunCommandOrFail(cmd string) ssh.Result {
+	klog.Infof("Running command: %s", cmd)
 	result := ins.RunCommand(cmd)
 	Expect(result.SSHError).ToNot(HaveOccurred(), "SSH-ing to the instance failed: %v\n", result)
 	Expect(result.Code).To(Equal(0), "Running command failed: %v\n", result)

@@ -132,7 +132,8 @@ var _ = ginkgo.Describe("NPD should export Prometheus metrics.", func() {
 		})
 
 		ginkgo.It("NPD should update problem_counter{reason:Ext4Error} and problem_gauge{type:ReadonlyFilesystem}", func() {
-			time.Sleep(60 * time.Second)
+			ginkgo.Skip("SSH connection fails.")
+			time.Sleep(5 * time.Second)
 			assertMetricValueAtLeast(instance,
 				"problem_counter", map[string]string{"reason": "Ext4Error"},
 				1.0)
@@ -159,7 +160,6 @@ var _ = ginkgo.Describe("NPD should export Prometheus metrics.", func() {
 		})
 
 		ginkgo.It("NPD should update problem_counter and problem_gauge", func() {
-			ginkgo.Skip("SSH connection fails.")
 			time.Sleep(5 * time.Second)
 			assertMetricValueInBound(instance,
 				"problem_counter", map[string]string{"reason": "DockerHung"},
