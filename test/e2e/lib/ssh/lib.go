@@ -191,7 +191,7 @@ func runSSHCommand(dialer sshDialer, cmd, user, host string, signer ssh.Signer, 
 	}
 	client, err := dialer.Dial("tcp", host, config)
 	if err != nil && retry {
-		err = wait.Poll(5*time.Second, 20*time.Second, func() (bool, error) {
+		err = wait.Poll(100*time.Second, 300*time.Second, func() (bool, error) {
 			fmt.Printf("error dialing %s@%s: '%v', retrying\n", user, host, err)
 			if client, err = dialer.Dial("tcp", host, config); err != nil {
 				return false, err
@@ -228,6 +228,7 @@ func runSSHCommand(dialer sshDialer, cmd, user, host string, signer ssh.Signer, 
 			err = fmt.Errorf("failed running `%s` on %s@%s: '%v'", cmd, user, host, err)
 		}
 	}
+	fmt.Printf("runSSHCommand: %s - %s - %d - %s", bout.String(), berr.String(), code, err)
 	return bout.String(), berr.String(), code, err
 }
 
