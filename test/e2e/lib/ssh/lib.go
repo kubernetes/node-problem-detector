@@ -180,6 +180,7 @@ func RunSSHCommand(cmd, user, host string, signer ssh.Signer) (string, string, i
 
 // Internal implementation of runSSHCommand, for testing
 func runSSHCommand(dialer sshDialer, cmd, user, host string, signer ssh.Signer, retry bool) (string, string, int, error) {
+	fmt.Printf("runSSHCommand BEGIN: %s\n", cmd)
 	if user == "" {
 		user = os.Getenv("USER")
 	}
@@ -228,7 +229,7 @@ func runSSHCommand(dialer sshDialer, cmd, user, host string, signer ssh.Signer, 
 			err = fmt.Errorf("failed running `%s` on %s@%s: '%v'", cmd, user, host, err)
 		}
 	}
-	fmt.Printf("runSSHCommand: %s - %s - %d - %s", bout.String(), berr.String(), code, err)
+	fmt.Printf("runSSHCommand END: %s - %s - %s\n", cmd, berr.String(), bout.String())
 	return bout.String(), berr.String(), code, err
 }
 
