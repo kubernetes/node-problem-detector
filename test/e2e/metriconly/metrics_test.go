@@ -131,16 +131,16 @@ var _ = ginkgo.Describe("NPD should export Prometheus metrics.", func() {
 			instance.RunCommandOrFail("sudo /home/kubernetes/bin/problem-maker --problem Ext4FilesystemError")
 		})
 
-		ginkgo.It("NPD should update problem_counter{reason:Ext4Error} and problem_gauge{type:ReadonlyFilesystem}", func() {
-			ginkgo.Skip("SSH connection fails.")
-			time.Sleep(5 * time.Second)
-			assertMetricValueAtLeast(instance,
-				"problem_counter", map[string]string{"reason": "Ext4Error"},
-				1.0)
-			assertMetricValueInBound(instance,
-				"problem_gauge", map[string]string{"reason": "FilesystemIsReadOnly", "type": "ReadonlyFilesystem"},
-				1.0, 1.0)
-		})
+		//ginkgo.It("NPD should update problem_counter{reason:Ext4Error} and problem_gauge{type:ReadonlyFilesystem}", func() {
+		//	ginkgo.Skip("SSH connection fails.")
+		//	time.Sleep(5 * time.Second)
+		//	assertMetricValueAtLeast(instance,
+		//		"problem_counter", map[string]string{"reason": "Ext4Error"},
+		//		1.0)
+		//	assertMetricValueInBound(instance,
+		//		"problem_gauge", map[string]string{"reason": "FilesystemIsReadOnly", "type": "ReadonlyFilesystem"},
+		//		1.0, 1.0)
+		//})
 
 		ginkgo.It("NPD should remain healthy", func() {
 			time.Sleep(60 * time.Second)
