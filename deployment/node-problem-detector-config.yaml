@@ -64,6 +64,30 @@ data:
             }
         ]
     }
+  readonly-monitor.json: |
+    {
+        "plugin": "kmsg",
+        "logPath": "/dev/kmsg",
+        "lookback": "5m",
+        "bufferSize": 10,
+        "source": "readonly-monitor",
+        "metricsReporting": true,
+        "conditions": [
+            {
+                "type": "ReadonlyFilesystem",
+                "reason": "FilesystemIsNotReadOnly",
+                "message": "Filesystem is not read-only"
+            }
+        ],
+        "rules": [
+            {
+                "type": "permanent",
+                "condition": "ReadonlyFilesystem",
+                "reason": "FilesystemIsReadOnly",
+                "pattern": "Remounting filesystem read-only"
+            }
+        ]
+    }
   docker-monitor.json: |
     {
         "plugin": "journald",

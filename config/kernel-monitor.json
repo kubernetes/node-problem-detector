@@ -10,11 +10,6 @@
 			"type": "KernelDeadlock",
 			"reason": "KernelHasNoDeadlock",
 			"message": "kernel has no deadlock"
-		},
-		{
-			"type": "ReadonlyFilesystem",
-			"reason": "FilesystemIsNotReadOnly",
-			"message": "Filesystem is not read-only"
 		}
 	],
 	"rules": [
@@ -68,12 +63,6 @@
 			"condition": "KernelDeadlock",
 			"reason": "DockerHung",
 			"pattern": "task docker:\\w+ blocked for more than \\w+ seconds\\."
-		},
-		{
-			"type": "permanent",
-			"condition": "ReadonlyFilesystem",
-			"reason": "FilesystemIsReadOnly",
-			"pattern": "Remounting filesystem read-only"
 		}
 	]
 }
