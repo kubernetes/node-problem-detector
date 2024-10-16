@@ -116,6 +116,9 @@ func (s *filelogWatcher) watchLoop() {
 		}
 		line = buffer.String()
 		buffer.Reset()
+		if s.filterSkipList(line) {
+			continue
+		}
 		log, err := s.translator.translate(strings.TrimSuffix(line, "\n"))
 		if err != nil {
 			klog.Warningf("Unable to parse line: %q, %v", line, err)
@@ -128,4 +131,13 @@ func (s *filelogWatcher) watchLoop() {
 		}
 		s.logCh <- log
 	}
+}
+
+func (s *filelogWatcher) filterSkipList(line string) bool {
+	for _ , skipItem := range s.cfg.SkipList {
+		if strings.Contains(line, skipItem) {
+			return true
+		}
+	}
+	return false
 }

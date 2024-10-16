@@ -1,0 +1,28 @@
+{
+	"plugin": "filelog",
+	"pluginConfig": {
+		"timestamp": "^.{15}",
+		"message": "(?i)Currently unreadable.*sectors|(?i)Offline uncorrectable sectors",
+		"timestampFormat": "Jan _2 15:04:05"
+	},
+	"logPath": "/var/log/messages",
+	"lookback": "10h",
+	"bufferSize": 1,
+	"source": "disk-monitor",
+	"skipList": [ " audit:", " audit[" ],
+	"conditions": [
+		{
+			"type": "DiskBadBlock",
+			"reason": "DiskBadBlock",
+			"message": "Disk no bad block"
+		},
+	],
+	"rules": [
+		{
+			"type": "permanent",
+			"condition": "DiskBadBlock",
+			"reason": "DiskBadBlock",
+			"pattern": ".*([1-9]\\d{2,}) (Currently unreadable.*sectors|Offline uncorrectable sectors).*"
+		},
+	]
+}
