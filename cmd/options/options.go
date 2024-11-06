@@ -44,7 +44,7 @@ type NodeProblemDetectorOptions struct {
 	// ServerAddress is the address to bind the node problem detector server.
 	ServerAddress string
 	// QPS is the maximum QPS to the master from client.
-	QPS float64
+	QPS float32
 	// Burst is the maximum burst for throttle.
 	Burst int
 
@@ -129,8 +129,8 @@ func (npdo *NodeProblemDetectorOptions) AddFlags(fs *pflag.FlagSet) {
 		20257, "The port to bind the Prometheus scrape endpoint. Prometheus exporter is enabled by default at port 20257. Use 0 to disable.")
 	fs.StringVar(&npdo.PrometheusServerAddress, "prometheus-address",
 		"127.0.0.1", "The address to bind the Prometheus scrape endpoint.")
-	flag.Float64Var(&npdo.QPS, "kube-api-qps", 500, "Maximum QPS to use while talking with Kubernetes API")
-	flag.IntVar(&npdo.Burst, "kube-api-burst", 500, "Maximum burst for throttle while talking with Kubernetes API")
+	fs.Float32Var(&npdo.QPS, "kube-api-qps", 500, "Maximum QPS to use while talking with Kubernetes API")
+	fs.IntVar(&npdo.Burst, "kube-api-burst", 500, "Maximum burst for throttle while talking with Kubernetes API")
 	for _, exporterName := range exporters.GetExporterNames() {
 		exporterHandler := exporters.GetExporterHandlerOrDie(exporterName)
 		exporterHandler.Options.SetFlags(fs)

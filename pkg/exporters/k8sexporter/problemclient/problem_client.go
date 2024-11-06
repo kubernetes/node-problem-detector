@@ -74,7 +74,7 @@ func NewClientOrDie(npdo *options.NodeProblemDetectorOptions) Client {
 	}
 
 	cfg.UserAgent = fmt.Sprintf("%s/%s", filepath.Base(os.Args[0]), version.Version())
-	cfg.QPS = float32(npdo.QPS)
+	cfg.QPS = npdo.QPS
 	cfg.Burst = npdo.Burst
 	c.client = clientset.NewForConfigOrDie(cfg).CoreV1()
 	c.nodeName = npdo.NodeName
