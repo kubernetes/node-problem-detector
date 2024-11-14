@@ -79,7 +79,7 @@ CGO_ENABLED:=0
 ifeq ($(GOARCH), arm64)
 	CC:=aarch64-linux-gnu-gcc
 else
-	CC:=gcc
+	CC:=x86_64-linux-gnu-gcc
 endif
 
 # Set default Go architecture to AMD64.
