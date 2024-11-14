@@ -19,7 +19,7 @@
 # Must override builder-base, not builder, since the latter is referred to later in the file and so must not be
 # directly replaced. See here, and note that "stage" parameter mentioned there has been renamed to
 # "build-context": https://github.com/docker/buildx/pull/904#issuecomment-1005871838
-FROM golang:1.23-bookworm@sha256:2341ddffd3eddb72e0aebab476222fbc24d4a507c4d490a51892ec861bdb71fc as builder-base
+FROM golang:1.23-bookworm@sha256:0e3377d7a71c1fcb31cdc3215292712e83baec44e4792aeaa75e503cfcae16ec as builder-base
 FROM builder-base as builder
 LABEL maintainer="Andy Xie <andy.xning@gmail.com>"
 
