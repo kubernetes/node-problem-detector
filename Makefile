@@ -76,6 +76,12 @@ endif
 # Disable cgo by default to make the binary statically linked.
 CGO_ENABLED:=0
 
+ifeq ($(GOARCH), arm64)
+	CC:=aarch64-linux-gnu-gcc
+else
+	CC:=x86_64-linux-gnu-gcc
+endif
+
 # Set default Go architecture to AMD64.
 GOARCH ?= amd64
 
@@ -181,7 +187,7 @@ output/linux_arm64/test/bin/%: $(PKG_SOURCES)
 # In the future these targets should be deprecated.
 ./bin/log-counter: $(PKG_SOURCES)
 ifeq ($(ENABLE_JOURNALD), 1)
-	CGO_ENABLED=$(CGO_ENABLED) GOOS=linux GOARCH=$(GOARCH) go build \
+	CGO_ENABLED=$(CGO_ENABLED) GOOS=linux GOARCH=$(GOARCH) CC=$(CC) go build \
 		-o bin/log-counter \
 		-ldflags '-X $(PKG)/pkg/version.version=$(VERSION)' \
 		-tags "$(LINUX_BUILD_TAGS)" \
@@ -191,7 +197,7 @@ else
 endif
 
 ./bin/node-problem-detector: $(PKG_SOURCES)
-	CGO_ENABLED=$(CGO_ENABLED) GOOS=linux GOARCH=$(GOARCH) go build \
+	CGO_ENABLED=$(CGO_ENABLED) GOOS=linux GOARCH=$(GOARCH) CC=$(CC) go build \
 		-o bin/node-problem-detector \
 		-ldflags '-X $(PKG)/pkg/version.version=$(VERSION)' \
 		-tags "$(LINUX_BUILD_TAGS)" \
@@ -199,13 +205,13 @@ endif
 
 ./test/bin/problem-maker: $(PKG_SOURCES)
 	cd test && \
-	CGO_ENABLED=$(CGO_ENABLED) GOOS=linux GOARCH=$(GOARCH) go build \
+	CGO_ENABLED=$(CGO_ENABLED) GOOS=linux GOARCH=$(GOARCH) CC=$(CC) go build \
 		-o bin/problem-maker \
 		-tags "$(LINUX_BUILD_TAGS)" \
 		./e2e/problemmaker/problem_maker.go
 
 ./bin/health-checker: $(PKG_SOURCES)
-	CGO_ENABLED=$(CGO_ENABLED) GOOS=linux GOARCH=$(GOARCH) go build \
+	CGO_ENABLED=$(CGO_ENABLED) GOOS=linux GOARCH=$(GOARCH) CC=$(CC) go build \
 		-o bin/health-checker \
 		-ldflags '-X $(PKG)/pkg/version.version=$(VERSION)' \
 		-tags "$(LINUX_BUILD_TAGS)" \
