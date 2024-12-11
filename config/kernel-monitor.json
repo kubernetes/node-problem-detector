@@ -10,6 +10,11 @@
 			"type": "KernelDeadlock",
 			"reason": "KernelHasNoDeadlock",
 			"message": "kernel has no deadlock"
+		},
+		{
+			"type": "XfsShutdown",
+			"reason": "XfsHasNotShutDown",
+			"message": "XFS has not shutdown"
 		}
 	],
 	"rules": [
@@ -52,6 +57,12 @@
 			"type": "temporary",
 			"reason": "IOError",
 			"pattern": "Buffer I/O error .*"
+		},
+		{
+			"type": "permanent",
+			"condition": "XfsShutdown",
+			"reason": "XfsHasShutdown",
+			"pattern": "XFS .* Shutting down filesystem.?"
 		},
 		{
 			"type": "temporary",
