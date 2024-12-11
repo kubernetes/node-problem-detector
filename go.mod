@@ -11,6 +11,7 @@ require (
 	github.com/coreos/go-systemd/v22 v22.5.0
 	github.com/euank/go-kmsg-parser v2.0.0+incompatible
 	github.com/hpcloud/tail v1.0.0
+	github.com/prometheus/client_golang v1.19.1
 	github.com/prometheus/client_model v0.6.1
 	github.com/prometheus/common v0.55.0
 	github.com/prometheus/procfs v0.15.1
@@ -70,7 +71,6 @@ require (
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/power-devops/perfstat v0.0.0-20210106213030-5aafc221ea8c // indirect
-	github.com/prometheus/client_golang v1.19.1 // indirect
 	github.com/prometheus/prometheus v0.35.0 // indirect
 	github.com/prometheus/statsd_exporter v0.22.7 // indirect
 	github.com/shoenig/go-m1cpu v0.1.6 // indirect
