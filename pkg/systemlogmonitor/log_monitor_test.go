@@ -26,6 +26,7 @@ import (
 	"k8s.io/node-problem-detector/pkg/problemdaemon"
 	"k8s.io/node-problem-detector/pkg/problemmetrics"
 	logtypes "k8s.io/node-problem-detector/pkg/systemlogmonitor/types"
+	systemlogtypes "k8s.io/node-problem-detector/pkg/systemlogmonitor/types"
 	"k8s.io/node-problem-detector/pkg/types"
 	"k8s.io/node-problem-detector/pkg/util"
 	"k8s.io/node-problem-detector/pkg/util/metrics"
@@ -696,6 +697,43 @@ func TestInitializeProblemMetricsOrDie(t *testing.T) {
 
 			assert.ElementsMatch(t, test.expectedMetrics, gotMetrics,
 				"expected metrics: %+v, got: %+v", test.expectedMetrics, gotMetrics)
+		})
+	}
+}
+
+func TestGenerateMessage(t *testing.T) {
+	tests := []struct {
+		name                          string
+		logs                          []*systemlogtypes.Log
+		patternGeneratedMessageSuffix string
+		want                          string
+	}{
+		{
+			name: "No rule message",
+			logs: []*systemlogtypes.Log{
+				{Message: "First log message"},
+				{Message: "Second log message"},
+			},
+			patternGeneratedMessageSuffix: "",
+			want:                          "First log message\nSecond log message",
+		},
+		{
+			name: "With rule message",
+			logs: []*systemlogtypes.Log{
+				{Message: "First log message"},
+				{Message: "Second log message"},
+			},
+			patternGeneratedMessageSuffix: "refer www.foo.com/docs for playbook on how to fix the issue",
+			want:                          "First log message\nSecond log message; refer www.foo.com/docs for playbook on how to fix the issue",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := generateMessage(tt.logs, tt.patternGeneratedMessageSuffix)
+			if got != tt.want {
+				t.Errorf("generateMessage() = %v, want %v", got, tt.want)
+			}
 		})
 	}
 }

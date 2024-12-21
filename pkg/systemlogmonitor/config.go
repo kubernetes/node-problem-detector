@@ -46,7 +46,7 @@ type MonitorConfig struct {
 	EnableMetricsReporting *bool `json:"metricsReporting,omitempty"`
 }
 
-// ApplyConfiguration applies default configurations.
+// ApplyDefaultConfiguration applies default configurations.
 func (mc *MonitorConfig) ApplyDefaultConfiguration() {
 	if mc.BufferSize == 0 {
 		mc.BufferSize = defaultBufferSize
