@@ -42,4 +42,9 @@ type Rule struct {
 	// Pattern is the regular expression to match the problem in log.
 	// Notice that the pattern must match to the end of the line.
 	Pattern string `json:"pattern"`
+	// PatternGeneratedMessageSuffix is an optional suffix appended to the matched pattern.
+	// This suffix provides additional context or instructions for resolving the issue.
+	// It can be used to include environment-specific details, links to documentation,
+	// or any other information that helps users understand and address the problem.
+	PatternGeneratedMessageSuffix string `json:"patternGeneratedMessageSuffix,omitempty"`
 }

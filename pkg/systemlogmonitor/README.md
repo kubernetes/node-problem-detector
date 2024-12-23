@@ -37,7 +37,8 @@ with new rule definition:
   "type": "temporary/permanent",
   "condition": "NodeConditionOfPermanentIssue",
   "reason": "CamelCaseShortReason",
-  "pattern": "regexp matching the issue in the log"
+  "pattern": "regexp matching the issue in the log",
+  "patternGeneratedMessageSuffix": "Please check the network connectivity and ensure that all required services are running. For more details, see our documentation at https://example.com/docs/troubleshooting."
 }
 ```
 

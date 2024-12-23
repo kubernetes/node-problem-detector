@@ -18,6 +18,7 @@ package systemlogmonitor
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"time"
 
@@ -165,7 +166,7 @@ func (l *logMonitor) parseLog(log *systemlogtypes.Log) {
 func (l *logMonitor) generateStatus(logs []*systemlogtypes.Log, rule systemlogtypes.Rule) *types.Status {
 	// We use the timestamp of the first log line as the timestamp of the status.
 	timestamp := logs[0].Timestamp
-	message := generateMessage(logs)
+	message := generateMessage(logs, rule.PatternGeneratedMessageSuffix)
 	var events []types.Event
 	var changedConditions []*types.Condition
 	if rule.Type == types.Temp {
@@ -250,10 +251,14 @@ func initialConditions(defaults []types.Condition) []types.Condition {
 	return conditions
 }
 
-func generateMessage(logs []*systemlogtypes.Log) string {
+func generateMessage(logs []*systemlogtypes.Log, patternGeneratedMessageSuffix string) string {
 	messages := []string{}
 	for _, log := range logs {
 		messages = append(messages, log.Message)
 	}
-	return concatLogs(messages)
+	logMessage := concatLogs(messages)
+	if patternGeneratedMessageSuffix != "" {
+		return fmt.Sprintf("%s; %s", logMessage, patternGeneratedMessageSuffix)
+	}
+	return logMessage
 }
