@@ -57,7 +57,7 @@ type pluginGlobalConfig struct {
 	SkipInitialStatus *bool `json:"skip_initial_status,omitempty"`
 }
 
-// Custom plugin config is the configuration of custom plugin monitor.
+// CustomPluginConfig is the configuration of custom plugin monitor.
 type CustomPluginConfig struct {
 	// Plugin is the name of plugin which is currently used.
 	// Currently supported: custom.

@@ -123,11 +123,11 @@ func (c *customPluginMonitor) Stop() {
 // there is one customPluginMonitor, one plugin instance for each configPath.
 // each runs rules in parallel at pre-configured concurrency, and interval.
 func (c *customPluginMonitor) monitorLoop() {
-	if !*c.config.PluginGlobalConfig.SkipInitialStatus {
-		c.initializeStatus()
+	c.initializeConditions()
+	if *c.config.PluginGlobalConfig.SkipInitialStatus {
+		klog.Infof("Skipping sending initial status. Using default conditions: %+v", c.conditions)
 	} else {
-		c.conditions = initialConditions(c.config.DefaultConditions)
-		klog.Infof("Skipping condition initialization: %+v", c.conditions)
+		c.sendInitialStatus()
 	}
 
 	resultChan := c.plugin.GetResultChan()
@@ -296,16 +296,20 @@ func toConditionStatus(s cpmtypes.Status) types.ConditionStatus {
 	}
 }
 
-// initializeStatus initializes the internal condition and also reports it to the node problem detector.
-func (c *customPluginMonitor) initializeStatus() {
-	// Initialize the default node conditions
-	c.conditions = initialConditions(c.config.DefaultConditions)
-	klog.Infof("Initialize condition generated: %+v", c.conditions)
+// sendInitialStatus sends the initial status to the node problem detector.
+func (c *customPluginMonitor) sendInitialStatus() {
+	klog.Infof("Sending initial status for %s with conditions: %+v", c.config.Source, c.conditions)
 	// Update the initial status
 	c.statusChan <- &types.Status{
 		Source:     c.config.Source,
 		Conditions: c.conditions,
 	}
+}
+
+// initializeConditions initializes the internal node conditions.
+func (c *customPluginMonitor) initializeConditions() {
+	c.conditions = initialConditions(c.config.DefaultConditions)
+	klog.Infof("Initialized conditions for %s: %+v", c.configPath, c.conditions)
 }
 
 func initialConditions(defaults []types.Condition) []types.Condition {
