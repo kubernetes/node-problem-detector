@@ -83,6 +83,12 @@ func (k *kernelLogWatcher) Stop() {
 
 // watchLoop is the main watch loop of kernel log watcher.
 func (k *kernelLogWatcher) watchLoop() {
+	// send event to the watcher in case we are configured to
+	// event on loop starts
+	k.logCh <- &logtypes.Log{
+		Message:   "[npd-internal] Entering watch loop",
+		Timestamp: time.Now(),
+	}
 	kmsgs := k.kmsgParser.Parse()
 	defer func() {
 		if err := k.kmsgParser.Close(); err != nil {
