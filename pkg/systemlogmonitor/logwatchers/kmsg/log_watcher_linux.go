@@ -68,6 +68,8 @@ func (k *kernelLogWatcher) Watch() (<-chan *logtypes.Log, error) {
 		if err != nil {
 			return nil, fmt.Errorf("failed to create kmsg parser: %v", err)
 		}
+		// set kmsg parser logger to klog
+		parser.SetLogger(&kmsgParserLogger{})
 		k.kmsgParser = parser
 	}
 
