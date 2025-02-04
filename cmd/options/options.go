@@ -88,6 +88,9 @@ type NodeProblemDetectorOptions struct {
 	MonitorConfigPaths types.ProblemDaemonConfigPathMap
 
 	// application options
+	// DeleteDeprecatedConditions is the flag determining whether to delete deprecated Conditions and Events from the node status.
+	DeleteDeprecatedConditions bool
+	DeprecatedConditionTypes   []string
 
 	// NodeName is the node name used to communicate with Kubernetes ApiServer.
 	NodeName string
@@ -131,6 +134,8 @@ func (npdo *NodeProblemDetectorOptions) AddFlags(fs *pflag.FlagSet) {
 		"127.0.0.1", "The address to bind the Prometheus scrape endpoint.")
 	fs.Float32Var(&npdo.QPS, "kube-api-qps", 500, "Maximum QPS to use while talking with Kubernetes API")
 	fs.IntVar(&npdo.Burst, "kube-api-burst", 500, "Maximum burst for throttle while talking with Kubernetes API")
+	fs.BoolVar(&npdo.DeleteDeprecatedConditions, "delete-deprecated-conditions", false, "Whether to delete deprecated Conditions and Events from the node status")
+	fs.StringSliceVar(&npdo.DeprecatedConditionTypes, "deprecated-condition-types", []string{}, "List of deprecated condition types to delete. This is ignored if --delete-deprecated-conditions is false.")
 	for _, exporterName := range exporters.GetExporterNames() {
 		exporterHandler := exporters.GetExporterHandlerOrDie(exporterName)
 		exporterHandler.Options.SetFlags(fs)

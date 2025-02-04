@@ -23,6 +23,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"slices"
 
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -41,6 +42,8 @@ import (
 
 // Client is the interface of problem client
 type Client interface {
+	// DeleteDeprecatedConditions deletes the deprecated conditions of the node.
+	DeleteDeprecatedConditions(ctx context.Context, conditionTypeStrings []string) error
 	// GetConditions get all specific conditions of current node.
 	GetConditions(ctx context.Context, conditionTypes []v1.NodeConditionType) ([]*v1.NodeCondition, error)
 	// SetConditions set or update conditions of current node.
@@ -120,6 +123,44 @@ func (c *nodeProblemClient) SetConditions(ctx context.Context, newConditions []v
 	)
 }
 
+func (c *nodeProblemClient) DeleteDeprecatedConditions(ctx context.Context, conditionTypeStrings []string) error {
+	// get node object
+	klog.Infof("Deleting deprecated conditions %v (if present)...", conditionTypeStrings)
+	node, err := c.GetNode(ctx)
+	if err != nil {
+		return err
+	}
+
+	conditionTypes := generateConditionTypes(conditionTypeStrings)
+	// create a slice of the conditions we want to keep
+	newConditions := []v1.NodeCondition{}
+	for _, condition := range node.Status.Conditions {
+		if !slices.Contains(conditionTypes, condition.Type) {
+			newConditions = append(newConditions, condition)
+		} else {
+			klog.Infof("Deleting deprecated condition %s", condition.Type)
+		}
+	}
+
+	// update the node status if we need to,
+	// we only need to if the number of conditions has changed
+	if len(newConditions) < len(node.Status.Conditions) {
+		node.Status.Conditions = newConditions
+		return retry.OnError(retry.DefaultRetry,
+			func(error) bool {
+				return true
+			},
+			func() error {
+				_, err = c.client.Nodes().UpdateStatus(ctx, node, metav1.UpdateOptions{})
+				return err
+			},
+		)
+	} else {
+		klog.Infof("No deprecated conditions to delete")
+	}
+	return nil
+}
+
 func (c *nodeProblemClient) Eventf(eventType, source, reason, messageFmt string, args ...interface{}) {
 	recorder, found := c.recorders[source]
 	if !found {
@@ -162,4 +203,13 @@ func getNodeRef(namespace, nodeName string) *v1.ObjectReference {
 		UID:       types.UID(nodeName),
 		Namespace: namespace,
 	}
+}
+
+func generateConditionTypes(conditionTypeStrings []string) []v1.NodeConditionType {
+	// convert the condition type strings to NodeConditionType
+	conditionTypes := []v1.NodeConditionType{}
+	for _, conditionTypeString := range conditionTypeStrings {
+		conditionTypes = append(conditionTypes, v1.NodeConditionType(conditionTypeString))
+	}
+	return conditionTypes
 }

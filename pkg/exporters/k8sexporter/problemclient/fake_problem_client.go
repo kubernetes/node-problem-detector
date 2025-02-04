@@ -60,6 +60,18 @@ func (f *FakeProblemClient) AssertConditions(expected []v1.NodeCondition) error 
 	return nil
 }
 
+// DeleteDeprecatedConditions is a fake mimic of DeleteDeprecatedConditions, it only delete the internal condition cache.
+func (f *FakeProblemClient) DeleteDeprecatedConditions(ctx context.Context, types []string) error {
+	if err, ok := f.errors["DeleteDeprecatedConditions"]; ok {
+		return err
+	}
+	realTypes := generateConditionTypes(types)
+	for _, t := range realTypes {
+		delete(f.conditions, t)
+	}
+	return nil
+}
+
 // SetConditions is a fake mimic of SetConditions, it only update the internal condition cache.
 func (f *FakeProblemClient) SetConditions(ctx context.Context, conditions []v1.NodeCondition) error {
 	f.Lock()
