@@ -38,6 +38,8 @@ import (
 type k8sExporter struct {
 	client           problemclient.Client
 	conditionManager condition.ConditionManager
+	writeEvents      bool
+	updateConditions bool
 }
 
 // NewExporterOrDie creates a exporter for Kubernetes apiserver exporting,
@@ -60,6 +62,8 @@ func NewExporterOrDie(ctx context.Context, npdo *options.NodeProblemDetectorOpti
 	ke := k8sExporter{
 		client:           c,
 		conditionManager: condition.NewConditionManager(c, clock.RealClock{}, npdo.K8sExporterHeartbeatPeriod),
+		writeEvents:      npdo.K8sExporterWriteEvents,
+		updateConditions: npdo.K8sExporterUpdateNodeConditions,
 	}
 
 	ke.startHTTPReporting(npdo)
@@ -69,11 +73,15 @@ func NewExporterOrDie(ctx context.Context, npdo *options.NodeProblemDetectorOpti
 }
 
 func (ke *k8sExporter) ExportProblems(status *types.Status) {
-	for _, event := range status.Events {
-		ke.client.Eventf(util.ConvertToAPIEventType(event.Severity), status.Source, event.Reason, event.Message)
+	if ke.writeEvents {
+		for _, event := range status.Events {
+			ke.client.Eventf(util.ConvertToAPIEventType(event.Severity), status.Source, event.Reason, event.Message)
+		}
 	}
-	for _, cdt := range status.Conditions {
-		ke.conditionManager.UpdateCondition(cdt)
+	if ke.updateConditions {
+		for _, cdt := range status.Conditions {
+			ke.conditionManager.UpdateCondition(cdt)
+		}
 	}
 }
 
