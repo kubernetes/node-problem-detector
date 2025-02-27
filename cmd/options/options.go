@@ -65,6 +65,10 @@ type NodeProblemDetectorOptions struct {
 	APIServerWaitInterval time.Duration
 	// K8sExporterHeartbeatPeriod is the period at which the k8s exporter does forcibly sync with apiserver.
 	K8sExporterHeartbeatPeriod time.Duration
+	// K8sExporterWriteEvents determines whether to write Kubernetes Events for problems.
+	K8sExporterWriteEvents bool
+	// K8sExporterUpdateNodeConditions determines whether to update Kubernetes Node Conditions for problems.
+	K8sExporterUpdateNodeConditions bool
 
 	// prometheusExporter options
 	// PrometheusServerPort is the port to bind the Prometheus scrape endpoint. Use 0 to disable.
@@ -117,6 +121,8 @@ func (npdo *NodeProblemDetectorOptions) AddFlags(fs *pflag.FlagSet) {
 	fs.DurationVar(&npdo.APIServerWaitTimeout, "apiserver-wait-timeout", time.Duration(5)*time.Minute, "The timeout on waiting for kube-apiserver to be ready. This is ignored if --enable-k8s-exporter is false.")
 	fs.DurationVar(&npdo.APIServerWaitInterval, "apiserver-wait-interval", time.Duration(5)*time.Second, "The interval between the checks on the readiness of kube-apiserver. This is ignored if --enable-k8s-exporter is false.")
 	fs.DurationVar(&npdo.K8sExporterHeartbeatPeriod, "k8s-exporter-heartbeat-period", 5*time.Minute, "The period at which k8s-exporter does forcibly sync with apiserver.")
+	fs.BoolVar(&npdo.K8sExporterWriteEvents, "k8s-exporter-write-events", true, "Whether to write Kubernetes Event objects with event details.")
+	fs.BoolVar(&npdo.K8sExporterUpdateNodeConditions, "k8s-exporter-update-node-conditions", true, "Whether to update Kubernetes Node conditions with event details.")
 	fs.BoolVar(&npdo.PrintVersion, "version", false, "Print version information and quit")
 	fs.StringVar(&npdo.HostnameOverride, "hostname-override",
 		"", "Custom node name used to override hostname")
