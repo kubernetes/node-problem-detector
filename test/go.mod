@@ -5,7 +5,7 @@ go 1.23.1
 replace k8s.io/node-problem-detector => ../.
 
 require (
-	github.com/avast/retry-go/v4 v4.6.0
+	github.com/avast/retry-go/v4 v4.6.1
 	github.com/onsi/ginkgo v1.16.5
 	github.com/onsi/gomega v1.31.1
 	github.com/pborman/uuid v1.2.1
