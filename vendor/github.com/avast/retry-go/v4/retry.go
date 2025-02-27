@@ -202,7 +202,7 @@ func DoWithData[T any](retryableFunc RetryableFuncWithData[T], opts ...Option) (
 		if n == config.attempts-1 {
 			break
 		}
-
+		n++
 		select {
 		case <-config.timer.After(delay(config, n, err)):
 		case <-config.context.Done():
@@ -213,7 +213,6 @@ func DoWithData[T any](retryableFunc RetryableFuncWithData[T], opts ...Option) (
 			return emptyT, append(errorLog, config.context.Err())
 		}
 
-		n++
 		shouldRetry = shouldRetry && n < config.attempts
 	}
 
