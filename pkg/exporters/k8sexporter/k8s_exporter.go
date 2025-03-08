@@ -63,6 +63,12 @@ func NewExporterOrDie(ctx context.Context, npdo *options.NodeProblemDetectorOpti
 	}
 
 	ke.startHTTPReporting(npdo)
+	if npdo.DeleteDeprecatedConditions {
+		err := ke.client.DeleteDeprecatedConditions(ctx, npdo.DeprecatedConditionTypes)
+		if err != nil {
+			klog.Errorf("Failed to delete deprecated conditions: %v", err)
+		}
+	}
 	ke.conditionManager.Start(ctx)
 
 	return &ke
