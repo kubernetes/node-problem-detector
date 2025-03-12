@@ -279,16 +279,6 @@ detected by the node-problem-detector. Remedy systems observe events and/or node
 conditions emitted by the node-problem-detector and take action to return the
 Kubernetes cluster to a healthy state. The following remedy systems exist:
 
-* [**Draino**](https://github.com/planetlabs/draino) automatically drains Kubernetes
-  nodes based on labels and node conditions. Nodes that match _all_ of the supplied
-  labels and _any_ of the supplied node conditions will be prevented from accepting
-  new pods (aka 'cordoned') immediately, and
-  [drained](https://kubernetes.io/docs/tasks/administer-cluster/safely-drain-node/)
-  after a configurable time. Draino can be used in conjunction with the
-  [Cluster Autoscaler](https://github.com/kubernetes/autoscaler/tree/master/cluster-autoscaler)
-  to automatically terminate drained nodes. Refer to
-  [this issue](https://github.com/kubernetes/node-problem-detector/issues/199)
-  for an example production use case for Draino.
 * [**Descheduler**](https://github.com/kubernetes-sigs/descheduler) strategy RemovePodsViolatingNodeTaints
   evicts pods violating NoSchedule taints on nodes. The k8s scheduler's TaintNodesByCondition feature must
   be enabled. The [Cluster Autoscaler](https://github.com/kubernetes/autoscaler/tree/master/cluster-autoscaler)
