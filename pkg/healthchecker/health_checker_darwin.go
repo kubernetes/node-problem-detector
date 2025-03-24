@@ -42,8 +42,3 @@ func checkForPattern(service, logStartTime, logPattern string, logCountThreshold
 	klog.Fatalf("checkForPattern is not supported in %s", runtime.GOOS)
 	return false, nil
 }
-
-func getDockerPath() string {
-	klog.Fatalf("getDockerPath is not supported in %s", runtime.GOOS)
-	return ""
-}

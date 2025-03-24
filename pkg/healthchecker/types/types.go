@@ -35,7 +35,6 @@ const (
 
 	KubeletComponent   = "kubelet"
 	CRIComponent       = "cri"
-	DockerComponent    = "docker"
 	ContainerdService  = "containerd"
 	KubeProxyComponent = "kube-proxy"
 
@@ -80,12 +79,12 @@ func setKubeEndpoints() {
 
 	kubeletHealthCheckEndpoint = fmt.Sprintf("http://%s:%s/healthz", hostAddress, kubeletPort)
 	kubeProxyHealthCheckEndpoint = fmt.Sprintf("http://%s:%s/healthz", hostAddress, kubeProxyPort)
-
 }
 
 func KubeProxyHealthCheckEndpoint() string {
 	return kubeProxyHealthCheckEndpoint
 }
+
 func KubeletHealthCheckEndpoint() string {
 	return kubeletHealthCheckEndpoint
 }

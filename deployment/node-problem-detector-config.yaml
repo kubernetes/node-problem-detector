@@ -52,12 +52,6 @@ data:
             },
             {
                 "type": "permanent",
-                "condition": "KernelDeadlock",
-                "reason": "DockerHung",
-                "pattern": "task docker:\\w+ blocked for more than \\w+ seconds\\."
-            },
-            {
-                "type": "permanent",
                 "condition": "ReadonlyFilesystem",
                 "reason": "FilesystemIsReadOnly",
                 "pattern": "Remounting filesystem read-only"
@@ -85,25 +79,6 @@ data:
                 "condition": "ReadonlyFilesystem",
                 "reason": "FilesystemIsReadOnly",
                 "pattern": "Remounting filesystem read-only"
-            }
-        ]
-    }
-  docker-monitor.json: |
-    {
-        "plugin": "journald",
-        "pluginConfig": {
-            "source": "dockerd"
-        },
-        "logPath": "/var/log/journal",
-        "lookback": "5m",
-        "bufferSize": 10,
-        "source": "docker-monitor",
-        "conditions": [],
-        "rules": [
-            {
-                "type": "temporary",
-                "reason": "CorruptDockerImage",
-                "pattern": "Error trying v2 registry: failed to register layer: rename /var/lib/docker/image/(.+) /var/lib/docker/image/(.+): directory not empty.*"
             }
         ]
     }

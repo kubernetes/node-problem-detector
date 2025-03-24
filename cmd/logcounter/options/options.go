@@ -40,7 +40,7 @@ type LogCounterOptions struct {
 
 // AddFlags adds log counter command line options to pflag.
 func (fedo *LogCounterOptions) AddFlags(fs *pflag.FlagSet) {
-	fs.StringVar(&fedo.JournaldSource, "journald-source", "", "The source configuration of journald, e.g., kernel, kubelet, dockerd, etc")
+	fs.StringVar(&fedo.JournaldSource, "journald-source", "", "The source configuration of journald, e.g., kernel, kubelet, etc")
 	fs.StringVar(&fedo.LogPath, "log-path", "", "The log path that log watcher looks up")
 	fs.StringVar(&fedo.Lookback, "lookback", "", "The time log watcher looks up")
 	fs.StringVar(&fedo.Delay, "delay", "",
