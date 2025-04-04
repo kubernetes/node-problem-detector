@@ -41,12 +41,6 @@
 			"type": "temporary",
 			"reason": "KernelOops",
 			"pattern": "divide error: 0000 \\[#\\d+\\] SMP"
-		},
-		{
-			"type": "permanent",
-			"condition": "KernelDeadlock",
-			"reason": "DockerHung",
-			"pattern": "task docker:\\w+ blocked for more than \\w+ seconds\\."
 		}
 	]
 }
