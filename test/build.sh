@@ -103,7 +103,7 @@ function build-npd-custom-flags() {
 
   flags="--v=2"
   flags+=" --logtostderr"
-  flags+=" --config.system-log-monitor=${km_config},${rm_config},${dm_config},${sm_config}"
+  flags+=" --config.system-log-monitor=${km_config},${rm_config},${sm_config}"
   flags+=" --config.custom-plugin-monitor=${custom_km_config},${custom_sm_config}"
   flags+=" --port=20256"
 
