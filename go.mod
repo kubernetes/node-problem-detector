@@ -11,7 +11,7 @@ require (
 	github.com/coreos/go-systemd/v22 v22.5.0
 	github.com/euank/go-kmsg-parser v2.0.0+incompatible
 	github.com/hpcloud/tail v1.0.0
-	github.com/prometheus/client_model v0.6.1
+	github.com/prometheus/client_model v0.6.2
 	github.com/prometheus/common v0.55.0
 	github.com/prometheus/procfs v0.15.1
 	github.com/shirou/gopsutil/v3 v3.24.5
@@ -94,7 +94,7 @@ require (
 	google.golang.org/genproto/googleapis/api v0.0.0-20240725223205-93522f1f2a9f // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240730163845-b1a4ccb954bf // indirect
 	google.golang.org/grpc v1.64.1 // indirect
-	google.golang.org/protobuf v1.34.2 // indirect
+	google.golang.org/protobuf v1.36.6 // indirect
 	gopkg.in/fsnotify.v1 v1.4.7 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 // indirect
