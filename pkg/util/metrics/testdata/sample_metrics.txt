@@ -21,7 +21,7 @@ host_uptime{kernel_version="4.14.127+",os_version="cos 73-11647.217.0"} 81
 problem_counter{reason="ContainerdStart"} 1
 problem_counter{reason="CorruptDockerImage"} 0
 problem_counter{reason="CorruptDockerOverlay2"} 0
-problem_counter{reason="DockerHung"} 0
+problem_counter{reason="TaskHung"} 0
 problem_counter{reason="DockerStart"} 1
 problem_counter{reason="FilesystemIsReadOnly"} 0
 problem_counter{reason="FrequentContainerdRestart"} 0
@@ -35,7 +35,7 @@ problem_counter{reason="UnregisterNetDevice"} 0
 # HELP problem_gauge Whether a specific type of problem is affecting the node or not.
 # TYPE problem_gauge gauge
 problem_gauge{reason="CorruptDockerOverlay2",type="CorruptDockerOverlay2"} 0
-problem_gauge{reason="DockerHung",type="KernelDeadlock"} 0
+problem_gauge{reason="TaskHung",type="KernelDeadlock"} 0
 problem_gauge{reason="FilesystemIsReadOnly",type="ReadonlyFilesystem"} 0
 problem_gauge{reason="FrequentContainerdRestart",type="FrequentContainerdRestart"} 0
 problem_gauge{reason="FrequentDockerRestart",type="FrequentDockerRestart"} 0

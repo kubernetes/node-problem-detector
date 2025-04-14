@@ -260,9 +260,9 @@ For example, to test [KernelMonitor](https://github.com/kubernetes/node-problem-
 3. ```./bin/node-problem-detector --logtostderr --apiserver-override=http://127.0.0.1:8080?inClusterConfig=false --config.system-log-monitor=config/kernel-monitor.json --config.system-stats-monitor=config/system-stats-monitor.json --port=20256 --prometheus-port=20257``` (or point to any API server address:port and Prometheus port)
 4. ```sudo sh -c "echo 'kernel: BUG: unable to handle kernel NULL pointer dereference at TESTING' >> /dev/kmsg"```
 5. You can see ```KernelOops``` event in the node-problem-detector log.
-6. ```sudo sh -c "echo 'kernel: INFO: task docker:20744 blocked for more than 120 seconds.' >> /dev/kmsg"```
-7. You can see ```DockerHung``` event and condition in the node-problem-detector log.
-8. You can see ```DockerHung``` condition at [http://127.0.0.1:20256/conditions](http://127.0.0.1:20256/conditions).
+6. ```sudo sh -c "echo 'kernel: INFO: task foo:20744 blocked for more than 120 seconds.' >> /dev/kmsg"```
+7. You can see ```TaskHung``` event and condition in the node-problem-detector log.
+8. You can see ```TaskHung``` condition at [http://127.0.0.1:20256/conditions](http://127.0.0.1:20256/conditions).
 9. You can see disk-related system metrics in Prometheus format at [http://127.0.0.1:20257/metrics](http://127.0.0.1:20257/metrics).
 
 **Note**:

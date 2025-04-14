@@ -108,9 +108,8 @@ example:
 ```
 # HELP problem_counter Number of times a specific type of problem have occurred.
 # TYPE problem_counter counter
-problem_counter{reason="DockerHung"} 1
+problem_counter{reason="TaskHung"} 1
 # HELP problem_gauge Whether a specific type of problem is affecting the node or not.
 # TYPE problem_gauge gauge
-problem_gauge{condition="KernelDeadlock",reason="DockerHung"} 1
+problem_gauge{condition="KernelDeadlock",reason="TaskHung"} 1
 ```
-
