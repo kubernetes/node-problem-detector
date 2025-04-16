@@ -49,15 +49,15 @@ type HealthCheckerOptions struct {
 // AddFlags adds health checker command line options to pflag.
 func (hco *HealthCheckerOptions) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&hco.Component, "component", types.KubeletComponent,
-		"The component to check health for. Supports kubelet, docker, kube-proxy, and cri")
+		"The component to check health for. Supports kubelet, kube-proxy, and cri")
 	// Deprecated: For backward compatibility on linux environment. Going forward "service" will be used instead of systemd-service
 	if runtime.GOOS == "linux" {
 		fs.MarkDeprecated("systemd-service", "please use --service flag instead")
 		fs.StringVar(&hco.Service, "systemd-service", "",
-			"The underlying service responsible for the component. Set to the corresponding component for docker and kubelet, containerd for cri.")
+			"The underlying service responsible for the component. Set to the corresponding component for kubelet, containerd for cri.")
 	}
 	fs.StringVar(&hco.Service, "service", "",
-		"The underlying service responsible for the component. Set to the corresponding component for docker and kubelet, containerd for cri.")
+		"The underlying service responsible for the component. Set to the corresponding component for kubelet, containerd for cri.")
 	fs.BoolVar(&hco.EnableRepair, "enable-repair", true, "Flag to enable/disable repair attempt for the component.")
 	fs.StringVar(&hco.CriCtlPath, "crictl-path", types.DefaultCriCtl,
 		"The path to the crictl binary. This is used to check health of cri component.")
@@ -79,9 +79,8 @@ func (hco *HealthCheckerOptions) AddFlags(fs *pflag.FlagSet) {
 // Returns error if invalid, nil otherwise.
 func (hco *HealthCheckerOptions) IsValid() error {
 	// Make sure the component specified is valid.
-	if hco.Component != types.KubeletComponent && hco.Component != types.DockerComponent &&
-		hco.Component != types.CRIComponent && hco.Component != types.KubeProxyComponent {
-		return fmt.Errorf("the component specified is not supported. Supported components are : <kubelet/docker/cri/kube-proxy>")
+	if hco.Component != types.KubeletComponent && hco.Component != types.CRIComponent && hco.Component != types.KubeProxyComponent {
+		return fmt.Errorf("the component specified is not supported. Supported components are : <kubelet/cri/kube-proxy>")
 	}
 	// Make sure the service is specified if repair is enabled.
 	if hco.EnableRepair && hco.Service == "" {

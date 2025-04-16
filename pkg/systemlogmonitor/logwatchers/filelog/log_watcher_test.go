@@ -185,22 +185,21 @@ func TestFilterSkipList(t *testing.T) {
 			},
 		},
 	}
-	testcase := []struct{
-		log string
+	testcase := []struct {
+		log    string
 		expect bool
 	}{
 		{
-			log: `Jan  2 03:04:03 kernel: [0.000000] 1`,
+			log:    `Jan  2 03:04:03 kernel: [0.000000] 1`,
 			expect: false,
 		},
 		{
-			log: `Jan  2 03:04:04 audit: [1.000000] 2`,
+			log:    `Jan  2 03:04:04 audit: [1.000000] 2`,
 			expect: true,
 		},
 		{
-			log: `Jan  2 03:04:05 kubelet: [2.000000] 3`,
+			log:    `Jan  2 03:04:05 kubelet: [2.000000] 3`,
 			expect: true,
-
 		},
 	}
 	for i, test := range testcase {
