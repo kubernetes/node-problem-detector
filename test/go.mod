@@ -14,7 +14,7 @@ require (
 	golang.org/x/oauth2 v0.29.0
 	google.golang.org/api v0.230.0
 	k8s.io/apimachinery v0.33.0
-	k8s.io/component-base v0.32.3
+	k8s.io/component-base v0.32.4
 	k8s.io/klog/v2 v2.130.1
 	k8s.io/node-problem-detector v0.8.20
 	sigs.k8s.io/boskos v0.0.0-20200515170311-7d36bde8cdf6
