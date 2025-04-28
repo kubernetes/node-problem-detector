@@ -134,7 +134,7 @@ func (s *filelogWatcher) watchLoop() {
 }
 
 func (s *filelogWatcher) filterSkipList(line string) bool {
-	for _ , skipItem := range s.cfg.SkipList {
+	for _, skipItem := range s.cfg.SkipList {
 		if strings.Contains(line, skipItem) {
 			return true
 		}

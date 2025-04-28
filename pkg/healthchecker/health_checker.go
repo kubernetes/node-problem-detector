@@ -141,13 +141,6 @@ func getHealthCheckFunc(hco *options.HealthCheckerOptions) func() (bool, error) 
 		return healthCheckEndpointOKFunc(types.KubeletHealthCheckEndpoint(), hco.HealthCheckTimeout)
 	case types.KubeProxyComponent:
 		return healthCheckEndpointOKFunc(types.KubeProxyHealthCheckEndpoint(), hco.HealthCheckTimeout)
-	case types.DockerComponent:
-		return func() (bool, error) {
-			if _, err := execCommand(hco.HealthCheckTimeout, getDockerPath(), "ps"); err != nil {
-				return false, nil
-			}
-			return true, nil
-		}
 	case types.CRIComponent:
 		return func() (bool, error) {
 			_, err := execCommand(
