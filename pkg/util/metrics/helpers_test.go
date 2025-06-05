@@ -81,7 +81,7 @@ func TestPrometheusMetricsParsingAndMatching(t *testing.T) {
 				},
 				{
 					Name:   "problem_counter",
-					Labels: map[string]string{"reason": "DockerHung"},
+					Labels: map[string]string{"reason": "TaskHung"},
 				},
 				{
 					Name:   "problem_counter",
