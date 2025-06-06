@@ -109,9 +109,10 @@ func TestKubeEndpointConfiguration(t *testing.T) {
 		{
 			name:                      "no overrides supplied",
 			envConfig:                 map[string]string{},
-			expectedKubeletEndpoint:   "http://127.0.0.1:10248/healthz",
-			expectedKubeProxyEndpoint: "http://127.0.0.1:10256/healthz",
-		}, {
+			expectedKubeletEndpoint:   "http://localhost:10248/healthz",
+			expectedKubeProxyEndpoint: "http://localhost:10256/healthz",
+		},
+		{
 			name: "HOST_ADDRESS override supplied",
 			envConfig: map[string]string{
 				"HOST_ADDRESS": "samplehost.testdomain.com",
@@ -120,20 +121,36 @@ func TestKubeEndpointConfiguration(t *testing.T) {
 			expectedKubeProxyEndpoint: "http://samplehost.testdomain.com:10256/healthz",
 		},
 		{
+			name: "HOST_ADDRESS override supplied with IPv4",
+			envConfig: map[string]string{
+				"HOST_ADDRESS": "10.0.5.4",
+			},
+			expectedKubeletEndpoint:   "http://10.0.5.4:10248/healthz",
+			expectedKubeProxyEndpoint: "http://10.0.5.4:10256/healthz",
+		},
+		{
+			name: "HOST_ADDRESS override supplied with IPv6",
+			envConfig: map[string]string{
+				"HOST_ADDRESS": "80:f4:16::1",
+			},
+			expectedKubeletEndpoint:   "http://[80:f4:16::1]:10248/healthz",
+			expectedKubeProxyEndpoint: "http://[80:f4:16::1]:10256/healthz",
+		},
+		{
 			name: "KUBELET_PORT override supplied",
 			envConfig: map[string]string{
 				"KUBELET_PORT": "12345",
 			},
-			expectedKubeletEndpoint:   "http://127.0.0.1:12345/healthz",
-			expectedKubeProxyEndpoint: "http://127.0.0.1:10256/healthz",
+			expectedKubeletEndpoint:   "http://localhost:12345/healthz",
+			expectedKubeProxyEndpoint: "http://localhost:10256/healthz",
 		},
 		{
 			name: "KUBEPROXY_PORT override supplied",
 			envConfig: map[string]string{
 				"KUBEPROXY_PORT": "12345",
 			},
-			expectedKubeletEndpoint:   "http://127.0.0.1:10248/healthz",
-			expectedKubeProxyEndpoint: "http://127.0.0.1:12345/healthz",
+			expectedKubeletEndpoint:   "http://localhost:10248/healthz",
+			expectedKubeProxyEndpoint: "http://localhost:12345/healthz",
 		},
 		{
 			name: "HOST_ADDRESS and KUBELET_PORT override supplied",
@@ -174,8 +191,8 @@ func TestKubeEndpointConfiguration(t *testing.T) {
 			kubeProxyHCEndpoint := KubeProxyHealthCheckEndpoint()
 			kubeletHCEndpoint := KubeletHealthCheckEndpoint()
 
-			assert.Equal(t, kubeProxyHCEndpoint, test.expectedKubeProxyEndpoint)
-			assert.Equal(t, kubeletHCEndpoint, test.expectedKubeletEndpoint)
+			assert.Equal(t, test.expectedKubeProxyEndpoint, kubeProxyHCEndpoint)
+			assert.Equal(t, test.expectedKubeletEndpoint, kubeletHCEndpoint)
 		})
 	}
 }
