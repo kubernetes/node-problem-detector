@@ -9,7 +9,7 @@ require (
 	github.com/onsi/ginkgo v1.16.5
 	github.com/onsi/gomega v1.37.0
 	github.com/pborman/uuid v1.2.1
-	github.com/spf13/pflag v1.0.6
+	github.com/spf13/pflag v1.0.7
 	golang.org/x/crypto v0.37.0
 	golang.org/x/oauth2 v0.29.0
 	google.golang.org/api v0.230.0
