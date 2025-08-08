@@ -1,4 +1,5 @@
 /bin/
+.bin
 /test/bin/
 /*.tar.gz*
 ci.env

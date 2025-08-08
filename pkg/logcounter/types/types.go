@@ -14,8 +14,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+// Package types contains the types for log counter.
 package types
 
+// LogCounter is the interface for a log counter.
 type LogCounter interface {
 	Count() (int, error)
 }

@@ -219,6 +219,10 @@ func (nc *netCollector) mustRegisterMetric(metricID metrics.MetricID, descriptio
 
 func (nc *netCollector) recordNetDev() {
 	fs, err := procfs.NewFS(nc.procPath)
+	if err != nil {
+		klog.Errorf("Failed to open procfs: %v", err)
+		return
+	}
 	stats, err := fs.NetDev()
 	if err != nil {
 		klog.Errorf("Failed to retrieve net dev stat: %v", err)

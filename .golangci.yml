@@ -1,0 +1,27 @@
+version: "2"
+run:
+  tests: true
+#  build-tags:
+#    - journald
+linters:
+  default: none
+  enable:
+    - ineffassign
+  exclusions:
+    generated: lax
+    paths:
+      - vendor
+      - third_party
+      - third_party$
+      - builtin$
+      - examples$
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
+formatters:
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
