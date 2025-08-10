@@ -37,18 +37,15 @@ var _ = ginkgo.Describe("NPD should export Prometheus metrics.", func() {
 	var instance gce.Instance
 
 	ginkgo.BeforeEach(func() {
-		var err error
-		// TODO(xueweiz): Creating instance for each test case is slow. We should either reuse the instance
-		// between tests, or have a way to run these tests in parallel.
-		if *imageFamily != "" && *image == "" {
-			gceImage, err := computeService.Images.GetFromFamily(*imageProject, *imageFamily).Do()
-			if err != nil {
-				ginkgo.Fail(fmt.Sprintf("Unable to get image from family %s at project %s: %v",
-					*imageFamily, *imageProject, err))
-			}
-			*image = gceImage.Name
-			fmt.Printf("Using image %s from image family %s at project %s\n", *image, *imageFamily, *imageProject)
+		imageProject := "ubuntu-os-gke-cloud"
+		imageFamily := "pipeline-1-24"
+		gceImage, err := computeService.Images.GetFromFamily(imageProject, imageFamily).Do()
+		if err != nil {
+			ginkgo.Fail(fmt.Sprintf("Unable to get image from family %s at project %s: %v",
+				imageFamily, imageProject, err))
 		}
+		*image = gceImage.Name
+		fmt.Printf("Using image %s from image family %s at project %s\n", *image, imageFamily, imageProject)
 		instance, err = gce.CreateInstance(
 			gce.Instance{
 				Name:           "npd-metrics-" + *image + "-" + uuid.NewUUID().String()[:8],
@@ -59,7 +56,7 @@ var _ = ginkgo.Describe("NPD should export Prometheus metrics.", func() {
 				ComputeService: computeService,
 			},
 			*image,
-			*imageProject)
+			imageProject)
 		Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("Unable to create test instance: %v", err))
 
 		err = npd.SetupNPD(instance, *npdBuildTar)
@@ -117,34 +114,6 @@ var _ = ginkgo.Describe("NPD should export Prometheus metrics.", func() {
 			assertMetricValueInBound(instance,
 				"problem_counter", map[string]string{"reason": "OOMKilling"},
 				0.0, 0.0)
-		})
-	})
-
-	ginkgo.Context("When ext4 filesystem error happens", func() {
-
-		ginkgo.BeforeEach(func() {
-			err := npd.WaitForNPD(instance, []string{"problem_gauge"}, 120)
-			Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("Expect NPD to become ready in 120s, but hit error: %v", err))
-			// This will trigger a ext4 error on the boot disk, causing the boot disk mounted as read-only and systemd-journald crashing.
-			instance.RunCommandOrFail("sudo /home/kubernetes/bin/problem-maker --problem Ext4FilesystemError")
-		})
-
-		ginkgo.It("NPD should update problem_counter{reason:Ext4Error} and problem_gauge{type:ReadonlyFilesystem}", func() {
-			ginkgo.Skip("Writing to /sys/fs/ext4/sda1/trigger_fs_error breaks SSH: https://github.com/kubernetes/node-problem-detector/issues/970")
-			time.Sleep(5 * time.Second)
-			assertMetricValueAtLeast(instance,
-				"problem_counter", map[string]string{"reason": "Ext4Error"},
-				1.0)
-			assertMetricValueInBound(instance,
-				"problem_gauge", map[string]string{"reason": "FilesystemIsReadOnly", "type": "ReadonlyFilesystem"},
-				1.0, 1.0)
-		})
-
-		ginkgo.It("NPD should remain healthy", func() {
-			ginkgo.Skip("Writing to /sys/fs/ext4/sda1/trigger_fs_error breaks SSH: https://github.com/kubernetes/node-problem-detector/issues/970")
-			npdStates := instance.RunCommandOrFail("sudo systemctl show node-problem-detector -p ActiveState -p SubState")
-			Expect(npdStates.Stdout).To(ContainSubstring("ActiveState=active"), "NPD is no longer active: %v", npdStates)
-			Expect(npdStates.Stdout).To(ContainSubstring("SubState=running"), "NPD is no longer running: %v", npdStates)
 		})
 	})
 
