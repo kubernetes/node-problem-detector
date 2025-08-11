@@ -94,6 +94,12 @@ func TestGetOSVersionLinux(t *testing.T) {
 			expectErr:         false,
 		},
 		{
+			name:              "flatcar",
+			fakeOSReleasePath: "testdata/os-release-flatcar",
+			expectedOSVersion: "flatcar 4372.0.1",
+			expectErr:         false,
+		},
+		{
 			name:              "Unknown",
 			fakeOSReleasePath: "testdata/os-release-unknown",
 			expectedOSVersion: "",
