@@ -19,14 +19,13 @@
 # Must override builder-base, not builder, since the latter is referred to later in the file and so must not be
 # directly replaced. See here, and note that "stage" parameter mentioned there has been renamed to
 # "build-context": https://github.com/docker/buildx/pull/904#issuecomment-1005871838
-FROM golang:1.24-bookworm@sha256:00eccd446e023d3cd9566c25a6e6a02b90db3e1e0bbe26a48fc29cd96e800901 as builder-base
-FROM builder-base as builder
-LABEL maintainer="Andy Xie <andy.xning@gmail.com>"
+FROM golang:1.24-bookworm@sha256:00eccd446e023d3cd9566c25a6e6a02b90db3e1e0bbe26a48fc29cd96e800901 AS builder-base
+FROM builder-base AS builder
 
 ARG TARGETARCH
 
-ENV GOPATH /gopath/
-ENV PATH $GOPATH/bin:$PATH
+ENV GOPATH=/gopath/
+ENV PATH=$GOPATH/bin:$PATH
 
 RUN apt-get update --fix-missing && apt-get --yes install libsystemd-dev gcc-aarch64-linux-gnu
 RUN go version
@@ -35,7 +34,7 @@ COPY . /gopath/src/k8s.io/node-problem-detector/
 WORKDIR /gopath/src/k8s.io/node-problem-detector
 RUN GOARCH=${TARGETARCH} make bin/node-problem-detector bin/health-checker bin/log-counter
 
-FROM --platform=${TARGETPLATFORM} registry.k8s.io/build-image/debian-base:bookworm-v1.0.5@sha256:dd9c1f36c33b410480f6e6dcdfc075b0dfcab2c137953dd40189dbd06bdf9938 as base
+FROM registry.k8s.io/build-image/debian-base:bookworm-v1.0.5@sha256:dd9c1f36c33b410480f6e6dcdfc075b0dfcab2c137953dd40189dbd06bdf9938 AS base
 
 LABEL maintainer="Random Liu <lantaol@google.com>"
 
