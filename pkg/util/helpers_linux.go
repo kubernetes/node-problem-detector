@@ -70,6 +70,8 @@ func getOSVersion(osReleasePath string) (string, error) {
 		return getDebianVersion(osReleaseMap), nil
 	case "azurelinux":
 		return getDebianVersion(osReleaseMap), nil
+	case "flatcar":
+		return getDebianVersion(osReleaseMap), nil
 	default:
 		return "", fmt.Errorf("Unsupported ID in /etc/os-release: %q", osReleaseMap["ID"])
 	}
