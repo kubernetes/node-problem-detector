@@ -22,9 +22,7 @@ import (
 	"k8s.io/node-problem-detector/pkg/types"
 )
 
-var (
-	handlers = make(map[types.ExporterType]types.ExporterHandler)
-)
+var handlers = make(map[types.ExporterType]types.ExporterHandler)
 
 // Register registers a exporter factory method, which will be used to create the exporter.
 func Register(exporterType types.ExporterType, handler types.ExporterHandler) {

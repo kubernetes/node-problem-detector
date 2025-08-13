@@ -17,9 +17,9 @@ limitations under the License.
 package logwatchers
 
 import (
-	"k8s.io/node-problem-detector/pkg/systemlogmonitor/logwatchers/types"
-
 	"k8s.io/klog/v2"
+
+	"k8s.io/node-problem-detector/pkg/systemlogmonitor/logwatchers/types"
 )
 
 // createFuncs is a table of createFuncs for all supported log watchers.

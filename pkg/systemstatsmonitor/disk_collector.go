@@ -307,7 +307,6 @@ func (dc *diskCollector) collect() {
 			dc.mPercentUsed.Record(map[string]string{deviceNameLabel: deviceName, fsTypeLabel: fstype, mountOptionLabel: opttypes, stateLabel: "used"}, float64(usageStat.UsedPercent))
 		}
 	}
-
 }
 
 // listRootBlockDevices lists all block devices that's not a slave or holder.

@@ -17,12 +17,12 @@ limitations under the License.
 package kmsg
 
 import (
-	testclock "k8s.io/utils/clock/testing"
 	"testing"
+	"time"
 
 	"github.com/euank/go-kmsg-parser/kmsgparser"
 	"github.com/stretchr/testify/assert"
-	"time"
+	testclock "k8s.io/utils/clock/testing"
 
 	"k8s.io/node-problem-detector/pkg/systemlogmonitor/logwatchers/types"
 	logtypes "k8s.io/node-problem-detector/pkg/systemlogmonitor/types"

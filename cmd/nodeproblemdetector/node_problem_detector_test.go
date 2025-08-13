@@ -71,8 +71,7 @@ func init() {
 	})
 }
 
-type nullExporter struct {
-}
+type nullExporter struct{}
 
 func (ne *nullExporter) ExportProblems(*types.Status) {
 }
@@ -96,7 +95,7 @@ func writeTempFile(t *testing.T, ext string, contents string) (string, error) {
 
 	fileName := f.Name()
 
-	if err := os.WriteFile(fileName, []byte(contents), 0644); err != nil {
+	if err := os.WriteFile(fileName, []byte(contents), 0o644); err != nil {
 		os.Remove(fileName)
 		return "", fmt.Errorf("cannot write config to temp file %s, %v", fileName, err)
 	}

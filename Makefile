@@ -130,8 +130,9 @@ vet:
 		grep -v "./vendor/*" | \
 		xargs go vet -tags "$(HOST_PLATFORM_BUILD_TAGS)"
 
-fmt:
+fmt: $(GOLANGCI_LINT)
 	find . -type f -name "*.go" | grep -v "./vendor/*" | xargs gofmt -s -w -l
+	$(GOLANGCI_LINT) run --config .golangci.yml --fix ./...
 
 version:
 	@echo $(VERSION)

@@ -40,7 +40,7 @@ func Modules(modulesFilePath string) ([]Module, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error reading the contents of %s: %s", modulesFilePath, err)
 	}
-	var result = make([]Module, 0, len(lines))
+	result := make([]Module, 0, len(lines))
 
 	/* a line of /proc/modules has the following structure
 	  nf_nat 61440 2 xt_MASQUERADE,iptable_nat, Live 0x0000000000000000  (O)
@@ -55,14 +55,13 @@ func Modules(modulesFilePath string) ([]Module, error) {
 	*/
 	for _, line := range lines {
 		fields := strings.Fields(line)
-		moduleName := fields[0] // name of the module
-		numberOfInstances, err :=
-			strconv.ParseUint((fields[2]), 10, 64) // instances of the module are currently loaded
+		moduleName := fields[0]                                          // name of the module
+		numberOfInstances, err := strconv.ParseUint((fields[2]), 10, 64) // instances of the module are currently loaded
 		if err != nil {
 			numberOfInstances = 0
 		}
 
-		var module = Module{
+		module := Module{
 			ModuleName: moduleName,
 			Instances:  numberOfInstances,
 		}

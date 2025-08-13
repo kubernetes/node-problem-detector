@@ -22,12 +22,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/tools/record"
 	testclock "k8s.io/utils/clock/testing"
-
-	"github.com/stretchr/testify/assert"
 )
 
 const (

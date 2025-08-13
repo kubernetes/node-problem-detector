@@ -20,9 +20,9 @@ import (
 	"regexp"
 	"time"
 
-	logtypes "k8s.io/node-problem-detector/pkg/systemlogmonitor/types"
-
 	"k8s.io/klog/v2"
+
+	logtypes "k8s.io/node-problem-detector/pkg/systemlogmonitor/types"
 )
 
 // translator translates log line into internal log type based on user defined

@@ -21,6 +21,7 @@ import (
 	"strings"
 
 	"k8s.io/klog/v2"
+
 	ssmtypes "k8s.io/node-problem-detector/pkg/systemstatsmonitor/types"
 	"k8s.io/node-problem-detector/pkg/util/metrics"
 	"k8s.io/node-problem-detector/pkg/util/metrics/system"
@@ -61,7 +62,7 @@ func NewOsFeatureCollectorOrDie(osFeatureConfig *ssmtypes.OSFeatureStatsConfig, 
 // 2. UnifiedCgroupHierarchy based on systemd.unified_cgroup_hierarchy
 // 3. KernelModuleIntegrity based on the loadpin enabled and a module signed.
 func (ofc *osFeatureCollector) recordFeaturesFromCmdline(cmdlineArgs []system.CmdlineArg) {
-	var featuresMap = map[string]int64{
+	featuresMap := map[string]int64{
 		"KTD":                    0,
 		"UnifiedCgroupHierarchy": 0,
 		"ModuleSigned":           0,
@@ -118,7 +119,7 @@ func (ofc *osFeatureCollector) recordFeaturesFromModules(modules []system.Module
 		knownModules = []system.Module{}
 	}
 
-	var hasGPUSupport = 0
+	hasGPUSupport := 0
 	unknownModules := []string{}
 
 	// Collect UnknownModules and check GPUSupport
@@ -136,8 +137,10 @@ func (ofc *osFeatureCollector) recordFeaturesFromModules(modules []system.Module
 	}
 	// record the UnknownModules and GPUSupport
 	if len(unknownModules) > 0 {
-		ofc.osFeature.Record(map[string]string{featureLabel: "UnknownModules",
-			valueLabel: strings.Join(unknownModules, ",")}, 1)
+		ofc.osFeature.Record(map[string]string{
+			featureLabel: "UnknownModules",
+			valueLabel:   strings.Join(unknownModules, ","),
+		}, 1)
 	} else {
 		ofc.osFeature.Record(map[string]string{featureLabel: "UnknownModules"},
 			0)

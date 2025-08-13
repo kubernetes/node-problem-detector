@@ -51,7 +51,7 @@ func testCollectAux(t *testing.T, name string, excludeInterfaceRegexp ssmtypes.N
 
 	// mkdir -C /tmp/proc-X/net
 	procNetDir := path.Join(procDir, "net")
-	if err := os.Mkdir(procNetDir, 0777); err != nil {
+	if err := os.Mkdir(procNetDir, 0o777); err != nil {
 		t.Fatalf("Failed to create directory %q: %v", procNetDir, err)
 	}
 

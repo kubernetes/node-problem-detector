@@ -41,7 +41,8 @@ func init() {
 		SystemLogMonitorName,
 		types.ProblemDaemonHandler{
 			CreateProblemDaemonOrDie: NewLogMonitorOrDie,
-			CmdOptionDescription:     "Set to config file paths."})
+			CmdOptionDescription:     "Set to config file paths.",
+		})
 }
 
 type logMonitor struct {

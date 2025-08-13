@@ -23,9 +23,8 @@ import (
 	"net/http/pprof"
 	"strconv"
 
-	"k8s.io/klog/v2"
-
 	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/klog/v2"
 	"k8s.io/utils/clock"
 
 	"k8s.io/node-problem-detector/cmd/options"

@@ -38,7 +38,6 @@ func getUptimeFunc(service string) func() (time.Duration, error) {
 		// RestartSec of systemd and invoke interval of plugin got in sync. The service was repeatedly killed in
 		// activating state and hence ActiveEnterTimestamp was never updated.
 		out, err := execCommand(types.CmdTimeout, "systemctl", "show", service, "--property=InactiveExitTimestamp")
-
 		if err != nil {
 			return time.Duration(0), err
 		}

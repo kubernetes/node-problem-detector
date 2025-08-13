@@ -42,7 +42,7 @@ func splitAfterSpace(inputChar rune) bool {
 		withinQuotes = !withinQuotes
 		return false
 	}
-	//ignore spaces when it is within quotes.
+	// ignore spaces when it is within quotes.
 	if withinQuotes {
 		return false
 	}
@@ -59,7 +59,7 @@ func CmdlineArgs(cmdlineFilePath string) ([]CmdlineArg, error) {
 		return nil, fmt.Errorf("no lines are returned")
 	}
 	cmdlineArgs := strings.FieldsFunc(lines[0], splitAfterSpace)
-	var result = make([]CmdlineArg, 0, len(cmdlineArgs))
+	result := make([]CmdlineArg, 0, len(cmdlineArgs))
 	// for commandline only one line is returned.
 	for _, words := range cmdlineArgs {
 		// Ignore the keys that start with double quotes
@@ -68,14 +68,14 @@ func CmdlineArgs(cmdlineFilePath string) ([]CmdlineArg, error) {
 		}
 		tokens := strings.Split(words, "=")
 		if len(tokens) < 2 {
-			var stats = CmdlineArg{
+			stats := CmdlineArg{
 				Key: tokens[0],
 			}
 			result = append(result, stats)
 		} else {
-			//remove quotes in the values
+			// remove quotes in the values
 			trimmedValue := strings.Trim(tokens[1], "\"'")
-			var stats = CmdlineArg{
+			stats := CmdlineArg{
 				Key:   tokens[0],
 				Value: trimmedValue,
 			}

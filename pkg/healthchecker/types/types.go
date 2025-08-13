@@ -81,12 +81,12 @@ func setKubeEndpoints() {
 
 	kubeletHealthCheckEndpoint = fmt.Sprintf("http://%s/healthz", net.JoinHostPort(hostAddress, kubeletPort))
 	kubeProxyHealthCheckEndpoint = fmt.Sprintf("http://%s/healthz", net.JoinHostPort(hostAddress, kubeProxyPort))
-
 }
 
 func KubeProxyHealthCheckEndpoint() string {
 	return kubeProxyHealthCheckEndpoint
 }
+
 func KubeletHealthCheckEndpoint() string {
 	return kubeletHealthCheckEndpoint
 }
