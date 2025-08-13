@@ -22,7 +22,7 @@ import (
 	"fmt"
 
 	"github.com/prometheus/procfs"
-	"github.com/shirou/gopsutil/v3/load"
+	"github.com/shirou/gopsutil/v4/load"
 	"k8s.io/klog/v2"
 )
 

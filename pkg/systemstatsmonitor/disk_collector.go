@@ -22,7 +22,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/shirou/gopsutil/v3/disk"
+	"github.com/shirou/gopsutil/v4/disk"
 	"k8s.io/klog/v2"
 
 	ssmtypes "k8s.io/node-problem-detector/pkg/systemstatsmonitor/types"
