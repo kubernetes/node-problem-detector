@@ -62,6 +62,10 @@ func (cc *cpuCollector) recordSystemStats() {
 	}
 
 	fs, err := procfs.NewFS(cc.procPath)
+	if err != nil {
+		klog.Errorf("Failed to open procfs: %v", err)
+		return
+	}
 	stats, err := fs.Stat()
 	if err != nil {
 		klog.Errorf("Failed to retrieve cpu/process stats: %v", err)
