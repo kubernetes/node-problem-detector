@@ -116,5 +116,4 @@ func TestModuleStat_String(t *testing.T) {
 	e := `{"moduleName":"test","instances":2,"proprietary":false,"outOfTree":false,"unsigned":false}`
 	assert.Equal(t,
 		e, fmt.Sprintf("%v", v), "Module string is invalid: %v", v)
-
 }

@@ -22,8 +22,8 @@ import (
 	"os"
 
 	"github.com/spf13/pflag"
-
 	"k8s.io/klog/v2"
+
 	"k8s.io/node-problem-detector/cmd/healthchecker/options"
 	"k8s.io/node-problem-detector/pkg/custompluginmonitor/types"
 	"k8s.io/node-problem-detector/pkg/healthchecker"

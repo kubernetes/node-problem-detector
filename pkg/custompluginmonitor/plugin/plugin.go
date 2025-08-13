@@ -27,6 +27,7 @@ import (
 	"time"
 
 	"k8s.io/klog/v2"
+
 	cpmtypes "k8s.io/node-problem-detector/pkg/custompluginmonitor/types"
 	"k8s.io/node-problem-detector/pkg/util"
 	"k8s.io/node-problem-detector/pkg/util/tomb"

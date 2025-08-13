@@ -39,7 +39,8 @@ func init() {
 		CustomPluginMonitorName,
 		types.ProblemDaemonHandler{
 			CreateProblemDaemonOrDie: NewCustomPluginMonitorOrDie,
-			CmdOptionDescription:     "Set to config file paths."})
+			CmdOptionDescription:     "Set to config file paths.",
+		})
 }
 
 type customPluginMonitor struct {

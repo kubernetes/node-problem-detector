@@ -22,14 +22,13 @@ import (
 	"sync"
 	"time"
 
+	v1 "k8s.io/api/core/v1"
+	"k8s.io/klog/v2"
+	"k8s.io/utils/clock"
+
 	"k8s.io/node-problem-detector/pkg/exporters/k8sexporter/problemclient"
 	"k8s.io/node-problem-detector/pkg/types"
 	problemutil "k8s.io/node-problem-detector/pkg/util"
-
-	v1 "k8s.io/api/core/v1"
-	"k8s.io/utils/clock"
-
-	"k8s.io/klog/v2"
 )
 
 const (

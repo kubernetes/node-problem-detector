@@ -19,11 +19,11 @@ package systemstatsmonitor
 import (
 	"fmt"
 
-	ssmtypes "k8s.io/node-problem-detector/pkg/systemstatsmonitor/types"
-	"k8s.io/node-problem-detector/pkg/util/metrics"
-
 	"github.com/prometheus/procfs"
 	"k8s.io/klog/v2"
+
+	ssmtypes "k8s.io/node-problem-detector/pkg/systemstatsmonitor/types"
+	"k8s.io/node-problem-detector/pkg/util/metrics"
 )
 
 type newInt64MetricFn func(metricID metrics.MetricID, viewName string, description string, unit string, aggregation metrics.Aggregation, tagNames []string) (metrics.Int64MetricInterface, error)
@@ -205,7 +205,8 @@ func NewNetCollectorOrDie(netConfig *ssmtypes.NetStatsConfig, procPath string) *
 }
 
 func (nc *netCollector) mustRegisterMetric(metricID metrics.MetricID, description, unit string,
-	aggregation metrics.Aggregation, exporter func(stat procfs.NetDevLine) int64) {
+	aggregation metrics.Aggregation, exporter func(stat procfs.NetDevLine) int64,
+) {
 	metricConfig, ok := nc.config.MetricsConfigs[string(metricID)]
 	if !ok {
 		klog.Fatalf("Metric config `%q` not found", metricID)
@@ -265,7 +266,8 @@ func newIfaceStatRecorder(newInt64Metric newInt64MetricFn) *ifaceStatRecorder {
 }
 
 func (r *ifaceStatRecorder) Register(metricID metrics.MetricID, viewName string, description string,
-	unit string, aggregation metrics.Aggregation, tagNames []string, exporter func(procfs.NetDevLine) int64) error {
+	unit string, aggregation metrics.Aggregation, tagNames []string, exporter func(procfs.NetDevLine) int64,
+) error {
 	if _, ok := r.collectors[metricID]; ok {
 		// Check duplication
 		return fmt.Errorf("metric %q already registered", metricID)

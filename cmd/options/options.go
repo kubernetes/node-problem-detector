@@ -19,10 +19,9 @@ package options
 import (
 	"flag"
 	"fmt"
+	"net/url"
 	"os"
 	"time"
-
-	"net/url"
 
 	"github.com/spf13/pflag"
 

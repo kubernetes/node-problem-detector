@@ -19,8 +19,9 @@ package filelog
 import (
 	"fmt"
 	"io"
-	"k8s.io/node-problem-detector/third_party/forked/cadvisor/tail"
 	"os"
+
+	"k8s.io/node-problem-detector/third_party/forked/cadvisor/tail"
 )
 
 // getLogReader returns log reader for filelog log. Note that getLogReader doesn't look back

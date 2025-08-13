@@ -197,9 +197,10 @@ func TestCustomPluginConfigApplyConfiguration(t *testing.T) {
 			},
 		},
 		"disable status update during initialization": {
-			Orig: CustomPluginConfig{PluginGlobalConfig: pluginGlobalConfig{
-				SkipInitialStatus: &disableInitialStatusUpdate,
-			},
+			Orig: CustomPluginConfig{
+				PluginGlobalConfig: pluginGlobalConfig{
+					SkipInitialStatus: &disableInitialStatusUpdate,
+				},
 			},
 			Wanted: CustomPluginConfig{
 				PluginGlobalConfig: pluginGlobalConfig{

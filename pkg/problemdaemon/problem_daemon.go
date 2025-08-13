@@ -24,9 +24,7 @@ import (
 	"k8s.io/node-problem-detector/pkg/types"
 )
 
-var (
-	handlers = make(map[types.ProblemDaemonType]types.ProblemDaemonHandler)
-)
+var handlers = make(map[types.ProblemDaemonType]types.ProblemDaemonHandler)
 
 // Register registers a problem daemon factory method, which will be used to create the problem daemon.
 func Register(problemDaemonType types.ProblemDaemonType, handler types.ProblemDaemonHandler) {

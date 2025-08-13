@@ -91,5 +91,4 @@ func TestCmdlineStats_String(t *testing.T) {
 	e := `{"key":"test","value":"test"}`
 	assert.Equal(t,
 		e, fmt.Sprintf("%v", v), "CmdlineArg string is invalid: %v", v)
-
 }

@@ -25,8 +25,10 @@ import (
 	"go.opencensus.io/tag"
 )
 
-var tagMap map[string]tag.Key
-var tagMapMutex sync.RWMutex
+var (
+	tagMap      map[string]tag.Key
+	tagMapMutex sync.RWMutex
+)
 
 func init() {
 	tagMapMutex.Lock()
@@ -105,7 +107,8 @@ func ParsePrometheusMetrics(metricsText string) ([]Float64MetricRepresentation, 
 // When strictLabelMatching is set to true, the founded metric labels are identical to the provided labels;
 // when strictLabelMatching is set to false, the founded metric labels are a superset of the provided labels.
 func GetFloat64Metric(metrics []Float64MetricRepresentation, name string, labels map[string]string,
-	strictLabelMatching bool) (Float64MetricRepresentation, error) {
+	strictLabelMatching bool,
+) (Float64MetricRepresentation, error) {
 	for _, metric := range metrics {
 		if metric.Name != name {
 			continue

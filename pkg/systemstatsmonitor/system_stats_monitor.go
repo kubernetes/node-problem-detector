@@ -35,7 +35,8 @@ const SystemStatsMonitorName = "system-stats-monitor"
 func init() {
 	problemdaemon.Register(SystemStatsMonitorName, types.ProblemDaemonHandler{
 		CreateProblemDaemonOrDie: NewSystemStatsMonitorOrDie,
-		CmdOptionDescription:     "Set to config file paths."})
+		CmdOptionDescription:     "Set to config file paths.",
+	})
 }
 
 type systemStatsMonitor struct {

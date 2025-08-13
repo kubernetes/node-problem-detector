@@ -150,8 +150,6 @@ func TestComponentsSupported(t *testing.T) {
 			if checkFunc == nil {
 				t.Errorf("component %v should be supported", tc.component)
 			}
-
 		})
 	}
-
 }

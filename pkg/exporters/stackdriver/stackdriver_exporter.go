@@ -25,12 +25,12 @@ import (
 
 	"contrib.go.opencensus.io/exporter/stackdriver"
 	monitoredres "contrib.go.opencensus.io/exporter/stackdriver/monitoredresource"
+	"github.com/avast/retry-go/v4"
 	"github.com/spf13/pflag"
 	"go.opencensus.io/stats/view"
 	"google.golang.org/api/option"
 	"k8s.io/klog/v2"
 
-	"github.com/avast/retry-go/v4"
 	"k8s.io/node-problem-detector/pkg/exporters"
 	seconfig "k8s.io/node-problem-detector/pkg/exporters/stackdriver/config"
 	"k8s.io/node-problem-detector/pkg/types"
@@ -41,7 +41,8 @@ func init() {
 	clo := commandLineOptions{}
 	exporters.Register(exporterName, types.ExporterHandler{
 		CreateExporterOrDie: NewExporterOrDie,
-		Options:             &clo})
+		Options:             &clo,
+	})
 }
 
 const exporterName = "stackdriver"
@@ -95,7 +96,6 @@ var NPDMetricToSDMetric = map[metrics.MetricID]string{
 }
 
 func getMetricTypeConversionFunction(customMetricPrefix string) func(*view.View) string {
-
 	return func(view *view.View) string {
 		viewName := view.Measure.Name()
 

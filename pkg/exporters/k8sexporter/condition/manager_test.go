@@ -23,13 +23,12 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	v1 "k8s.io/api/core/v1"
+	testclock "k8s.io/utils/clock/testing"
 
 	"k8s.io/node-problem-detector/pkg/exporters/k8sexporter/problemclient"
 	"k8s.io/node-problem-detector/pkg/types"
 	problemutil "k8s.io/node-problem-detector/pkg/util"
-
-	v1 "k8s.io/api/core/v1"
-	testclock "k8s.io/utils/clock/testing"
 )
 
 const heartbeatPeriod = 1 * time.Minute
