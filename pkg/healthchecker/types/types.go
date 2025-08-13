@@ -18,6 +18,7 @@ package types
 
 import (
 	"fmt"
+	"net"
 	"os"
 	"sort"
 	"strconv"
@@ -43,7 +44,7 @@ const (
 	kubeletPortKey          = "KUBELET_PORT"
 	kubeProxyPortKey        = "KUBEPROXY_PORT"
 
-	defaultHostAddress   = "127.0.0.1"
+	defaultHostAddress   = "localhost"
 	defaultKubeletPort   = "10248"
 	defaultKubeproxyPort = "10256"
 )
@@ -77,8 +78,8 @@ func setKubeEndpoints() {
 		kubeProxyPort = o
 	}
 
-	kubeletHealthCheckEndpoint = fmt.Sprintf("http://%s:%s/healthz", hostAddress, kubeletPort)
-	kubeProxyHealthCheckEndpoint = fmt.Sprintf("http://%s:%s/healthz", hostAddress, kubeProxyPort)
+	kubeletHealthCheckEndpoint = fmt.Sprintf("http://%s/healthz", net.JoinHostPort(hostAddress, kubeletPort))
+	kubeProxyHealthCheckEndpoint = fmt.Sprintf("http://%s/healthz", net.JoinHostPort(hostAddress, kubeProxyPort))
 }
 
 func KubeProxyHealthCheckEndpoint() string {

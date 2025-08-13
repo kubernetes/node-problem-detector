@@ -1,0 +1,13 @@
+NAME="Flatcar Container Linux by Kinvolk"
+ID=flatcar
+ID_LIKE=coreos
+VERSION=4372.0.1
+VERSION_ID=4372.0.1
+BUILD_ID=2025-07-06-2244
+SYSEXT_LEVEL=1.0
+PRETTY_NAME="Flatcar Container Linux by Kinvolk 4372.0.1 (Oklo)"
+ANSI_COLOR="38;5;75"
+HOME_URL="https://flatcar.org/"
+BUG_REPORT_URL="https://issues.flatcar.org"
+FLATCAR_BOARD="amd64-usr"
+CPE_NAME="cpe:2.3:o:flatcar-linux:flatcar_linux:4372.0.1:*:*:*:*:*:*:*"

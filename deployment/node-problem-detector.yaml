@@ -37,7 +37,7 @@ spec:
           requests:
             cpu: 10m
             memory: 80Mi
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         securityContext:
           privileged: true
         env:

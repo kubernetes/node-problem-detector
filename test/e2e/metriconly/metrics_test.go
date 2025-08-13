@@ -51,7 +51,7 @@ var _ = ginkgo.Describe("NPD should export Prometheus metrics.", func() {
 		}
 		instance, err = gce.CreateInstance(
 			gce.Instance{
-				Name:           "npd-metrics-" + *image + "-" + uuid.NewUUID().String()[:8],
+				Name:           "npd-metrics-" + uuid.NewUUID().String()[:8],
 				Zone:           *zone,
 				Project:        *project,
 				SshKey:         *sshKey,
