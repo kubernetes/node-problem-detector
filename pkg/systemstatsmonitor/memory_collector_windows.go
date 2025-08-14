@@ -19,7 +19,7 @@ package systemstatsmonitor
 import (
 	"k8s.io/klog/v2"
 
-	"github.com/shirou/gopsutil/v3/mem"
+	"github.com/shirou/gopsutil/v4/mem"
 )
 
 func (mc *memoryCollector) collect() {

@@ -17,7 +17,7 @@ limitations under the License.
 package systemstatsmonitor
 
 import (
-	"github.com/shirou/gopsutil/v3/cpu"
+	"github.com/shirou/gopsutil/v4/cpu"
 	"k8s.io/klog/v2"
 
 	ssmtypes "k8s.io/node-problem-detector/pkg/systemstatsmonitor/types"

@@ -18,7 +18,7 @@ package util
 import (
 	"time"
 
-	"github.com/shirou/gopsutil/v3/host"
+	"github.com/shirou/gopsutil/v4/host"
 )
 
 // GetUptimeDuration returns the time elapsed since last boot.
