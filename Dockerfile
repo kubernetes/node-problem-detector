@@ -27,6 +27,8 @@ ARG TARGETARCH
 ENV GOPATH=/gopath/
 ENV PATH=$GOPATH/bin:$PATH
 
+# Pre-create directories to avoid warnings from update-alternatives.
+RUN mkdir -p /usr/share/man/man1 /usr/share/man/man7
 RUN apt-get update --fix-missing && apt-get --yes install libsystemd-dev gcc-aarch64-linux-gnu
 RUN go version
 
@@ -38,6 +40,8 @@ FROM registry.k8s.io/build-image/debian-base:bookworm-v1.0.5@sha256:dd9c1f36c33b
 
 LABEL maintainer="Random Liu <lantaol@google.com>"
 
+# Pre-create directories to avoid warnings from update-alternatives.
+RUN mkdir -p /usr/share/man/man1 /usr/share/man/man7
 RUN clean-install util-linux bash libsystemd-dev
 
 # Avoid symlink of /etc/localtime.
