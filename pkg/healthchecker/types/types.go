@@ -36,7 +36,6 @@ const (
 
 	KubeletComponent   = "kubelet"
 	CRIComponent       = "cri"
-	DockerComponent    = "docker"
 	ContainerdService  = "containerd"
 	KubeProxyComponent = "kube-proxy"
 

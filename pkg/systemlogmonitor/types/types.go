@@ -23,7 +23,7 @@ import (
 )
 
 // Log is the log item returned by translator. It's very easy to extend this
-// to support other log monitoring, such as docker log monitoring.
+// to support other log monitoring.
 type Log struct {
 	Timestamp time.Time
 	Message   string

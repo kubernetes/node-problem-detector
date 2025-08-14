@@ -21,7 +21,6 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
-
 NPD_STAGING_PATH=${NPD_STAGING_PATH:-"gs://k8s-staging-npd"}
 NPD_STAGING_REGISTRY=${NPD_STAGING_REGISTRY:-"gcr.io/node-problem-detector-staging"}
 PR_ENV_FILENAME=${PR_ENV_FILENAME:-"pr.env"}
@@ -29,7 +28,6 @@ CI_ENV_FILENAME=${CI_ENV_FILENAME:-"ci.env"}
 CI_CUSTOM_FLAGS_ENV_FILENAME=${CI_CUSTOM_FLAGS_ENV_FILENAME:-"ci-custom-flags.env"}
 ROOT_PATH=$(git rev-parse --show-toplevel)
 GCS_URL_PREFIX="https://storage.googleapis.com/"
-
 
 function print-help() {
   echo "Usage: build.sh [flags] [command]"
@@ -57,7 +55,7 @@ function print-help() {
 
 function get-version() {
   if [ -d .git ]; then
-    echo `git describe --tags --dirty`
+    echo $(git describe --tags --dirty)
   else
     echo "UNKNOWN"
   fi
@@ -75,7 +73,7 @@ function write-env-file() {
     exit 1
   fi
 
-  cat > ${ROOT_PATH}/${env_file} <<EOF
+  cat >${ROOT_PATH}/${env_file} <<EOF
 export KUBE_ENABLE_NODE_PROBLEM_DETECTOR=standalone
 export NODE_PROBLEM_DETECTOR_RELEASE_PATH=${UPLOAD_PATH/gs:\/\//${GCS_URL_PREFIX}}
 export NODE_PROBLEM_DETECTOR_VERSION=${VERSION}
@@ -84,7 +82,7 @@ export EXTRA_ENVS=NODE_PROBLEM_DETECTOR_IMAGE=${REGISTRY}/node-problem-detector:
 EOF
 
   if [[ -n "${NODE_PROBLEM_DETECTOR_CUSTOM_FLAGS:-}" ]]; then
-    cat >> ${ROOT_PATH}/${env_file} <<EOF
+    cat >>${ROOT_PATH}/${env_file} <<EOF
 export NODE_PROBLEM_DETECTOR_CUSTOM_FLAGS="${NODE_PROBLEM_DETECTOR_CUSTOM_FLAGS}"
 EOF
   fi
@@ -98,7 +96,6 @@ function build-npd-custom-flags() {
 
   local -r km_config="${kube_home}/node-problem-detector/config/kernel-monitor.json"
   local -r rm_config="${kube_home}/node-problem-detector/config/readonly-monitor.json"
-  local -r dm_config="${kube_home}/node-problem-detector/config/docker-monitor.json"
   local -r sm_config="${kube_home}/node-problem-detector/config/systemd-monitor.json"
 
   local -r custom_km_config="${kube_home}/node-problem-detector/config/kernel-monitor-counter.json"
@@ -106,7 +103,7 @@ function build-npd-custom-flags() {
 
   flags="--v=2"
   flags+=" --logtostderr"
-  flags+=" --config.system-log-monitor=${km_config},${rm_config},${dm_config},${sm_config}"
+  flags+=" --config.system-log-monitor=${km_config},${rm_config},${sm_config}"
   flags+=" --config.custom-plugin-monitor=${custom_km_config},${custom_sm_config}"
   flags+=" --port=20256"
 
@@ -179,25 +176,24 @@ main() {
   fi
 
   case ${1:-} in
-  help) print-help;;
-  pr) build-pr;;
-  ci) build-ci;;
-  get-ci-env) get-ci-env;;
-  install-lib) install-lib;;
-  *) print-help;;
+  help) print-help ;;
+  pr) build-pr ;;
+  ci) build-ci ;;
+  get-ci-env) get-ci-env ;;
+  install-lib) install-lib ;;
+  *) print-help ;;
   esac
 }
-
 
 USE_CUSTOM_FLAGS="false"
 PR_NUMBER=""
 
 while getopts "fp:" opt; do
   case ${opt} in
-    f) USE_CUSTOM_FLAGS="true";;
-    p) PR_NUMBER="${OPTARG}";;
+  f) USE_CUSTOM_FLAGS="true" ;;
+  p) PR_NUMBER="${OPTARG}" ;;
   esac
 done
-shift "$((OPTIND-1))"
+shift "$((OPTIND - 1))"
 
 main "$@"
