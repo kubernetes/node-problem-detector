@@ -75,7 +75,6 @@ certain backends. Some of them can be disabled at compile-time using a build tag
 |----------|:-----------|:--------------------|
 | Kubernetes exporter | Kubernetes exporter reports node problems to Kubernetes API server: temporary problems get reported as Events, and permanent problems get reported as Node Conditions. |
 | Prometheus exporter | Prometheus exporter reports node problems and metrics locally as Prometheus metrics |
-| [Stackdriver exporter](https://github.com/kubernetes/node-problem-detector/blob/master/config/exporter/stackdriver-exporter.json) | Stackdriver exporter reports node problems and metrics to Stackdriver Monitoring API. | disable_stackdriver_exporter
 
 # Usage
 
@@ -129,10 +128,6 @@ For example, to run without auth, use the following config:
 
 * `--prometheus-address`: The address to bind the Prometheus scrape endpoint, default to `127.0.0.1`.
 * `--prometheus-port`: The port to bind the Prometheus scrape endpoint, default to 20257. Use 0 to disable.
-
-#### For Stackdriver exporter
-
-* `--exporter.stackdriver`: Path to a Stackdriver exporter config file, e.g. [config/exporter/stackdriver-exporter.json](https://github.com/kubernetes/node-problem-detector/blob/master/config/exporter/stackdriver-exporter.json), defaults to empty string. Set to empty string to disable.
 
 ### Deprecated Flags
 
