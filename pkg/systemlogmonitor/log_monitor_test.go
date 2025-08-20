@@ -537,6 +537,29 @@ func TestGenerateStatusForEvents(t *testing.T) {
 				}},
 			},
 		},
+		{
+			name: "using matching groups in Pattern but not in Reason",
+			rule: logtypes.Rule{
+				Type:    types.Temp,
+				Reason:  "OOMKilling",
+				Pattern: "Killed process \\d+ (.+) total-vm:\\d+kB, anon-rss:\\d+kB, file-rss:\\d+kB.*",
+			},
+			logs: []*logtypes.Log{
+				{
+					Timestamp: time.Unix(1000, 1000),
+					Message:   "kernel: Killed process 13357 (mysqld), UID 27, total-vm:4977676kB, anon-rss:3256736kB, file-rss:0kB, shmem-rss:0kB",
+				},
+			},
+			expected: &types.Status{
+				Source: testSource,
+				Events: []types.Event{{
+					Severity:  types.Warn,
+					Timestamp: time.Unix(1000, 1000),
+					Reason:    "OOMKilling",
+					Message:   "kernel: Killed process 13357 (mysqld), UID 27, total-vm:4977676kB, anon-rss:3256736kB, file-rss:0kB, shmem-rss:0kB",
+				}},
+			},
+		},
 	} {
 		l := &logMonitor{
 			config: MonitorConfig{
