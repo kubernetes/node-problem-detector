@@ -17,11 +17,6 @@
 		},
 		{
 			"type": "temporary",
-			"reason": "DockerStart",
-			"pattern": "Starting (Docker Application Container Engine|docker.service|docker.service - Docker Application Container Engine)..."
-		},
-		{
-			"type": "temporary",
 			"reason": "ContainerdStart",
 			"pattern": "Starting (containerd container runtime|containerd.service|containerd.service - containerd container runtime)..."
 		}
