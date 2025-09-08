@@ -87,11 +87,12 @@ func ParsePrometheusMetrics(metricsText string) ([]Float64MetricRepresentation, 
 			}
 
 			var value float64
-			if *metricFamily.Type == pcm.MetricType_COUNTER {
+			switch *metricFamily.Type {
+			case pcm.MetricType_COUNTER:
 				value = *metric.Counter.Value
-			} else if *metricFamily.Type == pcm.MetricType_GAUGE {
+			case pcm.MetricType_GAUGE:
 				value = *metric.Gauge.Value
-			} else {
+			default:
 				return metrics, fmt.Errorf("unexpected MetricType %s for metric %s",
 					pcm.MetricType_name[int32(*metricFamily.Type)], *metricFamily.Name)
 			}

@@ -73,7 +73,7 @@ func getOSVersion(osReleasePath string) (string, error) {
 	case "flatcar":
 		return getDebianVersion(osReleaseMap), nil
 	default:
-		return "", fmt.Errorf("Unsupported ID in /etc/os-release: %q", osReleaseMap["ID"])
+		return "", fmt.Errorf("unsupported ID in /etc/os-release: %q", osReleaseMap["ID"])
 	}
 }
 

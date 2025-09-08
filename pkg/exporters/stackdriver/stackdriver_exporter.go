@@ -186,7 +186,6 @@ func (se *stackdriverExporter) populateMetadataOrDie() {
 // ExportProblems does nothing.
 // Stackdriver exporter only exports metrics.
 func (se *stackdriverExporter) ExportProblems(status *types.Status) {
-	return
 }
 
 type commandLineOptions struct {
