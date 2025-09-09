@@ -47,8 +47,8 @@ type logBuffer struct {
 // lines of patterns we support.
 func NewLogBuffer(maxLines int) *logBuffer {
 	return &logBuffer{
-		buffer: make([]*types.Log, maxLines, maxLines),
-		msg:    make([]string, maxLines, maxLines),
+		buffer: make([]*types.Log, maxLines),
+		msg:    make([]string, maxLines),
 		max:    maxLines,
 	}
 }

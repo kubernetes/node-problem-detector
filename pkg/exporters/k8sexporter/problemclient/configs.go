@@ -89,7 +89,7 @@ func getKubeClientConfig(uri *url.URL) (*kube_rest.Config, error) {
 		kubeConfig.GroupVersion = &schema.GroupVersion{Version: APIVersion}
 		kubeConfig.Insecure = configOverrides.ClusterInfo.InsecureSkipTLSVerify
 		if configOverrides.ClusterInfo.InsecureSkipTLSVerify {
-			kubeConfig.TLSClientConfig.CAFile = ""
+			kubeConfig.CAFile = ""
 		}
 	} else {
 		authFile := ""

@@ -83,8 +83,7 @@ func TestNeedUpdates(t *testing.T) {
 		t.Log(tc.name)
 		if tc.condition != "" {
 			// Guarantee that the time advances before creating a new condition.
-			for now := time.Now(); now == time.Now(); {
-			}
+			time.Sleep(time.Nanosecond)
 			c = newTestCondition(tc.condition)
 		}
 		m.UpdateCondition(c)

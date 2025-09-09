@@ -56,5 +56,4 @@ func NewExporterOrDie(npdo *options.NodeProblemDetectorOptions) types.Exporter {
 // ExportProblems does nothing.
 // Prometheus exporter only exports metrics.
 func (pe *prometheusExporter) ExportProblems(status *types.Status) {
-	return
 }

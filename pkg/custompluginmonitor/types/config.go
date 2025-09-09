@@ -161,7 +161,7 @@ func (cpc CustomPluginConfig) Validate() error {
 			}
 		}
 		if !defaultConditionExists {
-			return fmt.Errorf("Permanent problem %s does not have preset default condition.", conditionType)
+			return fmt.Errorf("permanent problem %s does not have preset default condition", conditionType)
 		}
 	}
 

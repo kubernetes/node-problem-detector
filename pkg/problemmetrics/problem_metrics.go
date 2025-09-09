@@ -78,7 +78,7 @@ func NewProblemMetricsManagerOrDie() *ProblemMetricsManager {
 // IncrementProblemCounter increments the value of a problem counter.
 func (pmm *ProblemMetricsManager) IncrementProblemCounter(reason string, count int64) error {
 	if pmm.problemCounter == nil {
-		return errors.New("problem counter is being incremented before initialized.")
+		return errors.New("problem counter is being incremented before initialized")
 	}
 
 	return pmm.problemCounter.Record(map[string]string{"reason": reason}, count)
@@ -87,7 +87,7 @@ func (pmm *ProblemMetricsManager) IncrementProblemCounter(reason string, count i
 // SetProblemGauge sets the value of a problem gauge.
 func (pmm *ProblemMetricsManager) SetProblemGauge(problemType string, reason string, value bool) error {
 	if pmm.problemGauge == nil {
-		return errors.New("problem gauge is being set before initialized.")
+		return errors.New("problem gauge is being set before initialized")
 	}
 
 	pmm.problemTypeToReasonMutex.Lock()

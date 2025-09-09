@@ -54,8 +54,8 @@ func (mc *MonitorConfig) ApplyDefaultConfiguration() {
 	if mc.EnableMetricsReporting == nil {
 		mc.EnableMetricsReporting = &defaultEnableMetricsReporting
 	}
-	if mc.WatcherConfig.Lookback == "" {
-		mc.WatcherConfig.Lookback = defaultLookback
+	if mc.Lookback == "" {
+		mc.Lookback = defaultLookback
 	}
 }
 
