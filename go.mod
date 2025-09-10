@@ -15,7 +15,7 @@ require (
 	github.com/prometheus/common v0.65.0
 	github.com/prometheus/procfs v0.17.0
 	github.com/shirou/gopsutil/v4 v4.25.8
-	github.com/spf13/pflag v1.0.7
+	github.com/spf13/pflag v1.0.10
 	github.com/stretchr/testify v1.11.1
 	go.opencensus.io v0.24.0
 	golang.org/x/sys v0.35.0
