@@ -141,8 +141,12 @@ Jan  2 03:04:05 kernel: [2.000000] 3
 		f, err := os.CreateTemp("", "log_watcher_test")
 		assert.NoError(t, err)
 		defer func() {
-			f.Close()
-			os.Remove(f.Name())
+			if err := f.Close(); err != nil {
+				t.Logf("failed to close temporary file %s: %v", f.Name(), err)
+			}
+			if err := os.Remove(f.Name()); err != nil {
+				t.Logf("failed to remove temporary file %s: %v", f.Name(), err)
+			}
 		}()
 		_, err = f.Write([]byte(test.log))
 		assert.NoError(t, err)

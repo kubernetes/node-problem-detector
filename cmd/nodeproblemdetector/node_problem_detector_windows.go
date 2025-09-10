@@ -53,11 +53,17 @@ func main() {
 		}
 	})
 	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
-	pflag.CommandLine.MarkHidden("vmodule")
-	pflag.CommandLine.MarkHidden("logtostderr")
+	if err := pflag.CommandLine.MarkHidden("vmodule"); err != nil {
+		klog.Fatalf("Failed to mark hidden flag 'vmodule': %v", err)
+	}
+	if err := pflag.CommandLine.MarkHidden("logtostderr"); err != nil {
+		klog.Fatalf("Failed to mark hidden flag 'logtostderr': %v", err)
+	}
 
 	npdo := options.NewNodeProblemDetectorOptions()
-	npdo.AddFlags(pflag.CommandLine)
+	if err := npdo.AddFlags(pflag.CommandLine); err != nil {
+		klog.Fatalf("Failed to add flags: %v", err)
+	}
 
 	pflag.Parse()
 

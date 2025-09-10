@@ -188,10 +188,14 @@ func (dc *diskCollector) recordIOCounters(ioCountersStats map[string]disk.IOCoun
 		dc.lastWeightedIO[deviceName] = ioCountersStat.WeightedIO
 
 		if dc.mIOTime != nil {
-			dc.mIOTime.Record(tags, int64(ioCountersStat.IoTime-lastIOTime))
+			if err := dc.mIOTime.Record(tags, int64(ioCountersStat.IoTime-lastIOTime)); err != nil {
+				klog.Errorf("Failed to record IO time for %s: %v", deviceName, err)
+			}
 		}
 		if dc.mWeightedIO != nil {
-			dc.mWeightedIO.Record(tags, int64(ioCountersStat.WeightedIO-lastWeightedIO))
+			if err := dc.mWeightedIO.Record(tags, int64(ioCountersStat.WeightedIO-lastWeightedIO)); err != nil {
+				klog.Errorf("Failed to record weighted IO for %s: %v", deviceName, err)
+			}
 		}
 		if historyExist {
 			avgQueueLen := float64(0.0)
@@ -200,7 +204,9 @@ func (dc *diskCollector) recordIOCounters(ioCountersStats map[string]disk.IOCoun
 				avgQueueLen = float64(ioCountersStat.WeightedIO-lastWeightedIO) / diffSampleTimeMs
 			}
 			if dc.mAvgQueueLen != nil {
-				dc.mAvgQueueLen.Record(tags, avgQueueLen)
+				if err := dc.mAvgQueueLen.Record(tags, avgQueueLen); err != nil {
+					klog.Errorf("Failed to record average queue length for %s: %v", deviceName, err)
+				}
 			}
 		}
 
@@ -208,19 +214,27 @@ func (dc *diskCollector) recordIOCounters(ioCountersStats map[string]disk.IOCoun
 		tags = map[string]string{deviceNameLabel: deviceName, directionLabel: "read"}
 
 		if dc.mOpsCount != nil {
-			dc.mOpsCount.Record(tags, int64(ioCountersStat.ReadCount-dc.lastReadCount[deviceName]))
+			if err := dc.mOpsCount.Record(tags, int64(ioCountersStat.ReadCount-dc.lastReadCount[deviceName])); err != nil {
+				klog.Errorf("Failed to record read ops count for %s: %v", deviceName, err)
+			}
 			dc.lastReadCount[deviceName] = ioCountersStat.ReadCount
 		}
 		if dc.mMergedOpsCount != nil {
-			dc.mMergedOpsCount.Record(tags, int64(ioCountersStat.MergedReadCount-dc.lastMergedReadCount[deviceName]))
+			if err := dc.mMergedOpsCount.Record(tags, int64(ioCountersStat.MergedReadCount-dc.lastMergedReadCount[deviceName])); err != nil {
+				klog.Errorf("Failed to record merged read ops count for %s: %v", deviceName, err)
+			}
 			dc.lastMergedReadCount[deviceName] = ioCountersStat.MergedReadCount
 		}
 		if dc.mOpsBytes != nil {
-			dc.mOpsBytes.Record(tags, int64(ioCountersStat.ReadBytes-dc.lastReadBytes[deviceName]))
+			if err := dc.mOpsBytes.Record(tags, int64(ioCountersStat.ReadBytes-dc.lastReadBytes[deviceName])); err != nil {
+				klog.Errorf("Failed to record read ops bytes for %s: %v", deviceName, err)
+			}
 			dc.lastReadBytes[deviceName] = ioCountersStat.ReadBytes
 		}
 		if dc.mOpsTime != nil {
-			dc.mOpsTime.Record(tags, int64(ioCountersStat.ReadTime-dc.lastReadTime[deviceName]))
+			if err := dc.mOpsTime.Record(tags, int64(ioCountersStat.ReadTime-dc.lastReadTime[deviceName])); err != nil {
+				klog.Errorf("Failed to record read ops time for %s: %v", deviceName, err)
+			}
 			dc.lastReadTime[deviceName] = ioCountersStat.ReadTime
 		}
 
@@ -228,19 +242,27 @@ func (dc *diskCollector) recordIOCounters(ioCountersStats map[string]disk.IOCoun
 		tags = map[string]string{deviceNameLabel: deviceName, directionLabel: "write"}
 
 		if dc.mOpsCount != nil {
-			dc.mOpsCount.Record(tags, int64(ioCountersStat.WriteCount-dc.lastWriteCount[deviceName]))
+			if err := dc.mOpsCount.Record(tags, int64(ioCountersStat.WriteCount-dc.lastWriteCount[deviceName])); err != nil {
+				klog.Errorf("Failed to record write ops count for %s: %v", deviceName, err)
+			}
 			dc.lastWriteCount[deviceName] = ioCountersStat.WriteCount
 		}
 		if dc.mMergedOpsCount != nil {
-			dc.mMergedOpsCount.Record(tags, int64(ioCountersStat.MergedWriteCount-dc.lastMergedWriteCount[deviceName]))
+			if err := dc.mMergedOpsCount.Record(tags, int64(ioCountersStat.MergedWriteCount-dc.lastMergedWriteCount[deviceName])); err != nil {
+				klog.Errorf("Failed to record merged write ops count for %s: %v", deviceName, err)
+			}
 			dc.lastMergedWriteCount[deviceName] = ioCountersStat.MergedWriteCount
 		}
 		if dc.mOpsBytes != nil {
-			dc.mOpsBytes.Record(tags, int64(ioCountersStat.WriteBytes-dc.lastWriteBytes[deviceName]))
+			if err := dc.mOpsBytes.Record(tags, int64(ioCountersStat.WriteBytes-dc.lastWriteBytes[deviceName])); err != nil {
+				klog.Errorf("Failed to record write ops bytes for %s: %v", deviceName, err)
+			}
 			dc.lastWriteBytes[deviceName] = ioCountersStat.WriteBytes
 		}
 		if dc.mOpsTime != nil {
-			dc.mOpsTime.Record(tags, int64(ioCountersStat.WriteTime-dc.lastWriteTime[deviceName]))
+			if err := dc.mOpsTime.Record(tags, int64(ioCountersStat.WriteTime-dc.lastWriteTime[deviceName])); err != nil {
+				klog.Errorf("Failed to record write ops time for %s: %v", deviceName, err)
+			}
 			dc.lastWriteTime[deviceName] = ioCountersStat.WriteTime
 		}
 	}
@@ -301,10 +323,16 @@ func (dc *diskCollector) collect() {
 		deviceName := strings.TrimPrefix(partition.Device, "/dev/")
 		fstype := partition.Fstype
 		opttypes := strings.Join(partition.Opts, ",")
-		dc.mBytesUsed.Record(map[string]string{deviceNameLabel: deviceName, fsTypeLabel: fstype, mountOptionLabel: opttypes, stateLabel: "free"}, int64(usageStat.Free))
-		dc.mBytesUsed.Record(map[string]string{deviceNameLabel: deviceName, fsTypeLabel: fstype, mountOptionLabel: opttypes, stateLabel: "used"}, int64(usageStat.Used))
+		if err := dc.mBytesUsed.Record(map[string]string{deviceNameLabel: deviceName, fsTypeLabel: fstype, mountOptionLabel: opttypes, stateLabel: "free"}, int64(usageStat.Free)); err != nil {
+			klog.Errorf("Failed to record free bytes for %s: %v", deviceName, err)
+		}
+		if err := dc.mBytesUsed.Record(map[string]string{deviceNameLabel: deviceName, fsTypeLabel: fstype, mountOptionLabel: opttypes, stateLabel: "used"}, int64(usageStat.Used)); err != nil {
+			klog.Errorf("Failed to record used bytes for %s: %v", deviceName, err)
+		}
 		if dc.mPercentUsed != nil {
-			dc.mPercentUsed.Record(map[string]string{deviceNameLabel: deviceName, fsTypeLabel: fstype, mountOptionLabel: opttypes, stateLabel: "used"}, float64(usageStat.UsedPercent))
+			if err := dc.mPercentUsed.Record(map[string]string{deviceNameLabel: deviceName, fsTypeLabel: fstype, mountOptionLabel: opttypes, stateLabel: "used"}, float64(usageStat.UsedPercent)); err != nil {
+				klog.Errorf("Failed to record used percent for %s: %v", deviceName, err)
+			}
 		}
 	}
 }

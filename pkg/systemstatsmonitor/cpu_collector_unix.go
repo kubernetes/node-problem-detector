@@ -40,16 +40,24 @@ func (cc *cpuCollector) recordLoad() {
 	}
 
 	if cc.mRunnableTaskCount != nil {
-		cc.mRunnableTaskCount.Record(map[string]string{}, loadAvg.Load1)
+		if err := cc.mRunnableTaskCount.Record(map[string]string{}, loadAvg.Load1); err != nil {
+			klog.Errorf("Failed to record runnable task count: %v", err)
+		}
 	}
 	if cc.mCpuLoad1m != nil {
-		cc.mCpuLoad1m.Record(map[string]string{}, loadAvg.Load1)
+		if err := cc.mCpuLoad1m.Record(map[string]string{}, loadAvg.Load1); err != nil {
+			klog.Errorf("Failed to record cpu load 1m: %v", err)
+		}
 	}
 	if cc.mCpuLoad5m != nil {
-		cc.mCpuLoad5m.Record(map[string]string{}, loadAvg.Load5)
+		if err := cc.mCpuLoad5m.Record(map[string]string{}, loadAvg.Load5); err != nil {
+			klog.Errorf("Failed to record cpu load 5m: %v", err)
+		}
 	}
 	if cc.mCpuLoad15m != nil {
-		cc.mCpuLoad15m.Record(map[string]string{}, loadAvg.Load15)
+		if err := cc.mCpuLoad15m.Record(map[string]string{}, loadAvg.Load15); err != nil {
+			klog.Errorf("Failed to record cpu load 15m: %v", err)
+		}
 	}
 }
 
@@ -73,19 +81,27 @@ func (cc *cpuCollector) recordSystemStats() {
 	}
 
 	if cc.mSystemProcessesTotal != nil {
-		cc.mSystemProcessesTotal.Record(map[string]string{}, int64(stats.ProcessCreated))
+		if err := cc.mSystemProcessesTotal.Record(map[string]string{}, int64(stats.ProcessCreated)); err != nil {
+			klog.Errorf("Failed to record system processes total: %v", err)
+		}
 	}
 
 	if cc.mSystemProcsRunning != nil {
-		cc.mSystemProcsRunning.Record(map[string]string{}, int64(stats.ProcessesRunning))
+		if err := cc.mSystemProcsRunning.Record(map[string]string{}, int64(stats.ProcessesRunning)); err != nil {
+			klog.Errorf("Failed to record system procs running: %v", err)
+		}
 	}
 
 	if cc.mSystemProcsBlocked != nil {
-		cc.mSystemProcsBlocked.Record(map[string]string{}, int64(stats.ProcessesBlocked))
+		if err := cc.mSystemProcsBlocked.Record(map[string]string{}, int64(stats.ProcessesBlocked)); err != nil {
+			klog.Errorf("Failed to record system procs blocked: %v", err)
+		}
 	}
 
 	if cc.mSystemInterruptsTotal != nil {
-		cc.mSystemInterruptsTotal.Record(map[string]string{}, int64(stats.IRQTotal))
+		if err := cc.mSystemInterruptsTotal.Record(map[string]string{}, int64(stats.IRQTotal)); err != nil {
+			klog.Errorf("Failed to record system interrupts total: %v", err)
+		}
 	}
 
 	if cc.mSystemCPUStat != nil {
@@ -94,25 +110,45 @@ func (cc *cpuCollector) recordSystemStats() {
 			tags[cpuLabel] = fmt.Sprintf("cpu%d", i)
 
 			tags[stageLabel] = "user"
-			cc.mSystemCPUStat.Record(tags, c.User)
+			if err := cc.mSystemCPUStat.Record(tags, c.User); err != nil {
+				klog.Errorf("Failed to record system cpu stat for user: %v", err)
+			}
 			tags[stageLabel] = "nice"
-			cc.mSystemCPUStat.Record(tags, c.Nice)
+			if err := cc.mSystemCPUStat.Record(tags, c.Nice); err != nil {
+				klog.Errorf("Failed to record system cpu stat for nice: %v", err)
+			}
 			tags[stageLabel] = "system"
-			cc.mSystemCPUStat.Record(tags, c.System)
+			if err := cc.mSystemCPUStat.Record(tags, c.System); err != nil {
+				klog.Errorf("Failed to record system cpu stat for system: %v", err)
+			}
 			tags[stageLabel] = "idle"
-			cc.mSystemCPUStat.Record(tags, c.Idle)
+			if err := cc.mSystemCPUStat.Record(tags, c.Idle); err != nil {
+				klog.Errorf("Failed to record system cpu stat for idle: %v", err)
+			}
 			tags[stageLabel] = "iowait"
-			cc.mSystemCPUStat.Record(tags, c.Iowait)
+			if err := cc.mSystemCPUStat.Record(tags, c.Iowait); err != nil {
+				klog.Errorf("Failed to record system cpu stat for iowait: %v", err)
+			}
 			tags[stageLabel] = "iRQ"
-			cc.mSystemCPUStat.Record(tags, c.IRQ)
+			if err := cc.mSystemCPUStat.Record(tags, c.IRQ); err != nil {
+				klog.Errorf("Failed to record system cpu stat for iRQ: %v", err)
+			}
 			tags[stageLabel] = "softIRQ"
-			cc.mSystemCPUStat.Record(tags, c.SoftIRQ)
+			if err := cc.mSystemCPUStat.Record(tags, c.SoftIRQ); err != nil {
+				klog.Errorf("Failed to record system cpu stat for softIRQ: %v", err)
+			}
 			tags[stageLabel] = "steal"
-			cc.mSystemCPUStat.Record(tags, c.Steal)
+			if err := cc.mSystemCPUStat.Record(tags, c.Steal); err != nil {
+				klog.Errorf("Failed to record system cpu stat for steal: %v", err)
+			}
 			tags[stageLabel] = "guest"
-			cc.mSystemCPUStat.Record(tags, c.Guest)
+			if err := cc.mSystemCPUStat.Record(tags, c.Guest); err != nil {
+				klog.Errorf("Failed to record system cpu stat for guest: %v", err)
+			}
 			tags[stageLabel] = "guestNice"
-			cc.mSystemCPUStat.Record(tags, c.GuestNice)
+			if err := cc.mSystemCPUStat.Record(tags, c.GuestNice); err != nil {
+				klog.Errorf("Failed to record system cpu stat for guestNice: %v", err)
+			}
 		}
 	}
 }

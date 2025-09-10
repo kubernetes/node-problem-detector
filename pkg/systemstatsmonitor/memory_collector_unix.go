@@ -41,57 +41,83 @@ func (mc *memoryCollector) collect() {
 
 	if mc.mBytesUsed != nil {
 		if meminfo.MemFree != nil {
-			mc.mBytesUsed.Record(map[string]string{stateLabel: "free"}, int64(*meminfo.MemFree)*1024)
+			if err := mc.mBytesUsed.Record(map[string]string{stateLabel: "free"}, int64(*meminfo.MemFree)*1024); err != nil {
+				klog.Errorf("Failed to record memory bytes used for free state: %v", err)
+			}
 		}
 		if meminfo.Buffers != nil {
-			mc.mBytesUsed.Record(map[string]string{stateLabel: "buffered"}, int64(*meminfo.Buffers)*1024)
+			if err := mc.mBytesUsed.Record(map[string]string{stateLabel: "buffered"}, int64(*meminfo.Buffers)*1024); err != nil {
+				klog.Errorf("Failed to record memory bytes used for buffered state: %v", err)
+			}
 		}
 		if meminfo.Cached != nil {
-			mc.mBytesUsed.Record(map[string]string{stateLabel: "cached"}, int64(*meminfo.Cached)*1024)
+			if err := mc.mBytesUsed.Record(map[string]string{stateLabel: "cached"}, int64(*meminfo.Cached)*1024); err != nil {
+				klog.Errorf("Failed to record memory bytes used for cached state: %v", err)
+			}
 		}
 		if meminfo.Slab != nil {
-			mc.mBytesUsed.Record(map[string]string{stateLabel: "slab"}, int64(*meminfo.Slab)*1024)
+			if err := mc.mBytesUsed.Record(map[string]string{stateLabel: "slab"}, int64(*meminfo.Slab)*1024); err != nil {
+				klog.Errorf("Failed to record memory bytes used for slab state: %v", err)
+			}
 		}
 		if meminfo.MemTotal != nil && meminfo.MemFree != nil && meminfo.Buffers != nil && meminfo.Cached != nil && meminfo.Slab != nil {
 			memUsed := *meminfo.MemTotal - *meminfo.MemFree - *meminfo.Buffers - *meminfo.Cached - *meminfo.Slab
-			mc.mBytesUsed.Record(map[string]string{stateLabel: "used"}, int64(memUsed)*1024)
+			if err := mc.mBytesUsed.Record(map[string]string{stateLabel: "used"}, int64(memUsed)*1024); err != nil {
+				klog.Errorf("Failed to record memory bytes used for used state: %v", err)
+			}
 		}
 	}
 
 	if mc.mPercentUsed != nil && meminfo.MemTotal != nil && *meminfo.MemTotal > 0 &&
 		meminfo.MemFree != nil && meminfo.Buffers != nil && meminfo.Cached != nil && meminfo.Slab != nil {
 		ratio := float64(*meminfo.MemTotal-*meminfo.MemFree-*meminfo.Buffers-*meminfo.Cached-*meminfo.Slab) / float64(*meminfo.MemTotal)
-		mc.mPercentUsed.Record(map[string]string{stateLabel: "used"}, float64(ratio*100.0))
+		if err := mc.mPercentUsed.Record(map[string]string{stateLabel: "used"}, float64(ratio*100.0)); err != nil {
+			klog.Errorf("Failed to record memory percent used: %v", err)
+		}
 	}
 
 	if mc.mDirtyUsed != nil {
 		if meminfo.Dirty != nil {
-			mc.mDirtyUsed.Record(map[string]string{stateLabel: "dirty"}, int64(*meminfo.Dirty)*1024)
+			if err := mc.mDirtyUsed.Record(map[string]string{stateLabel: "dirty"}, int64(*meminfo.Dirty)*1024); err != nil {
+				klog.Errorf("Failed to record dirty used memory: %v", err)
+			}
 		}
 		if meminfo.Writeback != nil {
-			mc.mDirtyUsed.Record(map[string]string{stateLabel: "writeback"}, int64(*meminfo.Writeback)*1024)
+			if err := mc.mDirtyUsed.Record(map[string]string{stateLabel: "writeback"}, int64(*meminfo.Writeback)*1024); err != nil {
+				klog.Errorf("Failed to record writeback used memory: %v", err)
+			}
 		}
 	}
 
 	if mc.mAnonymousUsed != nil {
 		if meminfo.ActiveAnon != nil {
-			mc.mAnonymousUsed.Record(map[string]string{stateLabel: "active"}, int64(*meminfo.ActiveAnon)*1024)
+			if err := mc.mAnonymousUsed.Record(map[string]string{stateLabel: "active"}, int64(*meminfo.ActiveAnon)*1024); err != nil {
+				klog.Errorf("Failed to record active anonymous used memory: %v", err)
+			}
 		}
 		if meminfo.InactiveAnon != nil {
-			mc.mAnonymousUsed.Record(map[string]string{stateLabel: "inactive"}, int64(*meminfo.InactiveAnon)*1024)
+			if err := mc.mAnonymousUsed.Record(map[string]string{stateLabel: "inactive"}, int64(*meminfo.InactiveAnon)*1024); err != nil {
+				klog.Errorf("Failed to record inactive anonymous used memory: %v", err)
+			}
 		}
 	}
 
 	if mc.mPageCacheUsed != nil {
 		if meminfo.ActiveFile != nil {
-			mc.mPageCacheUsed.Record(map[string]string{stateLabel: "active"}, int64(*meminfo.ActiveFile)*1024)
+			if err := mc.mPageCacheUsed.Record(map[string]string{stateLabel: "active"}, int64(*meminfo.ActiveFile)*1024); err != nil {
+				klog.Errorf("Failed to record active page cache used memory: %v", err)
+			}
 		}
 		if meminfo.InactiveFile != nil {
-			mc.mPageCacheUsed.Record(map[string]string{stateLabel: "inactive"}, int64(*meminfo.InactiveFile)*1024)
+			if err := mc.mPageCacheUsed.Record(map[string]string{stateLabel: "inactive"}, int64(*meminfo.InactiveFile)*1024); err != nil {
+				klog.Errorf("Failed to record inactive page cache used memory: %v", err)
+			}
 		}
 	}
 
 	if mc.mUnevictableUsed != nil && meminfo.Unevictable != nil {
-		mc.mUnevictableUsed.Record(map[string]string{}, int64(*meminfo.Unevictable)*1024)
+		if err := mc.mUnevictableUsed.Record(map[string]string{}, int64(*meminfo.Unevictable)*1024); err != nil {
+			klog.Errorf("Failed to record unevictable used memory: %v", err)
+		}
 	}
 }

@@ -187,34 +187,54 @@ func (cc *cpuCollector) recordUsage() {
 	}
 	timersStat := timersStats[0]
 
-	cc.mUsageTime.Record(map[string]string{stateLabel: "user"}, clockTick*timersStat.User-cc.lastUsageTime["user"])
+	if err := cc.mUsageTime.Record(map[string]string{stateLabel: "user"}, clockTick*timersStat.User-cc.lastUsageTime["user"]); err != nil {
+		klog.Errorf("Failed to record cpu usage time for user: %v", err)
+	}
 	cc.lastUsageTime["user"] = clockTick * timersStat.User
 
-	cc.mUsageTime.Record(map[string]string{stateLabel: "system"}, clockTick*timersStat.System-cc.lastUsageTime["system"])
+	if err := cc.mUsageTime.Record(map[string]string{stateLabel: "system"}, clockTick*timersStat.System-cc.lastUsageTime["system"]); err != nil {
+		klog.Errorf("Failed to record cpu usage time for system: %v", err)
+	}
 	cc.lastUsageTime["system"] = clockTick * timersStat.System
 
-	cc.mUsageTime.Record(map[string]string{stateLabel: "idle"}, clockTick*timersStat.Idle-cc.lastUsageTime["idle"])
+	if err := cc.mUsageTime.Record(map[string]string{stateLabel: "idle"}, clockTick*timersStat.Idle-cc.lastUsageTime["idle"]); err != nil {
+		klog.Errorf("Failed to record cpu usage time for idle: %v", err)
+	}
 	cc.lastUsageTime["idle"] = clockTick * timersStat.Idle
 
-	cc.mUsageTime.Record(map[string]string{stateLabel: "nice"}, clockTick*timersStat.Nice-cc.lastUsageTime["nice"])
+	if err := cc.mUsageTime.Record(map[string]string{stateLabel: "nice"}, clockTick*timersStat.Nice-cc.lastUsageTime["nice"]); err != nil {
+		klog.Errorf("Failed to record cpu usage time for nice: %v", err)
+	}
 	cc.lastUsageTime["nice"] = clockTick * timersStat.Nice
 
-	cc.mUsageTime.Record(map[string]string{stateLabel: "iowait"}, clockTick*timersStat.Iowait-cc.lastUsageTime["iowait"])
+	if err := cc.mUsageTime.Record(map[string]string{stateLabel: "iowait"}, clockTick*timersStat.Iowait-cc.lastUsageTime["iowait"]); err != nil {
+		klog.Errorf("Failed to record cpu usage time for iowait: %v", err)
+	}
 	cc.lastUsageTime["iowait"] = clockTick * timersStat.Iowait
 
-	cc.mUsageTime.Record(map[string]string{stateLabel: "irq"}, clockTick*timersStat.Irq-cc.lastUsageTime["irq"])
+	if err := cc.mUsageTime.Record(map[string]string{stateLabel: "irq"}, clockTick*timersStat.Irq-cc.lastUsageTime["irq"]); err != nil {
+		klog.Errorf("Failed to record cpu usage time for irq: %v", err)
+	}
 	cc.lastUsageTime["irq"] = clockTick * timersStat.Irq
 
-	cc.mUsageTime.Record(map[string]string{stateLabel: "softirq"}, clockTick*timersStat.Softirq-cc.lastUsageTime["softirq"])
+	if err := cc.mUsageTime.Record(map[string]string{stateLabel: "softirq"}, clockTick*timersStat.Softirq-cc.lastUsageTime["softirq"]); err != nil {
+		klog.Errorf("Failed to record cpu usage time for softirq: %v", err)
+	}
 	cc.lastUsageTime["softirq"] = clockTick * timersStat.Softirq
 
-	cc.mUsageTime.Record(map[string]string{stateLabel: "steal"}, clockTick*timersStat.Steal-cc.lastUsageTime["steal"])
+	if err := cc.mUsageTime.Record(map[string]string{stateLabel: "steal"}, clockTick*timersStat.Steal-cc.lastUsageTime["steal"]); err != nil {
+		klog.Errorf("Failed to record cpu usage time for steal: %v", err)
+	}
 	cc.lastUsageTime["steal"] = clockTick * timersStat.Steal
 
-	cc.mUsageTime.Record(map[string]string{stateLabel: "guest"}, clockTick*timersStat.Guest-cc.lastUsageTime["guest"])
+	if err := cc.mUsageTime.Record(map[string]string{stateLabel: "guest"}, clockTick*timersStat.Guest-cc.lastUsageTime["guest"]); err != nil {
+		klog.Errorf("Failed to record cpu usage time for guest: %v", err)
+	}
 	cc.lastUsageTime["guest"] = clockTick * timersStat.Guest
 
-	cc.mUsageTime.Record(map[string]string{stateLabel: "guest_nice"}, clockTick*timersStat.GuestNice-cc.lastUsageTime["guest_nice"])
+	if err := cc.mUsageTime.Record(map[string]string{stateLabel: "guest_nice"}, clockTick*timersStat.GuestNice-cc.lastUsageTime["guest_nice"]); err != nil {
+		klog.Errorf("Failed to record cpu usage time for guest_nice: %v", err)
+	}
 	cc.lastUsageTime["guest_nice"] = clockTick * timersStat.GuestNice
 }
 
