@@ -67,7 +67,6 @@ var _ = ginkgo.Describe("NPD should export Prometheus metrics.", func() {
 	})
 
 	ginkgo.Context("On a clean node", func() {
-
 		ginkgo.It("NPD should export cpu/disk/host/memory metric", func() {
 			err := npd.WaitForNPD(instance, []string{"host_uptime"}, 120)
 			Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("Expect NPD to become ready in 120s, but hit error: %v", err))
@@ -103,10 +102,10 @@ var _ = ginkgo.Describe("NPD should export Prometheus metrics.", func() {
 			Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("Expect NPD to become ready in 120s, but hit error: %v", err))
 
 			assertMetricValueInBound(instance,
-				"problem_gauge", map[string]string{"reason": "DockerHung", "type": "KernelDeadlock"},
+				"problem_gauge", map[string]string{"reason": "TaskHung", "type": "KernelDeadlock"},
 				0.0, 0.0)
 			assertMetricValueInBound(instance,
-				"problem_counter", map[string]string{"reason": "DockerHung"},
+				"problem_counter", map[string]string{"reason": "TaskHung"},
 				0.0, 0.0)
 			assertMetricValueInBound(instance,
 				"problem_counter", map[string]string{"reason": "FilesystemIsReadOnly"},
@@ -121,7 +120,6 @@ var _ = ginkgo.Describe("NPD should export Prometheus metrics.", func() {
 	})
 
 	ginkgo.Context("When ext4 filesystem error happens", func() {
-
 		ginkgo.BeforeEach(func() {
 			err := npd.WaitForNPD(instance, []string{"problem_gauge"}, 120)
 			Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("Expect NPD to become ready in 120s, but hit error: %v", err))
@@ -148,25 +146,24 @@ var _ = ginkgo.Describe("NPD should export Prometheus metrics.", func() {
 		})
 	})
 
-	ginkgo.Context("When OOM kills and docker hung happen", func() {
-
+	ginkgo.Context("When OOM kills and task hung happen", func() {
 		ginkgo.BeforeEach(func() {
 			err := npd.WaitForNPD(instance, []string{"problem_gauge"}, 120)
 			Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("Expect NPD to become ready in 120s, but hit error: %v", err))
 			instance.RunCommandOrFail("sudo /home/kubernetes/bin/problem-maker --problem OOMKill")
-			instance.RunCommandOrFail("sudo /home/kubernetes/bin/problem-maker --problem DockerHung")
+			instance.RunCommandOrFail("sudo /home/kubernetes/bin/problem-maker --problem TaskHung")
 		})
 
 		ginkgo.It("NPD should update problem_counter and problem_gauge", func() {
 			time.Sleep(5 * time.Second)
 			assertMetricValueInBound(instance,
-				"problem_counter", map[string]string{"reason": "DockerHung"},
+				"problem_counter", map[string]string{"reason": "TaskHung"},
 				1.0, 1.0)
 			assertMetricValueInBound(instance,
 				"problem_counter", map[string]string{"reason": "TaskHung"},
 				1.0, 1.0)
 			assertMetricValueInBound(instance,
-				"problem_gauge", map[string]string{"reason": "DockerHung", "type": "KernelDeadlock"},
+				"problem_gauge", map[string]string{"reason": "TaskHung", "type": "KernelDeadlock"},
 				1.0, 1.0)
 			assertMetricValueInBound(instance,
 				"problem_counter", map[string]string{"reason": "OOMKilling"},
@@ -186,7 +183,7 @@ var _ = ginkgo.Describe("NPD should export Prometheus metrics.", func() {
 			testSubdirName := strings.Replace(testText, " ", "_", -1)
 
 			artifactSubDir = path.Join(*artifactsDir, testSubdirName)
-			err := os.MkdirAll(artifactSubDir, os.ModeDir|0755)
+			err := os.MkdirAll(artifactSubDir, os.ModeDir|0o755)
 			if err != nil {
 				fmt.Printf("Failed to create sub-directory to hold test artiface for test %s at %s\n",
 					testText, artifactSubDir)

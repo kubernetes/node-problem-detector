@@ -89,12 +89,6 @@
 			"condition": "CperHardwareErrorFatal",
 			"reason": "CperHardwareErrorFatal",
 			"pattern": ".*\\[Hardware Error\\]: event severity: fatal$"
-		},
-		{
-			"type": "permanent",
-			"condition": "KernelDeadlock",
-			"reason": "DockerHung",
-			"pattern": "task docker:\\w+ blocked for more than \\w+ seconds\\."
 		}
 	]
 }

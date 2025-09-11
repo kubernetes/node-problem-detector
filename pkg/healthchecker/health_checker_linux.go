@@ -60,19 +60,9 @@ func getRepairFunc(hco *options.HealthCheckerOptions) func() {
 	// indicate if the component restart is due to an administrative plan (restart)
 	// or a system issue that needs repair (kill).
 	// See https://github.com/kubernetes/node-problem-detector/issues/847.
-	switch hco.Component {
-	case types.DockerComponent:
-		// Use "docker ps" for docker health check. Not using crictl for docker to remove
-		// dependency on the kubelet.
-		return func() {
-			execCommand(types.CmdTimeout, "pkill", "-SIGUSR1", "dockerd")
-			execCommand(types.CmdTimeout, "systemctl", "kill", "--kill-who=main", hco.Service)
-		}
-	default:
-		// Just kill the service for all other components
-		return func() {
-			execCommand(types.CmdTimeout, "systemctl", "kill", "--kill-who=main", hco.Service)
-		}
+	// Just kill the service for all other components
+	return func() {
+		execCommand(types.CmdTimeout, "systemctl", "kill", "--kill-who=main", hco.Service)
 	}
 }
 
@@ -98,8 +88,4 @@ func checkForPattern(service, logStartTime, logPattern string, logCountThreshold
 		return false, nil
 	}
 	return true, nil
-}
-
-func getDockerPath() string {
-	return "docker"
 }

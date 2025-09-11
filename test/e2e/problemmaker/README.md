@@ -1,6 +1,7 @@
 # Problem Maker
 
 Problem maker is a program to generate/simulate various kinds of node problems. It is used in NPD e2e tests to verify NPD's behavior when node problems happen:
+
 1. NPD should report the problems correctly.
 2. NPD should survive the problems as much as possible.
 
@@ -11,9 +12,10 @@ You shouldn't need to run it anyways. If you want to test NPD, it's best to run 
 ## Developing/Testing Problem Maker
 
 If you want to enrich the problems that problem maker can generate, you may want to run it to test the behavior. Then the recommended way for running it is to run it in a VM:
+
 ```
 sudo problem-maker --help
-sudo problem-maker --problem DockerHung
+sudo problem-maker --problem TaskHung
 sudo problem-maker --problem Ext4FilesystemError
 ```
 

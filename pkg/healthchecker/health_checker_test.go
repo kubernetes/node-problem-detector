@@ -135,10 +135,6 @@ func TestComponentsSupported(t *testing.T) {
 			component:   types.KubeletComponent,
 		},
 		{
-			description: "Docker should be supported",
-			component:   types.DockerComponent,
-		},
-		{
 			description: "CRI should be supported",
 			component:   types.CRIComponent,
 		},

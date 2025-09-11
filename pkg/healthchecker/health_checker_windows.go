@@ -106,7 +106,3 @@ func checkForPattern(service, logStartTime, logPattern string, logCountThreshold
 	}
 	return true, nil
 }
-
-func getDockerPath() string {
-	return "docker.exe"
-}
