@@ -47,12 +47,14 @@ type HealthCheckerOptions struct {
 }
 
 // AddFlags adds health checker command line options to pflag.
-func (hco *HealthCheckerOptions) AddFlags(fs *pflag.FlagSet) {
+func (hco *HealthCheckerOptions) AddFlags(fs *pflag.FlagSet) error {
 	fs.StringVar(&hco.Component, "component", types.KubeletComponent,
 		"The component to check health for. Supports kubelet, docker, kube-proxy, and cri")
 	// Deprecated: For backward compatibility on linux environment. Going forward "service" will be used instead of systemd-service
 	if runtime.GOOS == "linux" {
-		fs.MarkDeprecated("systemd-service", "please use --service flag instead")
+		if err := fs.MarkDeprecated("systemd-service", "please use --service flag instead"); err != nil {
+			return fmt.Errorf("failed to mark deprecated flag 'systemd-service': %w", err)
+		}
 		fs.StringVar(&hco.Service, "systemd-service", "",
 			"The underlying service responsible for the component. Set to the corresponding component for docker and kubelet, containerd for cri.")
 	}
@@ -73,6 +75,7 @@ func (hco *HealthCheckerOptions) AddFlags(fs *pflag.FlagSet) {
 		"The time to wait before marking the component as unhealthy.")
 	fs.Var(&hco.LogPatterns, "log-pattern",
 		"The log pattern to look for in service journald logs. The format for flag value <failureThresholdCount>:<logPattern>")
+	return nil
 }
 
 // IsValid validates health checker command line options.

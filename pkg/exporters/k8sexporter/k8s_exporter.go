@@ -94,7 +94,9 @@ func (ke *k8sExporter) startHTTPReporting(npdo *options.NodeProblemDetectorOptio
 	// logic in the future.
 	mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("ok"))
+		if _, err := w.Write([]byte("ok")); err != nil {
+			klog.Errorf("Failed to write response: %v", err)
+		}
 	})
 
 	// Add the handler to serve condition http request.

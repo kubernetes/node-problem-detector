@@ -287,7 +287,9 @@ func (r ifaceStatRecorder) RecordWithSameTags(stat procfs.NetDevLine, tags map[s
 	// Range all registered collector and record its measurement with same tags
 	for metricID, collector := range r.collectors {
 		measurement := collector.exporter(stat)
-		collector.metric.Record(tags, measurement)
+		if err := collector.metric.Record(tags, measurement); err != nil {
+			klog.Errorf("Failed to record metric %q: %v", metricID, err)
+		}
 		klog.V(6).Infof("Metric %q record measurement %d with tags %v", metricID, measurement, tags)
 	}
 }

@@ -91,7 +91,9 @@ const watchPollInterval = 500 * time.Millisecond
 // watchLoop is the main watch loop of filelog watcher.
 func (s *filelogWatcher) watchLoop() {
 	defer func() {
-		s.closer.Close()
+		if err := s.closer.Close(); err != nil {
+			klog.Errorf("Failed to close log file: %v", err)
+		}
 		close(s.logCh)
 		s.tomb.Done()
 	}()

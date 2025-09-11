@@ -232,7 +232,9 @@ func TestFakeInt64Metric(t *testing.T) {
 			metric := NewFakeInt64Metric(test.metricName, test.aggregation, test.tagNames)
 
 			for _, record := range test.records {
-				metric.Record(record.tags, record.measurement)
+				if err := metric.Record(record.tags, record.measurement); err != nil {
+					t.Errorf("unexpected error: %v", err)
+				}
 			}
 
 			gotMetrics := metric.ListMetrics()

@@ -19,6 +19,8 @@ package util
 import (
 	"encoding/json"
 	"net/http"
+
+	"k8s.io/klog/v2"
 )
 
 // ReturnHTTPJson generates json http response.
@@ -30,11 +32,15 @@ func ReturnHTTPJson(w http.ResponseWriter, object interface{}) {
 	}
 	w.Header().Set("Content-type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	w.Write(data)
+	if _, err := w.Write(data); err != nil {
+		klog.Errorf("Failed to write http response: %v", err)
+	}
 }
 
 // ReturnHTTPError generates error http response.
 func ReturnHTTPError(w http.ResponseWriter, err error) {
 	w.WriteHeader(http.StatusInternalServerError)
-	w.Write([]byte(err.Error()))
+	if _, err := w.Write([]byte(err.Error())); err != nil {
+		klog.Errorf("Failed to write http error response: %v", err)
+	}
 }

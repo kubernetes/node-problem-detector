@@ -96,7 +96,9 @@ func writeTempFile(t *testing.T, ext string, contents string) (string, error) {
 	fileName := f.Name()
 
 	if err := os.WriteFile(fileName, []byte(contents), 0o644); err != nil {
-		os.Remove(fileName)
+		if err := os.Remove(fileName); err != nil {
+			t.Logf("Failed to remove temporary file %s: %v", fileName, err)
+		}
 		return "", fmt.Errorf("cannot write config to temp file %s, %v", fileName, err)
 	}
 
@@ -106,7 +108,9 @@ func writeTempFile(t *testing.T, ext string, contents string) (string, error) {
 func setupNPD(t *testing.T) (*options.NodeProblemDetectorOptions, func()) {
 	fakeLogFileName, err := writeTempFile(t, "log", "")
 	if err != nil {
-		os.Remove(fakeLogFileName)
+		if err := os.Remove(fakeLogFileName); err != nil {
+			t.Logf("Failed to remove temporary file %s: %v", fakeLogFileName, err)
+		}
 		t.Fatalf("cannot create temp config file, %v", err)
 	}
 
@@ -114,8 +118,12 @@ func setupNPD(t *testing.T) (*options.NodeProblemDetectorOptions, func()) {
 
 	fakeConfigFileName, err := writeTempFile(t, "json", fakeConfigFileContents)
 	if err != nil {
-		os.Remove(fakeLogFileName)
-		os.Remove(fakeConfigFileName)
+		if err := os.Remove(fakeLogFileName); err != nil {
+			t.Logf("Failed to remove temporary file %s: %v", fakeLogFileName, err)
+		}
+		if err := os.Remove(fakeConfigFileName); err != nil {
+			t.Logf("Failed to remove temporary file %s: %v", fakeConfigFileName, err)
+		}
 		t.Fatalf("cannot create temp config file, %v", err)
 	}
 
@@ -126,7 +134,11 @@ func setupNPD(t *testing.T) (*options.NodeProblemDetectorOptions, func()) {
 				},
 			},
 		}, func() {
-			os.Remove(fakeLogFileName)
-			os.Remove(fakeConfigFileName)
+			if err := os.Remove(fakeLogFileName); err != nil {
+				t.Logf("Failed to remove temporary file %s: %v", fakeLogFileName, err)
+			}
+			if err := os.Remove(fakeConfigFileName); err != nil {
+				t.Logf("Failed to remove temporary file %s: %v", fakeConfigFileName, err)
+			}
 		}
 }

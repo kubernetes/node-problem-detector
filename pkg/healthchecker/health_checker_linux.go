@@ -65,13 +65,19 @@ func getRepairFunc(hco *options.HealthCheckerOptions) func() {
 		// Use "docker ps" for docker health check. Not using crictl for docker to remove
 		// dependency on the kubelet.
 		return func() {
-			execCommand(types.CmdTimeout, "pkill", "-SIGUSR1", "dockerd")
-			execCommand(types.CmdTimeout, "systemctl", "kill", "--kill-who=main", hco.Service)
+			if _, err := execCommand(types.CmdTimeout, "pkill", "-SIGUSR1", "dockerd"); err != nil {
+				klog.Errorf("Failed to send SIGUSR1 to dockerd: %v", err)
+			}
+			if _, err := execCommand(types.CmdTimeout, "systemctl", "kill", "--kill-who=main", hco.Service); err != nil {
+				klog.Errorf("Failed to kill service %s: %v", hco.Service, err)
+			}
 		}
 	default:
 		// Just kill the service for all other components
 		return func() {
-			execCommand(types.CmdTimeout, "systemctl", "kill", "--kill-who=main", hco.Service)
+			if _, err := execCommand(types.CmdTimeout, "systemctl", "kill", "--kill-who=main", hco.Service); err != nil {
+				klog.Errorf("Failed to kill service %s: %v", hco.Service, err)
+			}
 		}
 	}
 }

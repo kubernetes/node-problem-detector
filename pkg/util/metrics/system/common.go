@@ -16,6 +16,8 @@ package system
 import (
 	"bufio"
 	"os"
+
+	"k8s.io/klog/v2"
 )
 
 // ReadFileIntoLines reads contents from a file and returns lines.
@@ -24,7 +26,11 @@ func ReadFileIntoLines(filename string) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer file.Close()
+	defer func() {
+		if err := file.Close(); err != nil {
+			klog.Errorf("Failed to close file %s: %v", filename, err)
+		}
+	}()
 
 	var result []string
 	s := bufio.NewScanner(file)

@@ -103,7 +103,9 @@ func TestNewPluginRun(t *testing.T) {
 		utMeta := v
 		t.Run(desp, func(t *testing.T) {
 			conf := cpmtypes.CustomPluginConfig{}
-			(&conf).ApplyConfiguration()
+			if err := (&conf).ApplyConfiguration(); err != nil {
+				t.Errorf("Failed to apply configuration: %v", err)
+			}
 			p := Plugin{config: conf}
 			gotExitStatus, gotOutput := p.run(utMeta.Rule)
 			// cut at position max_output_length if expected output is longer than max_output_length bytes

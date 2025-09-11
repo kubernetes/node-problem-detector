@@ -9,7 +9,7 @@ linters:
     - ineffassign
     - unused
     - govet
-    #- errcheck
+    - errcheck
     - staticcheck
   exclusions:
     generated: lax

@@ -39,11 +39,18 @@ func main() {
 		}
 	})
 	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
-	pflag.CommandLine.MarkHidden("vmodule")
-	pflag.CommandLine.MarkHidden("logtostderr")
+	if err := pflag.CommandLine.MarkHidden("vmodule"); err != nil {
+		klog.Fatalf("Failed to mark hidden flag 'vmodule': %v", err)
+	}
+	if err := pflag.CommandLine.MarkHidden("logtostderr"); err != nil {
+		klog.Fatalf("Failed to mark hidden flag 'logtostderr': %v", err)
+	}
 
 	hco := options.NewHealthCheckerOptions()
-	hco.AddFlags(pflag.CommandLine)
+	if err := hco.AddFlags(pflag.CommandLine); err != nil {
+		fmt.Println(err)
+		os.Exit(int(types.Unknown))
+	}
 	pflag.Parse()
 	hco.SetDefaults()
 	if err := hco.IsValid(); err != nil {
