@@ -21,6 +21,7 @@ import (
 )
 
 func TestGetOSVersionLinux(t *testing.T) {
+	t.Parallel()
 	testCases := []struct {
 		name              string
 		fakeOSReleasePath string
