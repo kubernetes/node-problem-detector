@@ -85,6 +85,7 @@ func testCollectAux(t *testing.T, name string, excludeInterfaceRegexp ssmtypes.N
 }
 
 func TestCollect(t *testing.T) {
+	t.Parallel()
 	tcs := []struct {
 		Name                   string
 		ExcludeInterfaceRegexp ssmtypes.NetStatsInterfaceRegexp

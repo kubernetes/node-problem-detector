@@ -148,7 +148,7 @@ Jan  2 03:04:05 kernel: [2.000000] 3
 				t.Logf("failed to remove temporary file %s: %v", f.Name(), err)
 			}
 		}()
-		_, err = f.Write([]byte(test.log))
+		_, err = f.WriteString(test.log)
 		assert.NoError(t, err)
 
 		w := NewSyslogWatcherOrDie(types.WatcherConfig{

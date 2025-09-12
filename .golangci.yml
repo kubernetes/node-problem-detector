@@ -6,11 +6,114 @@ run:
 linters:
   default: none
   enable:
-    - ineffassign
-    - unused
-    - govet
+    - arangolint
+    - asasalint
+    - asciicheck
+    - bidichk
+    - bodyclose
+    - canonicalheader
+    - containedctx
+    - contextcheck
+    # - copyloopvar                 1
+    # - cyclop                      15
+    - decorder
+    # - depguard                    265
+    - dogsled
+    # - dupl                        2
+    - dupword
+    - durationcheck
+    # - embeddedstructfieldcheck    5
+    # - err113                      64
     - errcheck
+    - errchkjson
+    - errname
+    # - errorlint                   4
+    # - exhaustive                  2
+    # - exhaustruct                 260
+    - exptostd
+    - fatcontext
+    # - forbidigo                   6
+    # - forcetypeassert:            5
+    # - funcorder:                  5
+    # - funlen:                     24
+    - ginkgolinter
+    - gocheckcompilerdirectives
+    # - gochecknoglobals            31
+    # - gochecknoinits              14
+    - gochecksumtype
+    # - gocognit                    5
+    - goconst
+    # - gocritic                    3
+    # - gocyclo                     1
+    # - godot                       24
+    # - godox                       8
+    - goheader
+    - gomoddirectives
+    - gomodguard
+    - goprintffuncname
+    # - gosec                       55
+    # - gosmopolitan                5
+    - govet
+    - grouper
+    - iface
+    - importas
+    # - inamedparam                 6
+    - ineffassign
+    - interfacebloat
+    # - intrange                    1
+    # - ireturn                     15
+    # - lll                         59
+    - loggercheck
+    - maintidx
+    - makezero
+    - mirror
+    - misspell
+    # - mnd 29
+    - musttag
+    - nakedret
+    # - nestif                      7
+    # - nilerr                      2
+    # - nilnesserr                  2
+    # - nilnil                      3
+    # - nlreturn                    149
+    - noctx
+    # - noinlineerr                 81
+    - nolintlint
+    # - nonamedreturns              2
+    - nosprintfhostport
+    # - paralleltest                54
+    # - perfsprint                  14
+    # - prealloc                    5
+    # - predeclared                 1
+    - promlinter
+    # - protogetter                 7
+    - reassign
+    # - recvcheck                   3
+    # - revive                      133
+    - rowserrcheck
+    - sloglint
+    - spancheck
+    - sqlclosecheck
     - staticcheck
+    - tagalign
+    # - tagliatelle                6
+    - testableexamples
+    # - testifylint                10
+    # - testpackage                34
+    # - thelper                     4
+    - tparallel
+    - unconvert
+    # - unparam                   1
+    - unused
+    - usestdlibvars
+    # - usetesting                3
+    # - varnamelen                33
+    - wastedassign
+    - whitespace
+    # - wrapcheck                 26
+    # - wsl                       403
+    # - wsl_v5                    58
+    - zerologlint
   exclusions:
     generated: lax
     paths:

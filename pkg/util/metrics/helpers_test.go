@@ -56,7 +56,7 @@ func TestPrometheusMetricsParsingAndMatching(t *testing.T) {
 				// Metric with non-existent label.
 				{
 					Name:   "host_uptime",
-					Labels: map[string]string{"non-existant-version": "0.0.1"},
+					Labels: map[string]string{"non-existent-version": "0.0.1"},
 				},
 				// Metric with incorrect label.
 				{

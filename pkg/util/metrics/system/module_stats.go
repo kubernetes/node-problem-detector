@@ -18,6 +18,8 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+
+	"k8s.io/klog/v2"
 )
 
 type Module struct {
@@ -29,7 +31,11 @@ type Module struct {
 }
 
 func (d Module) String() string {
-	s, _ := json.Marshal(d)
+	s, err := json.Marshal(d)
+	if err != nil {
+		klog.Errorf("failed to marshal module stat: %v", err)
+		return ""
+	}
 	return string(s)
 }
 

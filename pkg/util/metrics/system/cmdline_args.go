@@ -17,6 +17,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+
+	"k8s.io/klog/v2"
 )
 
 type CmdlineArg struct {
@@ -25,7 +27,11 @@ type CmdlineArg struct {
 }
 
 func (d CmdlineArg) String() string {
-	s, _ := json.Marshal(d)
+	s, err := json.Marshal(d)
+	if err != nil {
+		klog.Errorf("failed to marshal cmdline arg: %v", err)
+		return ""
+	}
 	return string(s)
 }
 

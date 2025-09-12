@@ -126,9 +126,22 @@ func logPatternHealthCheck(service string, loopBackTime time.Duration, logPatter
 // healthCheckEndpointOKFunc returns a function to check the status of an http endpoint
 func healthCheckEndpointOKFunc(endpoint string, timeout time.Duration) func() (bool, error) {
 	return func() (bool, error) {
+		req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, endpoint, nil)
+		if err != nil {
+			return false, err
+		}
 		httpClient := http.Client{Timeout: timeout}
-		response, err := httpClient.Get(endpoint)
-		if err != nil || response.StatusCode != http.StatusOK {
+		response, err := httpClient.Do(req)
+		if err != nil {
+			return false, nil
+		}
+		defer func() {
+			err := response.Body.Close()
+			if err != nil {
+				klog.Warningf("failed to close http client: %v", err)
+			}
+		}()
+		if response.StatusCode != http.StatusOK {
 			return false, nil
 		}
 		return true, nil
