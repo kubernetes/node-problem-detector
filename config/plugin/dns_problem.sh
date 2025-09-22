@@ -14,7 +14,7 @@ if ! command -v getent >/dev/null; then
   exit $UNKNOWN
 fi
 
-# Return success if a DNS lookup to the Kubernetes host is successful
+# Return success if a DNS lookup of the kubernetes service is successful
 if getent hosts "${KUBERNETES_SERVICE}" >/dev/null; then
   echo "DNS lookup to ${KUBERNETES_SERVICE} is working"
   exit $OK
