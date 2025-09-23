@@ -65,8 +65,10 @@ TARBALL=$(NPD_NAME_VERSION).tar.gz
 
 # IMAGE_TAGS contains the image tags of the node problem detector container image.
 IMAGE_TAGS=--tag $(REGISTRY)/node-problem-detector:$(TAG)
+IMAGE_TAGS_WINDOWS=--tag $(REGISTRY)/node-problem-detector-windows:$(TAG)
 ifeq ($(REGISTRY), gcr.io/k8s-staging-npd)
   IMAGE_TAGS+= --tag $(REGISTRY)/node-problem-detector:$(BRANCH)
+  IMAGE_TAGS_WINDOWS+= --tag $(REGISTRY)/node-problem-detector-windows:$(BRANCH)
 endif
 
 # ENABLE_JOURNALD enables build journald support or not. Building journald
@@ -215,6 +217,12 @@ else
 	echo "Warning: log-counter requires journald, skipping."
 endif
 
+./bin/node-problem-detector.exe: $(PKG_SOURCES)
+	CGO_ENABLED=0 GOOS=windows GOARCH=$(GOARCH) go build \
+		-o bin/node-problem-detector.exe \
+		-ldflags '-X $(PKG)/pkg/version.version=$(VERSION)' \
+		./cmd/nodeproblemdetector
+
 ./bin/node-problem-detector: $(PKG_SOURCES)
 	CGO_ENABLED=$(CGO_ENABLED) GOOS=linux GOARCH=$(GOARCH) CC=$(CC) go build \
 		-o bin/node-problem-detector \
@@ -234,6 +242,12 @@ endif
 		-o bin/health-checker \
 		-ldflags '-X $(PKG)/pkg/version.version=$(VERSION)' \
 		-tags "$(LINUX_BUILD_TAGS)" \
+		cmd/healthchecker/health_checker.go
+
+./bin/health-checker.exe: $(PKG_SOURCES)
+	CGO_ENABLED=0 GOOS=windows GOARCH=$(GOARCH) go build \
+		-o bin/health-checker.exe \
+		-ldflags '-X $(PKG)/pkg/version.version=$(VERSION)' \
 		cmd/healthchecker/health_checker.go
 
 test: vet fmt
@@ -263,6 +277,10 @@ build-container: clean Dockerfile
 	docker buildx create --platform $(DOCKER_PLATFORMS) --use
 	docker buildx build --platform $(DOCKER_PLATFORMS) $(IMAGE_TAGS) --build-arg LOGCOUNTER=$(LOGCOUNTER) .
 
+build-container-windows: clean Dockerfile.windows
+	docker buildx create --platform windows/amd64 --use
+	docker buildx build --platform windows/amd64 $(IMAGE_TAGS_WINDOWS) -f Dockerfile.windows .
+
 $(TARBALL): ./bin/node-problem-detector ./bin/log-counter ./bin/health-checker ./test/bin/problem-maker
 	tar -zcvf $(TARBALL) bin/ config/ test/e2e-install.sh test/bin/problem-maker
 	sha1sum $(TARBALL)
@@ -283,6 +301,10 @@ build-in-docker: clean docker-builder
 push-container: build-container
 	# Build should be cached from build-container
 	docker buildx build --push --platform $(DOCKER_PLATFORMS) $(IMAGE_TAGS) --build-arg LOGCOUNTER=$(LOGCOUNTER) .
+
+push-container-windows: build-container-windows
+	# Build should be cached from build-container
+	docker buildx build --push --platform windows/amdd64 $(IMAGE_TAGS_WINDOWS) -f Dockerfile.windows .
 
 push-tar: build-tar
 	gsutil cp $(TARBALL) $(UPLOAD_PATH)/node-problem-detector/
