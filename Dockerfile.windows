@@ -1,0 +1,27 @@
+# "builder-base" can be overridden using docker buildx's --build-context flag,
+# by users who want to use a different images for the builder. E.g. if you need to use an older OS
+# to avoid dependencies on very recent glibc versions.
+# E.g. of the param: --build-context builder-base=docker-image://golang:<something>@sha256:<something>
+# Must override builder-base, not builder, since the latter is referred to later in the file and so must not be
+# directly replaced. See here, and note that "stage" parameter mentioned there has been renamed to
+# "build-context": https://github.com/docker/buildx/pull/904#issuecomment-1005871838
+FROM --platform=linux/$BUILDARCH golang:1.25.4-bookworm@sha256:e17419604b6d1f9bc245694425f0ec9b1b53685c80850900a376fb10cb0f70cb AS builder-base
+FROM --platform=linux/$BUILDARCH builder-base AS builder
+
+ARG TARGETARCH
+
+ENV GOPATH=/gopath/
+ENV PATH=$GOPATH/bin:$PATH
+RUN go version
+
+COPY . /src/
+WORKDIR /src
+RUN GOARCH=${TARGETARCH} make bin/node-problem-detector.exe bin/health-checker.exe
+
+FROM mcr.microsoft.com/windows/nanoserver:ltsc2022-${TARGETARCH} AS base
+
+COPY --from=builder /src/bin/node-problem-detector.exe /node-problem-detector.exe
+COPY --from=builder /src/bin/health-checker.exe /etc/kubernetes/node/bin/health-checker.exe
+
+COPY --from=builder /src/config/ /config
+ENTRYPOINT ["/node-problem-detector.exe"]
