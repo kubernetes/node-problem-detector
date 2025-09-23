@@ -34,7 +34,7 @@ COPY . /gopath/src/k8s.io/node-problem-detector/
 WORKDIR /gopath/src/k8s.io/node-problem-detector
 RUN GOARCH=${TARGETARCH} make bin/node-problem-detector bin/health-checker bin/log-counter
 
-FROM registry.k8s.io/build-image/debian-base:bookworm-v1.0.5@sha256:dd9c1f36c33b410480f6e6dcdfc075b0dfcab2c137953dd40189dbd06bdf9938 AS base
+FROM registry.k8s.io/build-image/debian-base:bookworm-v1.0.6@sha256:e100119ba6cf265b29957046f178e9374f9a9419133284c9b883e64c5b463d73 AS base
 
 LABEL maintainer="Random Liu <lantaol@google.com>"
 
