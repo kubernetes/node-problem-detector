@@ -57,6 +57,10 @@ func ParsePrometheusMetrics(metricsText string) ([]Float64MetricRepresentation, 
 				value = *metric.Counter.Value
 			case pcm.MetricType_GAUGE:
 				value = *metric.Gauge.Value
+			case pcm.MetricType_SUMMARY:
+				value = *metric.Summary.SampleSum
+			case pcm.MetricType_HISTOGRAM:
+				value = *metric.Histogram.SampleSum
 			default:
 				return metrics, fmt.Errorf("unexpected MetricType %s for metric %s",
 					pcm.MetricType_name[int32(*metricFamily.Type)], *metricFamily.Name)
