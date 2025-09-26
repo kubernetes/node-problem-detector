@@ -5,22 +5,12 @@ timeout: 3600s
 options:
   # job builds a multi-arch docker image for amd64 and arm64
   machineType: E2_HIGHCPU_8
+  substitution_option: ALLOW_LOOSE
 steps:
-  - name: 'gcr.io/k8s-staging-test-infra/gcb-docker-gcloud:v20230623-56e06d7c18'
-    entrypoint: bash
-    env:
-    - PROW_GIT_TAG=$_GIT_TAG
-    - PULL_BASE_REF=$_PULL_BASE_REF
-    - VERSION=$_PULL_BASE_REF
-    - DOCKER_CLI_EXPERIMENTAL=enabled
+  - name: 'gcr.io/cloud-builders/docker'
+    entrypoint: make
     args:
-    - -c
-    - |
-      echo "Building/Pushing NPD containers"
-      apk add musl-dev gcc
-      make push-container
+    - push-container
 substitutions:
-  # _GIT_TAG will be filled with a git-based tag for the image, of the form vYYYYMMDD-hash, and
-  # can be used as a substitution
-  _GIT_TAG: 'PLACE_HOLDER'
-  _PULL_BASE_REF: 'master'
+  _GIT_TAG: 'dev'
+  _PULL_BASE_REF: 'dev'
