@@ -44,6 +44,7 @@ func TestRegistration(t *testing.T) {
 }
 
 func TestGenerateStatusForConditions(t *testing.T) {
+	problemmetrics.InitializeGlobalProblemMetricsManager()
 	initConditions := []types.Condition{
 		{
 			Type:       testConditionA,
@@ -387,6 +388,7 @@ func TestGenerateStatusForMetrics(t *testing.T) {
 			l.conditions = test.conditions
 			(&l.config).ApplyDefaultConfiguration()
 
+			problemmetrics.InitializeGlobalProblemMetricsManager()
 			originalGlobalProblemMetricsManager := problemmetrics.GlobalProblemMetricsManager
 			defer func() {
 				problemmetrics.GlobalProblemMetricsManager = originalGlobalProblemMetricsManager

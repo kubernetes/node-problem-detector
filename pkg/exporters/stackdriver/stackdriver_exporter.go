@@ -23,18 +23,18 @@ import (
 	"reflect"
 	"time"
 
-	"contrib.go.opencensus.io/exporter/stackdriver"
-	monitoredres "contrib.go.opencensus.io/exporter/stackdriver/monitoredresource"
+	gcpmetric "github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/metric"
 	"github.com/avast/retry-go/v4"
 	"github.com/spf13/pflag"
-	"go.opencensus.io/stats/view"
-	"google.golang.org/api/option"
+	"go.opentelemetry.io/otel/sdk/metric"
+	"go.opentelemetry.io/otel/sdk/metric/metricdata"
 	"k8s.io/klog/v2"
 
 	"k8s.io/node-problem-detector/pkg/exporters"
 	seconfig "k8s.io/node-problem-detector/pkg/exporters/stackdriver/config"
 	"k8s.io/node-problem-detector/pkg/types"
 	"k8s.io/node-problem-detector/pkg/util/metrics"
+	otelutil "k8s.io/node-problem-detector/pkg/util/otel"
 )
 
 func init() {
@@ -95,17 +95,15 @@ var NPDMetricToSDMetric = map[metrics.MetricID]string{
 	metrics.NetDevTxCompressed:      "kubernetes.io/internal/node/guest/net/tx_compressed",
 }
 
-func getMetricTypeConversionFunction(customMetricPrefix string) func(*view.View) string {
-	return func(view *view.View) string {
-		viewName := view.Measure.Name()
-
+func getMetricTypeConversionFunction(customMetricPrefix string) func(string) string {
+	return func(metricName string) string {
 		fallbackMetricType := ""
 		if customMetricPrefix != "" {
 			// Example fallbackMetricType: custom.googleapis.com/npd/host/uptime
-			fallbackMetricType = filepath.Join(customMetricPrefix, viewName)
+			fallbackMetricType = filepath.Join(customMetricPrefix, metricName)
 		}
 
-		metricID, ok := metrics.MetricMap.ViewNameToMetricID(viewName)
+		metricID, ok := metrics.MetricMap.ViewNameToMetricID(metricName)
 		if !ok {
 			return fallbackMetricType
 		}
@@ -121,25 +119,14 @@ type stackdriverExporter struct {
 	config seconfig.StackdriverExporterConfig
 }
 
-func (se *stackdriverExporter) setupOpenCensusViewExporterOrDie() {
-	clientOption := option.WithEndpoint(se.config.APIEndpoint)
-
-	var globalLabels stackdriver.Labels
-	globalLabels.Set("instance_name", se.config.GCEMetadata.InstanceName, "The name of the VM instance")
-
-	viewExporter, err := stackdriver.NewExporter(stackdriver.Options{
-		ProjectID:               se.config.GCEMetadata.ProjectID,
-		MonitoringClientOptions: []option.ClientOption{clientOption},
-		MonitoredResource: &monitoredres.GCEInstance{
-			ProjectID:  se.config.GCEMetadata.ProjectID,
-			InstanceID: se.config.GCEMetadata.InstanceID,
-			Zone:       se.config.GCEMetadata.Zone,
-		},
-		GetMetricType:           getMetricTypeConversionFunction(se.config.CustomMetricPrefix),
-		DefaultMonitoringLabels: &globalLabels,
-	})
+func (se *stackdriverExporter) setupOTelExporterOrDie() {
+	// Create Google Cloud Monitoring exporter
+	gcpExporter, err := gcpmetric.New(
+		gcpmetric.WithProjectID(se.config.GCEMetadata.ProjectID),
+		gcpmetric.WithMetricDescriptorTypeFormatter(se.getMetricTypeFormatter()),
+	)
 	if err != nil {
-		klog.Fatalf("Failed to create Stackdriver OpenCensus view exporter: %v", err)
+		klog.Fatalf("Failed to create Google Cloud Monitoring exporter: %v", err)
 	}
 
 	exportPeriod, err := time.ParseDuration(se.config.ExportPeriod)
@@ -147,8 +134,23 @@ func (se *stackdriverExporter) setupOpenCensusViewExporterOrDie() {
 		klog.Fatalf("Failed to parse ExportPeriod %q: %v", se.config.ExportPeriod, err)
 	}
 
-	view.SetReportingPeriod(exportPeriod)
-	view.RegisterExporter(viewExporter)
+	reader := metric.NewPeriodicReader(
+		gcpExporter,
+		metric.WithInterval(exportPeriod),
+	)
+
+	// register with the global meter provider
+	otelutil.AddMetricReader(reader)
+
+	klog.Infof("Google Cloud Monitoring exporter configured for project %s", se.config.GCEMetadata.ProjectID)
+}
+
+// getMetricTypeFormatter returns a function to convert metrics to GCP metric types
+func (se *stackdriverExporter) getMetricTypeFormatter() func(metricdata.Metrics) string {
+	converter := getMetricTypeConversionFunction(se.config.CustomMetricPrefix)
+	return func(m metricdata.Metrics) string {
+		return converter(m.Name)
+	}
 }
 
 func (se *stackdriverExporter) populateMetadataOrDie() {
@@ -223,7 +225,7 @@ func NewExporterOrDie(clo types.CommandLineOptions) types.Exporter {
 	klog.Infof("Starting Stackdriver exporter %s", options.configPath)
 
 	se.populateMetadataOrDie()
-	se.setupOpenCensusViewExporterOrDie()
+	se.setupOTelExporterOrDie()
 
 	return &se
 }

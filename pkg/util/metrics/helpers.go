@@ -18,53 +18,18 @@ package metrics
 import (
 	"fmt"
 	"strings"
-	"sync"
 
 	pcm "github.com/prometheus/client_model/go"
 	"github.com/prometheus/common/expfmt"
-	"go.opencensus.io/tag"
 )
 
-var (
-	tagMap      map[string]tag.Key
-	tagMapMutex sync.RWMutex
-)
-
-func init() {
-	tagMapMutex.Lock()
-	tagMap = make(map[string]tag.Key)
-	tagMapMutex.Unlock()
-}
-
-// Aggregation defines how measurements should be aggregated into data points.
-type Aggregation string
+// Aggregation types for compatibility
+type Aggregation int
 
 const (
-	// LastValue means last measurement overwrites previous measurements (gauge metric).
-	LastValue Aggregation = "LastValue"
-	// Sum means last measurement will be added onto previous measurements (counter metric).
-	Sum Aggregation = "Sum"
+	LastValue Aggregation = iota
+	Sum
 )
-
-func getTagKeysFromNames(tagNames []string) ([]tag.Key, error) {
-	tagMapMutex.Lock()
-	defer tagMapMutex.Unlock()
-
-	var tagKeys []tag.Key
-	var err error
-	for _, tagName := range tagNames {
-		tagKey, ok := tagMap[tagName]
-		if !ok {
-			tagKey, err = tag.NewKey(tagName)
-			if err != nil {
-				return []tag.Key{}, fmt.Errorf("failed to create tag %q: %v", tagName, err)
-			}
-			tagMap[tagName] = tagKey
-		}
-		tagKeys = append(tagKeys, tagKey)
-	}
-	return tagKeys, nil
-}
 
 // ParsePrometheusMetrics parses Prometheus formatted metrics into metrics under Float64MetricRepresentation.
 //

@@ -20,6 +20,7 @@ import (
 	"runtime"
 
 	"k8s.io/klog/v2"
+
 	"k8s.io/node-problem-detector/pkg/systemlogmonitor/logwatchers/types"
 )
 
