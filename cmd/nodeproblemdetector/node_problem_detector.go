@@ -29,7 +29,9 @@ import (
 	"k8s.io/node-problem-detector/pkg/exporters/prometheusexporter"
 	"k8s.io/node-problem-detector/pkg/problemdaemon"
 	"k8s.io/node-problem-detector/pkg/problemdetector"
+	"k8s.io/node-problem-detector/pkg/problemmetrics"
 	"k8s.io/node-problem-detector/pkg/types"
+	otelutil "k8s.io/node-problem-detector/pkg/util/otel"
 	"k8s.io/node-problem-detector/pkg/version"
 )
 
@@ -43,13 +45,7 @@ func npdMain(ctx context.Context, npdo *options.NodeProblemDetectorOptions) erro
 	npdo.SetConfigFromDeprecatedOptionsOrDie()
 	npdo.ValidOrDie()
 
-	// Initialize problem daemons.
-	problemDaemons := problemdaemon.NewProblemDaemons(npdo.MonitorConfigPaths)
-	if len(problemDaemons) == 0 {
-		klog.Fatalf("No problem daemon is configured")
-	}
-
-	// Initialize exporters.
+	// Initialize exporters first to set up the OpenTelemetry readers.
 	defaultExporters := []types.Exporter{}
 	if ke := k8sexporter.NewExporterOrDie(ctx, npdo); ke != nil {
 		defaultExporters = append(defaultExporters, ke)
@@ -59,8 +55,18 @@ func npdMain(ctx context.Context, npdo *options.NodeProblemDetectorOptions) erro
 		defaultExporters = append(defaultExporters, pe)
 		klog.Info("Prometheus exporter started.")
 	}
-
 	plugableExporters := exporters.NewExporters()
+
+	// Initialize OpenTelemetry meter provider with all registered readers
+	// This must be called after all exporters have been created and registered their readers
+	otelutil.InitializeMeterProvider()
+	problemmetrics.InitializeGlobalProblemMetricsManager()
+
+	// Initialize problem daemons.
+	problemDaemons := problemdaemon.NewProblemDaemons(npdo.MonitorConfigPaths)
+	if len(problemDaemons) == 0 {
+		klog.Fatalf("No problem daemon is configured")
+	}
 
 	npdExporters := []types.Exporter{}
 	npdExporters = append(npdExporters, defaultExporters...)

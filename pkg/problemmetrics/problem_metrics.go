@@ -31,7 +31,13 @@ import (
 // problem daemons.
 var GlobalProblemMetricsManager *ProblemMetricsManager
 
-func init() {
+// otel migration edit 2025: this should be called after the OpenTelemetry meter
+// provider is initialized, rather than on init(), which was observed to cause
+// non-deterministic ordering
+func InitializeGlobalProblemMetricsManager() {
+	if GlobalProblemMetricsManager != nil {
+		return
+	}
 	GlobalProblemMetricsManager = NewProblemMetricsManagerOrDie()
 }
 
