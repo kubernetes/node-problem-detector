@@ -97,3 +97,8 @@ func (mm *MetricMapping) ViewNameToMetricID(viewName string) (MetricID, bool) {
 	id, ok := mm.viewNameToMetricIDMap[viewName]
 	return id, ok
 }
+
+// MetricInterface provides a common interface for all metric types
+type MetricInterface interface {
+	Record(labelValues map[string]string, value interface{}) error
+}

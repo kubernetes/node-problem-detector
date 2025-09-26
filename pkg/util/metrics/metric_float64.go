@@ -17,11 +17,12 @@ package metrics
 
 import (
 	"context"
-	"fmt"
 
-	"go.opencensus.io/stats"
-	"go.opencensus.io/stats/view"
-	"go.opencensus.io/tag"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/metric"
+	"k8s.io/klog/v2"
+
+	otelutil "k8s.io/node-problem-detector/pkg/util/otel"
 )
 
 // Float64MetricRepresentation represents a snapshot of a float64 metrics.
@@ -36,67 +37,88 @@ type Float64MetricRepresentation struct {
 }
 
 // Float64Metric represents an float64 metric.
-type Float64Metric struct {
-	name    string
-	measure *stats.Float64Measure
+// Type alias added for backward compatibility
+type Float64Metric = OTelFloat64Metric
+
+type Float64MetricInterface interface {
+	Record(labelValues map[string]string, value float64) error
 }
 
-// NewFloat64Metric create a Float64Metric metrics, returns nil when viewName is empty.
-func NewFloat64Metric(metricID MetricID, viewName string, description string, unit string, aggregation Aggregation, tagNames []string) (*Float64Metric, error) {
-	if viewName == "" {
-		return nil, nil
+// NewFloat64Metric creates a new Float64 metric using OpenTelemetry
+func NewFloat64Metric(metricID MetricID, name, description, unit string, aggregation Aggregation, labels []string) (*Float64Metric, error) {
+	meter := otelutil.GetGlobalMeter()
+
+	otelMetric := &OTelFloat64Metric{
+		name:        name,
+		description: description,
+		unit:        unit,
+		aggregation: aggregation,
+		labels:      labels,
+		meter:       meter,
 	}
 
-	MetricMap.AddMapping(metricID, viewName)
-
-	tagKeys, err := getTagKeysFromNames(tagNames)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create metric %q because of tag creation failure: %v", viewName, err)
-	}
-
-	var aggregationMethod *view.Aggregation
+	var err error
 	switch aggregation {
-	case LastValue:
-		aggregationMethod = view.LastValue()
 	case Sum:
-		aggregationMethod = view.Sum()
+		otelMetric.counter, err = meter.Float64Counter(
+			name,
+			metric.WithDescription(description),
+			metric.WithUnit(unit),
+		)
+	case LastValue:
+		otelMetric.gauge, err = meter.Float64Gauge(
+			name,
+			metric.WithDescription(description),
+			metric.WithUnit(unit),
+		)
 	default:
-		return nil, fmt.Errorf("unknown aggregation option %q", aggregation)
+		klog.Warningf("Unsupported aggregation type for metric %s: %v", name, aggregation)
 	}
 
-	measure := stats.Float64(viewName, description, unit)
-	newView := &view.View{
-		Name:        viewName,
-		Measure:     measure,
-		Description: description,
-		Aggregation: aggregationMethod,
-		TagKeys:     tagKeys,
-	}
-	if err := view.Register(newView); err != nil {
-		return nil, fmt.Errorf("failed to register view for metric %q: %v", viewName, err)
+	if err != nil {
+		return nil, err
 	}
 
-	metric := Float64Metric{viewName, measure}
-	return &metric, nil
+	// Register metric mapping
+	MetricMap.AddMapping(metricID, name)
+
+	return otelMetric, nil
 }
 
-// Record records a measurement for the metric, with provided tags as metric labels.
-func (metric *Float64Metric) Record(tags map[string]string, measurement float64) error {
-	var mutators []tag.Mutator
+// OTelFloat64Metric wraps OpenTelemetry float64 instruments
+type OTelFloat64Metric struct {
+	name        string
+	description string
+	unit        string
+	aggregation Aggregation
+	labels      []string
+	counter     metric.Float64Counter
+	gauge       metric.Float64Gauge
+	meter       metric.Meter
+}
 
-	tagMapMutex.RLock()
-	defer tagMapMutex.RUnlock()
+// Record implements Float64MetricInterface
+func (m *OTelFloat64Metric) Record(labelValues map[string]string, value float64) error {
+	ctx := context.Background()
 
-	for tagName, tagValue := range tags {
-		tagKey, ok := tagMap[tagName]
-		if !ok {
-			return fmt.Errorf("referencing none existing tag %q in metric %q", tagName, metric.name)
-		}
-		mutators = append(mutators, tag.Upsert(tagKey, tagValue))
+	// Convert to OTel attributes
+	attrs := make([]attribute.KeyValue, 0, len(labelValues))
+	for k, v := range labelValues {
+		attrs = append(attrs, attribute.String(k, v))
 	}
 
-	return stats.RecordWithTags(
-		context.Background(),
-		mutators,
-		metric.measure.M(measurement))
+	switch m.aggregation {
+	case Sum:
+		if m.counter != nil {
+			m.counter.Add(ctx, value, metric.WithAttributes(attrs...))
+		}
+	case LastValue:
+		if m.gauge != nil {
+			m.gauge.Record(ctx, value, metric.WithAttributes(attrs...))
+		}
+	default:
+		klog.Warningf("Unsupported aggregation type: %v", m.aggregation)
+	}
+
+	return nil
 }
