@@ -28,7 +28,10 @@ LINUX_PLATFORMS=linux_amd64 linux_arm64
 DOCKER_PLATFORMS=linux/amd64,linux/arm64
 PLATFORMS=$(LINUX_PLATFORMS) windows_amd64
 
-# VERSION is the version of the binary.
+# BRANCH is the git branch.
+BRANCH=$(shell git symbolic-ref --short HEAD)
+
+# VERSION is the git version of the binary.
 VERSION?=$(shell git describe --tags --always --dirty)
 
 # TAG is the tag of the container image, default to binary version.
@@ -60,8 +63,11 @@ NPD_NAME_VERSION?=node-problem-detector-$(VERSION)
 # TARBALL is the name of release tar. Include binary version by default.
 TARBALL=$(NPD_NAME_VERSION).tar.gz
 
-# IMAGE is the image name of the node problem detector container image.
-IMAGE:=$(REGISTRY)/node-problem-detector:$(TAG)
+# IMAGE_TAGS contains the image tags of the node problem detector container image.
+IMAGE_TAGS=--tag $(REGISTRY)/node-problem-detector:$(TAG)
+ifeq ($(REGISTRY), gcr.io/k8s-staging-npd)
+  IMAGE_TAGS+= --tag $(REGISTRY)/node-problem-detector:$(BRANCH)
+endif
 
 # ENABLE_JOURNALD enables build journald support or not. Building journald
 # support needs libsystemd-dev or libsystemd-journal-dev.
@@ -255,7 +261,7 @@ build-binaries: $(ALL_BINARIES)
 
 build-container: clean Dockerfile
 	docker buildx create --platform $(DOCKER_PLATFORMS) --use
-	docker buildx build --platform $(DOCKER_PLATFORMS) -t $(IMAGE) --build-arg LOGCOUNTER=$(LOGCOUNTER) .
+	docker buildx build --platform $(DOCKER_PLATFORMS) $(IMAGE_TAGS) --build-arg LOGCOUNTER=$(LOGCOUNTER) .
 
 $(TARBALL): ./bin/node-problem-detector ./bin/log-counter ./bin/health-checker ./test/bin/problem-maker
 	tar -zcvf $(TARBALL) bin/ config/ test/e2e-install.sh test/bin/problem-maker
@@ -276,7 +282,7 @@ build-in-docker: clean docker-builder
 
 push-container: build-container
 	# Build should be cached from build-container
-	docker buildx build --push --platform $(DOCKER_PLATFORMS) -t $(IMAGE) --build-arg LOGCOUNTER=$(LOGCOUNTER) .
+	docker buildx build --push --platform $(DOCKER_PLATFORMS) $(IMAGE_TAGS) --build-arg LOGCOUNTER=$(LOGCOUNTER) .
 
 push-tar: build-tar
 	gsutil cp $(TARBALL) $(UPLOAD_PATH)/node-problem-detector/
