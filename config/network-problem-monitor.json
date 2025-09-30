@@ -15,6 +15,12 @@
       "reason": "ConntrackFull",
       "path": "./config/plugin/network_problem.sh",
       "timeout": "3s"
+    },
+    {
+      "type": "temporary",
+      "reason": "DNSUnreachable",
+      "path": "./config/plugin/dns_problem.sh",
+      "timeout": "3s"
     }
   ]
 }
