@@ -86,3 +86,8 @@ func Kill(cmd *exec.Cmd) error {
 	}
 	return err
 }
+
+// IsProcessInDState does not apply to Windows.
+func IsProcessInDState(pid int) bool {
+	return false
+}
