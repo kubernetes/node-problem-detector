@@ -52,11 +52,11 @@ func (hco *HealthCheckerOptions) AddFlags(fs *pflag.FlagSet) error {
 		"The component to check health for. Supports kubelet, docker, kube-proxy, and cri")
 	// Deprecated: For backward compatibility on linux environment. Going forward "service" will be used instead of systemd-service
 	if runtime.GOOS == "linux" {
+		fs.StringVar(&hco.Service, "systemd-service", "",
+			"The underlying service responsible for the component. Set to the corresponding component for docker and kubelet, containerd for cri.")
 		if err := fs.MarkDeprecated("systemd-service", "please use --service flag instead"); err != nil {
 			return fmt.Errorf("failed to mark deprecated flag 'systemd-service': %w", err)
 		}
-		fs.StringVar(&hco.Service, "systemd-service", "",
-			"The underlying service responsible for the component. Set to the corresponding component for docker and kubelet, containerd for cri.")
 	}
 	fs.StringVar(&hco.Service, "service", "",
 		"The underlying service responsible for the component. Set to the corresponding component for docker and kubelet, containerd for cri.")
