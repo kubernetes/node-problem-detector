@@ -123,7 +123,7 @@ func (s *filelogWatcher) watchLoop() {
 		}
 		log, err := s.translator.translate(strings.TrimSuffix(line, "\n"))
 		if err != nil {
-			klog.Warningf("Unable to parse line: %q, %v", line, err)
+			klog.V(5).Infof("Unable to parse line: %q, %v", line, err)
 			continue
 		}
 		// Discard messages before start time.
