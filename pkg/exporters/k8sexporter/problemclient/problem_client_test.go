@@ -87,9 +87,9 @@ func TestEvent(t *testing.T) {
 }
 
 func TestNodeRefHasAPIVersionV1(t *testing.T) {
-    client := newFakeProblemClient()
+	client := newFakeProblemClient()
 
-    if client.nodeRef.APIVersion != "v1" {
-        t.Errorf("expected nodeRef.APIVersion to be 'v1', got %q", client.nodeRef.APIVersion)
-    }
+	if client.nodeRef.APIVersion != "v1" {
+		t.Errorf("expected nodeRef.APIVersion to be 'v1', got %q", client.nodeRef.APIVersion)
+	}
 }

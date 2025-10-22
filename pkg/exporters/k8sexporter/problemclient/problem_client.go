@@ -158,9 +158,9 @@ func getNodeRef(namespace, nodeName string) *v1.ObjectReference {
 	// TODO(random-liu): Get node to initialize the node reference
 	return &v1.ObjectReference{
 		APIVersion: "v1",
-		Kind:      "Node",
-		Name:      nodeName,
-		UID:       types.UID(nodeName),
-		Namespace: namespace,
+		Kind:       "Node",
+		Name:       nodeName,
+		UID:        types.UID(nodeName),
+		Namespace:  namespace,
 	}
 }
