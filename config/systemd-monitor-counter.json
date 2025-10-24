@@ -37,8 +37,8 @@
         "--lookback=20m",
         "--delay=5m",
         "--count=5",
-        "--pattern=Started (Kubernetes kubelet|kubelet.service|kubelet.service - Kubernetes kubelet).",
-        "--revert-pattern=Stopping (Kubernetes kubelet|kubelet.service|kubelet.service - Kubernetes kubelet)..."
+        "--pattern=Started (Kubernetes kubelet|kubelet.service|kubelet.service - Kubernetes kubelet|kubelet.service - kubelet: The Kubernetes Node Agent).",
+        "--revert-pattern=Stopping (Kubernetes kubelet|kubelet.service|kubelet.service - Kubernetes kubelet|kubelet.service - kubelet: The Kubernetes Node Agent)..."
       ],
       "timeout": "1m"
     },
