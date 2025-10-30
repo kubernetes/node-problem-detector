@@ -23,12 +23,26 @@ spec:
                     operator: In
                     values:
                       - linux
+              - matchExpressions:
+                  - key: kubernetes.io/os
+                    operator: In
+                    values:
+                      - linux
+                  - key: accelerator
+                    operator: In
+                    values:
+                      - nvidia-tesla-k80
+                      - nvidia-tesla-p4
+                      - nvidia-tesla-v100
+                      - nvidia-tesla-p100
+                      - nvidia-tesla-t4
       containers:
       - name: node-problem-detector
         command:
         - /node-problem-detector
         - --logtostderr
         - --config.system-log-monitor=/config/kernel-monitor.json,/config/readonly-monitor.json,/config/docker-monitor.json
+        - --config.external-monitor=/config/external-gpu-monitor.json
         image: registry.k8s.io/node-problem-detector/node-problem-detector:v0.8.19
         resources:
           limits:
@@ -60,6 +74,35 @@ spec:
         - name: config
           mountPath: /config
           readOnly: true
+        - name: socket-dir
+          mountPath: /var/run
+      - name: gpu-monitor
+        image: gpu-monitor:latest
+        command:
+        - /gpu-monitor
+        - --socket-path=/var/run/npd-gpu-monitor.sock
+        resources:
+          limits:
+            cpu: 10m
+            memory: 50Mi
+          requests:
+            cpu: 10m
+            memory: 50Mi
+        imagePullPolicy: IfNotPresent
+        securityContext:
+          privileged: true
+        volumeMounts:
+        - name: socket-dir
+          mountPath: /var/run
+        - name: nvidia-dev
+          mountPath: /dev/nvidia0
+          readOnly: true
+        - name: nvidia-uvm
+          mountPath: /dev/nvidia-uvm
+          readOnly: true
+        - name: nvidia-ml
+          mountPath: /usr/bin/nvidia-smi
+          readOnly: true
       serviceAccountName: node-problem-detector
       volumes:
       - name: log
@@ -82,6 +125,19 @@ spec:
             path: readonly-monitor.json
           - key: docker-monitor.json
             path: docker-monitor.json
+          - key: external-gpu-monitor.json
+            path: external-gpu-monitor.json
+      - name: socket-dir
+        emptyDir: {}
+      - name: nvidia-dev
+        hostPath:
+          path: /dev/nvidia0
+      - name: nvidia-uvm
+        hostPath:
+          path: /dev/nvidia-uvm
+      - name: nvidia-ml
+        hostPath:
+          path: /usr/bin/nvidia-smi
       tolerations:
         - effect: NoSchedule
           operator: Exists

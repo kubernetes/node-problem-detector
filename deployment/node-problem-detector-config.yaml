@@ -107,6 +107,37 @@ data:
             }
         ]
     }
+  external-gpu-monitor.json: |
+    {
+        "plugin": "external",
+        "pluginConfig": {
+            "socketPath": "/var/run/npd-gpu-monitor.sock",
+            "grpcTimeout": "10s",
+            "reconnectInterval": "30s",
+            "maxReconnectAttempts": 5
+        },
+        "invokeInterval": "30s",
+        "bufferSize": 10,
+        "source": "gpu-monitor",
+        "metricsReporting": true,
+        "conditions": [
+            {
+                "type": "GPUHung",
+                "reason": "GPUIsHealthy",
+                "message": "GPU is functioning properly"
+            },
+            {
+                "type": "GPUMemoryPressure",
+                "reason": "GPUMemoryIsSufficient",
+                "message": "GPU memory usage is normal"
+            },
+            {
+                "type": "GPUTemperatureHigh",
+                "reason": "GPUTemperatureIsNormal",
+                "message": "GPU temperature is within normal range"
+            }
+        ]
+    }
 kind: ConfigMap
 metadata:
   name: node-problem-detector-config
