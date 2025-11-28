@@ -1,6 +1,6 @@
 module k8s.io/node-problem-detector/test
 
-go 1.24.7
+go 1.24.10
 
 replace k8s.io/node-problem-detector => ../.
 
@@ -10,8 +10,8 @@ require (
 	github.com/onsi/gomega v1.37.0
 	github.com/pborman/uuid v1.2.1
 	github.com/spf13/pflag v1.0.10
-	golang.org/x/crypto v0.40.0
-	golang.org/x/oauth2 v0.30.0
+	golang.org/x/crypto v0.44.0
+	golang.org/x/oauth2 v0.33.0
 	google.golang.org/api v0.246.0
 	k8s.io/apimachinery v0.34.1
 	k8s.io/component-base v0.34.1
@@ -64,10 +64,10 @@ require (
 	go.opentelemetry.io/otel/trace v1.36.0 // indirect
 	go.yaml.in/yaml/v2 v2.4.2 // indirect
 	go4.org v0.0.0-20201209231011-d4a079459e60 // indirect
-	golang.org/x/net v0.42.0 // indirect
-	golang.org/x/sys v0.35.0 // indirect
-	golang.org/x/text v0.27.0 // indirect
-	golang.org/x/tools v0.34.0 // indirect
+	golang.org/x/net v0.47.0 // indirect
+	golang.org/x/sys v0.38.0 // indirect
+	golang.org/x/text v0.31.0 // indirect
+	golang.org/x/tools v0.38.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250728155136-f173205681a0 // indirect
 	google.golang.org/grpc v1.74.2 // indirect
 	google.golang.org/protobuf v1.36.6 // indirect
