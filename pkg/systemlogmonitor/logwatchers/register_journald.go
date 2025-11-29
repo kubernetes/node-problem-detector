@@ -1,5 +1,4 @@
 //go:build journald
-// +build journald
 
 /*
 Copyright 2016 The Kubernetes Authors All rights reserved.
