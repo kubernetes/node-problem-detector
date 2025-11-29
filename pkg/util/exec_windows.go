@@ -17,6 +17,7 @@ limitations under the License.
 package util
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"os/exec"
@@ -27,7 +28,7 @@ import (
 )
 
 // Exec creates a new process with the specified arguments.
-func Exec(name string, arg ...string) *exec.Cmd {
+func Exec(ctx context.Context, name string, arg ...string) *exec.Cmd {
 	// Windows does not handle relative path names in exec very well.
 	name = filepath.Clean(name)
 	cmdArgs := arg
@@ -48,7 +49,7 @@ func Exec(name string, arg ...string) *exec.Cmd {
 		// Run directly.
 	}
 
-	return exec.Command(name, cmdArgs...)
+	return exec.CommandContext(ctx, name, cmdArgs...)
 }
 
 // Powershell creates a new powershell process with the specified arguments
