@@ -132,7 +132,7 @@ func DoWithData[T any](retryableFunc RetryableFuncWithData[T], opts ...Option) (
 		opt(config)
 	}
 
-	if err := config.context.Err(); err != nil {
+	if err := context.Cause(config.context); err != nil {
 		return emptyT, err
 	}
 
@@ -161,9 +161,9 @@ func DoWithData[T any](retryableFunc RetryableFuncWithData[T], opts ...Option) (
 			case <-config.timer.After(delay(config, n, err)):
 			case <-config.context.Done():
 				if config.wrapContextErrorWithLastError {
-					return emptyT, Error{config.context.Err(), lastErr}
+					return emptyT, Error{context.Cause(config.context), lastErr}
 				}
-				return emptyT, config.context.Err()
+				return emptyT, context.Cause(config.context)
 			}
 		}
 	}
@@ -175,8 +175,8 @@ func DoWithData[T any](retryableFunc RetryableFuncWithData[T], opts ...Option) (
 		attemptsForError[err] = attempts
 	}
 
-	shouldRetry := true
-	for shouldRetry {
+shouldRetry:
+	for {
 		t, err := retryableFunc()
 		if err == nil {
 			return t, nil
@@ -194,26 +194,26 @@ func DoWithData[T any](retryableFunc RetryableFuncWithData[T], opts ...Option) (
 			if errors.Is(err, errToCheck) {
 				attempts--
 				attemptsForError[errToCheck] = attempts
-				shouldRetry = shouldRetry && attempts > 0
+				if attempts <= 0 {
+					break shouldRetry
+				}
 			}
 		}
 
 		// if this is last attempt - don't wait
 		if n == config.attempts-1 {
-			break
+			break shouldRetry
 		}
 		n++
 		select {
 		case <-config.timer.After(delay(config, n, err)):
 		case <-config.context.Done():
 			if config.lastErrorOnly {
-				return emptyT, config.context.Err()
+				return emptyT, context.Cause(config.context)
 			}
 
-			return emptyT, append(errorLog, config.context.Err())
+			return emptyT, append(errorLog, context.Cause(config.context))
 		}
-
-		shouldRetry = shouldRetry && n < config.attempts
 	}
 
 	if config.lastErrorOnly {

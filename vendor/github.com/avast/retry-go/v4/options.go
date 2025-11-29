@@ -124,6 +124,8 @@ func BackOffDelay(n uint, _ error, config *Config) time.Duration {
 		config.maxBackOffN = max - uint(math.Floor(math.Log2(float64(config.delay))))
 	}
 
+	n--
+
 	if n > config.maxBackOffN {
 		n = config.maxBackOffN
 	}
@@ -156,6 +158,35 @@ func CombineDelay(delays ...DelayTypeFunc) DelayTypeFunc {
 
 		return time.Duration(total)
 	}
+}
+
+// FullJitterBackoffDelay is a DelayTypeFunc that calculates delay using exponential backoff
+// with full jitter. The delay is a random value between 0 and the current backoff ceiling.
+// Formula: sleep = random_between(0, min(cap, base * 2^attempt))
+// It uses config.Delay as the base delay and config.MaxDelay as the cap.
+func FullJitterBackoffDelay(n uint, err error, config *Config) time.Duration {
+	// Calculate the exponential backoff ceiling for the current attempt
+	backoffCeiling := float64(config.delay) * math.Pow(2, float64(n))
+	currentCap := float64(config.maxDelay)
+
+	// If MaxDelay is set and backoffCeiling exceeds it, cap at MaxDelay
+	if currentCap > 0 && backoffCeiling > currentCap {
+		backoffCeiling = currentCap
+	}
+
+	// Ensure backoffCeiling is at least 0
+	if backoffCeiling < 0 {
+		backoffCeiling = 0
+	}
+
+	// Add jitter: random value between 0 and backoffCeiling
+	// rand.Int63n panics if argument is <= 0
+	if backoffCeiling <= 0 {
+		return 0 // No delay if ceiling is zero or negative
+	}
+
+	jitter := rand.Int63n(int64(backoffCeiling)) // #nosec G404 -- Using math/rand is acceptable for non-security critical jitter.
+	return time.Duration(jitter)
 }
 
 // OnRetry function callback are called each retry

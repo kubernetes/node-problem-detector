@@ -59,7 +59,7 @@ package sdjournal
 // void
 // my_sd_journal_close(void *f, sd_journal *j)
 // {
-//   int (*sd_journal_close)(sd_journal *);
+//   void (*sd_journal_close)(sd_journal *);
 //
 //   sd_journal_close = f;
 //   sd_journal_close(j);
@@ -104,7 +104,7 @@ package sdjournal
 // void
 // my_sd_journal_flush_matches(void *f, sd_journal *j)
 // {
-//   int (*sd_journal_flush_matches)(sd_journal *);
+//   void (*sd_journal_flush_matches)(sd_journal *);
 //
 //   sd_journal_flush_matches = f;
 //   sd_journal_flush_matches(j);
@@ -319,6 +319,7 @@ package sdjournal
 // }
 //
 import "C"
+
 import (
 	"bytes"
 	"errors"
@@ -389,11 +390,9 @@ const (
 	IndefiniteWait time.Duration = 1<<63 - 1
 )
 
-var (
-	// ErrNoTestCursor gets returned when using TestCursor function and cursor
-	// parameter is not the same as the current cursor position.
-	ErrNoTestCursor = errors.New("Cursor parameter is not the same as current position")
-)
+// ErrNoTestCursor gets returned when using TestCursor function and cursor
+// parameter is not the same as the current cursor position.
+var ErrNoTestCursor = errors.New("Cursor parameter is not the same as current position")
 
 // Journal is a Go wrapper of an sd_journal structure.
 type Journal struct {
