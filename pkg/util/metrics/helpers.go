@@ -22,6 +22,7 @@ import (
 
 	pcm "github.com/prometheus/client_model/go"
 	"github.com/prometheus/common/expfmt"
+	"github.com/prometheus/common/model"
 	"go.opencensus.io/tag"
 )
 
@@ -72,7 +73,7 @@ func getTagKeysFromNames(tagNames []string) ([]tag.Key, error) {
 func ParsePrometheusMetrics(metricsText string) ([]Float64MetricRepresentation, error) {
 	var metrics []Float64MetricRepresentation
 
-	var textParser expfmt.TextParser
+	textParser := expfmt.NewTextParser(model.UTF8Validation)
 	metricsText = strings.ReplaceAll(metricsText, "\r", "")
 	metricFamilies, err := textParser.TextToMetricFamilies(strings.NewReader(metricsText))
 	if err != nil {
