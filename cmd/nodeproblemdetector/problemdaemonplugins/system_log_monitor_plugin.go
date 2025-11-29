@@ -1,5 +1,4 @@
 //go:build !disable_system_log_monitor
-// +build !disable_system_log_monitor
 
 /*
 Copyright 2019 The Kubernetes Authors All rights reserved.
