@@ -106,7 +106,7 @@ github.com/coreos/go-systemd/v22/sdjournal
 # github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc
 ## explicit
 github.com/davecgh/go-spew/spew
-# github.com/ebitengine/purego v0.9.0
+# github.com/ebitengine/purego v0.9.1
 ## explicit; go 1.18
 github.com/ebitengine/purego
 github.com/ebitengine/purego/internal/cgo
@@ -293,8 +293,8 @@ github.com/prometheus/prometheus/model/value
 github.com/prometheus/statsd_exporter/pkg/level
 github.com/prometheus/statsd_exporter/pkg/mapper
 github.com/prometheus/statsd_exporter/pkg/mapper/fsm
-# github.com/shirou/gopsutil/v4 v4.25.9
-## explicit; go 1.23.0
+# github.com/shirou/gopsutil/v4 v4.25.11
+## explicit; go 1.24.0
 github.com/shirou/gopsutil/v4/common
 github.com/shirou/gopsutil/v4/cpu
 github.com/shirou/gopsutil/v4/disk
@@ -312,11 +312,11 @@ github.com/spf13/pflag
 github.com/stretchr/testify/assert
 github.com/stretchr/testify/assert/yaml
 github.com/stretchr/testify/require
-# github.com/tklauser/go-sysconf v0.3.15
-## explicit; go 1.23.0
+# github.com/tklauser/go-sysconf v0.3.16
+## explicit; go 1.24.0
 github.com/tklauser/go-sysconf
-# github.com/tklauser/numcpus v0.10.0
-## explicit; go 1.23.0
+# github.com/tklauser/numcpus v0.11.0
+## explicit; go 1.24.0
 github.com/tklauser/numcpus
 # github.com/x448/float16 v0.8.4
 ## explicit; go 1.11
@@ -421,8 +421,8 @@ golang.org/x/oauth2/jwt
 # golang.org/x/sync v0.16.0
 ## explicit; go 1.23.0
 golang.org/x/sync/semaphore
-# golang.org/x/sys v0.35.0
-## explicit; go 1.23.0
+# golang.org/x/sys v0.38.0
+## explicit; go 1.24.0
 golang.org/x/sys/cpu
 golang.org/x/sys/plan9
 golang.org/x/sys/unix
