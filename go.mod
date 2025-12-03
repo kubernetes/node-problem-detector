@@ -1,6 +1,6 @@
 module k8s.io/node-problem-detector
 
-go 1.24.10
+go 1.24.11
 
 require (
 	cloud.google.com/go/compute/metadata v0.8.0

@@ -1,6 +1,6 @@
 module k8s.io/node-problem-detector/test
 
-go 1.24.10
+go 1.24.11
 
 replace k8s.io/node-problem-detector => ../.
 
