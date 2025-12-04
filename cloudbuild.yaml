@@ -8,9 +8,15 @@ options:
   substitution_option: ALLOW_LOOSE
 steps:
   - name: 'gcr.io/cloud-builders/docker'
+    id: linux
     entrypoint: make
     args:
     - push-container
+  - name: 'gcr.io/cloud-builders/docker'
+    id: windows
+    entrypoint: make
+    args:
+    - push-container-windows
 substitutions:
   _GIT_TAG: 'dev'
   _PULL_BASE_REF: 'dev'
