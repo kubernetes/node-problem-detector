@@ -13,7 +13,7 @@
 		{
 			"type": "temporary",
 			"reason": "KubeletStart",
-			"pattern": "Started (Kubernetes kubelet|kubelet.service|kubelet.service - Kubernetes kubelet)."
+			"pattern": "Started (Kubernetes kubelet|kubelet.service|kubelet.service - Kubernetes kubelet|kubelet.service - kubelet: The Kubernetes Node Agent)."
 		},
 		{
 			"type": "temporary",
