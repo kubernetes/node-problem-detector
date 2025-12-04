@@ -304,7 +304,7 @@ push-container: build-container
 
 push-container-windows: build-container-windows
 	# Build should be cached from build-container
-	docker buildx build --push --platform windows/amdd64 $(IMAGE_TAGS_WINDOWS) -f Dockerfile.windows .
+	docker buildx build --push --platform windows/amd64 $(IMAGE_TAGS_WINDOWS) -f Dockerfile.windows .
 
 push-tar: build-tar
 	gsutil cp $(TARBALL) $(UPLOAD_PATH)/node-problem-detector/
