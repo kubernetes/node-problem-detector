@@ -5,7 +5,7 @@
 # Must override builder-base, not builder, since the latter is referred to later in the file and so must not be
 # directly replaced. See here, and note that "stage" parameter mentioned there has been renamed to
 # "build-context": https://github.com/docker/buildx/pull/904#issuecomment-1005871838
-FROM golang:1.24.11-bookworm@sha256:07a0d01bb30782aa8a2d2a2cdc03ea677a0546a5bf35211bb7191829b7c44f59 AS builder-base
+FROM golang:1.25.5-bookworm@sha256:5117d68695f57faa6c2b3a49a6f3187ec1f66c75d5b080e4360bfe4c1ada398c AS builder-base
 FROM --platform=$BUILDPLATFORM builder-base AS builder
 
 ARG TARGETARCH
