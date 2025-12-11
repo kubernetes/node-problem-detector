@@ -407,6 +407,173 @@ func TestGenerateStatusForMetrics(t *testing.T) {
 	}
 }
 
+func TestGenerateStatusForEvents(t *testing.T) {
+	for c, test := range []struct {
+		name     string
+		rule     logtypes.Rule
+		expected *types.Status
+		logs     []*logtypes.Log
+	}{
+		{
+			name: "without matching group",
+			rule: logtypes.Rule{
+				Type:    types.Temp,
+				Reason:  "NvidiaGPUXid",
+				Pattern: "NVRM: Xid \\(PCI:[^)]+\\): \\d+,.*",
+			},
+			logs: []*logtypes.Log{
+				{
+					Timestamp: time.Unix(1000, 1000),
+					Message:   "[...] NVRM: Xid (PCI:0000:00:00.0): 45, Ch 00000010",
+				},
+			},
+			expected: &types.Status{
+				Source: testSource,
+				Events: []types.Event{{
+					Severity:  types.Warn,
+					Timestamp: time.Unix(1000, 1000),
+					Reason:    "NvidiaGPUXid",
+					Message:   "[...] NVRM: Xid (PCI:0000:00:00.0): 45, Ch 00000010",
+				}},
+			},
+		},
+		{
+			name: "one matching group",
+			rule: logtypes.Rule{
+				Type:    types.Temp,
+				Reason:  "NvidiaGPUXid%s",
+				Pattern: "NVRM: Xid \\(PCI:[^)]+\\): (\\d+),.*",
+			},
+			logs: []*logtypes.Log{
+				{
+					Timestamp: time.Unix(1000, 1000),
+					Message:   "[...] NVRM: Xid (PCI:0000:00:00.0): 45, Ch 00000010",
+				},
+			},
+			expected: &types.Status{
+				Source: testSource,
+				Events: []types.Event{{
+					Severity:  types.Warn,
+					Timestamp: time.Unix(1000, 1000),
+					Reason:    "NvidiaGPUXid45",
+					Message:   "[...] NVRM: Xid (PCI:0000:00:00.0): 45, Ch 00000010",
+				}},
+			},
+		},
+		{
+			name: "two matching groups",
+			rule: logtypes.Rule{
+				Type:    types.Temp,
+				Reason:  "NvidiaGPUXid%s, Ch%s",
+				Pattern: "NVRM: Xid \\(PCI:[^)]+\\): (\\d+), Ch (\\d+).*",
+			},
+			logs: []*logtypes.Log{
+				{
+					Timestamp: time.Unix(1000, 1000),
+					Message:   "[...] NVRM: Xid (PCI:0000:00:00.0): 45, Ch 00000010",
+				},
+			},
+			expected: &types.Status{
+				Source: testSource,
+				Events: []types.Event{{
+					Severity:  types.Warn,
+					Timestamp: time.Unix(1000, 1000),
+					Reason:    "NvidiaGPUXid45, Ch00000010",
+					Message:   "[...] NVRM: Xid (PCI:0000:00:00.0): 45, Ch 00000010",
+				}},
+			},
+		},
+		{
+			name: "not enough matching groups 1",
+			rule: logtypes.Rule{
+				Type:    types.Temp,
+				Reason:  "NvidiaGPUXid%s, Ch%s",
+				Pattern: "NVRM: Xid \\(PCI:[^)]+\\): (\\d+),.*",
+			},
+			logs: []*logtypes.Log{
+				{
+					Timestamp: time.Unix(1000, 1000),
+					Message:   "[...] NVRM: Xid (PCI:0000:00:00.0): 45, Ch 00000010",
+				},
+			},
+			expected: nil,
+		},
+		{
+			name: "not enough matching groups 2",
+			rule: logtypes.Rule{
+				Type:    types.Temp,
+				Reason:  "NvidiaGPUXid%s",
+				Pattern: "NVRM: Xid \\(PCI:[^)]+\\): \\d+,.*",
+			},
+			logs: []*logtypes.Log{
+				{
+					Timestamp: time.Unix(1000, 1000),
+					Message:   "[...] NVRM: Xid (PCI:0000:00:00.0): 45, Ch 00000010",
+				},
+			},
+			expected: nil,
+		},
+		{
+			name: "indexed matching groups",
+			rule: logtypes.Rule{
+				Type:    types.Temp,
+				Reason:  "NvidiaGPUXid%[1]s, Ch%[2]s",
+				Pattern: "NVRM: Xid \\(PCI:[^)]+\\): (\\d+), Ch (\\d+).*",
+			},
+			logs: []*logtypes.Log{
+				{
+					Timestamp: time.Unix(1000, 1000),
+					Message:   "[...] NVRM: Xid (PCI:0000:00:00.0): 45, Ch 00000010",
+				},
+			},
+			expected: &types.Status{
+				Source: testSource,
+				Events: []types.Event{{
+					Severity:  types.Warn,
+					Timestamp: time.Unix(1000, 1000),
+					Reason:    "NvidiaGPUXid45, Ch00000010",
+					Message:   "[...] NVRM: Xid (PCI:0000:00:00.0): 45, Ch 00000010",
+				}},
+			},
+		},
+		{
+			name: "using matching groups in Pattern but not in Reason",
+			rule: logtypes.Rule{
+				Type:    types.Temp,
+				Reason:  "OOMKilling",
+				Pattern: "Killed process \\d+ (.+) total-vm:\\d+kB, anon-rss:\\d+kB, file-rss:\\d+kB.*",
+			},
+			logs: []*logtypes.Log{
+				{
+					Timestamp: time.Unix(1000, 1000),
+					Message:   "kernel: Killed process 13357 (mysqld), UID 27, total-vm:4977676kB, anon-rss:3256736kB, file-rss:0kB, shmem-rss:0kB",
+				},
+			},
+			expected: &types.Status{
+				Source: testSource,
+				Events: []types.Event{{
+					Severity:  types.Warn,
+					Timestamp: time.Unix(1000, 1000),
+					Reason:    "OOMKilling",
+					Message:   "kernel: Killed process 13357 (mysqld), UID 27, total-vm:4977676kB, anon-rss:3256736kB, file-rss:0kB, shmem-rss:0kB",
+				}},
+			},
+		},
+	} {
+		l := &logMonitor{
+			config: MonitorConfig{
+				Source: testSource,
+			},
+		}
+		(&l.config).ApplyDefaultConfiguration()
+		got := l.generateStatus(test.logs, test.rule)
+
+		if !reflect.DeepEqual(test.expected, got) {
+			t.Errorf("case %d %s: expected status %+v, got %+v", c+1, test.name, test.expected, got)
+		}
+	}
+}
+
 func TestInitializeProblemMetricsOrDie(t *testing.T) {
 	testCases := []struct {
 		name            string
