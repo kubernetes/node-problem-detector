@@ -22,12 +22,21 @@ import (
 	"time"
 
 	"github.com/euank/go-kmsg-parser/kmsgparser"
-	"k8s.io/klog/v2"
+	klog "k8s.io/klog/v2"
 
 	"k8s.io/node-problem-detector/pkg/systemlogmonitor/logwatchers/types"
 	logtypes "k8s.io/node-problem-detector/pkg/systemlogmonitor/types"
 	"k8s.io/node-problem-detector/pkg/util"
 	"k8s.io/node-problem-detector/pkg/util/tomb"
+)
+
+const (
+	// retryDelay is the time to wait before attempting to restart the kmsg parser.
+	retryDelay = 5 * time.Second
+
+	// RestartOnErrorKey is the configuration key to enable restarting
+	// the kmsg parser when the channel closes due to an error.
+	RestartOnErrorKey = "restartOnError"
 )
 
 type kernelLogWatcher struct {
@@ -83,6 +92,12 @@ func (k *kernelLogWatcher) Stop() {
 	k.tomb.Stop()
 }
 
+// restartOnError checks if the restart on error configuration is enabled.
+func (k *kernelLogWatcher) restartOnError() bool {
+	value, exists := k.cfg.PluginConfig[RestartOnErrorKey]
+	return exists && value == "true"
+}
+
 // watchLoop is the main watch loop of kernel log watcher.
 func (k *kernelLogWatcher) watchLoop() {
 	kmsgs := k.kmsgParser.Parse()
@@ -102,7 +117,28 @@ func (k *kernelLogWatcher) watchLoop() {
 		case msg, ok := <-kmsgs:
 			if !ok {
 				klog.Error("Kmsg channel closed")
-				return
+
+				// Only attempt to restart if configured to do so
+				if !k.restartOnError() {
+					klog.Infof("Restart on error not enabled, stopping watcher")
+					return
+				}
+
+				klog.Infof("Attempting to restart kmsg parser")
+
+				// Close the old parser
+				if err := k.kmsgParser.Close(); err != nil {
+					klog.Errorf("Failed to close kmsg parser: %v", err)
+				}
+
+				// Try to restart with backoff
+				var restarted bool
+				kmsgs, restarted = k.retryCreateParser()
+				if !restarted {
+					// Stopping was signaled
+					return
+				}
+				continue
 			}
 			klog.V(5).Infof("got kernel message: %+v", msg)
 			if msg.Message == "" {
@@ -120,5 +156,28 @@ func (k *kernelLogWatcher) watchLoop() {
 				Timestamp: msg.Timestamp,
 			}
 		}
+	}
+}
+
+// retryCreateParser attempts to create a new kmsg parser.
+// It returns the new message channel and true on success, or nil and false if stopping was signaled.
+func (k *kernelLogWatcher) retryCreateParser() (<-chan kmsgparser.Message, bool) {
+	for {
+		select {
+		case <-k.tomb.Stopping():
+			klog.Infof("Stop watching kernel log during restart attempt")
+			return nil, false
+		case <-time.After(retryDelay):
+		}
+
+		parser, err := kmsgparser.NewParser()
+		if err != nil {
+			klog.Errorf("Failed to create new kmsg parser, retrying in %v: %v", retryDelay, err)
+			continue
+		}
+
+		k.kmsgParser = parser
+		klog.Infof("Successfully restarted kmsg parser")
+		return parser.Parse(), true
 	}
 }
