@@ -13,8 +13,8 @@ require (
 	golang.org/x/crypto v0.45.0
 	golang.org/x/oauth2 v0.33.0
 	google.golang.org/api v0.256.0
-	k8s.io/apimachinery v0.34.2
-	k8s.io/component-base v0.34.2
+	k8s.io/apimachinery v0.34.3
+	k8s.io/component-base v0.34.3
 	k8s.io/klog/v2 v2.130.1
 	k8s.io/node-problem-detector v1.34.0
 	sigs.k8s.io/boskos v0.0.0-20250922191614-14f95fc7cd0b
