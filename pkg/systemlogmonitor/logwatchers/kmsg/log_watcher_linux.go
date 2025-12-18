@@ -120,7 +120,6 @@ func (k *kernelLogWatcher) watchLoop() {
 
 				// Only attempt to restart if configured to do so
 				if !k.restartOnError() {
-					klog.Infof("Restart on error not enabled, stopping watcher")
 					return
 				}
 
@@ -131,7 +130,7 @@ func (k *kernelLogWatcher) watchLoop() {
 					klog.Errorf("Failed to close kmsg parser: %v", err)
 				}
 
-				// Try to restart with backoff
+				// Try to restart
 				var restarted bool
 				kmsgs, restarted = k.retryCreateParser()
 				if !restarted {
