@@ -67,8 +67,10 @@ TARBALL=$(NPD_NAME_VERSION).tar.gz
 IMAGE_TAGS=--tag $(REGISTRY)/node-problem-detector:$(TAG)
 IMAGE_TAGS_WINDOWS=--tag $(REGISTRY)/node-problem-detector-windows:$(TAG)
 ifeq ($(REGISTRY), gcr.io/k8s-staging-npd)
+ifeq (,$(findstring heads,$(BRANCH)))
   IMAGE_TAGS+= --tag $(REGISTRY)/node-problem-detector:$(BRANCH)
   IMAGE_TAGS_WINDOWS+= --tag $(REGISTRY)/node-problem-detector-windows:$(BRANCH)
+endif
 endif
 
 # ENABLE_JOURNALD enables build journald support or not. Building journald
