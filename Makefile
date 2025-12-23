@@ -323,12 +323,12 @@ build-in-docker: clean docker-builder
 		-v `pwd`:/gopath/src/k8s.io/node-problem-detector/ npd-builder:latest bash \
 		-c 'cd /gopath/src/k8s.io/node-problem-detector/ && make build-binaries'
 
-push-container: build-container
-	# Build should be cached from build-container
+push-container: clean Dockerfile
+	docker buildx create --platform $(DOCKER_PLATFORMS) --use
 	docker buildx build --push --platform $(DOCKER_PLATFORMS) $(IMAGE_TAGS) --build-arg LOGCOUNTER=$(LOGCOUNTER) .
 
-push-container-windows: build-container-windows
-	# Build should be cached from build-container
+push-container-windows: clean Dockerfile.windows
+	docker buildx create --platform windows/amd64 --use
 	docker buildx build --push --platform windows/amd64 $(IMAGE_TAGS_WINDOWS) -f Dockerfile.windows .
 
 push-tar: build-tar
