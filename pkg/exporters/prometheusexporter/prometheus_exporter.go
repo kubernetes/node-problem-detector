@@ -22,6 +22,7 @@ import (
 	"strconv"
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/prometheus/otlptranslator"
 	"go.opentelemetry.io/otel/exporters/prometheus"
 	"k8s.io/klog/v2"
 
@@ -39,14 +40,13 @@ func NewExporterOrDie(npdo *options.NodeProblemDetectorOptions) types.Exporter {
 	}
 
 	addr := net.JoinHostPort(npdo.PrometheusServerAddress, strconv.Itoa(npdo.PrometheusServerPort))
-	// Use options to prevent OpenTelemetry from modifying metric names:
-	// - WithoutUnits: prevents adding unit suffixes like "_ratio" to metric names
-	// - WithoutCounterSuffixes: prevents adding "_total" suffix to counters
-	// - WithoutScopeInfo: prevents adding otel_scope_* labels to metrics
+	// Use UnderscoreEscapingWithoutSuffixes translation strategy to:
+	// - Translate metric/label name characters to underscores (standard Prometheus behavior)
+	// - NOT append suffixes like "_total" for counters or "_ratio" for gauges
+	// Also disable scope info to prevent adding otel_scope_* labels to metrics.
 	// This ensures backward compatibility with existing metric names.
 	exporter, err := prometheus.New(
-		prometheus.WithoutUnits(),
-		prometheus.WithoutCounterSuffixes(),
+		prometheus.WithTranslationStrategy(otlptranslator.UnderscoreEscapingWithoutSuffixes),
 		prometheus.WithoutScopeInfo(),
 	)
 	if err != nil {
