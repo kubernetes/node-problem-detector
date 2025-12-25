@@ -66,6 +66,7 @@ func getAttributeKeysFromNames(tagNames []string) []attribute.Key {
 // ParsePrometheusMetrics parses Prometheus formatted metrics into metrics under Float64MetricRepresentation.
 //
 // Note: Prometheus's go library stores all counter/gauge-typed metric values under float64.
+// Note: Only COUNTER and GAUGE metric types are parsed. Other types (SUMMARY, HISTOGRAM, UNTYPED) are skipped.
 func ParsePrometheusMetrics(metricsText string) ([]Float64MetricRepresentation, error) {
 	var metrics []Float64MetricRepresentation
 
@@ -90,8 +91,9 @@ func ParsePrometheusMetrics(metricsText string) ([]Float64MetricRepresentation, 
 			case pcm.MetricType_GAUGE:
 				value = *metric.Gauge.Value
 			default:
-				return metrics, fmt.Errorf("unexpected MetricType %s for metric %s",
-					pcm.MetricType_name[int32(*metricFamily.Type)], *metricFamily.Name)
+				// Skip unsupported metric types (SUMMARY, HISTOGRAM, UNTYPED, GAUGE_HISTOGRAM)
+				// These are typically Go runtime metrics and not NPD-specific metrics
+				continue
 			}
 
 			metrics = append(metrics, Float64MetricRepresentation{*metricFamily.Name, labels, value})
