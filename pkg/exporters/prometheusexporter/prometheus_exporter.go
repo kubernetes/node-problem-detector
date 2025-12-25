@@ -39,7 +39,16 @@ func NewExporterOrDie(npdo *options.NodeProblemDetectorOptions) types.Exporter {
 	}
 
 	addr := net.JoinHostPort(npdo.PrometheusServerAddress, strconv.Itoa(npdo.PrometheusServerPort))
-	exporter, err := prometheus.New()
+	// Use options to prevent OpenTelemetry from modifying metric names:
+	// - WithoutUnits: prevents adding unit suffixes like "_ratio" to metric names
+	// - WithoutCounterSuffixes: prevents adding "_total" suffix to counters
+	// - WithoutScopeInfo: prevents adding otel_scope_* labels to metrics
+	// This ensures backward compatibility with existing metric names.
+	exporter, err := prometheus.New(
+		prometheus.WithoutUnits(),
+		prometheus.WithoutCounterSuffixes(),
+		prometheus.WithoutScopeInfo(),
+	)
 	if err != nil {
 		klog.Fatalf("Failed to create Prometheus exporter: %v", err)
 	}
