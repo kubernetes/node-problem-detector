@@ -26,13 +26,11 @@ import (
 )
 
 var (
-	meterProvider     *sdkmetric.MeterProvider
-	meterProviderOnce sync.Once
-	meter             metric.Meter
-	meterOnce         sync.Once
-	readers           []sdkmetric.Reader
-	resources         []*resource.Resource
-	readersMutex      sync.Mutex
+	meterProvider *sdkmetric.MeterProvider
+	readers       []sdkmetric.Reader
+	resources     []*resource.Resource
+	readersMutex  sync.Mutex
+	initialized   bool
 )
 
 // AddReader adds a metric reader to be used when setting up the meter provider.
@@ -54,47 +52,50 @@ func AddReaderWithResource(reader sdkmetric.Reader, res *resource.Resource) {
 
 // SetupMeterProvider initializes the global meter provider with all registered readers.
 // This should be called after all readers have been added.
+// Can be called multiple times safely - only the first call takes effect.
 func SetupMeterProvider() {
-	meterProviderOnce.Do(func() {
-		readersMutex.Lock()
-		defer readersMutex.Unlock()
+	readersMutex.Lock()
+	defer readersMutex.Unlock()
 
-		opts := make([]sdkmetric.Option, 0, len(readers)+1)
-		for _, reader := range readers {
-			opts = append(opts, sdkmetric.WithReader(reader))
-		}
+	if initialized {
+		return
+	}
+	initialized = true
 
-		// Merge all resources if any
-		if len(resources) > 0 {
-			merged := resources[0]
-			for i := 1; i < len(resources); i++ {
-				var err error
-				merged, err = resource.Merge(merged, resources[i])
-				if err != nil {
-					// If merge fails, continue with what we have
-					continue
-				}
+	opts := make([]sdkmetric.Option, 0, len(readers)+1)
+	for _, reader := range readers {
+		opts = append(opts, sdkmetric.WithReader(reader))
+	}
+
+	// Merge all resources if any
+	if len(resources) > 0 {
+		merged := resources[0]
+		for i := 1; i < len(resources); i++ {
+			var err error
+			merged, err = resource.Merge(merged, resources[i])
+			if err != nil {
+				// If merge fails, continue with what we have
+				continue
 			}
-			opts = append(opts, sdkmetric.WithResource(merged))
 		}
+		opts = append(opts, sdkmetric.WithResource(merged))
+	}
 
-		meterProvider = sdkmetric.NewMeterProvider(opts...)
-		otel.SetMeterProvider(meterProvider)
-	})
+	meterProvider = sdkmetric.NewMeterProvider(opts...)
+	otel.SetMeterProvider(meterProvider)
 }
 
 // GetMeter returns the global meter for creating metrics.
+// Note: Metrics created before SetupMeterProvider() is called will use a no-op meter
+// and won't be exported. Always call SetupMeterProvider() after adding all readers.
 func GetMeter() metric.Meter {
-	meterOnce.Do(func() {
-		// Ensure meter provider is set up
-		SetupMeterProvider()
-		meter = otel.Meter("k8s.io/node-problem-detector")
-	})
-	return meter
+	return otel.Meter("k8s.io/node-problem-detector")
 }
 
 // ShutdownMeterProvider gracefully shuts down the meter provider.
 func ShutdownMeterProvider() error {
+	readersMutex.Lock()
+	defer readersMutex.Unlock()
 	if meterProvider != nil {
 		return meterProvider.Shutdown(context.Background())
 	}
