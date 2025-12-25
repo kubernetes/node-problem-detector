@@ -23,18 +23,18 @@ import (
 	pcm "github.com/prometheus/client_model/go"
 	"github.com/prometheus/common/expfmt"
 	"github.com/prometheus/common/model"
-	"go.opencensus.io/tag"
+	"go.opentelemetry.io/otel/attribute"
 )
 
 var (
-	tagMap      map[string]tag.Key
-	tagMapMutex sync.RWMutex
+	attributeKeyMap      map[string]attribute.Key
+	attributeKeyMapMutex sync.RWMutex
 )
 
 func init() {
-	tagMapMutex.Lock()
-	tagMap = make(map[string]tag.Key)
-	tagMapMutex.Unlock()
+	attributeKeyMapMutex.Lock()
+	attributeKeyMap = make(map[string]attribute.Key)
+	attributeKeyMapMutex.Unlock()
 }
 
 // Aggregation defines how measurements should be aggregated into data points.
@@ -47,24 +47,20 @@ const (
 	Sum Aggregation = "Sum"
 )
 
-func getTagKeysFromNames(tagNames []string) ([]tag.Key, error) {
-	tagMapMutex.Lock()
-	defer tagMapMutex.Unlock()
+func getAttributeKeysFromNames(tagNames []string) []attribute.Key {
+	attributeKeyMapMutex.Lock()
+	defer attributeKeyMapMutex.Unlock()
 
-	var tagKeys []tag.Key
-	var err error
+	var attrKeys []attribute.Key
 	for _, tagName := range tagNames {
-		tagKey, ok := tagMap[tagName]
+		attrKey, ok := attributeKeyMap[tagName]
 		if !ok {
-			tagKey, err = tag.NewKey(tagName)
-			if err != nil {
-				return []tag.Key{}, fmt.Errorf("failed to create tag %q: %v", tagName, err)
-			}
-			tagMap[tagName] = tagKey
+			attrKey = attribute.Key(tagName)
+			attributeKeyMap[tagName] = attrKey
 		}
-		tagKeys = append(tagKeys, tagKey)
+		attrKeys = append(attrKeys, attrKey)
 	}
-	return tagKeys, nil
+	return attrKeys
 }
 
 // ParsePrometheusMetrics parses Prometheus formatted metrics into metrics under Float64MetricRepresentation.
