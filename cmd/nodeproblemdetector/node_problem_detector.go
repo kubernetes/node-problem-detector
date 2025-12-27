@@ -30,6 +30,7 @@ import (
 	"k8s.io/node-problem-detector/pkg/problemdaemon"
 	"k8s.io/node-problem-detector/pkg/problemdetector"
 	"k8s.io/node-problem-detector/pkg/types"
+	"k8s.io/node-problem-detector/pkg/util/metrics"
 	"k8s.io/node-problem-detector/pkg/version"
 )
 
@@ -43,13 +44,8 @@ func npdMain(ctx context.Context, npdo *options.NodeProblemDetectorOptions) erro
 	npdo.SetConfigFromDeprecatedOptionsOrDie()
 	npdo.ValidOrDie()
 
-	// Initialize problem daemons.
-	problemDaemons := problemdaemon.NewProblemDaemons(npdo.MonitorConfigPaths)
-	if len(problemDaemons) == 0 {
-		klog.Fatalf("No problem daemon is configured")
-	}
-
-	// Initialize exporters.
+	// Initialize exporters first so that metric readers are registered before
+	// the meter provider is set up.
 	defaultExporters := []types.Exporter{}
 	if ke := k8sexporter.NewExporterOrDie(ctx, npdo); ke != nil {
 		defaultExporters = append(defaultExporters, ke)
@@ -68,6 +64,16 @@ func npdMain(ctx context.Context, npdo *options.NodeProblemDetectorOptions) erro
 
 	if len(npdExporters) == 0 {
 		klog.Fatalf("No exporter is successfully setup")
+	}
+
+	// Setup the meter provider after all exporters have registered their readers.
+	// This ensures metrics are properly exported to all configured backends.
+	metrics.SetupMeterProvider()
+
+	// Initialize problem daemons after meter provider is set up.
+	problemDaemons := problemdaemon.NewProblemDaemons(npdo.MonitorConfigPaths)
+	if len(problemDaemons) == 0 {
+		klog.Fatalf("No problem daemon is configured")
 	}
 
 	// Initialize NPD core.

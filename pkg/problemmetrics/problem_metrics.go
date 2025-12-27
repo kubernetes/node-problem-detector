@@ -29,10 +29,34 @@ import (
 // GlobalProblemMetricsManager is a singleton of ProblemMetricsManager,
 // which should be used to manage all problem-converted metrics across all
 // problem daemons.
-var GlobalProblemMetricsManager *ProblemMetricsManager
+var GlobalProblemMetricsManager ProblemMetricsManagerInterface = &lazyProblemMetricsManager{}
 
-func init() {
-	GlobalProblemMetricsManager = NewProblemMetricsManagerOrDie()
+// ProblemMetricsManagerInterface defines the interface for problem metrics management.
+type ProblemMetricsManagerInterface interface {
+	IncrementProblemCounter(reason string, count int64) error
+	SetProblemGauge(problemType string, reason string, value bool) error
+}
+
+// lazyProblemMetricsManager wraps ProblemMetricsManager with lazy initialization.
+type lazyProblemMetricsManager struct {
+	once    sync.Once
+	manager *ProblemMetricsManager
+}
+
+func (l *lazyProblemMetricsManager) init() {
+	l.once.Do(func() {
+		l.manager = NewProblemMetricsManagerOrDie()
+	})
+}
+
+func (l *lazyProblemMetricsManager) IncrementProblemCounter(reason string, count int64) error {
+	l.init()
+	return l.manager.IncrementProblemCounter(reason, count)
+}
+
+func (l *lazyProblemMetricsManager) SetProblemGauge(problemType string, reason string, value bool) error {
+	l.init()
+	return l.manager.SetProblemGauge(problemType, reason, value)
 }
 
 // ProblemMetricsManager manages problem-converted metrics.

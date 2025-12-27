@@ -17,24 +17,28 @@ limitations under the License.
 package stackdriverexporter
 
 import (
+	"context"
 	"encoding/json"
 	"os"
 	"path/filepath"
 	"reflect"
 	"time"
 
-	"contrib.go.opencensus.io/exporter/stackdriver"
-	monitoredres "contrib.go.opencensus.io/exporter/stackdriver/monitoredresource"
+	gcpmetricexporter "github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/metric"
 	"github.com/avast/retry-go/v4"
 	"github.com/spf13/pflag"
-	"go.opencensus.io/stats/view"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/sdk/metric"
+	"go.opentelemetry.io/otel/sdk/metric/metricdata"
+	"go.opentelemetry.io/otel/sdk/resource"
+	semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
 	"google.golang.org/api/option"
 	"k8s.io/klog/v2"
 
 	"k8s.io/node-problem-detector/pkg/exporters"
 	seconfig "k8s.io/node-problem-detector/pkg/exporters/stackdriver/config"
 	"k8s.io/node-problem-detector/pkg/types"
-	"k8s.io/node-problem-detector/pkg/util/metrics"
+	npdmetrics "k8s.io/node-problem-detector/pkg/util/metrics"
 )
 
 func init() {
@@ -47,57 +51,58 @@ func init() {
 
 const exporterName = "stackdriver"
 
-var NPDMetricToSDMetric = map[metrics.MetricID]string{
-	metrics.CPURunnableTaskCountID:  "compute.googleapis.com/guest/cpu/runnable_task_count",
-	metrics.CPUUsageTimeID:          "compute.googleapis.com/guest/cpu/usage_time",
-	metrics.CPULoad1m:               "compute.googleapis.com/guest/cpu/load_1m",
-	metrics.CPULoad5m:               "compute.googleapis.com/guest/cpu/load_5m",
-	metrics.CPULoad15m:              "compute.googleapis.com/guest/cpu/load_15m",
-	metrics.DiskAvgQueueLenID:       "compute.googleapis.com/guest/disk/queue_length",
-	metrics.DiskBytesUsedID:         "compute.googleapis.com/guest/disk/bytes_used",
-	metrics.DiskPercentUsedID:       "compute.googleapis.com/guest/disk/percent_used",
-	metrics.DiskIOTimeID:            "compute.googleapis.com/guest/disk/io_time",
-	metrics.DiskMergedOpsCountID:    "compute.googleapis.com/guest/disk/merged_operation_count",
-	metrics.DiskOpsBytesID:          "compute.googleapis.com/guest/disk/operation_bytes_count",
-	metrics.DiskOpsCountID:          "compute.googleapis.com/guest/disk/operation_count",
-	metrics.DiskOpsTimeID:           "compute.googleapis.com/guest/disk/operation_time",
-	metrics.DiskWeightedIOID:        "compute.googleapis.com/guest/disk/weighted_io_time",
-	metrics.HostUptimeID:            "compute.googleapis.com/guest/system/uptime",
-	metrics.MemoryAnonymousUsedID:   "compute.googleapis.com/guest/memory/anonymous_used",
-	metrics.MemoryBytesUsedID:       "compute.googleapis.com/guest/memory/bytes_used",
-	metrics.MemoryDirtyUsedID:       "compute.googleapis.com/guest/memory/dirty_used",
-	metrics.MemoryPageCacheUsedID:   "compute.googleapis.com/guest/memory/page_cache_used",
-	metrics.MemoryUnevictableUsedID: "compute.googleapis.com/guest/memory/unevictable_used",
-	metrics.MemoryPercentUsedID:     "compute.googleapis.com/guest/memory/percent_used",
-	metrics.ProblemCounterID:        "compute.googleapis.com/guest/system/problem_count",
-	metrics.ProblemGaugeID:          "compute.googleapis.com/guest/system/problem_state",
-	metrics.OSFeatureID:             "compute.googleapis.com/guest/system/os_feature_enabled",
-	metrics.SystemProcessesTotal:    "kubernetes.io/internal/node/guest/system/processes_total",
-	metrics.SystemProcsRunning:      "kubernetes.io/internal/node/guest/system/procs_running",
-	metrics.SystemProcsBlocked:      "kubernetes.io/internal/node/guest/system/procs_blocked",
-	metrics.SystemInterruptsTotal:   "kubernetes.io/internal/node/guest/system/interrupts_total",
-	metrics.SystemCPUStat:           "kubernetes.io/internal/node/guest/system/cpu_stat",
-	metrics.NetDevRxBytes:           "kubernetes.io/internal/node/guest/net/rx_bytes",
-	metrics.NetDevRxPackets:         "kubernetes.io/internal/node/guest/net/rx_packets",
-	metrics.NetDevRxErrors:          "kubernetes.io/internal/node/guest/net/rx_errors",
-	metrics.NetDevRxDropped:         "kubernetes.io/internal/node/guest/net/rx_dropped",
-	metrics.NetDevRxFifo:            "kubernetes.io/internal/node/guest/net/rx_fifo",
-	metrics.NetDevRxFrame:           "kubernetes.io/internal/node/guest/net/rx_frame",
-	metrics.NetDevRxCompressed:      "kubernetes.io/internal/node/guest/net/rx_compressed",
-	metrics.NetDevRxMulticast:       "kubernetes.io/internal/node/guest/net/rx_multicast",
-	metrics.NetDevTxBytes:           "kubernetes.io/internal/node/guest/net/tx_bytes",
-	metrics.NetDevTxPackets:         "kubernetes.io/internal/node/guest/net/tx_packets",
-	metrics.NetDevTxErrors:          "kubernetes.io/internal/node/guest/net/tx_errors",
-	metrics.NetDevTxDropped:         "kubernetes.io/internal/node/guest/net/tx_dropped",
-	metrics.NetDevTxFifo:            "kubernetes.io/internal/node/guest/net/tx_fifo",
-	metrics.NetDevTxCollisions:      "kubernetes.io/internal/node/guest/net/tx_collisions",
-	metrics.NetDevTxCarrier:         "kubernetes.io/internal/node/guest/net/tx_carrier",
-	metrics.NetDevTxCompressed:      "kubernetes.io/internal/node/guest/net/tx_compressed",
+var NPDMetricToSDMetric = map[npdmetrics.MetricID]string{
+	npdmetrics.CPURunnableTaskCountID:  "compute.googleapis.com/guest/cpu/runnable_task_count",
+	npdmetrics.CPUUsageTimeID:          "compute.googleapis.com/guest/cpu/usage_time",
+	npdmetrics.CPULoad1m:               "compute.googleapis.com/guest/cpu/load_1m",
+	npdmetrics.CPULoad5m:               "compute.googleapis.com/guest/cpu/load_5m",
+	npdmetrics.CPULoad15m:              "compute.googleapis.com/guest/cpu/load_15m",
+	npdmetrics.DiskAvgQueueLenID:       "compute.googleapis.com/guest/disk/queue_length",
+	npdmetrics.DiskBytesUsedID:         "compute.googleapis.com/guest/disk/bytes_used",
+	npdmetrics.DiskPercentUsedID:       "compute.googleapis.com/guest/disk/percent_used",
+	npdmetrics.DiskIOTimeID:            "compute.googleapis.com/guest/disk/io_time",
+	npdmetrics.DiskMergedOpsCountID:    "compute.googleapis.com/guest/disk/merged_operation_count",
+	npdmetrics.DiskOpsBytesID:          "compute.googleapis.com/guest/disk/operation_bytes_count",
+	npdmetrics.DiskOpsCountID:          "compute.googleapis.com/guest/disk/operation_count",
+	npdmetrics.DiskOpsTimeID:           "compute.googleapis.com/guest/disk/operation_time",
+	npdmetrics.DiskWeightedIOID:        "compute.googleapis.com/guest/disk/weighted_io_time",
+	npdmetrics.HostUptimeID:            "compute.googleapis.com/guest/system/uptime",
+	npdmetrics.MemoryAnonymousUsedID:   "compute.googleapis.com/guest/memory/anonymous_used",
+	npdmetrics.MemoryBytesUsedID:       "compute.googleapis.com/guest/memory/bytes_used",
+	npdmetrics.MemoryDirtyUsedID:       "compute.googleapis.com/guest/memory/dirty_used",
+	npdmetrics.MemoryPageCacheUsedID:   "compute.googleapis.com/guest/memory/page_cache_used",
+	npdmetrics.MemoryUnevictableUsedID: "compute.googleapis.com/guest/memory/unevictable_used",
+	npdmetrics.MemoryPercentUsedID:     "compute.googleapis.com/guest/memory/percent_used",
+	npdmetrics.ProblemCounterID:        "compute.googleapis.com/guest/system/problem_count",
+	npdmetrics.ProblemGaugeID:          "compute.googleapis.com/guest/system/problem_state",
+	npdmetrics.OSFeatureID:             "compute.googleapis.com/guest/system/os_feature_enabled",
+	npdmetrics.SystemProcessesTotal:    "kubernetes.io/internal/node/guest/system/processes_total",
+	npdmetrics.SystemProcsRunning:      "kubernetes.io/internal/node/guest/system/procs_running",
+	npdmetrics.SystemProcsBlocked:      "kubernetes.io/internal/node/guest/system/procs_blocked",
+	npdmetrics.SystemInterruptsTotal:   "kubernetes.io/internal/node/guest/system/interrupts_total",
+	npdmetrics.SystemCPUStat:           "kubernetes.io/internal/node/guest/system/cpu_stat",
+	npdmetrics.NetDevRxBytes:           "kubernetes.io/internal/node/guest/net/rx_bytes",
+	npdmetrics.NetDevRxPackets:         "kubernetes.io/internal/node/guest/net/rx_packets",
+	npdmetrics.NetDevRxErrors:          "kubernetes.io/internal/node/guest/net/rx_errors",
+	npdmetrics.NetDevRxDropped:         "kubernetes.io/internal/node/guest/net/rx_dropped",
+	npdmetrics.NetDevRxFifo:            "kubernetes.io/internal/node/guest/net/rx_fifo",
+	npdmetrics.NetDevRxFrame:           "kubernetes.io/internal/node/guest/net/rx_frame",
+	npdmetrics.NetDevRxCompressed:      "kubernetes.io/internal/node/guest/net/rx_compressed",
+	npdmetrics.NetDevRxMulticast:       "kubernetes.io/internal/node/guest/net/rx_multicast",
+	npdmetrics.NetDevTxBytes:           "kubernetes.io/internal/node/guest/net/tx_bytes",
+	npdmetrics.NetDevTxPackets:         "kubernetes.io/internal/node/guest/net/tx_packets",
+	npdmetrics.NetDevTxErrors:          "kubernetes.io/internal/node/guest/net/tx_errors",
+	npdmetrics.NetDevTxDropped:         "kubernetes.io/internal/node/guest/net/tx_dropped",
+	npdmetrics.NetDevTxFifo:            "kubernetes.io/internal/node/guest/net/tx_fifo",
+	npdmetrics.NetDevTxCollisions:      "kubernetes.io/internal/node/guest/net/tx_collisions",
+	npdmetrics.NetDevTxCarrier:         "kubernetes.io/internal/node/guest/net/tx_carrier",
+	npdmetrics.NetDevTxCompressed:      "kubernetes.io/internal/node/guest/net/tx_compressed",
 }
 
-func getMetricTypeConversionFunction(customMetricPrefix string) func(*view.View) string {
-	return func(view *view.View) string {
-		viewName := view.Measure.Name()
+// getMetricDescriptorTypeFunc returns a function that maps metric names to GCP metric types.
+func getMetricDescriptorTypeFunc(customMetricPrefix string) func(m metricdata.Metrics) string {
+	return func(m metricdata.Metrics) string {
+		viewName := m.Name
 
 		fallbackMetricType := ""
 		if customMetricPrefix != "" {
@@ -105,7 +110,7 @@ func getMetricTypeConversionFunction(customMetricPrefix string) func(*view.View)
 			fallbackMetricType = filepath.Join(customMetricPrefix, viewName)
 		}
 
-		metricID, ok := metrics.MetricMap.ViewNameToMetricID(viewName)
+		metricID, ok := npdmetrics.MetricMap.ViewNameToMetricID(viewName)
 		if !ok {
 			return fallbackMetricType
 		}
@@ -121,34 +126,45 @@ type stackdriverExporter struct {
 	config seconfig.StackdriverExporterConfig
 }
 
-func (se *stackdriverExporter) setupOpenCensusViewExporterOrDie() {
+func (se *stackdriverExporter) setupOpenTelemetryExporterOrDie() {
 	clientOption := option.WithEndpoint(se.config.APIEndpoint)
-
-	var globalLabels stackdriver.Labels
-	globalLabels.Set("instance_name", se.config.GCEMetadata.InstanceName, "The name of the VM instance")
-
-	viewExporter, err := stackdriver.NewExporter(stackdriver.Options{
-		ProjectID:               se.config.GCEMetadata.ProjectID,
-		MonitoringClientOptions: []option.ClientOption{clientOption},
-		MonitoredResource: &monitoredres.GCEInstance{
-			ProjectID:  se.config.GCEMetadata.ProjectID,
-			InstanceID: se.config.GCEMetadata.InstanceID,
-			Zone:       se.config.GCEMetadata.Zone,
-		},
-		GetMetricType:           getMetricTypeConversionFunction(se.config.CustomMetricPrefix),
-		DefaultMonitoringLabels: &globalLabels,
-	})
-	if err != nil {
-		klog.Fatalf("Failed to create Stackdriver OpenCensus view exporter: %v", err)
-	}
 
 	exportPeriod, err := time.ParseDuration(se.config.ExportPeriod)
 	if err != nil {
 		klog.Fatalf("Failed to parse ExportPeriod %q: %v", se.config.ExportPeriod, err)
 	}
 
-	view.SetReportingPeriod(exportPeriod)
-	view.RegisterExporter(viewExporter)
+	// Create a resource with GCE instance information
+	res, err := resource.New(context.Background(),
+		resource.WithAttributes(
+			semconv.CloudProviderGCP,
+			semconv.CloudPlatformGCPComputeEngine,
+			semconv.CloudAccountID(se.config.GCEMetadata.ProjectID),
+			semconv.CloudAvailabilityZone(se.config.GCEMetadata.Zone),
+			semconv.HostID(se.config.GCEMetadata.InstanceID),
+			semconv.HostName(se.config.GCEMetadata.InstanceName),
+			attribute.String("instance_name", se.config.GCEMetadata.InstanceName),
+		),
+	)
+	if err != nil {
+		klog.Fatalf("Failed to create OpenTelemetry resource: %v", err)
+	}
+
+	exporter, err := gcpmetricexporter.New(
+		gcpmetricexporter.WithProjectID(se.config.GCEMetadata.ProjectID),
+		gcpmetricexporter.WithMonitoringClientOptions(clientOption),
+		gcpmetricexporter.WithMetricDescriptorTypeFormatter(getMetricDescriptorTypeFunc(se.config.CustomMetricPrefix)),
+	)
+	if err != nil {
+		klog.Fatalf("Failed to create Google Cloud Monitoring exporter: %v", err)
+	}
+
+	reader := metric.NewPeriodicReader(exporter,
+		metric.WithInterval(exportPeriod),
+	)
+
+	// Add this reader to the global metrics provider with the resource
+	npdmetrics.AddReaderWithResource(reader, res)
 }
 
 func (se *stackdriverExporter) populateMetadataOrDie() {
@@ -223,7 +239,7 @@ func NewExporterOrDie(clo types.CommandLineOptions) types.Exporter {
 	klog.Infof("Starting Stackdriver exporter %s", options.configPath)
 
 	se.populateMetadataOrDie()
-	se.setupOpenCensusViewExporterOrDie()
+	se.setupOpenTelemetryExporterOrDie()
 
 	return &se
 }

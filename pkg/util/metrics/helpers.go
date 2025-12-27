@@ -23,18 +23,18 @@ import (
 	pcm "github.com/prometheus/client_model/go"
 	"github.com/prometheus/common/expfmt"
 	"github.com/prometheus/common/model"
-	"go.opencensus.io/tag"
+	"go.opentelemetry.io/otel/attribute"
 )
 
 var (
-	tagMap      map[string]tag.Key
-	tagMapMutex sync.RWMutex
+	attributeKeyMap      map[string]attribute.Key
+	attributeKeyMapMutex sync.RWMutex
 )
 
 func init() {
-	tagMapMutex.Lock()
-	tagMap = make(map[string]tag.Key)
-	tagMapMutex.Unlock()
+	attributeKeyMapMutex.Lock()
+	attributeKeyMap = make(map[string]attribute.Key)
+	attributeKeyMapMutex.Unlock()
 }
 
 // Aggregation defines how measurements should be aggregated into data points.
@@ -47,29 +47,26 @@ const (
 	Sum Aggregation = "Sum"
 )
 
-func getTagKeysFromNames(tagNames []string) ([]tag.Key, error) {
-	tagMapMutex.Lock()
-	defer tagMapMutex.Unlock()
+func getAttributeKeysFromNames(tagNames []string) []attribute.Key {
+	attributeKeyMapMutex.Lock()
+	defer attributeKeyMapMutex.Unlock()
 
-	var tagKeys []tag.Key
-	var err error
+	var attrKeys []attribute.Key
 	for _, tagName := range tagNames {
-		tagKey, ok := tagMap[tagName]
+		attrKey, ok := attributeKeyMap[tagName]
 		if !ok {
-			tagKey, err = tag.NewKey(tagName)
-			if err != nil {
-				return []tag.Key{}, fmt.Errorf("failed to create tag %q: %v", tagName, err)
-			}
-			tagMap[tagName] = tagKey
+			attrKey = attribute.Key(tagName)
+			attributeKeyMap[tagName] = attrKey
 		}
-		tagKeys = append(tagKeys, tagKey)
+		attrKeys = append(attrKeys, attrKey)
 	}
-	return tagKeys, nil
+	return attrKeys
 }
 
 // ParsePrometheusMetrics parses Prometheus formatted metrics into metrics under Float64MetricRepresentation.
 //
 // Note: Prometheus's go library stores all counter/gauge-typed metric values under float64.
+// Note: Only COUNTER and GAUGE metric types are parsed. Other types (SUMMARY, HISTOGRAM, UNTYPED) are skipped.
 func ParsePrometheusMetrics(metricsText string) ([]Float64MetricRepresentation, error) {
 	var metrics []Float64MetricRepresentation
 
@@ -94,8 +91,9 @@ func ParsePrometheusMetrics(metricsText string) ([]Float64MetricRepresentation, 
 			case pcm.MetricType_GAUGE:
 				value = *metric.Gauge.Value
 			default:
-				return metrics, fmt.Errorf("unexpected MetricType %s for metric %s",
-					pcm.MetricType_name[int32(*metricFamily.Type)], *metricFamily.Name)
+				// Skip unsupported metric types (SUMMARY, HISTOGRAM, UNTYPED, GAUGE_HISTOGRAM)
+				// These are typically Go runtime metrics and not NPD-specific metrics
+				continue
 			}
 
 			metrics = append(metrics, Float64MetricRepresentation{*metricFamily.Name, labels, value})
