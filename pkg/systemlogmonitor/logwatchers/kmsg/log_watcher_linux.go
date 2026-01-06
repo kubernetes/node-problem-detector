@@ -115,6 +115,12 @@ func (k *kernelLogWatcher) watchLoop() {
 				continue
 			}
 
+			// Discard messages after now, lots of log files are not record year. 1 min cover log write latency
+			if msg.Timestamp.After(time.Now().Add(time.Minute)) {
+				klog.V(5).Infof("Throwing away msg %q after current time: %v < %v", msg.Message, msg.Timestamp, time.Now())
+				continue
+			}
+
 			k.logCh <- &logtypes.Log{
 				Message:   strings.TrimSpace(msg.Message),
 				Timestamp: msg.Timestamp,
