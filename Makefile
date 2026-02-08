@@ -123,7 +123,7 @@ else
 	LOGCOUNTER=*dont-include-log-counter
 endif
 
-GOLANGCI_LINT_VERSION := v2.2.0
+GOLANGCI_LINT_VERSION := v2.6.2
 GOLANGCI_LINT := ./.bin/golangci-lint
 
 lint: $(GOLANGCI_LINT)

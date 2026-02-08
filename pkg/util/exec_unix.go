@@ -19,18 +19,19 @@ limitations under the License.
 package util
 
 import (
+	"context"
 	"fmt"
 	"os/exec"
 	"syscall"
 )
 
 // Exec creates a new process with the specified arguments.
-func Exec(name string, arg ...string) *exec.Cmd {
+func Exec(ctx context.Context, name string, arg ...string) *exec.Cmd {
 	// create a process group
 	sysProcAttr := &syscall.SysProcAttr{
 		Setpgid: true,
 	}
-	cmd := exec.Command(name, arg...)
+	cmd := exec.CommandContext(ctx, name, arg...)
 	cmd.SysProcAttr = sysProcAttr
 	return cmd
 }
