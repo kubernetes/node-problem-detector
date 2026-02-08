@@ -17,6 +17,7 @@ limitations under the License.
 package util
 
 import (
+	"context"
 	"fmt"
 	"runtime"
 	"testing"
@@ -41,10 +42,11 @@ func TestExec(t *testing.T) {
 		}
 	}
 
+	ctx := context.TODO()
 	for _, v := range cmds {
 		args := v
 		t.Run(fmt.Sprintf("%v", args), func(t *testing.T) {
-			cmd := Exec(args[0], args[1:]...)
+			cmd := Exec(ctx, args[0], args[1:]...)
 
 			if err := Kill(cmd); err == nil {
 				t.Error("Kill(cmd) expected to have error because of empty handle, got none")
