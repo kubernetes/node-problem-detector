@@ -20,7 +20,7 @@ COPY . /src/
 WORKDIR /src
 RUN GOARCH=${TARGETARCH} make bin/node-problem-detector bin/health-checker bin/log-counter
 
-FROM registry.k8s.io/build-image/debian-base:bookworm-v1.0.6@sha256:e100119ba6cf265b29957046f178e9374f9a9419133284c9b883e64c5b463d73 AS base
+FROM registry.k8s.io/build-image/debian-base:bookworm-v1.0.7@sha256:368abceecc1308e0913a6fd5ab89a513ee4268becefc2a82dbe616462b29a46b AS base
 
 RUN clean-install util-linux bash libsystemd-dev
 
