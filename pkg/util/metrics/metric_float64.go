@@ -44,8 +44,12 @@ type Float64MetricInterface interface {
 	Record(labelValues map[string]string, value float64) error
 }
 
-// NewFloat64Metric creates a new Float64 metric using OpenTelemetry
+// NewFloat64Metric creates a new Float64 metric using OpenTelemetry, returns nil when name is empty
 func NewFloat64Metric(metricID MetricID, name, description, unit string, aggregation Aggregation, labels []string) (*Float64Metric, error) {
+	if name == "" {
+		return nil, nil
+	}
+
 	meter := otelutil.GetGlobalMeter()
 
 	otelMetric := &OTelFloat64Metric{
