@@ -90,3 +90,14 @@ const MeterName = "node-problem-detector"
 func GetGlobalMeter() metric.Meter {
 	return otel.Meter(MeterName)
 }
+
+// ResetForTesting resets global state for testing purposes
+// This should only be used in tests
+func ResetForTesting() {
+	readersMutex.Lock()
+	defer readersMutex.Unlock()
+
+	globalMeterProvider = nil
+	meterProviderOnce = sync.Once{}
+	readers = nil
+}

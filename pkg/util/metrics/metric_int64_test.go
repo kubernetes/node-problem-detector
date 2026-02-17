@@ -21,7 +21,6 @@ import (
 	"testing"
 
 	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/metric"
 	sdkmetric "go.opentelemetry.io/otel/sdk/metric"
 	"go.opentelemetry.io/otel/sdk/metric/metricdata"
 	"go.opentelemetry.io/otel/sdk/metric/metricdata/metricdatatest"
@@ -30,34 +29,44 @@ import (
 )
 
 func TestGaugeSetValueSemantics(t *testing.T) {
-	// Set up SDK with ManualReader for testing
-	reader := sdkmetric.NewManualReader()
-	provider := sdkmetric.NewMeterProvider(
-		sdkmetric.WithResource(otelutil.GetResource()),
-		sdkmetric.WithReader(reader),
-	)
-	meter := provider.Meter("test")
+	// Reset global state for isolated testing
+	otelutil.ResetForTesting()
 
-	// Create a gauge metric
-	gauge, err := meter.Int64Gauge("test_gauge",
-		metric.WithDescription("Test gauge metric"),
-		metric.WithUnit("1"),
+	// Set up SDK with ManualReader for testing our metrics
+	reader := sdkmetric.NewManualReader()
+
+	// Register reader with our global meter provider for our metrics to use
+	otelutil.AddMetricReader(reader)
+	otelutil.InitializeMeterProvider()
+
+	// Create a gauge using our actual NewInt64Metric function
+	gauge, err := NewInt64Metric(
+		"test_gauge",
+		"test_gauge",
+		"Test gauge metric",
+		"1",
+		LastValue,
+		[]string{"reason", "type"},
 	)
 	if err != nil {
 		t.Fatalf("Failed to create gauge metric: %v", err)
 	}
 
 	ctx := context.Background()
-	attrs1 := []attribute.KeyValue{
-		attribute.String("reason", "TestReason"),
-		attribute.String("type", "TestType"),
+	labels1 := map[string]string{
+		"reason": "TestReason",
+		"type":   "TestType",
 	}
 
 	// Set initial value to 0 (initialization)
-	gauge.Record(ctx, 0, metric.WithAttributes(attrs1...))
+	if err := gauge.Record(labels1, 0); err != nil {
+		t.Fatalf("Failed to record initial value: %v", err)
+	}
 
 	// Set value to 1 (problem detected)
-	gauge.Record(ctx, 1, metric.WithAttributes(attrs1...))
+	if err := gauge.Record(labels1, 1); err != nil {
+		t.Fatalf("Failed to record updated value: %v", err)
+	}
 
 	// Collect metrics and verify gauge shows the last value (1)
 	var rm metricdata.ResourceMetrics
@@ -65,24 +74,43 @@ func TestGaugeSetValueSemantics(t *testing.T) {
 		t.Fatalf("Failed to collect metrics: %v", err)
 	}
 
-	expected := metricdata.Metrics{
-		Name:        "test_gauge",
-		Description: "Test gauge metric",
-		Unit:        "1",
-		Data: metricdata.Gauge[int64]{
-			DataPoints: []metricdata.DataPoint[int64]{
-				{
-					Attributes: attribute.NewSet(attrs1...),
-					Value:      1,
-				},
-			},
-		},
+	// Find our metric in the collected data
+	foundMetric := false
+	for _, sm := range rm.ScopeMetrics {
+		for _, m := range sm.Metrics {
+			if m.Name == "test_gauge" {
+				foundMetric = true
+
+				expected := metricdata.Metrics{
+					Name:        "test_gauge",
+					Description: "Test gauge metric",
+					Unit:        "1",
+					Data: metricdata.Gauge[int64]{
+						DataPoints: []metricdata.DataPoint[int64]{
+							{
+								Attributes: attribute.NewSet(
+									attribute.String("reason", "TestReason"),
+									attribute.String("type", "TestType"),
+								),
+								Value: 1,
+							},
+						},
+					},
+				}
+
+				metricdatatest.AssertEqual(t, expected, m, metricdatatest.IgnoreTimestamp())
+			}
+		}
 	}
 
-	metricdatatest.AssertEqual(t, expected, rm.ScopeMetrics[0].Metrics[0], metricdatatest.IgnoreTimestamp())
+	if !foundMetric {
+		t.Fatal("test_gauge metric not found in collected metrics")
+	}
 
 	// Set value back to 0 (problem resolved)
-	gauge.Record(ctx, 0, metric.WithAttributes(attrs1...))
+	if err := gauge.Record(labels1, 0); err != nil {
+		t.Fatalf("Failed to record resolved value: %v", err)
+	}
 
 	// Collect again and verify gauge now shows 0
 	rm = metricdata.ResourceMetrics{}
@@ -90,44 +118,75 @@ func TestGaugeSetValueSemantics(t *testing.T) {
 		t.Fatalf("Failed to collect metrics: %v", err)
 	}
 
-	expected.Data = metricdata.Gauge[int64]{
-		DataPoints: []metricdata.DataPoint[int64]{
-			{
-				Attributes: attribute.NewSet(attrs1...),
-				Value:      0,
-			},
-		},
+	foundMetric = false
+	for _, sm := range rm.ScopeMetrics {
+		for _, m := range sm.Metrics {
+			if m.Name == "test_gauge" {
+				foundMetric = true
+
+				expected := metricdata.Metrics{
+					Name:        "test_gauge",
+					Description: "Test gauge metric",
+					Unit:        "1",
+					Data: metricdata.Gauge[int64]{
+						DataPoints: []metricdata.DataPoint[int64]{
+							{
+								Attributes: attribute.NewSet(
+									attribute.String("reason", "TestReason"),
+									attribute.String("type", "TestType"),
+								),
+								Value: 0,
+							},
+						},
+					},
+				}
+
+				metricdatatest.AssertEqual(t, expected, m, metricdatatest.IgnoreTimestamp())
+			}
+		}
 	}
 
-	metricdatatest.AssertEqual(t, expected, rm.ScopeMetrics[0].Metrics[0], metricdatatest.IgnoreTimestamp())
+	if !foundMetric {
+		t.Fatal("test_gauge metric not found in second collection")
+	}
 }
 
 func TestCounterAddSemantics(t *testing.T) {
-	// Set up SDK with ManualReader for testing
-	reader := sdkmetric.NewManualReader()
-	provider := sdkmetric.NewMeterProvider(
-		sdkmetric.WithResource(otelutil.GetResource()),
-		sdkmetric.WithReader(reader),
-	)
-	meter := provider.Meter("test")
+	// Reset global state for isolated testing
+	otelutil.ResetForTesting()
 
-	// Create a counter metric
-	counter, err := meter.Int64Counter("test_counter",
-		metric.WithDescription("Test counter metric"),
-		metric.WithUnit("1"),
+	// Set up SDK with ManualReader for testing our metrics
+	reader := sdkmetric.NewManualReader()
+
+	// Register reader with our global meter provider for our metrics to use
+	otelutil.AddMetricReader(reader)
+	otelutil.InitializeMeterProvider()
+
+	// Create a counter using our actual NewInt64Metric function
+	counter, err := NewInt64Metric(
+		"test_counter",
+		"test_counter",
+		"Test counter metric",
+		"1",
+		Sum,
+		[]string{"reason"},
 	)
 	if err != nil {
 		t.Fatalf("Failed to create counter metric: %v", err)
 	}
 
 	ctx := context.Background()
-	attrs := []attribute.KeyValue{
-		attribute.String("reason", "TestReason"),
+	labels := map[string]string{
+		"reason": "TestReason",
 	}
 
-	// Add to counter twice
-	counter.Add(ctx, 5, metric.WithAttributes(attrs...))
-	counter.Add(ctx, 3, metric.WithAttributes(attrs...))
+	// Add to counter twice using our Record method
+	if err := counter.Record(labels, 5); err != nil {
+		t.Fatalf("Failed to record first value: %v", err)
+	}
+	if err := counter.Record(labels, 3); err != nil {
+		t.Fatalf("Failed to record second value: %v", err)
+	}
 
 	// Collect metrics and verify counter accumulated the sum
 	var rm metricdata.ResourceMetrics
@@ -135,21 +194,37 @@ func TestCounterAddSemantics(t *testing.T) {
 		t.Fatalf("Failed to collect metrics: %v", err)
 	}
 
-	expected := metricdata.Metrics{
-		Name:        "test_counter",
-		Description: "Test counter metric",
-		Unit:        "1",
-		Data: metricdata.Sum[int64]{
-			Temporality: metricdata.CumulativeTemporality,
-			IsMonotonic: true,
-			DataPoints: []metricdata.DataPoint[int64]{
-				{
-					Attributes: attribute.NewSet(attrs...),
-					Value:      8, // 5 + 3
-				},
-			},
-		},
+	// Find our metric in the collected data
+	foundMetric := false
+	for _, sm := range rm.ScopeMetrics {
+		for _, m := range sm.Metrics {
+			if m.Name == "test_counter" {
+				foundMetric = true
+
+				expected := metricdata.Metrics{
+					Name:        "test_counter",
+					Description: "Test counter metric",
+					Unit:        "1",
+					Data: metricdata.Sum[int64]{
+						Temporality: metricdata.CumulativeTemporality,
+						IsMonotonic: true,
+						DataPoints: []metricdata.DataPoint[int64]{
+							{
+								Attributes: attribute.NewSet(
+									attribute.String("reason", "TestReason"),
+								),
+								Value: 8, // 5 + 3
+							},
+						},
+					},
+				}
+
+				metricdatatest.AssertEqual(t, expected, m, metricdatatest.IgnoreTimestamp())
+			}
+		}
 	}
 
-	metricdatatest.AssertEqual(t, expected, rm.ScopeMetrics[0].Metrics[0], metricdatatest.IgnoreTimestamp())
+	if !foundMetric {
+		t.Fatal("test_counter metric not found in collected metrics")
+	}
 }
