@@ -124,6 +124,7 @@ func (se *stackdriverExporter) setupOTelExporterOrDie() {
 	gcpExporter, err := gcpmetric.New(
 		gcpmetric.WithProjectID(se.config.GCEMetadata.ProjectID),
 		gcpmetric.WithMetricDescriptorTypeFormatter(se.getMetricTypeFormatter()),
+		gcpmetric.WithFilteredResourceAttributes(gcpmetric.NoAttributes),
 	)
 	if err != nil {
 		klog.Fatalf("Failed to create Google Cloud Monitoring exporter: %v", err)
