@@ -29,7 +29,7 @@ import (
 	otelutil "k8s.io/node-problem-detector/pkg/util/otel"
 )
 
-func TestGaugeSetValueSemantics(t *testing.T) {
+func TestFloat64GaugeSetValueSemantics(t *testing.T) {
 	// Set up SDK with ManualReader for testing
 	reader := sdkmetric.NewManualReader()
 	provider := sdkmetric.NewMeterProvider(
@@ -39,41 +39,41 @@ func TestGaugeSetValueSemantics(t *testing.T) {
 	meter := provider.Meter("test")
 
 	// Create a gauge metric
-	gauge, err := meter.Int64Gauge("test_gauge",
-		metric.WithDescription("Test gauge metric"),
-		metric.WithUnit("1"),
+	gauge, err := meter.Float64Gauge("test_float_gauge",
+		metric.WithDescription("Test float64 gauge metric"),
+		metric.WithUnit("percent"),
 	)
 	if err != nil {
 		t.Fatalf("Failed to create gauge metric: %v", err)
 	}
 
 	ctx := context.Background()
-	attrs1 := []attribute.KeyValue{
-		attribute.String("reason", "TestReason"),
-		attribute.String("type", "TestType"),
+	attrs := []attribute.KeyValue{
+		attribute.String("component", "cpu"),
+		attribute.String("state", "usage"),
 	}
 
-	// Set initial value to 0 (initialization)
-	gauge.Record(ctx, 0, metric.WithAttributes(attrs1...))
+	// Set initial value to 0.0 (initialization)
+	gauge.Record(ctx, 0.0, metric.WithAttributes(attrs...))
 
-	// Set value to 1 (problem detected)
-	gauge.Record(ctx, 1, metric.WithAttributes(attrs1...))
+	// Set value to 42.5 (current reading)
+	gauge.Record(ctx, 42.5, metric.WithAttributes(attrs...))
 
-	// Collect metrics and verify gauge shows the last value (1)
+	// Collect metrics and verify gauge shows the last value (42.5)
 	var rm metricdata.ResourceMetrics
 	if err := reader.Collect(ctx, &rm); err != nil {
 		t.Fatalf("Failed to collect metrics: %v", err)
 	}
 
 	expected := metricdata.Metrics{
-		Name:        "test_gauge",
-		Description: "Test gauge metric",
-		Unit:        "1",
-		Data: metricdata.Gauge[int64]{
-			DataPoints: []metricdata.DataPoint[int64]{
+		Name:        "test_float_gauge",
+		Description: "Test float64 gauge metric",
+		Unit:        "percent",
+		Data: metricdata.Gauge[float64]{
+			DataPoints: []metricdata.DataPoint[float64]{
 				{
-					Attributes: attribute.NewSet(attrs1...),
-					Value:      1,
+					Attributes: attribute.NewSet(attrs...),
+					Value:      42.5,
 				},
 			},
 		},
@@ -81,20 +81,20 @@ func TestGaugeSetValueSemantics(t *testing.T) {
 
 	metricdatatest.AssertEqual(t, expected, rm.ScopeMetrics[0].Metrics[0], metricdatatest.IgnoreTimestamp())
 
-	// Set value back to 0 (problem resolved)
-	gauge.Record(ctx, 0, metric.WithAttributes(attrs1...))
+	// Set value to 15.3 (new reading)
+	gauge.Record(ctx, 15.3, metric.WithAttributes(attrs...))
 
-	// Collect again and verify gauge now shows 0
+	// Collect again and verify gauge now shows 15.3
 	rm = metricdata.ResourceMetrics{}
 	if err := reader.Collect(ctx, &rm); err != nil {
 		t.Fatalf("Failed to collect metrics: %v", err)
 	}
 
-	expected.Data = metricdata.Gauge[int64]{
-		DataPoints: []metricdata.DataPoint[int64]{
+	expected.Data = metricdata.Gauge[float64]{
+		DataPoints: []metricdata.DataPoint[float64]{
 			{
-				Attributes: attribute.NewSet(attrs1...),
-				Value:      0,
+				Attributes: attribute.NewSet(attrs...),
+				Value:      15.3,
 			},
 		},
 	}
@@ -102,7 +102,7 @@ func TestGaugeSetValueSemantics(t *testing.T) {
 	metricdatatest.AssertEqual(t, expected, rm.ScopeMetrics[0].Metrics[0], metricdatatest.IgnoreTimestamp())
 }
 
-func TestCounterAddSemantics(t *testing.T) {
+func TestFloat64CounterAddSemantics(t *testing.T) {
 	// Set up SDK with ManualReader for testing
 	reader := sdkmetric.NewManualReader()
 	provider := sdkmetric.NewMeterProvider(
@@ -112,9 +112,9 @@ func TestCounterAddSemantics(t *testing.T) {
 	meter := provider.Meter("test")
 
 	// Create a counter metric
-	counter, err := meter.Int64Counter("test_counter",
-		metric.WithDescription("Test counter metric"),
-		metric.WithUnit("1"),
+	counter, err := meter.Float64Counter("test_float_counter",
+		metric.WithDescription("Test float64 counter metric"),
+		metric.WithUnit("bytes"),
 	)
 	if err != nil {
 		t.Fatalf("Failed to create counter metric: %v", err)
@@ -122,12 +122,12 @@ func TestCounterAddSemantics(t *testing.T) {
 
 	ctx := context.Background()
 	attrs := []attribute.KeyValue{
-		attribute.String("reason", "TestReason"),
+		attribute.String("operation", "read"),
 	}
 
-	// Add to counter twice
-	counter.Add(ctx, 5, metric.WithAttributes(attrs...))
-	counter.Add(ctx, 3, metric.WithAttributes(attrs...))
+	// Add to counter multiple times with fractional values
+	counter.Add(ctx, 1024.5, metric.WithAttributes(attrs...))
+	counter.Add(ctx, 2048.75, metric.WithAttributes(attrs...))
 
 	// Collect metrics and verify counter accumulated the sum
 	var rm metricdata.ResourceMetrics
@@ -136,16 +136,16 @@ func TestCounterAddSemantics(t *testing.T) {
 	}
 
 	expected := metricdata.Metrics{
-		Name:        "test_counter",
-		Description: "Test counter metric",
-		Unit:        "1",
-		Data: metricdata.Sum[int64]{
+		Name:        "test_float_counter",
+		Description: "Test float64 counter metric",
+		Unit:        "bytes",
+		Data: metricdata.Sum[float64]{
 			Temporality: metricdata.CumulativeTemporality,
 			IsMonotonic: true,
-			DataPoints: []metricdata.DataPoint[int64]{
+			DataPoints: []metricdata.DataPoint[float64]{
 				{
 					Attributes: attribute.NewSet(attrs...),
-					Value:      8, // 5 + 3
+					Value:      3073.25, // 1024.5 + 2048.75
 				},
 			},
 		},
