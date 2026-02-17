@@ -44,8 +44,12 @@ type Int64MetricInterface interface {
 	Record(labelValues map[string]string, value int64) error
 }
 
-// NewInt64Metric creates a new Int64 metric using OpenTelemetry
+// NewInt64Metric creates a new Int64 metric using OpenTelemetry, returns nil when name is empty
 func NewInt64Metric(metricID MetricID, name, description, unit string, aggregation Aggregation, labels []string) (*Int64Metric, error) {
+	if name == "" {
+		return nil, nil
+	}
+
 	meter := otelutil.GetGlobalMeter()
 
 	otelMetric := &OTelInt64Metric{
