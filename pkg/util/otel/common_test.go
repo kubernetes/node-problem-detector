@@ -21,6 +21,7 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/prometheus/otlptranslator"
 	"go.opentelemetry.io/otel/exporters/prometheus"
 	sdkmetric "go.opentelemetry.io/otel/sdk/metric"
 	"go.opentelemetry.io/otel/sdk/metric/metricdata"
@@ -182,9 +183,8 @@ func TestPrometheusExporterWithoutScopeLabels(t *testing.T) {
 
 	// Create a Prometheus exporter with WithoutScopeInfo to remove all scope labels
 	promExporter, err := prometheus.New(
-		prometheus.WithoutScopeInfo(),       // Remove all otel_scope_* labels
-		prometheus.WithoutCounterSuffixes(), // Don't add _total suffix to counters
-		prometheus.WithoutUnits(),           // Don't add unit-based suffixes
+		prometheus.WithoutScopeInfo(),                                    // Remove all otel_scope_* labels
+		prometheus.WithTranslationStrategy(otlptranslator.NoTranslation), // Don't add suffixes or escape
 	)
 	if err != nil {
 		t.Fatalf("Failed to create Prometheus exporter: %v", err)

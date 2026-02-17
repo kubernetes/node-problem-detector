@@ -22,6 +22,7 @@ import (
 	"strconv"
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/prometheus/otlptranslator"
 	"go.opentelemetry.io/otel/exporters/prometheus"
 	"k8s.io/klog/v2"
 
@@ -40,9 +41,8 @@ func NewExporterOrDie(npdo *options.NodeProblemDetectorOptions) types.Exporter {
 
 	// Create Prometheus exporter with options to prevent automatic suffixing
 	promExporter, err := prometheus.New(
-		prometheus.WithoutCounterSuffixes(), // Don't add _total suffix to counters
-		prometheus.WithoutUnits(),           // Don't add unit-based suffixes like _ratio
-		prometheus.WithoutScopeInfo(),       // Don't add otel_scope_* labels
+		prometheus.WithTranslationStrategy(otlptranslator.NoTranslation), // Don't add suffixes or escape
+		prometheus.WithoutScopeInfo(),                                    // Don't add otel_scope_* labels
 	)
 	if err != nil {
 		klog.Fatalf("Failed to create Prometheus exporter: %v", err)
