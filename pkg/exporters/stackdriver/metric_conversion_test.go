@@ -30,9 +30,9 @@ import (
 // are valid and properly formatted.
 func TestNPDMetricToSDMetric(t *testing.T) {
 	tests := []struct {
-		metricID           metrics.MetricID
-		expectedSDMetric   string
-		expectedPrefix     string
+		metricID         metrics.MetricID
+		expectedSDMetric string
+		expectedPrefix   string
 	}{
 		// CPU metrics
 		{metrics.CPURunnableTaskCountID, "compute.googleapis.com/guest/cpu/runnable_task_count", "compute.googleapis.com"},
@@ -211,10 +211,10 @@ func TestMetricTypeFormatConsistency(t *testing.T) {
 // TestCustomMetricPrefixFormatting verifies custom metric prefix is properly formatted.
 func TestCustomMetricPrefixFormatting(t *testing.T) {
 	tests := []struct {
-		name               string
-		customPrefix       string
-		metricName         string
-		expectedResult     string
+		name           string
+		customPrefix   string
+		metricName     string
+		expectedResult string
 	}{
 		{
 			name:           "simple custom prefix",

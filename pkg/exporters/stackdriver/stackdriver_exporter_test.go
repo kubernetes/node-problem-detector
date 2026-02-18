@@ -146,7 +146,9 @@ func TestExportMetricsToCloudMonitoring(t *testing.T) {
 		sdkmetric.WithReader(sdkmetric.NewPeriodicReader(exporter, sdkmetric.WithInterval(100*time.Millisecond))),
 	)
 	otel.SetMeterProvider(provider)
-	defer provider.Shutdown(context.Background())
+	defer func() {
+		_ = provider.Shutdown(context.Background())
+	}()
 
 	// Register NPD metrics mappings
 	metrics.MetricMap.AddMapping(metrics.HostUptimeID, "host/uptime")
