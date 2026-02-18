@@ -180,7 +180,8 @@ func (f *fakeMetricServiceServer) CreateMetricDescriptor(
 // The server listens on a random port on localhost.
 func NewMetricTestServer() *MetricsTestServer {
 	srv := grpc.NewServer()
-	lis, err := net.Listen("tcp", "localhost:0")
+	lc := net.ListenConfig{}
+	lis, err := lc.Listen(context.Background(), "tcp", "localhost:0")
 	if err != nil {
 		panic(err)
 	}

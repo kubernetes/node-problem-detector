@@ -27,15 +27,15 @@ import (
 // MetadataTestServer is a mock GCE metadata server for testing.
 // It simulates the GCE metadata service that returns instance metadata.
 type MetadataTestServer struct {
-	server         *httptest.Server
-	projectID      string
-	zone           string
-	instanceID     string
-	instanceName   string
-	requestCount   map[string]int
-	failureCount   int
-	maxFailures    int
-	mu             sync.Mutex
+	server       *httptest.Server
+	projectID    string
+	zone         string
+	instanceID   string
+	instanceName string
+	requestCount map[string]int
+	failureCount int
+	maxFailures  int
+	mu           sync.Mutex
 }
 
 // NewMetadataTestServer creates a new mock GCE metadata server with the specified values.
@@ -83,24 +83,24 @@ func (m *MetadataTestServer) handleRequest(w http.ResponseWriter, r *http.Reques
 	// Check for required Metadata-Flavor header
 	if r.Header.Get("Metadata-Flavor") != "Google" {
 		w.WriteHeader(http.StatusForbidden)
-		fmt.Fprint(w, "Missing Metadata-Flavor: Google header")
+		_, _ = fmt.Fprint(w, "Missing Metadata-Flavor: Google header")
 		return
 	}
 
 	// Route to appropriate handler based on path
 	switch {
 	case strings.HasSuffix(r.URL.Path, "/project/project-id"):
-		fmt.Fprint(w, m.projectID)
+		_, _ = fmt.Fprint(w, m.projectID)
 	case strings.HasSuffix(r.URL.Path, "/instance/zone"):
 		// Zone is returned as projects/PROJECT_NUMBER/zones/ZONE
-		fmt.Fprintf(w, "projects/12345/zones/%s", m.zone)
+		_, _ = fmt.Fprintf(w, "projects/12345/zones/%s", m.zone)
 	case strings.HasSuffix(r.URL.Path, "/instance/id"):
-		fmt.Fprint(w, m.instanceID)
+		_, _ = fmt.Fprint(w, m.instanceID)
 	case strings.HasSuffix(r.URL.Path, "/instance/name"):
-		fmt.Fprint(w, m.instanceName)
+		_, _ = fmt.Fprint(w, m.instanceName)
 	default:
 		w.WriteHeader(http.StatusNotFound)
-		fmt.Fprintf(w, "Unknown metadata endpoint: %s", r.URL.Path)
+		_, _ = fmt.Fprintf(w, "Unknown metadata endpoint: %s", r.URL.Path)
 	}
 }
 
