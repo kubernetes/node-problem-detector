@@ -21,12 +21,14 @@ import (
 	"net/http"
 	"strconv"
 
-	"contrib.go.opencensus.io/exporter/prometheus"
-	"go.opencensus.io/stats/view"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/prometheus/otlptranslator"
+	"go.opentelemetry.io/otel/exporters/prometheus"
 	"k8s.io/klog/v2"
 
 	"k8s.io/node-problem-detector/cmd/options"
 	"k8s.io/node-problem-detector/pkg/types"
+	otelutil "k8s.io/node-problem-detector/pkg/util/otel"
 )
 
 type prometheusExporter struct{}
@@ -37,19 +39,28 @@ func NewExporterOrDie(npdo *options.NodeProblemDetectorOptions) types.Exporter {
 		return nil
 	}
 
-	addr := net.JoinHostPort(npdo.PrometheusServerAddress, strconv.Itoa(npdo.PrometheusServerPort))
-	pe, err := prometheus.NewExporter(prometheus.Options{})
+	// Create Prometheus exporter with options to prevent automatic suffixing
+	promExporter, err := prometheus.New(
+		prometheus.WithTranslationStrategy(otlptranslator.NoTranslation), // Don't add suffixes or escape
+		prometheus.WithoutScopeInfo(),                                    // Don't add otel_scope_* labels
+	)
 	if err != nil {
 		klog.Fatalf("Failed to create Prometheus exporter: %v", err)
 	}
+
+	// register with the global meter provider
+	otelutil.AddMetricReader(promExporter)
+
+	addr := net.JoinHostPort(npdo.PrometheusServerAddress, strconv.Itoa(npdo.PrometheusServerPort))
 	go func() {
 		mux := http.NewServeMux()
-		mux.Handle("/metrics", pe)
+		mux.Handle("/metrics", promhttp.Handler())
 		if err := http.ListenAndServe(addr, mux); err != nil {
 			klog.Fatalf("Failed to start Prometheus scrape endpoint: %v", err)
 		}
 	}()
-	view.RegisterExporter(pe)
+
+	klog.Infof("Prometheus exporter started on %s", addr)
 	return &prometheusExporter{}
 }
 
