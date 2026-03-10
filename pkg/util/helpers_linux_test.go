@@ -101,6 +101,12 @@ func TestGetOSVersionLinux(t *testing.T) {
 			expectErr:         false,
 		},
 		{
+			name:              "acl",
+			fakeOSReleasePath: "testdata/os-release-acl",
+			expectedOSVersion: "acl 4459.2.2",
+			expectErr:         false,
+		},
+		{
 			name:              "Unknown",
 			fakeOSReleasePath: "testdata/os-release-unknown",
 			expectedOSVersion: "",

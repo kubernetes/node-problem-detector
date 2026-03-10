@@ -1,0 +1,13 @@
+NAME="Azure Container Linux"
+ID=acl
+ID_LIKE=flatcar
+VERSION=4459.2.2
+VERSION_ID=4459.2.2
+BUILD_ID=97-g545e29b39d
+SYSEXT_LEVEL=1.0
+PRETTY_NAME="Azure Container Linux 4459.2.2+97-g545e29b39d (ACL)"
+ANSI_COLOR="38;5;75"
+HOME_URL="https://flatcar.org/"
+BUG_REPORT_URL="https://issues.flatcar.org"
+FLATCAR_BOARD="amd64-usr"
+CPE_NAME="cpe:2.3:o:acl-linux:acl_linux:4459.2.2+97-g545e29b39d:*:*:*:*:*:*:*"
