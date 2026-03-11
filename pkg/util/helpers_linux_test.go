@@ -101,9 +101,9 @@ func TestGetOSVersionLinux(t *testing.T) {
 			expectErr:         false,
 		},
 		{
-			name:              "acl",
+			name:              "azurecontainerlinux",
 			fakeOSReleasePath: "testdata/os-release-acl",
-			expectedOSVersion: "acl 4459.2.2",
+			expectedOSVersion: "azurecontainerlinux 3.0.20260311",
 			expectErr:         false,
 		},
 		{
