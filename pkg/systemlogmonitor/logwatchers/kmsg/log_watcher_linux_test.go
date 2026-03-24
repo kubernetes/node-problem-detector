@@ -192,149 +192,6 @@ func TestWatch(t *testing.T) {
 	}
 }
 
-func TestRestartOnErrorConfig(t *testing.T) {
-	testCases := []struct {
-		name         string
-		pluginConfig map[string]string
-		expected     bool
-	}{
-		{
-			name:         "nil config returns false",
-			pluginConfig: nil,
-			expected:     false,
-		},
-		{
-			name:         "empty config returns false",
-			pluginConfig: map[string]string{},
-			expected:     false,
-		},
-		{
-			name:         "key not present returns false",
-			pluginConfig: map[string]string{"otherKey": "true"},
-			expected:     false,
-		},
-		{
-			name:         "key present but set to false returns false",
-			pluginConfig: map[string]string{RestartOnErrorKey: "false"},
-			expected:     false,
-		},
-		{
-			name:         "key present and set to true returns true",
-			pluginConfig: map[string]string{RestartOnErrorKey: "true"},
-			expected:     true,
-		},
-		{
-			name:         "key present but uppercase TRUE returns false",
-			pluginConfig: map[string]string{RestartOnErrorKey: "TRUE"},
-			expected:     false,
-		},
-		{
-			name:         "key present but mixed case True returns false",
-			pluginConfig: map[string]string{RestartOnErrorKey: "True"},
-			expected:     false,
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			w := &kernelLogWatcher{
-				cfg: types.WatcherConfig{
-					PluginConfig: tc.pluginConfig,
-				},
-			}
-			assert.Equal(t, tc.expected, w.restartOnError())
-		})
-	}
-}
-
-func TestWatcherStopsOnChannelCloseWhenRestartDisabled(t *testing.T) {
-	now := time.Now()
-
-	mock := &mockKmsgParser{
-		kmsgs: []kmsgparser.Message{
-			{Message: "test message", Timestamp: now},
-		},
-		closeAfterSend: true,
-	}
-
-	w := &kernelLogWatcher{
-		cfg: types.WatcherConfig{
-			PluginConfig: map[string]string{
-				RestartOnErrorKey: "false",
-			},
-		},
-		startTime:  now.Add(-time.Second),
-		tomb:       tomb.NewTomb(),
-		logCh:      make(chan *logtypes.Log, 100),
-		kmsgParser: mock,
-	}
-
-	logCh, err := w.Watch()
-	assert.NoError(t, err)
-
-	// Should receive the message
-	select {
-	case log := <-logCh:
-		assert.Equal(t, "test message", log.Message)
-	case <-time.After(time.Second):
-		t.Fatal("timeout waiting for log message")
-	}
-
-	// Log channel should be closed since restart is disabled
-	select {
-	case _, ok := <-logCh:
-		assert.False(t, ok, "log channel should be closed")
-	case <-time.After(time.Second):
-		t.Fatal("timeout waiting for log channel to close")
-	}
-
-	// Verify parser was closed
-	assert.True(t, mock.WasCloseCalled(), "parser Close() should have been called")
-}
-
-func TestWatcherStopsOnChannelCloseWhenRestartNotConfigured(t *testing.T) {
-	now := time.Now()
-
-	mock := &mockKmsgParser{
-		kmsgs: []kmsgparser.Message{
-			{Message: "test message", Timestamp: now},
-		},
-		closeAfterSend: true,
-	}
-
-	w := &kernelLogWatcher{
-		cfg: types.WatcherConfig{
-			// No PluginConfig set
-		},
-		startTime:  now.Add(-time.Second),
-		tomb:       tomb.NewTomb(),
-		logCh:      make(chan *logtypes.Log, 100),
-		kmsgParser: mock,
-	}
-
-	logCh, err := w.Watch()
-	assert.NoError(t, err)
-
-	// Should receive the message
-	select {
-	case log := <-logCh:
-		assert.Equal(t, "test message", log.Message)
-	case <-time.After(time.Second):
-		t.Fatal("timeout waiting for log message")
-	}
-
-	// Log channel should be closed since restart is not configured
-	select {
-	case _, ok := <-logCh:
-		assert.False(t, ok, "log channel should be closed")
-	case <-time.After(time.Second):
-		t.Fatal("timeout waiting for log channel to close")
-	}
-
-	// Verify parser was closed
-	assert.True(t, mock.WasCloseCalled(), "parser Close() should have been called")
-}
-
 func TestWatcherStopsGracefullyOnTombStop(t *testing.T) {
 	now := time.Now()
 
@@ -346,11 +203,7 @@ func TestWatcherStopsGracefullyOnTombStop(t *testing.T) {
 	}
 
 	w := &kernelLogWatcher{
-		cfg: types.WatcherConfig{
-			PluginConfig: map[string]string{
-				RestartOnErrorKey: "true",
-			},
-		},
+		cfg:        types.WatcherConfig{},
 		startTime:  now.Add(-time.Second),
 		tomb:       tomb.NewTomb(),
 		logCh:      make(chan *logtypes.Log, 100),
@@ -392,7 +245,7 @@ func TestWatcherProcessesEmptyMessages(t *testing.T) {
 			{Message: "valid message", Timestamp: now.Add(time.Second)},
 			{Message: "", Timestamp: now.Add(2 * time.Second)},
 		},
-		closeAfterSend: true,
+		closeAfterSend: false,
 	}
 
 	w := &kernelLogWatcher{
@@ -414,10 +267,12 @@ func TestWatcherProcessesEmptyMessages(t *testing.T) {
 		t.Fatal("timeout waiting for log message")
 	}
 
-	// Channel should close, no more messages
+	// Stop the watcher and verify channel closes
+	w.Stop()
+
 	select {
 	case _, ok := <-logCh:
-		assert.False(t, ok, "log channel should be closed")
+		assert.False(t, ok, "log channel should be closed after Stop()")
 	case <-time.After(time.Second):
 		t.Fatal("timeout waiting for log channel to close")
 	}
@@ -432,7 +287,7 @@ func TestWatcherTrimsMessageWhitespace(t *testing.T) {
 			{Message: "\ttabbed message\t", Timestamp: now.Add(time.Second)},
 			{Message: "\n\nnewlines\n\n", Timestamp: now.Add(2 * time.Second)},
 		},
-		closeAfterSend: true,
+		closeAfterSend: false,
 	}
 
 	w := &kernelLogWatcher{
@@ -455,5 +310,15 @@ func TestWatcherTrimsMessageWhitespace(t *testing.T) {
 		case <-time.After(time.Second):
 			t.Fatalf("timeout waiting for message: %s", expected)
 		}
+	}
+
+	// Stop the watcher and verify channel closes
+	w.Stop()
+
+	select {
+	case _, ok := <-logCh:
+		assert.False(t, ok, "log channel should be closed after Stop()")
+	case <-time.After(time.Second):
+		t.Fatal("timeout waiting for log channel to close")
 	}
 }
