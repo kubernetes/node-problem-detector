@@ -174,8 +174,7 @@ to another registry.
 The easiest way to install node-problem-detector into your cluster is to use the [Helm](https://helm.sh/) [chart](https://github.com/deliveryhero/helm-charts/tree/master/stable/node-problem-detector):
 
 ```
-helm repo add deliveryhero https://charts.deliveryhero.io/
-helm install --generate-name deliveryhero/node-problem-detector
+helm install --generate-name oci://ghcr.io/deliveryhero/helm-charts/node-problem-detector
 ```
 
 Alternatively, to install node-problem-detector manually:
