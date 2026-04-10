@@ -9,3 +9,5 @@ debug.test
 /output/
 coverage.out
 .idea/
+*.DS_Store
+*.iml

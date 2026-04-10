@@ -17,6 +17,7 @@ limitations under the License.
 package kmsg
 
 import (
+	"sync"
 	"testing"
 	"time"
 
@@ -27,23 +28,44 @@ import (
 	"k8s.io/node-problem-detector/pkg/systemlogmonitor/logwatchers/types"
 	logtypes "k8s.io/node-problem-detector/pkg/systemlogmonitor/types"
 	"k8s.io/node-problem-detector/pkg/util"
+	"k8s.io/node-problem-detector/pkg/util/tomb"
 )
 
 type mockKmsgParser struct {
-	kmsgs []kmsgparser.Message
+	kmsgs          []kmsgparser.Message
+	closeAfterSend bool
+	closeCalled    bool
+	mu             sync.Mutex
 }
 
 func (m *mockKmsgParser) SetLogger(kmsgparser.Logger) {}
-func (m *mockKmsgParser) Close() error                { return nil }
+
+func (m *mockKmsgParser) Close() error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.closeCalled = true
+	return nil
+}
+
+func (m *mockKmsgParser) WasCloseCalled() bool {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return m.closeCalled
+}
+
 func (m *mockKmsgParser) Parse() <-chan kmsgparser.Message {
 	c := make(chan kmsgparser.Message)
 	go func() {
 		for _, msg := range m.kmsgs {
 			c <- msg
 		}
+		if m.closeAfterSend {
+			close(c)
+		}
 	}()
 	return c
 }
+
 func (m *mockKmsgParser) SeekEnd() error { return nil }
 
 func TestWatch(t *testing.T) {
@@ -167,5 +189,136 @@ func TestWatch(t *testing.T) {
 			t.Errorf("unexpected extra log: %+v", *log)
 		case <-timeout:
 		}
+	}
+}
+
+func TestWatcherStopsGracefullyOnTombStop(t *testing.T) {
+	now := time.Now()
+
+	mock := &mockKmsgParser{
+		kmsgs: []kmsgparser.Message{
+			{Message: "test message", Timestamp: now},
+		},
+		closeAfterSend: false, // Don't close, let tomb stop it
+	}
+
+	w := &kernelLogWatcher{
+		cfg:        types.WatcherConfig{},
+		startTime:  now.Add(-time.Second),
+		tomb:       tomb.NewTomb(),
+		logCh:      make(chan *logtypes.Log, 100),
+		kmsgParser: mock,
+	}
+
+	logCh, err := w.Watch()
+	assert.NoError(t, err)
+
+	// Should receive the message
+	select {
+	case log := <-logCh:
+		assert.Equal(t, "test message", log.Message)
+	case <-time.After(time.Second):
+		t.Fatal("timeout waiting for log message")
+	}
+
+	// Stop the watcher
+	w.Stop()
+
+	// Log channel should be closed after stop
+	select {
+	case _, ok := <-logCh:
+		assert.False(t, ok, "log channel should be closed after Stop()")
+	case <-time.After(time.Second):
+		t.Fatal("timeout waiting for log channel to close after Stop()")
+	}
+
+	// Verify parser was closed
+	assert.True(t, mock.WasCloseCalled(), "parser Close() should have been called")
+}
+
+func TestWatcherProcessesEmptyMessages(t *testing.T) {
+	now := time.Now()
+
+	mock := &mockKmsgParser{
+		kmsgs: []kmsgparser.Message{
+			{Message: "", Timestamp: now},
+			{Message: "valid message", Timestamp: now.Add(time.Second)},
+			{Message: "", Timestamp: now.Add(2 * time.Second)},
+		},
+		closeAfterSend: false,
+	}
+
+	w := &kernelLogWatcher{
+		cfg:        types.WatcherConfig{},
+		startTime:  now.Add(-time.Second),
+		tomb:       tomb.NewTomb(),
+		logCh:      make(chan *logtypes.Log, 100),
+		kmsgParser: mock,
+	}
+
+	logCh, err := w.Watch()
+	assert.NoError(t, err)
+
+	// Should only receive the non-empty message
+	select {
+	case log := <-logCh:
+		assert.Equal(t, "valid message", log.Message)
+	case <-time.After(time.Second):
+		t.Fatal("timeout waiting for log message")
+	}
+
+	// Stop the watcher and verify channel closes
+	w.Stop()
+
+	select {
+	case _, ok := <-logCh:
+		assert.False(t, ok, "log channel should be closed after Stop()")
+	case <-time.After(time.Second):
+		t.Fatal("timeout waiting for log channel to close")
+	}
+}
+
+func TestWatcherTrimsMessageWhitespace(t *testing.T) {
+	now := time.Now()
+
+	mock := &mockKmsgParser{
+		kmsgs: []kmsgparser.Message{
+			{Message: "  message with spaces  ", Timestamp: now},
+			{Message: "\ttabbed message\t", Timestamp: now.Add(time.Second)},
+			{Message: "\n\nnewlines\n\n", Timestamp: now.Add(2 * time.Second)},
+		},
+		closeAfterSend: false,
+	}
+
+	w := &kernelLogWatcher{
+		cfg:        types.WatcherConfig{},
+		startTime:  now.Add(-time.Second),
+		tomb:       tomb.NewTomb(),
+		logCh:      make(chan *logtypes.Log, 100),
+		kmsgParser: mock,
+	}
+
+	logCh, err := w.Watch()
+	assert.NoError(t, err)
+
+	expectedMessages := []string{"message with spaces", "tabbed message", "newlines"}
+
+	for _, expected := range expectedMessages {
+		select {
+		case log := <-logCh:
+			assert.Equal(t, expected, log.Message)
+		case <-time.After(time.Second):
+			t.Fatalf("timeout waiting for message: %s", expected)
+		}
+	}
+
+	// Stop the watcher and verify channel closes
+	w.Stop()
+
+	select {
+	case _, ok := <-logCh:
+		assert.False(t, ok, "log channel should be closed after Stop()")
+	case <-time.After(time.Second):
+		t.Fatal("timeout waiting for log channel to close")
 	}
 }
