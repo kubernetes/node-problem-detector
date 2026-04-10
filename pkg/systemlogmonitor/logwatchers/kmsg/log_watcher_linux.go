@@ -80,11 +80,8 @@ func (k *kernelLogWatcher) Watch() (<-chan *logtypes.Log, error) {
 	return k.logCh, nil
 }
 
-// Stop closes the kmsgparser
+// Stop signals the watch loop to stop.
 func (k *kernelLogWatcher) Stop() {
-	if err := k.kmsgParser.Close(); err != nil {
-		klog.Errorf("Failed to close kmsg parser: %v", err)
-	}
 	k.tomb.Stop()
 }
 
