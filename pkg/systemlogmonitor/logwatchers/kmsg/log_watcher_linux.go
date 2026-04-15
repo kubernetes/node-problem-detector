@@ -42,6 +42,8 @@ type kernelLogWatcher struct {
 	tomb      *tomb.Tomb
 
 	kmsgParser kmsgparser.Parser
+	// newParser creates a kmsgparser. Overridable in tests; defaults to kmsgparser.NewParser.
+	newParser func() (kmsgparser.Parser, error)
 }
 
 // NewKmsgWatcher creates a watcher which will read messages from /dev/kmsg
@@ -60,7 +62,8 @@ func NewKmsgWatcher(cfg types.WatcherConfig) types.LogWatcher {
 		startTime: startTime,
 		tomb:      tomb.NewTomb(),
 		// Arbitrary capacity
-		logCh: make(chan *logtypes.Log, 100),
+		logCh:     make(chan *logtypes.Log, 100),
+		newParser: kmsgparser.NewParser,
 	}
 }
 
@@ -69,7 +72,7 @@ var _ types.WatcherCreateFunc = NewKmsgWatcher
 func (k *kernelLogWatcher) Watch() (<-chan *logtypes.Log, error) {
 	if k.kmsgParser == nil {
 		// nil-check to make mocking easier
-		parser, err := kmsgparser.NewParser()
+		parser, err := k.newParser()
 		if err != nil {
 			return nil, fmt.Errorf("failed to create kmsg parser: %v", err)
 		}
@@ -150,7 +153,7 @@ func (k *kernelLogWatcher) watchLoop() {
 // It returns the new message channel and true on success, or nil and false if stopping was signaled.
 func (k *kernelLogWatcher) retryCreateParser() (<-chan kmsgparser.Message, bool) {
 	for {
-		parser, err := kmsgparser.NewParser()
+		parser, err := k.newParser()
 		if err != nil {
 			klog.Errorf("Failed to create new kmsg parser, retrying in %v: %v", retryDelay, err)
 		} else if seekErr := parser.SeekEnd(); seekErr != nil {
