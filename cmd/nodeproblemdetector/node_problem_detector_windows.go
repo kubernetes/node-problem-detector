@@ -46,6 +46,9 @@ var (
 func main() {
 	klogFlags := flag.NewFlagSet("klog", flag.ExitOnError)
 	klog.InitFlags(klogFlags)
+	// Opt into fixed stderrthreshold behavior (kubernetes/klog#212).
+	_ = klogFlags.Set("legacy_stderr_threshold_behavior", "false")
+	_ = klogFlags.Set("stderrthreshold", "INFO")
 	klogFlags.VisitAll(func(f *flag.Flag) {
 		switch f.Name {
 		case "v", "vmodule", "logtostderr":
