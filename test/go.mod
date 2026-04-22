@@ -13,8 +13,8 @@ require (
 	golang.org/x/crypto v0.48.0
 	golang.org/x/oauth2 v0.35.0
 	google.golang.org/api v0.258.0
-	k8s.io/apimachinery v0.35.3
-	k8s.io/component-base v0.34.6
+	k8s.io/apimachinery v0.35.4
+	k8s.io/component-base v0.34.7
 	k8s.io/klog/v2 v2.140.0
 	k8s.io/node-problem-detector v1.34.0
 	sigs.k8s.io/boskos v0.0.0-20250922191614-14f95fc7cd0b
@@ -59,9 +59,9 @@ require (
 	go.opencensus.io v0.24.0 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.61.0 // indirect
-	go.opentelemetry.io/otel v1.38.0 // indirect
-	go.opentelemetry.io/otel/metric v1.38.0 // indirect
-	go.opentelemetry.io/otel/trace v1.38.0 // indirect
+	go.opentelemetry.io/otel v1.41.0 // indirect
+	go.opentelemetry.io/otel/metric v1.41.0 // indirect
+	go.opentelemetry.io/otel/trace v1.41.0 // indirect
 	go.yaml.in/yaml/v2 v2.4.3 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
 	go4.org v0.0.0-20201209231011-d4a079459e60 // indirect
