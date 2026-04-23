@@ -126,7 +126,7 @@ func (c *customPluginMonitor) Stop() {
 func (c *customPluginMonitor) monitorLoop() {
 	c.initializeConditions()
 	if *c.config.PluginGlobalConfig.SkipInitialStatus {
-		klog.Infof("Skipping sending initial status. Using default conditions: %+v", c.conditions)
+		klog.Infof("Skipping sending initial status for %s, conditions will be populated as checks complete", c.configPath)
 	} else {
 		c.sendInitialStatus()
 	}
@@ -170,87 +170,96 @@ func (c *customPluginMonitor) generateStatus(result cpmtypes.Result) *types.Stat
 		}
 	} else {
 		// For permanent error that changes the condition
+		var condition *types.Condition
 		for i := range c.conditions {
-			condition := &c.conditions[i]
-			if condition.Type == result.Rule.Condition {
-				// The condition reason specified in the rule and the result message
-				// represent the problem happened. We need to know the default condition
-				// from the config, so that we can set the new condition reason/message
-				// back when such problem goes away.
-				var defaultConditionReason string
-				var defaultConditionMessage string
-				for j := range c.config.DefaultConditions {
-					defaultCondition := &c.config.DefaultConditions[j]
-					if defaultCondition.Type == result.Rule.Condition {
-						defaultConditionReason = defaultCondition.Reason
-						defaultConditionMessage = defaultCondition.Message
-						break
-					}
-				}
-
-				needToUpdateCondition := true
-				var newReason string
-				var newMessage string
-				status := toConditionStatus(result.ExitStatus)
-				if condition.Status == types.True && status != types.True {
-					// Scenario 1: Condition status changes from True to False/Unknown
-					newReason = defaultConditionReason
-					if status == types.False {
-						newMessage = defaultConditionMessage
-					} else {
-						// When status unknown, the result's message is important for debug
-						newMessage = result.Message
-					}
-				} else if condition.Status != types.True && status == types.True {
-					// Scenario 2: Condition status changes from False/Unknown to True
-					newReason = result.Rule.Reason
-					newMessage = result.Message
-				} else if condition.Status != status {
-					// Scenario 3: Condition status changes from False to Unknown or vice versa
-					newReason = defaultConditionReason
-					if status == types.False {
-						newMessage = defaultConditionMessage
-					} else {
-						// When status unknown, the result's message is important for debug
-						newMessage = result.Message
-					}
-				} else if condition.Status == types.True && status == types.True &&
-					(condition.Reason != result.Rule.Reason ||
-						(*c.config.PluginGlobalConfig.EnableMessageChangeBasedConditionUpdate && condition.Message != result.Message)) {
-					// Scenario 4: Condition status does not change and it stays true.
-					// condition reason changes or
-					// condition message changes when message based condition update is enabled.
-					newReason = result.Rule.Reason
-					newMessage = result.Message
-				} else {
-					// Scenario 5: Condition status does not change and it stays False/Unknown.
-					// This should just be the default reason or message (as a consequence
-					// of scenario 1 and scenario 3 above).
-					needToUpdateCondition = false
-				}
-
-				if needToUpdateCondition {
-					condition.Transition = timestamp
-					condition.Status = status
-					condition.Reason = newReason
-					condition.Message = newMessage
-
-					updateEvent := util.GenerateConditionChangeEvent(
-						condition.Type,
-						status,
-						newReason,
-						newMessage,
-						timestamp,
-					)
-
-					if status == types.True {
-						activeProblemEvents = append(activeProblemEvents, updateEvent)
-					} else {
-						inactiveProblemEvents = append(inactiveProblemEvents, updateEvent)
-					}
-				}
-
+			if c.conditions[i].Type == result.Rule.Condition {
+				condition = &c.conditions[i]
 				break
+			}
+		}
+
+		// The condition reason specified in the rule and the result message
+		// represent the problem happened. We need to know the default condition
+		// from the config, so that we can set the new condition reason/message
+		// back when such problem goes away.
+		var defaultConditionReason string
+		var defaultConditionMessage string
+		for j := range c.config.DefaultConditions {
+			if c.config.DefaultConditions[j].Type == result.Rule.Condition {
+				defaultConditionReason = c.config.DefaultConditions[j].Reason
+				defaultConditionMessage = c.config.DefaultConditions[j].Message
+
+				if condition == nil && *c.config.PluginGlobalConfig.SkipInitialStatus {
+					// Lazy initialize the condition now that we have a result for it
+					initialized := initialConditions([]types.Condition{c.config.DefaultConditions[j]})
+					c.conditions = append(c.conditions, initialized[0])
+					condition = &c.conditions[len(c.conditions)-1]
+				}
+				break
+			}
+		}
+
+		if condition != nil {
+			needToUpdateCondition := true
+			var newReason string
+			var newMessage string
+			status := toConditionStatus(result.ExitStatus)
+			if condition.Status == types.True && status != types.True {
+				// Scenario 1: Condition status changes from True to False/Unknown
+				newReason = defaultConditionReason
+				if status == types.False {
+					newMessage = defaultConditionMessage
+				} else {
+					// When status unknown, the result's message is important for debug
+					newMessage = result.Message
+				}
+			} else if condition.Status != types.True && status == types.True {
+				// Scenario 2: Condition status changes from False/Unknown to True
+				newReason = result.Rule.Reason
+				newMessage = result.Message
+			} else if condition.Status != status {
+				// Scenario 3: Condition status changes from False to Unknown or vice versa
+				newReason = defaultConditionReason
+				if status == types.False {
+					newMessage = defaultConditionMessage
+				} else {
+					// When status unknown, the result's message is important for debug
+					newMessage = result.Message
+				}
+			} else if condition.Status == types.True && status == types.True &&
+				(condition.Reason != result.Rule.Reason ||
+					(*c.config.PluginGlobalConfig.EnableMessageChangeBasedConditionUpdate && condition.Message != result.Message)) {
+				// Scenario 4: Condition status does not change and it stays true.
+				// condition reason changes or
+				// condition message changes when message based condition update is enabled.
+				newReason = result.Rule.Reason
+				newMessage = result.Message
+			} else {
+				// Scenario 5: Condition status does not change and it stays False/Unknown.
+				// This should just be the default reason or message (as a consequence
+				// of scenario 1 and scenario 3 above).
+				needToUpdateCondition = false
+			}
+
+			if needToUpdateCondition {
+				condition.Transition = timestamp
+				condition.Status = status
+				condition.Reason = newReason
+				condition.Message = newMessage
+
+				updateEvent := util.GenerateConditionChangeEvent(
+					condition.Type,
+					status,
+					newReason,
+					newMessage,
+					timestamp,
+				)
+
+				if status == types.True {
+					activeProblemEvents = append(activeProblemEvents, updateEvent)
+				} else {
+					inactiveProblemEvents = append(inactiveProblemEvents, updateEvent)
+				}
 			}
 		}
 	}
@@ -308,8 +317,14 @@ func (c *customPluginMonitor) sendInitialStatus() {
 }
 
 // initializeConditions initializes the internal node conditions.
+// When skip_initial_status is true, conditions start empty and are populated
+// lazily as check results arrive, so unchecked conditions are never reported.
 func (c *customPluginMonitor) initializeConditions() {
-	c.conditions = initialConditions(c.config.DefaultConditions)
+	if *c.config.PluginGlobalConfig.SkipInitialStatus {
+		c.conditions = []types.Condition{}
+	} else {
+		c.conditions = initialConditions(c.config.DefaultConditions)
+	}
 	klog.Infof("Initialized conditions for %s: %+v", c.configPath, c.conditions)
 }
 
