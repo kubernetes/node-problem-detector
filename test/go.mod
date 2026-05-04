@@ -5,9 +5,9 @@ go 1.25.8
 replace k8s.io/node-problem-detector => ../.
 
 require (
-	github.com/avast/retry-go/v4 v4.7.0
+	github.com/avast/retry-go/v4 v4.6.1
 	github.com/onsi/ginkgo v1.16.5
-	github.com/onsi/gomega v1.38.3
+	github.com/onsi/gomega v1.37.0
 	github.com/pborman/uuid v1.2.1
 	github.com/spf13/pflag v1.0.10
 	golang.org/x/crypto v0.49.0
@@ -16,8 +16,8 @@ require (
 	k8s.io/apimachinery v0.34.1
 	k8s.io/component-base v0.34.1
 	k8s.io/klog/v2 v2.130.1
-	k8s.io/node-problem-detector v1.34.0
-	sigs.k8s.io/boskos v0.0.0-20250922191614-14f95fc7cd0b
+	k8s.io/node-problem-detector v0.8.20
+	sigs.k8s.io/boskos v0.0.0-20250612085457-e9e53220ffb6
 )
 
 require (
@@ -63,7 +63,6 @@ require (
 	go.opentelemetry.io/otel/metric v1.42.0 // indirect
 	go.opentelemetry.io/otel/trace v1.42.0 // indirect
 	go.yaml.in/yaml/v2 v2.4.4 // indirect
-	go.yaml.in/yaml/v3 v3.0.4 // indirect
 	go4.org v0.0.0-20201209231011-d4a079459e60 // indirect
 	golang.org/x/net v0.52.0 // indirect
 	golang.org/x/sys v0.42.0 // indirect
@@ -75,7 +74,8 @@ require (
 	gopkg.in/ini.v1 v1.62.0 // indirect
 	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-	k8s.io/utils v0.0.0-20251222233032-718f0e51e6d2 // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
+	k8s.io/utils v0.0.0-20250604170112-4c0f3b243397 // indirect
 	sigs.k8s.io/controller-runtime v0.16.5 // indirect
 	sigs.k8s.io/prow v0.0.0-20240619181241-cfb8754e0459 // indirect
 	sigs.k8s.io/yaml v1.6.0 // indirect
