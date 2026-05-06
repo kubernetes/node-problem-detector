@@ -22,10 +22,32 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"k8s.io/node-problem-detector/pkg/problemdaemon"
+	"k8s.io/node-problem-detector/pkg/types"
 )
 
 func TestRegistration(t *testing.T) {
 	assert.NotPanics(t,
 		func() { problemdaemon.GetProblemDaemonHandlerOrDie("custom-plugin-monitor") },
 		"Custom plugin monitor failed to register itself as a problem daemon.")
+}
+
+func TestInitialConditions(t *testing.T) {
+	tests := []struct {
+		name           string
+		inputStatus    types.ConditionStatus
+		expectedStatus types.ConditionStatus
+	}{
+		{name: "TestTrue", inputStatus: types.True, expectedStatus: types.True},
+		{name: "TestFalse", inputStatus: types.False, expectedStatus: types.False},
+		{name: "TestUnknown", inputStatus: types.Unknown, expectedStatus: types.Unknown},
+		{name: "TestUnset", inputStatus: "", expectedStatus: types.False},
+		{name: "TestInvalid", inputStatus: "garbage", expectedStatus: types.False},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			defaults := []types.Condition{{Type: "TestCondition", Status: tt.inputStatus}}
+			conditions := initialConditions(defaults)
+			assert.Equal(t, tt.expectedStatus, conditions[0].Status)
+		})
+	}
 }

@@ -317,7 +317,13 @@ func initialConditions(defaults []types.Condition) []types.Condition {
 	conditions := make([]types.Condition, len(defaults))
 	copy(conditions, defaults)
 	for i := range conditions {
-		conditions[i].Status = types.False
+		switch conditions[i].Status {
+		case types.True, types.False, types.Unknown:
+		default:
+			klog.Warningf("Condition %q has invalid initial status %q, defaulting to %q",
+				conditions[i].Type, conditions[i].Status, types.False)
+			conditions[i].Status = types.False
+		}
 		conditions[i].Transition = time.Now()
 	}
 	return conditions
