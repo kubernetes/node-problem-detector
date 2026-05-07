@@ -21,6 +21,9 @@ package main
 import (
 	"context"
 	"flag"
+	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/spf13/pflag"
 	"k8s.io/klog/v2"
@@ -54,7 +57,9 @@ func main() {
 	}
 
 	pflag.Parse()
-	if err := npdMain(context.Background(), npdo); err != nil {
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+	if err := npdMain(ctx, npdo); err != nil {
 		klog.Fatalf("Problem detector failed with error: %v", err)
 	}
 }
