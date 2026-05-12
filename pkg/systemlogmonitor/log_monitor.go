@@ -20,6 +20,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"regexp"
+	"strings"
 	"time"
 
 	"k8s.io/klog/v2"
@@ -158,6 +160,9 @@ func (l *logMonitor) parseLog(log *systemlogtypes.Log) {
 			continue
 		}
 		status := l.generateStatus(matched, rule)
+		if status == nil {
+			continue
+		}
 		klog.Infof("New status generated: %+v", status)
 		l.output <- status
 	}
@@ -170,12 +175,33 @@ func (l *logMonitor) generateStatus(logs []*systemlogtypes.Log, rule systemlogty
 	message := generateMessage(logs, rule.PatternGeneratedMessageSuffix)
 	var events []types.Event
 	var changedConditions []*types.Condition
+
+	reason := rule.Reason
+	// Support configuring rule.Reason as a Sprintf format string and formatting it with the matched capturing groups in rule.Pattern.
+	if strings.Contains(reason, "%") {
+		re := regexp.MustCompile(rule.Pattern)
+		matches := re.FindStringSubmatch(message)
+		formatArgs := make([]interface{}, 0)
+		if len(matches) > 1 {
+			// Use the matched capturing groups as the arguments for Sprintf.
+			for _, value := range matches[1:] {
+				formatArgs = append(formatArgs, value)
+			}
+		}
+		reason = fmt.Sprintf(rule.Reason, formatArgs...)
+		// If fmt.Sprintf fails, it will add "%!" for each failed template in the result string.
+		if strings.Contains(reason, "%!") {
+			klog.Errorf("Got wrong string %q for reason %q with pattern %q", reason, rule.Reason, rule.Pattern)
+			return nil
+		}
+	}
+
 	if rule.Type == types.Temp {
 		// For temporary error only generate event
 		events = append(events, types.Event{
 			Severity:  types.Warn,
 			Timestamp: timestamp,
-			Reason:    rule.Reason,
+			Reason:    reason,
 			Message:   message,
 		})
 	} else {
@@ -186,19 +212,19 @@ func (l *logMonitor) generateStatus(logs []*systemlogtypes.Log, rule systemlogty
 				// Update transition timestamp and message when the condition
 				// changes. Condition is considered to be changed only when
 				// status or reason changes.
-				if condition.Status == types.False || condition.Reason != rule.Reason {
+				if condition.Status == types.False || condition.Reason != reason {
 					condition.Transition = timestamp
 					condition.Message = message
 					events = append(events, util.GenerateConditionChangeEvent(
 						condition.Type,
 						types.True,
-						rule.Reason,
+						reason,
 						message,
 						timestamp,
 					))
 				}
 				condition.Status = types.True
-				condition.Reason = rule.Reason
+				condition.Reason = reason
 				changedConditions = append(changedConditions, condition)
 				break
 			}
