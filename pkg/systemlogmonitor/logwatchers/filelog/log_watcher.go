@@ -131,6 +131,13 @@ func (s *filelogWatcher) watchLoop() {
 			klog.V(5).Infof("Throwing away msg %q before start time: %v < %v", log.Message, log.Timestamp, s.startTime)
 			continue
 		}
+
+		// Discard messages after now, lots of log files are not record year. 1 min cover log write latency
+		if log.Timestamp.After(time.Now().Add(time.Minute)) {
+			klog.V(5).Infof("Throwing away msg %q after current time: %v < %v", log.Message, log.Timestamp, time.Now())
+			continue
+		}
+
 		s.logCh <- log
 	}
 }

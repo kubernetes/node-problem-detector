@@ -130,6 +130,12 @@ func (j *journaldWatcher) watchLoop() {
 			continue
 		}
 
+		// Discard messages after now, the journal log is not record year. 1 min cover log write latency
+		if entry.RealtimeTimestamp > timeToJournalTimestamp(time.Now().Add(time.Minute)) {
+			klog.V(5).Infof("Throwing away msg %q after current time: %v < %v", entry.Fields[sdjournal.SD_JOURNAL_FIELD_MESSAGE], entry.RealtimeTimestamp, time.Now())
+			continue
+		}
+
 		j.logCh <- translate(entry)
 	}
 }
