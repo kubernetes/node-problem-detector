@@ -1,0 +1,89 @@
+// Copyright The Kubernetes Authors All rights reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package npd.external.v1;
+
+import "google/protobuf/empty.proto";
+import "api/services/external/v1/external_monitor.proto";
+
+option go_package = "k8s.io/node-problem-detector/api/services/external/v1";
+
+// ExternalExporter service defines the gRPC interface for external exporter plugins.
+// External exporters run as separate processes and receive status updates from NPD.
+service ExternalExporter {
+    // ExportProblems receives status updates from monitors and exports them.
+    // This is called whenever any monitor reports a status change.
+    rpc ExportProblems(ExportRequest) returns (ExportResponse);
+
+    // GetMetadata returns information about the exporter's capabilities and version.
+    // Called once during plugin initialization.
+    rpc GetMetadata(google.protobuf.Empty) returns (ExporterMetadata);
+
+    // Stop notifies the exporter to perform graceful shutdown.
+    // Called when NPD is shutting down or plugin is being disabled.
+    rpc Stop(google.protobuf.Empty) returns (google.protobuf.Empty);
+}
+
+// ExportRequest contains status information to be exported.
+message ExportRequest {
+    // Status from the monitor that needs to be exported.
+    Status status = 1;
+
+    // Sequence number for this export (for debugging/correlation).
+    int64 sequence = 2;
+
+    // Node name where this status originated.
+    string node_name = 3;
+
+    // Additional context information.
+    map<string, string> context = 4;
+}
+
+// ExportResponse indicates the result of the export operation.
+message ExportResponse {
+    // Success indicates whether the export was successful.
+    bool success = 1;
+
+    // Error message if export failed.
+    string error = 2;
+
+    // Number of events exported.
+    int32 events_exported = 3;
+
+    // Number of conditions exported.
+    int32 conditions_exported = 4;
+}
+
+// ExporterMetadata provides information about the exporter plugin.
+message ExporterMetadata {
+    // Name of the exporter.
+    string name = 1;
+
+    // Version of the exporter implementation.
+    string version = 2;
+
+    // Description of what the exporter does.
+    string description = 3;
+
+    // Supported export formats or destinations.
+    repeated string supported_formats = 4;
+
+    // Capabilities and features supported by this exporter.
+    map<string, string> capabilities = 5;
+
+    // API version this exporter implements.
+    string api_version = 6;
+}
