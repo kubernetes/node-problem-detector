@@ -23,7 +23,15 @@ set -o pipefail
 
 
 NPD_STAGING_PATH=${NPD_STAGING_PATH:-"gs://k8s-staging-npd"}
-NPD_STAGING_REGISTRY=${NPD_STAGING_REGISTRY:-"gcr.io/node-problem-detector-staging"}
+NPD_STAGING_REGISTRY=${NPD_STAGING_REGISTRY:-"gcr.io/k8s-staging-npd"}
+# NPD_E2E_IMAGE is the node-problem-detector container image that the kubernetes
+# node e2e "NodeProblemDetector" test pulls. The presubmit and CI build jobs run
+# on the untrusted build cluster and cannot push to the staging registry, so the
+# e2e test consumes the multi-arch image published to the community registry by
+# the node-problem-detector-push-images postsubmit (see test-infra
+# config/jobs/image-pushing/k8s-staging-node-problem-detector.yaml). The "master"
+# tag tracks the latest commit on the master branch.
+NPD_E2E_IMAGE=${NPD_E2E_IMAGE:-"gcr.io/k8s-staging-npd/node-problem-detector:master"}
 PR_ENV_FILENAME=${PR_ENV_FILENAME:-"pr.env"}
 CI_ENV_FILENAME=${CI_ENV_FILENAME:-"ci.env"}
 CI_CUSTOM_FLAGS_ENV_FILENAME=${CI_CUSTOM_FLAGS_ENV_FILENAME:-"ci-custom-flags.env"}
@@ -80,7 +88,7 @@ export KUBE_ENABLE_NODE_PROBLEM_DETECTOR=standalone
 export NODE_PROBLEM_DETECTOR_RELEASE_PATH=${UPLOAD_PATH/gs:\/\//${GCS_URL_PREFIX}}
 export NODE_PROBLEM_DETECTOR_VERSION=${VERSION}
 export NODE_PROBLEM_DETECTOR_TAR_HASH=$(sha1sum ${ROOT_PATH}/node-problem-detector-${VERSION}-linux_amd64.tar.gz | cut -d ' ' -f1)
-export EXTRA_ENVS=NODE_PROBLEM_DETECTOR_IMAGE=${REGISTRY}/node-problem-detector:${TAG}
+export EXTRA_ENVS=NODE_PROBLEM_DETECTOR_IMAGE=${NPD_E2E_IMAGE}
 EOF
 
   if [[ -n "${NODE_PROBLEM_DETECTOR_CUSTOM_FLAGS:-}" ]]; then
@@ -139,9 +147,9 @@ function build-ci() {
   export REGISTRY="${NPD_STAGING_REGISTRY}/ci"
   export VERSION="$(get-version)-$(date +%Y%m%d.%H%M)"
   export TAG="${VERSION}"
-  # e2e tests consume the tarball, not the container
-  # this is simpler to manage in the infra, and we still ensure the container
-  # build works locally
+  # The cluster e2e jobs consume the tarball; the node e2e test pulls a
+  # published container image (see NPD_E2E_IMAGE). We still build the container
+  # here to ensure the container build keeps working.
   make push-tar build-container
 
   # Create the env file with and without custom flags at the same time.
