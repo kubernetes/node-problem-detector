@@ -63,6 +63,10 @@ NPD_NAME_VERSION?=node-problem-detector-$(VERSION)
 # TARBALL is the name of release tar. Include binary version by default.
 TARBALL=$(NPD_NAME_VERSION).tar.gz
 
+# IMAGE_ARCHIVE is the single-arch (linux/amd64) image tarball built by
+# `build-image-archive` for side-loading onto node e2e VMs.
+IMAGE_ARCHIVE?=node-problem-detector-image.tar
+
 # IMAGE_TAGS contains the image tags of the node problem detector container image.
 IMAGE_TAGS=--tag $(REGISTRY)/node-problem-detector:$(TAG)
 IMAGE_TAGS_WINDOWS=--tag $(REGISTRY)/node-problem-detector-windows:$(TAG)
@@ -303,6 +307,12 @@ build-binaries: $(ALL_BINARIES)
 build-container: clean Dockerfile
 	docker buildx create --platform $(DOCKER_PLATFORMS) --use
 	docker buildx build --platform $(DOCKER_PLATFORMS) $(IMAGE_TAGS) --build-arg LOGCOUNTER=$(LOGCOUNTER) .
+
+# build-image-archive builds the linux/amd64 image into a docker-archive tarball
+# ($(IMAGE_ARCHIVE)) for side-loading onto node e2e VMs with `ctr images import`.
+build-image-archive: clean Dockerfile
+	docker buildx create --platform linux/amd64 --use
+	docker buildx build --platform linux/amd64 --output type=docker,dest=$(IMAGE_ARCHIVE) $(IMAGE_TAGS) --build-arg LOGCOUNTER=$(LOGCOUNTER) .
 
 build-container-windows: clean Dockerfile.windows
 	docker buildx create --platform windows/amd64 --use

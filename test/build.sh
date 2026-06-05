@@ -23,7 +23,11 @@ set -o pipefail
 
 
 NPD_STAGING_PATH=${NPD_STAGING_PATH:-"gs://k8s-staging-npd"}
-NPD_STAGING_REGISTRY=${NPD_STAGING_REGISTRY:-"gcr.io/node-problem-detector-staging"}
+NPD_STAGING_REGISTRY=${NPD_STAGING_REGISTRY:-"gcr.io/k8s-staging-npd"}
+# IMAGE_ARCHIVE is a single-arch (linux/amd64) image tarball that the node e2e
+# VM side-loads into containerd (see test/sideload-image.sh), so the test runs
+# the image built from this PR/CI run without pushing to a registry.
+IMAGE_ARCHIVE=${IMAGE_ARCHIVE:-"node-problem-detector-image.tar"}
 PR_ENV_FILENAME=${PR_ENV_FILENAME:-"pr.env"}
 CI_ENV_FILENAME=${CI_ENV_FILENAME:-"ci.env"}
 CI_CUSTOM_FLAGS_ENV_FILENAME=${CI_CUSTOM_FLAGS_ENV_FILENAME:-"ci-custom-flags.env"}
@@ -81,6 +85,7 @@ export NODE_PROBLEM_DETECTOR_RELEASE_PATH=${UPLOAD_PATH/gs:\/\//${GCS_URL_PREFIX
 export NODE_PROBLEM_DETECTOR_VERSION=${VERSION}
 export NODE_PROBLEM_DETECTOR_TAR_HASH=$(sha1sum ${ROOT_PATH}/node-problem-detector-${VERSION}-linux_amd64.tar.gz | cut -d ' ' -f1)
 export EXTRA_ENVS=NODE_PROBLEM_DETECTOR_IMAGE=${REGISTRY}/node-problem-detector:${TAG}
+export NODE_PROBLEM_DETECTOR_IMAGE_ARCHIVE_URL=${UPLOAD_PATH/gs:\/\//${GCS_URL_PREFIX}}/${IMAGE_ARCHIVE}
 EOF
 
   if [[ -n "${NODE_PROBLEM_DETECTOR_CUSTOM_FLAGS:-}" ]]; then
@@ -129,7 +134,8 @@ function build-pr() {
   export REGISTRY="${NPD_STAGING_REGISTRY}/pr/${PR}"
   export VERSION=$(get-version)
   export TAG="${VERSION}"
-  make push-tar
+  make push-tar build-image-archive
+  gsutil cp "${ROOT_PATH}/${IMAGE_ARCHIVE}" "${UPLOAD_PATH}/"
   write-env-file ${PR_ENV_FILENAME}
 }
 
@@ -139,10 +145,11 @@ function build-ci() {
   export REGISTRY="${NPD_STAGING_REGISTRY}/ci"
   export VERSION="$(get-version)-$(date +%Y%m%d.%H%M)"
   export TAG="${VERSION}"
-  # e2e tests consume the tarball, not the container
-  # this is simpler to manage in the infra, and we still ensure the container
-  # build works locally
-  make push-tar build-container
+  # The cluster e2e jobs consume the tarball; the node e2e test side-loads the
+  # image archive built here (see test/sideload-image.sh). Nothing is pushed to
+  # a registry.
+  make push-tar build-image-archive
+  gsutil cp "${ROOT_PATH}/${IMAGE_ARCHIVE}" "${UPLOAD_PATH}/"
 
   # Create the env file with and without custom flags at the same time.
   build-npd-custom-flags
