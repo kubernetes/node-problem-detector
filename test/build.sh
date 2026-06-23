@@ -23,7 +23,7 @@ set -o pipefail
 
 
 NPD_STAGING_PATH=${NPD_STAGING_PATH:-"gs://k8s-staging-npd"}
-NPD_STAGING_REGISTRY=${NPD_STAGING_REGISTRY:-"gcr.io/node-problem-detector-staging"}
+NPD_STAGING_REGISTRY=${NPD_STAGING_REGISTRY:-"gcr.io/k8s-staging-npd"}
 PR_ENV_FILENAME=${PR_ENV_FILENAME:-"pr.env"}
 CI_ENV_FILENAME=${CI_ENV_FILENAME:-"ci.env"}
 CI_CUSTOM_FLAGS_ENV_FILENAME=${CI_CUSTOM_FLAGS_ENV_FILENAME:-"ci-custom-flags.env"}
@@ -80,7 +80,7 @@ export KUBE_ENABLE_NODE_PROBLEM_DETECTOR=standalone
 export NODE_PROBLEM_DETECTOR_RELEASE_PATH=${UPLOAD_PATH/gs:\/\//${GCS_URL_PREFIX}}
 export NODE_PROBLEM_DETECTOR_VERSION=${VERSION}
 export NODE_PROBLEM_DETECTOR_TAR_HASH=$(sha1sum ${ROOT_PATH}/node-problem-detector-${VERSION}-linux_amd64.tar.gz | cut -d ' ' -f1)
-export EXTRA_ENVS=NODE_PROBLEM_DETECTOR_IMAGE=${REGISTRY}/node-problem-detector:${TAG}
+export EXTRA_ENVS=NODE_PROBLEM_DETECTOR_IMAGE=${NPD_STAGING_REGISTRY}/node-problem-detector:${PULL_BASE_REF:-master}
 EOF
 
   if [[ -n "${NODE_PROBLEM_DETECTOR_CUSTOM_FLAGS:-}" ]]; then
@@ -126,9 +126,7 @@ function build-pr() {
   install-lib
 
   export UPLOAD_PATH="${NPD_STAGING_PATH}/pr/${PR}"
-  export REGISTRY="${NPD_STAGING_REGISTRY}/pr/${PR}"
   export VERSION=$(get-version)
-  export TAG="${VERSION}"
   make push-tar
   write-env-file ${PR_ENV_FILENAME}
 }
