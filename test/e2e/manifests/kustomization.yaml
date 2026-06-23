@@ -1,0 +1,12 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Reuse the production base in deployment/ so this e2e overlay never drifts from
+# it; only the image is overridden, to the per-branch community staging build.
+resources:
+- ../../../deployment
+
+images:
+- name: registry.k8s.io/node-problem-detector/node-problem-detector
+  newName: gcr.io/k8s-staging-npd/node-problem-detector
+  newTag: master
