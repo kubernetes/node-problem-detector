@@ -33,9 +33,18 @@ import (
 	"k8s.io/node-problem-detector/pkg/util/tomb"
 )
 
-// maxCustomPluginBufferBytes is the max bytes that a custom plugin is allowed to
-// send to stdout/stderr. Any bytes exceeding this value will be truncated.
-const maxCustomPluginBufferBytes = 1024 * 4
+// maxCustomPluginStdoutCeilingBytes is a hard safety ceiling on how many bytes
+// of stdout NPD reads from a custom plugin, bounding memory use from a runaway
+// plugin. The per-plugin max_output_length is what actually governs the message
+// size; this ceiling only caps the (misconfigured) case where max_output_length
+// itself exceeds it. It must be >= the largest supported max_output_length so a
+// plugin's configured limit is never silently truncated by the read buffer.
+const maxCustomPluginStdoutCeilingBytes = 1024 * 1024
+
+// maxCustomPluginStderrBytes caps stderr. run() uses stderr only for diagnostic
+// logging (logPluginStderr) and never includes it in the returned output, so it
+// does not need to honor max_output_length and keeps a small fixed cap.
+const maxCustomPluginStderrBytes = 1024 * 4
 
 type Plugin struct {
 	config     cpmtypes.CustomPluginConfig
@@ -210,14 +219,22 @@ func (p *Plugin) run(rule cpmtypes.CustomRule) (exitStatus cpmtypes.Status, outp
 		stderrErr error
 	)
 
+	// Capture enough stdout to honor the configured max_output_length, bounded
+	// by a hard safety ceiling. Previously this was a fixed 4 KiB buffer that
+	// silently truncated plugins configured with a larger max_output_length.
+	stdoutCapture := int64(*p.config.PluginGlobalConfig.MaxOutputLength)
+	if stdoutCapture > maxCustomPluginStdoutCeilingBytes {
+		stdoutCapture = maxCustomPluginStdoutCeilingBytes
+	}
+
 	wg.Add(2)
 	go func() {
 		defer wg.Done()
-		stdout, stdoutErr = readFromReader(stdoutPipe, maxCustomPluginBufferBytes)
+		stdout, stdoutErr = readFromReader(stdoutPipe, stdoutCapture)
 	}()
 	go func() {
 		defer wg.Done()
-		stderr, stderrErr = readFromReader(stderrPipe, maxCustomPluginBufferBytes)
+		stderr, stderrErr = readFromReader(stderrPipe, maxCustomPluginStderrBytes)
 	}()
 	// This will wait for the reads to complete. If the execution times out, the pipes
 	// will be closed and the wait group unblocks.
