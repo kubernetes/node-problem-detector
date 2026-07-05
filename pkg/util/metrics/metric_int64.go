@@ -51,26 +51,30 @@ func NewInt64Metric(metricID MetricID, name, description, unit string, aggregati
 // newInt64Instrument constructs the int64 counter/gauge for the given aggregation.
 func newInt64Instrument(
 	meter metric.Meter, name, description, unit string, aggregation Aggregation,
-) (add func(context.Context, int64, ...metric.AddOption), record func(context.Context, int64, ...metric.RecordOption), err error) {
+) (func(context.Context, int64, metric.MeasurementOption), error) {
 	switch aggregation {
 	case Sum:
-		counter, cErr := meter.Int64Counter(name,
+		counter, err := meter.Int64Counter(name,
 			metric.WithDescription(description),
 			metric.WithUnit(unit),
 		)
-		if cErr != nil {
-			return nil, nil, cErr
+		if err != nil {
+			return nil, err
 		}
-		return counter.Add, nil, nil
+		return func(ctx context.Context, value int64, opt metric.MeasurementOption) {
+			counter.Add(ctx, value, opt)
+		}, nil
 	default: // LastValue
 		// Use synchronous Int64Gauge for proper gauge semantics without automatic suffixing
-		gauge, gErr := meter.Int64Gauge(name,
+		gauge, err := meter.Int64Gauge(name,
 			metric.WithDescription(description),
 			metric.WithUnit(unit),
 		)
-		if gErr != nil {
-			return nil, nil, gErr
+		if err != nil {
+			return nil, err
 		}
-		return nil, gauge.Record, nil
+		return func(ctx context.Context, value int64, opt metric.MeasurementOption) {
+			gauge.Record(ctx, value, opt)
+		}, nil
 	}
 }

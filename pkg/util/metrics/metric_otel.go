@@ -26,29 +26,23 @@ import (
 )
 
 // otelMetric wraps an OpenTelemetry instrument for a single numeric type.
-// The int64/float64 instrument types differ, so the counter Add and gauge
-// Record operations are bound at construction as method values.
+// The int64/float64 instrument types differ, so the measurement operation is
+// bound at construction.
 type otelMetric[T int64 | float64] struct {
-	name        string
-	description string
-	unit        string
-	aggregation Aggregation
-	labels      []string
-	labelSet    map[string]struct{}
-	meter       metric.Meter
+	name     string
+	labelSet map[string]struct{}
 
-	// add is bound to the counter's Add for Sum aggregation; nil otherwise.
-	add func(context.Context, T, ...metric.AddOption)
-	// record is bound to the gauge's Record for LastValue aggregation; nil otherwise.
-	record func(context.Context, T, ...metric.RecordOption)
+	// emit sends one measurement to the underlying counter (Sum) or
+	// gauge (LastValue) instrument.
+	emit func(context.Context, T, metric.MeasurementOption)
 }
 
-// otelInstrumentFactory constructs the type-specific counter and gauge
-// instruments and returns their bound Add/Record method values. Exactly one of
-// the returned functions is non-nil, matching the requested aggregation.
+// otelInstrumentFactory constructs the type-specific counter or gauge
+// instrument for the given aggregation and returns its bound measurement
+// operation.
 type otelInstrumentFactory[T int64 | float64] func(
 	meter metric.Meter, name, description, unit string, aggregation Aggregation,
-) (add func(context.Context, T, ...metric.AddOption), record func(context.Context, T, ...metric.RecordOption), err error)
+) (emit func(context.Context, T, metric.MeasurementOption), err error)
 
 // newOTelMetric builds a generic otelMetric, keeping the empty-name,
 // aggregation-switch/error, and MetricMap bookkeeping in one place.
@@ -60,46 +54,31 @@ func newOTelMetric[T int64 | float64](
 		return nil, nil
 	}
 
-	meter := otelutil.GetGlobalMeter()
+	switch aggregation {
+	case Sum, LastValue:
+	default:
+		return nil, fmt.Errorf("unsupported aggregation type for metric %s: %v", name, aggregation)
+	}
+
+	emit, err := factory(otelutil.GetGlobalMeter(), name, description, unit, aggregation)
+	if err != nil {
+		return nil, err
+	}
 
 	labelSet := make(map[string]struct{}, len(labels))
 	for _, label := range labels {
 		labelSet[label] = struct{}{}
 	}
 
-	m := &otelMetric[T]{
-		name:        name,
-		description: description,
-		unit:        unit,
-		aggregation: aggregation,
-		labels:      labels,
-		labelSet:    labelSet,
-		meter:       meter,
-	}
-
-	switch aggregation {
-	case Sum, LastValue:
-		add, record, err := factory(meter, name, description, unit, aggregation)
-		if err != nil {
-			return nil, err
-		}
-		m.add = add
-		m.record = record
-	default:
-		return nil, fmt.Errorf("unsupported aggregation type for metric %s: %v", name, aggregation)
-	}
-
 	// Register metric mapping
 	MetricMap.AddMapping(metricID, name)
 
-	return m, nil
+	return &otelMetric[T]{name: name, labelSet: labelSet, emit: emit}, nil
 }
 
 // Record validates the provided labels against the declared label set and
-// dispatches to the counter Add or gauge Record depending on aggregation.
+// emits the measurement to the underlying instrument.
 func (m *otelMetric[T]) Record(labelValues map[string]string, value T) error {
-	ctx := context.Background()
-
 	// Convert to OTel attributes, rejecting labels that were not declared.
 	attrs := make([]attribute.KeyValue, 0, len(labelValues))
 	for k, v := range labelValues {
@@ -109,18 +88,6 @@ func (m *otelMetric[T]) Record(labelValues map[string]string, value T) error {
 		attrs = append(attrs, attribute.String(k, v))
 	}
 
-	switch m.aggregation {
-	case Sum:
-		if m.add != nil {
-			m.add(ctx, value, metric.WithAttributes(attrs...))
-		}
-	case LastValue:
-		if m.record != nil {
-			m.record(ctx, value, metric.WithAttributes(attrs...))
-		}
-	default:
-		return fmt.Errorf("unsupported aggregation type for metric %s: %v", m.name, m.aggregation)
-	}
-
+	m.emit(context.Background(), value, metric.WithAttributes(attrs...))
 	return nil
 }
