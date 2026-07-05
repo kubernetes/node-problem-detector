@@ -330,7 +330,13 @@ func (dc *diskCollector) collect() {
 			klog.Errorf("Failed to record used bytes for %s: %v", deviceName, err)
 		}
 		if dc.mPercentUsed != nil {
-			if err := dc.mPercentUsed.Record(map[string]string{deviceNameLabel: deviceName, fsTypeLabel: fstype, mountOptionLabel: opttypes, stateLabel: "used"}, float64(usageStat.UsedPercent)); err != nil {
+			// disk_percent_used is keyed only by device_name, matching the
+			// label schema NPD has exported since the metric was introduced
+			// (the OpenCensus view aggregated by device_name and dropped the
+			// other tags). This also keeps writes compatible with the
+			// Google-owned compute.googleapis.com/guest/disk/percent_used
+			// descriptor.
+			if err := dc.mPercentUsed.Record(map[string]string{deviceNameLabel: deviceName}, float64(usageStat.UsedPercent)); err != nil {
 				klog.Errorf("Failed to record used percent for %s: %v", deviceName, err)
 			}
 		}
