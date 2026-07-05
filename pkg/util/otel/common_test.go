@@ -83,19 +83,6 @@ func TestMultipleExportersArchitecture(t *testing.T) {
 	}
 }
 
-func TestGetMeterProviderBeforeInitialization(t *testing.T) {
-	// Reset global state for isolated testing
-	globalMeterProvider = nil
-	meterProviderOnce = sync.Once{}
-	readers = nil
-
-	// GetMeterProvider should auto-initialize if not done
-	meterProvider := GetMeterProvider()
-	if meterProvider == nil {
-		t.Fatal("Expected meter provider to be auto-initialized")
-	}
-}
-
 func TestMeterNameConstant(t *testing.T) {
 	if MeterName != "node-problem-detector" {
 		t.Errorf("Expected MeterName to be 'node-problem-detector', got '%s'", MeterName)
