@@ -47,6 +47,7 @@ func newExporterAndHandler() (*otelprometheus.Exporter, http.Handler, error) {
 		otelprometheus.WithRegisterer(reg),                                   // Use a dedicated registry
 		otelprometheus.WithTranslationStrategy(otlptranslator.NoTranslation), // Don't add suffixes or escape
 		otelprometheus.WithoutScopeInfo(),                                    // Don't add otel_scope_* labels
+		otelprometheus.WithoutTargetInfo(),                                   // Don't emit target_info with resource attributes
 	)
 	if err != nil {
 		return nil, nil, err

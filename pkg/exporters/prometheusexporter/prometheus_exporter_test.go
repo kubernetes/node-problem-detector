@@ -89,10 +89,12 @@ func TestScrapeExcludesDefaultCollectors(t *testing.T) {
 		t.Errorf("Expected scrape output to contain recorded metric %q, got:\n%s", "test_problem_counter", output)
 	}
 
-	// The default Go runtime / process collectors must NOT be present.
-	for _, unwanted := range []string{"go_goroutines", "process_cpu_seconds_total"} {
+	// The default Go runtime / process collectors and the target_info metric
+	// (which would expose the shared OTel resource attributes) must NOT be
+	// present.
+	for _, unwanted := range []string{"go_goroutines", "process_cpu_seconds_total", "target_info"} {
 		if strings.Contains(output, unwanted) {
-			t.Errorf("Expected scrape output to NOT contain default collector metric %q, got:\n%s", unwanted, output)
+			t.Errorf("Expected scrape output to NOT contain metric %q, got:\n%s", unwanted, output)
 		}
 	}
 }
