@@ -67,3 +67,19 @@ func createResource() *resource.Resource {
 
 	return res
 }
+
+// resourceWithExtraAttributes merges the given attributes into the base resource.
+// The extra attributes are added without a schema URL so the base resource's
+// schema URL is preserved. Returns the base resource unchanged if there are no
+// extra attributes or the merge fails.
+func resourceWithExtraAttributes(base *resource.Resource, attrs []attribute.KeyValue) *resource.Resource {
+	if len(attrs) == 0 {
+		return base
+	}
+	merged, err := resource.Merge(base, resource.NewSchemaless(attrs...))
+	if err != nil {
+		klog.Errorf("Failed to merge resource attributes: %v", err)
+		return base
+	}
+	return merged
+}

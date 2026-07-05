@@ -26,15 +26,14 @@ import (
 	gcpmetric "github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/metric"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.opentelemetry.io/otel"
 	sdkmetric "go.opentelemetry.io/otel/sdk/metric"
-	"go.opentelemetry.io/otel/sdk/metric/metricdata"
 	"google.golang.org/api/option"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
 	"k8s.io/node-problem-detector/pkg/exporters"
 	seconfig "k8s.io/node-problem-detector/pkg/exporters/stackdriver/config"
+	"k8s.io/node-problem-detector/pkg/exporters/stackdriver/gce"
 	"k8s.io/node-problem-detector/pkg/exporters/stackdriver/internal/cloudmock"
 	"k8s.io/node-problem-detector/pkg/util/metrics"
 	otelutil "k8s.io/node-problem-detector/pkg/util/otel"
@@ -116,36 +115,46 @@ func TestCustomMetricPrefix(t *testing.T) {
 func TestExportMetricsToCloudMonitoring(t *testing.T) {
 	// Reset global OTel state for clean test
 	otelutil.ResetForTesting()
+	defer otelutil.ResetForTesting()
 
 	// Create mock Google Cloud Monitoring server
 	mockServer := cloudmock.NewMetricTestServer()
 	defer mockServer.Shutdown()
 
-	// Create GCP exporter configured to use mock server
-	exporter, err := gcpmetric.New(
-		gcpmetric.WithProjectID("test-project-dy"),
-		gcpmetric.WithMetricDescriptorTypeFormatter(func(m metricdata.Metrics) string {
-			// Use our NPD metric conversion function
-			converter := getMetricTypeConversionFunction("")
-			return converter(m.Name)
-		}),
+	// Drive the production setup path: configure the exporter to point at the
+	// mock server via the APIEndpoint config option (proving that wiring works)
+	// and populate the GCE metadata used to build the monitored resource.
+	se := stackdriverExporter{
+		config: seconfig.StackdriverExporterConfig{
+			ExportPeriod: (100 * time.Millisecond).String(),
+			APIEndpoint:  mockServer.Endpoint(),
+			GCEMetadata: gce.Metadata{
+				ProjectID:    "test-project-dy",
+				Zone:         "us-central1-a",
+				InstanceID:   "1234567890",
+				InstanceName: "test-instance",
+			},
+		},
+	}
+
+	// Register the GCE resource attributes exactly as the production path does.
+	otelutil.AddResourceAttributes(se.gceResourceAttributes()...)
+
+	// Build the exporter from the production options, adding only the insecure
+	// dial options required to talk to the in-process mock server.
+	opts := append(se.exporterOptions(),
 		gcpmetric.WithMonitoringClientOptions(
-			option.WithEndpoint(mockServer.Endpoint()),
 			option.WithoutAuthentication(),
 			option.WithGRPCDialOption(grpc.WithTransportCredentials(insecure.NewCredentials())),
 		),
 	)
+	exporter, err := gcpmetric.New(opts...)
 	require.NoError(t, err)
 
-	// Create a manual reader for deterministic export
-	reader := sdkmetric.NewManualReader()
-
-	// Create meter provider with both readers
-	provider := sdkmetric.NewMeterProvider(
-		sdkmetric.WithReader(reader),
-		sdkmetric.WithReader(sdkmetric.NewPeriodicReader(exporter, sdkmetric.WithInterval(100*time.Millisecond))),
-	)
-	otel.SetMeterProvider(provider)
+	// Register the exporter's reader and initialize the global meter provider
+	// (which merges the GCE resource attributes into the global resource).
+	otelutil.AddMetricReader(sdkmetric.NewPeriodicReader(exporter, sdkmetric.WithInterval(100*time.Millisecond)))
+	provider := otelutil.InitializeMeterProvider()
 	defer func() {
 		_ = provider.Shutdown(context.Background())
 	}()
@@ -241,6 +250,25 @@ func TestExportMetricsToCloudMonitoring(t *testing.T) {
 	assert.True(t, foundUptime, "should have exported host uptime metric")
 	assert.True(t, foundCPULoad, "should have exported CPU load metric")
 	assert.True(t, foundMemory, "should have exported memory bytes metric")
+
+	// Every exported time series must map to the gce_instance monitored
+	// resource (with instance_id/zone labels) and carry the instance_name
+	// metric label.
+	for _, req := range reqs {
+		for _, ts := range req.TimeSeries {
+			require.NotNil(t, ts.Resource, "time series must have a monitored resource")
+			assert.Equal(t, "gce_instance", ts.Resource.Type,
+				"time series should map to the gce_instance monitored resource")
+			assert.Equal(t, "1234567890", ts.Resource.Labels["instance_id"],
+				"gce_instance resource should carry the instance_id label")
+			assert.Equal(t, "us-central1-a", ts.Resource.Labels["zone"],
+				"gce_instance resource should carry the zone label")
+
+			require.NotNil(t, ts.Metric, "time series must have a metric")
+			assert.Equal(t, "test-instance", ts.Metric.Labels["instance_name"],
+				"metric labels should include the instance_name label")
+		}
+	}
 
 	t.Logf("Successfully exported and verified %d time series to mock GCM", totalTimeSeries)
 }

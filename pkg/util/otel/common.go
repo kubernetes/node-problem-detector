@@ -20,6 +20,7 @@ import (
 	"sync"
 
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/metric"
 	sdkmetric "go.opentelemetry.io/otel/sdk/metric"
 	"k8s.io/klog/v2"
@@ -30,6 +31,7 @@ var (
 	meterProviderOnce   sync.Once
 	readers             []sdkmetric.Reader
 	readersMutex        sync.Mutex
+	extraResourceAttrs  []attribute.KeyValue
 )
 
 // AddMetricReader adds a metric reader to the global meter provider configuration
@@ -39,6 +41,15 @@ func AddMetricReader(reader sdkmetric.Reader) {
 	readersMutex.Lock()
 	defer readersMutex.Unlock()
 	readers = append(readers, reader)
+}
+
+// AddResourceAttributes registers additional resource attributes that are merged
+// into the global OpenTelemetry resource by InitializeMeterProvider().
+// This should be called before InitializeMeterProvider().
+func AddResourceAttributes(attrs ...attribute.KeyValue) {
+	readersMutex.Lock()
+	defer readersMutex.Unlock()
+	extraResourceAttrs = append(extraResourceAttrs, attrs...)
 }
 
 // InitializeMeterProvider creates and sets the global meter provider with all registered readers
@@ -52,8 +63,9 @@ func InitializeMeterProvider() *sdkmetric.MeterProvider {
 			klog.Warning("No metric readers registered, creating meter provider without readers")
 		}
 
-		// Use global resource with proper service identification
-		resource := GetResource()
+		// Use global resource with proper service identification, merged with
+		// any additional attributes registered via AddResourceAttributes.
+		resource := resourceWithExtraAttributes(GetResource(), extraResourceAttrs)
 
 		// Create meter provider options
 		opts := []sdkmetric.Option{sdkmetric.WithResource(resource)}
@@ -100,4 +112,5 @@ func ResetForTesting() {
 	globalMeterProvider = nil
 	meterProviderOnce = sync.Once{}
 	readers = nil
+	extraResourceAttrs = nil
 }
