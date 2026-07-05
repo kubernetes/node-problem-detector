@@ -228,3 +228,41 @@ func TestCounterAddSemantics(t *testing.T) {
 		t.Fatal("test_counter metric not found in collected metrics")
 	}
 }
+
+func TestNewInt64MetricUnsupportedAggregation(t *testing.T) {
+	otelutil.ResetForTesting()
+	otelutil.AddMetricReader(sdkmetric.NewManualReader())
+	otelutil.InitializeMeterProvider()
+
+	// An unsupported aggregation must return an error, not a nil-instrument metric.
+	if _, err := NewInt64Metric("bad_agg", "bad_agg", "desc", "1", Aggregation("bogus"), []string{"reason"}); err == nil {
+		t.Fatal("expected error for unsupported aggregation type, got nil")
+	}
+
+	// The zero value of Aggregation must not silently mean a valid aggregation.
+	var zero Aggregation
+	if _, err := NewInt64Metric("zero_agg", "zero_agg", "desc", "1", zero, []string{"reason"}); err == nil {
+		t.Fatal("expected error for zero-value aggregation type, got nil")
+	}
+}
+
+func TestInt64MetricRecordUndeclaredLabel(t *testing.T) {
+	otelutil.ResetForTesting()
+	otelutil.AddMetricReader(sdkmetric.NewManualReader())
+	otelutil.InitializeMeterProvider()
+
+	metric, err := NewInt64Metric("labeled_metric", "labeled_metric", "desc", "1", Sum, []string{"reason"})
+	if err != nil {
+		t.Fatalf("Failed to create metric: %v", err)
+	}
+
+	// Declared label records fine.
+	if err := metric.Record(map[string]string{"reason": "TestReason"}, 1); err != nil {
+		t.Fatalf("expected declared label to record, got error: %v", err)
+	}
+
+	// Undeclared label key must be rejected.
+	if err := metric.Record(map[string]string{"typo": "oops"}, 1); err == nil {
+		t.Fatal("expected error for undeclared label key, got nil")
+	}
+}

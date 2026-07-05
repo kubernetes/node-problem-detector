@@ -17,10 +17,10 @@ package metrics
 
 import (
 	"context"
+	"fmt"
 
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/metric"
-	"k8s.io/klog/v2"
 
 	otelutil "k8s.io/node-problem-detector/pkg/util/otel"
 )
@@ -52,12 +52,18 @@ func NewInt64Metric(metricID MetricID, name, description, unit string, aggregati
 
 	meter := otelutil.GetGlobalMeter()
 
+	labelSet := make(map[string]struct{}, len(labels))
+	for _, label := range labels {
+		labelSet[label] = struct{}{}
+	}
+
 	otelMetric := &OTelInt64Metric{
 		name:        name,
 		description: description,
 		unit:        unit,
 		aggregation: aggregation,
 		labels:      labels,
+		labelSet:    labelSet,
 		meter:       meter,
 	}
 
@@ -77,7 +83,7 @@ func NewInt64Metric(metricID MetricID, name, description, unit string, aggregati
 			metric.WithUnit(unit),
 		)
 	default:
-		klog.Warningf("Unsupported aggregation type for metric %s: %v", name, aggregation)
+		return nil, fmt.Errorf("unsupported aggregation type for metric %s: %v", name, aggregation)
 	}
 
 	if err != nil {
@@ -97,6 +103,7 @@ type OTelInt64Metric struct {
 	unit        string
 	aggregation Aggregation
 	labels      []string
+	labelSet    map[string]struct{}
 	counter     metric.Int64Counter
 	gauge       metric.Int64Gauge
 	meter       metric.Meter
@@ -106,9 +113,12 @@ type OTelInt64Metric struct {
 func (m *OTelInt64Metric) Record(labelValues map[string]string, value int64) error {
 	ctx := context.Background()
 
-	// Convert to OTel attributes
+	// Convert to OTel attributes, rejecting labels that were not declared.
 	attrs := make([]attribute.KeyValue, 0, len(labelValues))
 	for k, v := range labelValues {
+		if _, ok := m.labelSet[k]; !ok {
+			return fmt.Errorf("referencing non-existent label %q on metric %q", k, m.name)
+		}
 		attrs = append(attrs, attribute.String(k, v))
 	}
 
@@ -123,7 +133,7 @@ func (m *OTelInt64Metric) Record(labelValues map[string]string, value int64) err
 			m.gauge.Record(ctx, value, metric.WithAttributes(attrs...))
 		}
 	default:
-		klog.Warningf("Unsupported aggregation type: %v", m.aggregation)
+		return fmt.Errorf("unsupported aggregation type for metric %s: %v", m.name, m.aggregation)
 	}
 
 	return nil
