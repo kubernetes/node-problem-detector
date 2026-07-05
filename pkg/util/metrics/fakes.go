@@ -18,6 +18,8 @@ package metrics
 
 import (
 	"fmt"
+	"maps"
+	"sort"
 	"sync"
 )
 
@@ -25,7 +27,6 @@ import (
 type FakeInt64Metric struct {
 	name        string
 	aggregation Aggregation
-	labels      []string
 	records     []RecordCall
 	mutex       sync.RWMutex
 }
@@ -41,7 +42,6 @@ func NewFakeInt64Metric(name string, aggregation Aggregation, labels []string) *
 	return &FakeInt64Metric{
 		name:        name,
 		aggregation: aggregation,
-		labels:      labels,
 		records:     make([]RecordCall, 0),
 	}
 }
@@ -90,7 +90,7 @@ func (f *FakeInt64Metric) GetLastValue(labelValues map[string]string) (int64, er
 	// Search backwards for the last matching record
 	for i := len(f.records) - 1; i >= 0; i-- {
 		record := f.records[i]
-		if mapsEqual(record.LabelValues, labelValues) {
+		if maps.Equal(record.LabelValues, labelValues) {
 			return record.Value, nil
 		}
 	}
@@ -105,7 +105,7 @@ func (f *FakeInt64Metric) GetTotalValue(labelValues map[string]string) int64 {
 
 	var total int64
 	for _, record := range f.records {
-		if mapsEqual(record.LabelValues, labelValues) {
+		if maps.Equal(record.LabelValues, labelValues) {
 			total += record.Value
 		}
 	}
@@ -118,56 +118,37 @@ func (f *FakeInt64Metric) ListMetrics() []Int64MetricRepresentation {
 	f.mutex.RLock()
 	defer f.mutex.RUnlock()
 
-	if f.aggregation == Sum {
-		// For Sum aggregation, aggregate values by labels
-		aggregated := make(map[string]int64)
-		labelMaps := make(map[string]map[string]string)
+	// For Sum aggregation, accumulate values by label set; for LastValue
+	// aggregation, keep the last value seen for each label set.
+	aggregated := make(map[string]int64)
+	labelMaps := make(map[string]map[string]string)
 
-		for _, record := range f.records {
-			key := labelsMapToString(record.LabelValues)
+	for _, record := range f.records {
+		key := labelsMapToString(record.LabelValues)
+		if f.aggregation == Sum {
 			aggregated[key] += record.Value
-			labelMaps[key] = record.LabelValues
+		} else {
+			aggregated[key] = record.Value
 		}
-
-		var metrics []Int64MetricRepresentation
-		for key, value := range aggregated {
-			metrics = append(metrics, Int64MetricRepresentation{
-				Name:   f.name,
-				Labels: labelMaps[key],
-				Value:  value,
-			})
-		}
-
-		return metrics
-	} else {
-		// For LastValue aggregation, return the last value for each unique label set
-		lastValues := make(map[string]int64)
-		labelMaps := make(map[string]map[string]string)
-
-		for _, record := range f.records {
-			key := labelsMapToString(record.LabelValues)
-			lastValues[key] = record.Value
-			labelMaps[key] = record.LabelValues
-		}
-
-		var metrics []Int64MetricRepresentation
-		for key, value := range lastValues {
-			metrics = append(metrics, Int64MetricRepresentation{
-				Name:   f.name,
-				Labels: labelMaps[key],
-				Value:  value,
-			})
-		}
-
-		return metrics
+		labelMaps[key] = record.LabelValues
 	}
+
+	var metrics []Int64MetricRepresentation
+	for key, value := range aggregated {
+		metrics = append(metrics, Int64MetricRepresentation{
+			Name:   f.name,
+			Labels: labelMaps[key],
+			Value:  value,
+		})
+	}
+
+	return metrics
 }
 
 // FakeFloat64Metric is a fake implementation of Float64MetricInterface for testing
 type FakeFloat64Metric struct {
 	name        string
 	aggregation Aggregation
-	labels      []string
 	records     []Float64RecordCall
 	mutex       sync.RWMutex
 }
@@ -183,7 +164,6 @@ func NewFakeFloat64Metric(name string, aggregation Aggregation, labels []string)
 	return &FakeFloat64Metric{
 		name:        name,
 		aggregation: aggregation,
-		labels:      labels,
 		records:     make([]Float64RecordCall, 0),
 	}
 }
@@ -224,21 +204,6 @@ func (f *FakeFloat64Metric) Reset() {
 	f.records = f.records[:0]
 }
 
-// Helper function to compare label maps
-func mapsEqual(a, b map[string]string) bool {
-	if len(a) != len(b) {
-		return false
-	}
-
-	for k, v := range a {
-		if b[k] != v {
-			return false
-		}
-	}
-
-	return true
-}
-
 // Helper function to convert a labels map to a string key for aggregation
 func labelsMapToString(labels map[string]string) string {
 	if len(labels) == 0 {
@@ -252,13 +217,7 @@ func labelsMapToString(labels map[string]string) string {
 	}
 
 	// Sort keys for consistent ordering
-	for i := 0; i < len(keys); i++ {
-		for j := i + 1; j < len(keys); j++ {
-			if keys[i] > keys[j] {
-				keys[i], keys[j] = keys[j], keys[i]
-			}
-		}
-	}
+	sort.Strings(keys)
 
 	result := ""
 	for i, k := range keys {

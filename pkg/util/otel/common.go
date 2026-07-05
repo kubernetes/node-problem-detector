@@ -87,14 +87,6 @@ func InitializeMeterProvider() *sdkmetric.MeterProvider {
 	return globalMeterProvider
 }
 
-// GetMeterProvider returns the global meter provider, initializing it if necessary
-func GetMeterProvider() *sdkmetric.MeterProvider {
-	if globalMeterProvider == nil {
-		return InitializeMeterProvider()
-	}
-	return globalMeterProvider
-}
-
 // MeterName is the standard meter name used across the application
 const MeterName = "node-problem-detector"
 
