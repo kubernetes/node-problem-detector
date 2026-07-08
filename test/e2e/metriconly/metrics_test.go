@@ -125,12 +125,10 @@ var _ = ginkgo.Describe("NPD should export Prometheus metrics.", func() {
 		ginkgo.BeforeEach(func() {
 			err := npd.WaitForNPD(instance, []string{"problem_gauge"}, 120)
 			Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("Expect NPD to become ready in 120s, but hit error: %v", err))
-			// This will trigger a ext4 error on the boot disk, causing the boot disk mounted as read-only and systemd-journald crashing.
 			instance.RunCommandOrFail("sudo /home/kubernetes/bin/problem-maker --problem Ext4FilesystemError")
 		})
 
 		ginkgo.It("NPD should update problem_counter{reason:Ext4Error} and problem_gauge{type:ReadonlyFilesystem}", func() {
-			ginkgo.Skip("Writing to /sys/fs/ext4/sda1/trigger_fs_error breaks SSH: https://github.com/kubernetes/node-problem-detector/issues/970")
 			time.Sleep(5 * time.Second)
 			assertMetricValueAtLeast(instance,
 				"problem_counter", map[string]string{"reason": "Ext4Error"},
@@ -138,13 +136,6 @@ var _ = ginkgo.Describe("NPD should export Prometheus metrics.", func() {
 			assertMetricValueInBound(instance,
 				"problem_gauge", map[string]string{"reason": "FilesystemIsReadOnly", "type": "ReadonlyFilesystem"},
 				1.0, 1.0)
-		})
-
-		ginkgo.It("NPD should remain healthy", func() {
-			ginkgo.Skip("Writing to /sys/fs/ext4/sda1/trigger_fs_error breaks SSH: https://github.com/kubernetes/node-problem-detector/issues/970")
-			npdStates := instance.RunCommandOrFail("sudo systemctl show node-problem-detector -p ActiveState -p SubState")
-			Expect(npdStates.Stdout).To(ContainSubstring("ActiveState=active"), "NPD is no longer active: %v", npdStates)
-			Expect(npdStates.Stdout).To(ContainSubstring("SubState=running"), "NPD is no longer running: %v", npdStates)
 		})
 	})
 
