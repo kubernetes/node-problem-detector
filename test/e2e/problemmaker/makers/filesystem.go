@@ -16,22 +16,13 @@ limitations under the License.
 
 package makers
 
-import (
-	"os"
-
-	"k8s.io/klog/v2"
-)
+const ext4ErrorPattern = `EXT4-fs error (device sda1): fake filesystem error from problem-maker
+EXT4-fs (sda1): Remounting filesystem read-only`
 
 func init() {
 	ProblemGenerators["Ext4FilesystemError"] = makeFilesystemError
 }
 
-const ext4ErrorTrigger = "/sys/fs/ext4/sda1/trigger_fs_error"
-
 func makeFilesystemError() {
-	msg := []byte("fake filesystem error from problem-maker")
-	err := os.WriteFile(ext4ErrorTrigger, msg, 0200)
-	if err != nil {
-		klog.Fatalf("Failed writing log to %q: %v", ext4ErrorTrigger, err)
-	}
+	writeKernelMessageOrDie(ext4ErrorPattern)
 }
