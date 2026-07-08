@@ -31,6 +31,7 @@ COPY --from=builder /src/bin/node-problem-detector /node-problem-detector
 
 ARG LOGCOUNTER
 COPY --from=builder /src/bin/health-checker /src/${LOGCOUNTER} /home/kubernetes/bin/
+COPY --from=builder /src/config/plugin/ /home/kubernetes/bin/plugin/
 
 COPY --from=builder /src/config/ /config
 ENTRYPOINT ["/node-problem-detector", "--config.system-log-monitor=/config/kernel-monitor.json,/config/readonly-monitor.json"]

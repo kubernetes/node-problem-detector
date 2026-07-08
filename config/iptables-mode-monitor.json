@@ -13,7 +13,7 @@
     {
       "type": "temporary",
       "reason": "IPTablesVersionsMismatch",
-      "path": "./config/plugin/iptables_mode.sh",
+      "path": "/home/kubernetes/bin/plugin/iptables_mode.sh",
       "timeout": "5s"
     }
   ]
