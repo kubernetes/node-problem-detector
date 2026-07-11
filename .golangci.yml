@@ -114,6 +114,13 @@ linters:
     # - wsl                       403
     # - wsl_v5                    58
     - zerologlint
+  settings:
+    gomoddirectives:
+      replace-allow-list:
+        # Keep the k8s.io modules on the v0.34 line, see go.mod.
+        - k8s.io/api
+        - k8s.io/apimachinery
+        - k8s.io/client-go
   exclusions:
     generated: lax
     paths:
