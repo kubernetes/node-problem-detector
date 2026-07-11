@@ -19,6 +19,7 @@ package kmsg
 import (
 	"fmt"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -416,6 +417,55 @@ func TestWatcherRestartsOnUnexpectedChannelClose(t *testing.T) {
 	// that were already processed before the restart.
 	assert.Equal(t, 0, first.SeekEndCallCount(), "SeekEnd should not be called on the initial parser")
 	assert.Equal(t, 1, second.SeekEndCallCount(), "SeekEnd should be called once on the restart parser")
+}
+
+// TestWatcherRateLimitsRestarts verifies that a parser whose channel closes
+// right after every restart does not drive a hot restart loop: only the first
+// restart is immediate, the next attempt waits retryDelay.
+func TestWatcherRateLimitsRestarts(t *testing.T) {
+	now := time.Now()
+
+	var factoryCalls int64
+	w := &kernelLogWatcher{
+		cfg:       types.WatcherConfig{},
+		startTime: now.Add(-time.Minute),
+		tomb:      tomb.NewTomb(),
+		logCh:     make(chan *logtypes.Log, 100),
+		// Every parser closes its channel immediately, triggering restarts.
+		kmsgParser: &mockKmsgParser{closeAfterSend: true},
+		newParser: func() (kmsgparser.Parser, error) {
+			atomic.AddInt64(&factoryCalls, 1)
+			return &mockKmsgParser{closeAfterSend: true}, nil
+		},
+	}
+
+	logCh, err := w.Watch()
+	assert.NoError(t, err)
+
+	// The first restart is immediate; the second must wait retryDelay (5s),
+	// so within this window the factory must be called exactly once.
+	time.Sleep(500 * time.Millisecond)
+	assert.EqualValues(t, 1, atomic.LoadInt64(&factoryCalls),
+		"only one restart should happen within retryDelay")
+
+	// Stop() must return promptly while the watcher waits out the rate limit.
+	stopped := make(chan struct{})
+	go func() {
+		w.Stop()
+		close(stopped)
+	}()
+	select {
+	case <-stopped:
+	case <-time.After(time.Second):
+		t.Fatal("timeout waiting for Stop() during restart rate-limit wait")
+	}
+
+	select {
+	case _, ok := <-logCh:
+		assert.False(t, ok, "log channel should be closed after Stop()")
+	case <-time.After(time.Second):
+		t.Fatal("timeout waiting for log channel to close after Stop()")
+	}
 }
 
 // TestWatcherProcessesMessageContent verifies watchLoop's per-message
