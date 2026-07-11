@@ -135,9 +135,16 @@ func (k *kernelLogWatcher) watchLoop() {
 				continue
 			}
 
-			k.logCh <- &logtypes.Log{
+			// The consumer stops draining logCh before calling Stop(), so a
+			// plain send on a full channel could block forever and deadlock Stop().
+			select {
+			case k.logCh <- &logtypes.Log{
 				Message:   strings.TrimSpace(msg.Message),
 				Timestamp: msg.Timestamp,
+			}:
+			case <-k.tomb.Stopping():
+				klog.Infof("Stop watching kernel log")
+				return
 			}
 		}
 	}

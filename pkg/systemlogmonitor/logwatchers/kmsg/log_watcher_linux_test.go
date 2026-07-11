@@ -468,6 +468,45 @@ func TestWatcherRateLimitsRestarts(t *testing.T) {
 	}
 }
 
+// TestStopDoesNotDeadlockWhenLogChannelFull verifies that Stop() returns even
+// when logCh is full and nobody is draining it.
+func TestStopDoesNotDeadlockWhenLogChannelFull(t *testing.T) {
+	now := time.Now()
+
+	// More messages than logCh capacity so watchLoop ends up blocked sending.
+	kmsgs := make([]kmsgparser.Message, 150)
+	for i := range kmsgs {
+		kmsgs[i] = kmsgparser.Message{Message: fmt.Sprintf("msg-%d", i), Timestamp: now}
+	}
+
+	w := &kernelLogWatcher{
+		cfg:        types.WatcherConfig{},
+		startTime:  now.Add(-time.Minute),
+		tomb:       tomb.NewTomb(),
+		logCh:      make(chan *logtypes.Log, 100),
+		kmsgParser: &mockKmsgParser{kmsgs: kmsgs},
+	}
+
+	// Watch but never read logCh, mimicking the log monitor after it has
+	// decided to stop.
+	_, err := w.Watch()
+	assert.NoError(t, err)
+
+	// Let watchLoop fill the channel and block on the send.
+	time.Sleep(300 * time.Millisecond)
+
+	stopped := make(chan struct{})
+	go func() {
+		w.Stop()
+		close(stopped)
+	}()
+	select {
+	case <-stopped:
+	case <-time.After(2 * time.Second):
+		t.Fatal("Stop() deadlocked while logCh was full")
+	}
+}
+
 // TestWatcherProcessesMessageContent verifies watchLoop's per-message
 // handling: empty messages are dropped, and surrounding whitespace is
 // trimmed before forwarding.
