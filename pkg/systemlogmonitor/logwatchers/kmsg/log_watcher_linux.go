@@ -94,8 +94,11 @@ func (k *kernelLogWatcher) Stop() {
 func (k *kernelLogWatcher) watchLoop() {
 	kmsgs := k.kmsgParser.Parse()
 	defer func() {
-		if err := k.kmsgParser.Close(); err != nil {
-			klog.Errorf("Failed to close kmsg parser: %v", err)
+		// kmsgParser is nil when stopping interrupted a restart.
+		if k.kmsgParser != nil {
+			if err := k.kmsgParser.Close(); err != nil {
+				klog.Errorf("Failed to close kmsg parser: %v", err)
+			}
 		}
 		close(k.logCh)
 		k.tomb.Done()
@@ -110,10 +113,12 @@ func (k *kernelLogWatcher) watchLoop() {
 			if !ok {
 				klog.Error("Kmsg channel closed, attempting to restart kmsg parser")
 
-				// Close the old parser
+				// Close the old parser and clear the reference so the
+				// deferred cleanup doesn't close it a second time.
 				if err := k.kmsgParser.Close(); err != nil {
 					klog.Errorf("Failed to close kmsg parser: %v", err)
 				}
+				k.kmsgParser = nil
 
 				// Try to restart. retryCreateParser() waits between attempts.
 				var restarted bool

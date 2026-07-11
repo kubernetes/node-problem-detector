@@ -468,6 +468,59 @@ func TestWatcherRateLimitsRestarts(t *testing.T) {
 	}
 }
 
+// TestStopDuringRestartClosesOldParserOnce verifies that when Stop() arrives
+// while the watcher is in the restart path, the already-closed old parser is
+// not closed a second time by watchLoop's deferred cleanup.
+func TestStopDuringRestartClosesOldParserOnce(t *testing.T) {
+	now := time.Now()
+
+	// Closing the channel after sending drives watchLoop into the restart path.
+	mock := &mockKmsgParser{
+		kmsgs:          []kmsgparser.Message{{Message: "msg", Timestamp: now}},
+		closeAfterSend: true,
+	}
+
+	factoryCalled := make(chan struct{}, 1)
+	w := &kernelLogWatcher{
+		cfg:        types.WatcherConfig{},
+		startTime:  now.Add(-time.Minute),
+		tomb:       tomb.NewTomb(),
+		logCh:      make(chan *logtypes.Log, 100),
+		kmsgParser: mock,
+		newParser: func() (kmsgparser.Parser, error) {
+			select {
+			case factoryCalled <- struct{}{}:
+			default:
+			}
+			// Keep the watcher in the retry loop until Stop() is called.
+			return nil, fmt.Errorf("kmsg unavailable")
+		},
+	}
+
+	logCh, err := w.Watch()
+	assert.NoError(t, err)
+	<-logCh
+
+	// Wait until watchLoop has entered the restart path.
+	select {
+	case <-factoryCalled:
+	case <-time.After(time.Second):
+		t.Fatal("timeout waiting for restart attempt")
+	}
+
+	w.Stop()
+
+	select {
+	case _, ok := <-logCh:
+		assert.False(t, ok, "log channel should be closed after Stop()")
+	case <-time.After(time.Second):
+		t.Fatal("timeout waiting for log channel to close after Stop()")
+	}
+
+	assert.Equal(t, 1, mock.CloseCallCount(),
+		"old parser must be closed exactly once, not again by watchLoop's defer")
+}
+
 // TestStopDoesNotDeadlockWhenLogChannelFull verifies that Stop() returns even
 // when logCh is full and nobody is draining it.
 func TestStopDoesNotDeadlockWhenLogChannelFull(t *testing.T) {
