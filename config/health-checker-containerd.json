@@ -25,6 +25,7 @@
         "--component=cri",
         "--enable-repair=true",
         "--cooldown-time=2m",
+        "--cri-timeout=10s",
         "--health-check-timeout=60s"
       ],
       "timeout": "3m"
