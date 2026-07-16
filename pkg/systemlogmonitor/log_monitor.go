@@ -96,6 +96,11 @@ func NewLogMonitorOrDie(configPath string) types.Monitor {
 // panic if error occurs.
 func initializeProblemMetricsOrDie(rules []systemlogtypes.Rule) {
 	for _, rule := range rules {
+		// Skip template reasons (e.g. "NvidiaGPUXid%s") — they are expanded at match time
+		// and pushing the raw template string produces meaningless Prometheus label values.
+		if strings.Contains(rule.Reason, "%") {
+			continue
+		}
 		if rule.Type == types.Perm {
 			err := problemmetrics.GlobalProblemMetricsManager.SetProblemGauge(rule.Condition, rule.Reason, false)
 			if err != nil {
@@ -189,11 +194,6 @@ func (l *logMonitor) generateStatus(logs []*systemlogtypes.Log, rule systemlogty
 			}
 		}
 		reason = fmt.Sprintf(rule.Reason, formatArgs...)
-		// If fmt.Sprintf fails, it will add "%!" for each failed template in the result string.
-		if strings.Contains(reason, "%!") {
-			klog.Errorf("Got wrong string %q for reason %q with pattern %q", reason, rule.Reason, rule.Pattern)
-			return nil
-		}
 	}
 
 	if rule.Type == types.Temp {
