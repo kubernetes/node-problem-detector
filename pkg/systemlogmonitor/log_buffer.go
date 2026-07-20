@@ -39,6 +39,8 @@ type logBuffer struct {
 	msg     []string
 	max     int
 	current int
+	// regexps caches compiled regular expressions.
+	regexps map[string]*regexp.Regexp
 }
 
 // NewLogBuffer creates log buffer with max line number limit. Because we only match logs
@@ -47,9 +49,10 @@ type logBuffer struct {
 // lines of patterns we support.
 func NewLogBuffer(maxLines int) *logBuffer {
 	return &logBuffer{
-		buffer: make([]*types.Log, maxLines),
-		msg:    make([]string, maxLines),
-		max:    maxLines,
+		buffer:  make([]*types.Log, maxLines),
+		msg:     make([]string, maxLines),
+		max:     maxLines,
+		regexps: make(map[string]*regexp.Regexp),
 	}
 }
 
@@ -59,10 +62,13 @@ func (b *logBuffer) Push(log *types.Log) {
 	b.current++
 }
 
-// TODO(random-liu): Cache regexp if garbage collection becomes a problem someday.
 func (b *logBuffer) Match(expr string) []*types.Log {
 	// The expression should be checked outside, and it must match to the end.
-	reg := regexp.MustCompile(expr + `\z`)
+	reg, ok := b.regexps[expr]
+	if !ok {
+		reg = regexp.MustCompile(expr + `\z`)
+		b.regexps[expr] = reg
+	}
 	log := b.String()
 	loc := reg.FindStringIndex(log)
 	if loc == nil {
