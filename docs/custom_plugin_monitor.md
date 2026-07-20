@@ -13,8 +13,8 @@
 
 ### Rule Config
 
-* `timeout`: The JSON string sets the execution timeout for one rule.
-* `invoke_interval`: The JSON string sets the invoke interval for one rule. The rule uses the global `invoke_interval` when this field is absent.
+* `timeout`: The execution timeout for one rule. A rule `timeout` greater than the global `timeout` fails validation at startup.
+* `invoke_interval`: The invoke interval for one rule. The rule uses the global `invoke_interval` when this field is absent. Rules with different effective intervals run on independent schedules. Their plugins can run at the same time, up to the global `concurrency` limit. A rule never runs concurrently with itself. The monitor runs at most one catch-up batch when a batch overruns its interval.
 
 For example, this rule runs every seven seconds:
 
