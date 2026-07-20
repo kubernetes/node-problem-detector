@@ -27,6 +27,7 @@ import (
 	"time"
 
 	"k8s.io/klog/v2"
+	"k8s.io/utils/clock"
 
 	cpmtypes "k8s.io/node-problem-detector/pkg/custompluginmonitor/types"
 	"k8s.io/node-problem-detector/pkg/util"
@@ -42,17 +43,28 @@ type Plugin struct {
 	syncChan   chan struct{}
 	resultChan chan cpmtypes.Result
 	tomb       *tomb.Tomb
+	clock      clock.WithTicker
+	runFunc    func(cpmtypes.CustomRule) (cpmtypes.Status, string)
 	sync.WaitGroup
 }
 
+type intervalGroup struct {
+	interval time.Duration
+	rules    []*cpmtypes.CustomRule
+	ticker   clock.Ticker
+}
+
 func NewPlugin(config cpmtypes.CustomPluginConfig) *Plugin {
-	return &Plugin{
+	p := &Plugin{
 		config:   config,
 		syncChan: make(chan struct{}, *config.PluginGlobalConfig.Concurrency),
 		// A 1000 size channel should be big enough.
 		resultChan: make(chan cpmtypes.Result, 1000),
 		tomb:       tomb.NewTomb(),
+		clock:      clock.RealClock{},
 	}
+	p.runFunc = p.run
+	return p
 }
 
 func (p *Plugin) GetResultChan() <-chan cpmtypes.Result {
@@ -66,44 +78,107 @@ func (p *Plugin) Run() {
 		p.tomb.Done()
 	}()
 
-	runTicker := time.NewTicker(*p.config.PluginGlobalConfig.InvokeInterval)
-	defer runTicker.Stop()
-
-	// on boot run once
-	select {
-	case <-p.tomb.Stopping():
+	groups := p.intervalGroups()
+	if len(groups) == 0 {
+		<-p.tomb.Stopping()
 		return
-	default:
-		p.runRules()
 	}
 
-	// run every InvokeInterval
+	for i := range groups {
+		groups[i].ticker = p.clock.NewTicker(groups[i].interval)
+	}
+	defer func() {
+		for i := range groups {
+			groups[i].ticker.Stop()
+		}
+	}()
+
+	// On boot, run every rule in one batch.
+	if !p.runRules(p.config.Rules) {
+		return
+	}
+
+	for i := range groups {
+		p.Add(1)
+		go p.runGroup(&groups[i])
+	}
+	p.Wait()
+}
+
+func (p *Plugin) intervalGroups() []intervalGroup {
+	groups := []intervalGroup{}
+	groupIndexes := make(map[time.Duration]int)
+	for _, rule := range p.config.Rules {
+		interval := p.effectiveInterval(rule)
+		groupIndex, ok := groupIndexes[interval]
+		if !ok {
+			groupIndex = len(groups)
+			groupIndexes[interval] = groupIndex
+			groups = append(groups, intervalGroup{interval: interval})
+		}
+		groups[groupIndex].rules = append(groups[groupIndex].rules, rule)
+	}
+	return groups
+}
+
+func (p *Plugin) effectiveInterval(rule *cpmtypes.CustomRule) time.Duration {
+	if rule.InvokeInterval != nil {
+		return *rule.InvokeInterval
+	}
+	return *p.config.PluginGlobalConfig.InvokeInterval
+}
+
+func (p *Plugin) runGroup(group *intervalGroup) {
+	defer p.Done()
 	for {
 		select {
-		case <-runTicker.C:
-			p.runRules()
+		case <-group.ticker.C():
+			if !p.runRules(group.rules) {
+				return
+			}
 		case <-p.tomb.Stopping():
 			return
 		}
 	}
 }
 
-// run each rule in parallel and wait for them to complete
-func (p *Plugin) runRules() {
+// runRules runs each rule in parallel and waits for the batch to complete.
+func (p *Plugin) runRules(rules []*cpmtypes.CustomRule) bool {
 	klog.V(3).Info("Start to run custom plugins")
+	var workers sync.WaitGroup
 
-	for _, rule := range p.config.Rules {
+	for _, rule := range rules {
 		// syncChan limits concurrent goroutines to configured PluginGlobalConfig.Concurrency value
-		p.syncChan <- struct{}{}
-		p.Add(1)
+		select {
+		case p.syncChan <- struct{}{}:
+		case <-p.tomb.Stopping():
+			workers.Wait()
+			return false
+		}
+
+		select {
+		case <-p.tomb.Stopping():
+			<-p.syncChan
+			workers.Wait()
+			return false
+		default:
+		}
+
+		workers.Add(1)
 		go func(rule *cpmtypes.CustomRule) {
-			defer p.Done()
+			defer workers.Done()
 			defer func() {
 				<-p.syncChan
 			}()
 
+			select {
+			case <-p.tomb.Stopping():
+				return
+			default:
+			}
+
 			start := time.Now()
-			exitStatus, message := p.run(*rule)
+			exitStatus, message := p.runFunc(*rule)
 			level := klog.Level(3)
 			if exitStatus != 0 {
 				level = klog.Level(2)
@@ -118,15 +193,20 @@ func (p *Plugin) runRules() {
 			}
 
 			// pipes result into resultChan which customPluginMonitor instance generates status from
-			p.resultChan <- result
+			select {
+			case p.resultChan <- result:
+			case <-p.tomb.Stopping():
+				return
+			}
 
 			// Let the result be logged at a higher verbosity level. If there is a change in status it is logged later.
 			klog.V(level).Infof("Add check result %+v for rule %+v", result, rule)
 		}(rule)
 	}
 
-	p.Wait()
+	workers.Wait()
 	klog.V(3).Info("Finish running custom plugins")
+	return true
 }
 
 // readFromReader reads the maxBytes from the reader and drains the rest.

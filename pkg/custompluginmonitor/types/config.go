@@ -120,6 +120,13 @@ func (cpc *CustomPluginConfig) ApplyConfiguration() error {
 			}
 			rule.Timeout = &timeout
 		}
+		if rule.InvokeIntervalString != nil {
+			invokeInterval, err := time.ParseDuration(*rule.InvokeIntervalString)
+			if err != nil {
+				return fmt.Errorf("error in parsing rule invoke interval %+v: %v", rule, err)
+			}
+			rule.InvokeInterval = &invokeInterval
+		}
 	}
 
 	if cpc.EnableMetricsReporting == nil {
@@ -134,8 +141,14 @@ func (cpc CustomPluginConfig) Validate() error {
 	if cpc.Plugin != customPluginName {
 		return fmt.Errorf("NPD does not support %q plugin for now. Only support \"custom\"", cpc.Plugin)
 	}
+	if *cpc.PluginGlobalConfig.InvokeInterval <= 0 {
+		return fmt.Errorf("global invoke interval must be greater than zero: %v", *cpc.PluginGlobalConfig.InvokeInterval)
+	}
 
 	for _, rule := range cpc.Rules {
+		if rule.InvokeInterval != nil && *rule.InvokeInterval <= 0 {
+			return fmt.Errorf("rule invoke interval must be greater than zero. Rule: %+v", rule)
+		}
 		if rule.Timeout != nil && *rule.Timeout > *cpc.PluginGlobalConfig.Timeout {
 			return fmt.Errorf("plugin timeout is greater than global timeout. "+
 				"Rule: %+v. Global timeout: %v", rule, cpc.PluginGlobalConfig.Timeout)

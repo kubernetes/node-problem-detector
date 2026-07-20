@@ -11,6 +11,20 @@
 * `enable_message_change_based_condition_update`: Flag controls whether message change should result in a condition update.
 * `skip_initial_status`: Flag controls whether condition will be emitted during plugin initialization.
 
+### Rule Config
+
+* `timeout`: The JSON string sets the execution timeout for one rule.
+* `invoke_interval`: The JSON string sets the invoke interval for one rule. The rule uses the global `invoke_interval` when this field is absent.
+
+For example, this rule runs every seven seconds:
+
+```
+{
+  "path": "./config/plugin/check_ntp.sh",
+  "invoke_interval": "7s"
+}
+```
+
 ### Annotated Plugin Configuration Example
 
 ```
@@ -41,6 +55,7 @@
       "reason": "NTPIsDown",            // This is the reason shown for this event
                                         // and the message shown comes from stdout.
       "path": "./config/plugin/check_ntp.sh",
+      "invoke_interval": "7s",
       "timeout": "3s"
     },
     {

@@ -17,7 +17,9 @@ limitations under the License.
 package types
 
 import (
+	"fmt"
 	"reflect"
+	"strings"
 	"testing"
 	"time"
 
@@ -37,10 +39,14 @@ func TestCustomPluginConfigApplyConfiguration(t *testing.T) {
 
 	ruleTimeout := 1 * time.Second
 	ruleTimeoutString := ruleTimeout.String()
+	ruleInvokeInterval := 7 * time.Second
+	ruleInvokeIntervalString := ruleInvokeInterval.String()
+	invalidRuleInvokeIntervalString := "invalid"
 
 	utMetas := map[string]struct {
-		Orig   CustomPluginConfig
-		Wanted CustomPluginConfig
+		Orig              CustomPluginConfig
+		Wanted            CustomPluginConfig
+		ErrorMessageStart string
 	}{
 		"global default settings": {
 			Orig: CustomPluginConfig{
@@ -68,15 +74,60 @@ func TestCustomPluginConfigApplyConfiguration(t *testing.T) {
 				EnableMetricsReporting: &defaultEnableMetricsReporting,
 				Rules: []*CustomRule{
 					{
-						Path: "../plugin/test-data/ok.sh",
+						Path:                 "../plugin/test-data/ok.sh",
+						InvokeIntervalString: nil,
+						InvokeInterval:       nil,
 					},
 					{
-						Path:          "../plugin/test-data/warning.sh",
-						Timeout:       &ruleTimeout,
-						TimeoutString: &ruleTimeoutString,
+						Path:                 "../plugin/test-data/warning.sh",
+						Timeout:              &ruleTimeout,
+						TimeoutString:        &ruleTimeoutString,
+						InvokeIntervalString: nil,
+						InvokeInterval:       nil,
 					},
 				},
 			},
+		},
+		"custom rule invoke interval": {
+			Orig: CustomPluginConfig{
+				Rules: []*CustomRule{
+					{
+						Path:                 "../plugin/test-data/ok.sh",
+						InvokeIntervalString: &ruleInvokeIntervalString,
+					},
+				},
+			},
+			Wanted: CustomPluginConfig{
+				PluginGlobalConfig: pluginGlobalConfig{
+					InvokeIntervalString:                    &defaultInvokeIntervalString,
+					InvokeInterval:                          &defaultInvokeInterval,
+					TimeoutString:                           &defaultGlobalTimeoutString,
+					Timeout:                                 &defaultGlobalTimeout,
+					MaxOutputLength:                         &defaultMaxOutputLength,
+					Concurrency:                             &defaultConcurrency,
+					EnableMessageChangeBasedConditionUpdate: &defaultMessageChangeBasedConditionUpdate,
+					SkipInitialStatus:                       &defaultSkipInitialStatus,
+				},
+				EnableMetricsReporting: &defaultEnableMetricsReporting,
+				Rules: []*CustomRule{
+					{
+						Path:                 "../plugin/test-data/ok.sh",
+						InvokeIntervalString: &ruleInvokeIntervalString,
+						InvokeInterval:       &ruleInvokeInterval,
+					},
+				},
+			},
+		},
+		"invalid rule invoke interval": {
+			Orig: CustomPluginConfig{
+				Rules: []*CustomRule{
+					{
+						Path:                 "../plugin/test-data/ok.sh",
+						InvokeIntervalString: &invalidRuleInvokeIntervalString,
+					},
+				},
+			},
+			ErrorMessageStart: "error in parsing rule invoke interval",
 		},
 		"custom invoke interval": {
 			Orig: CustomPluginConfig{
@@ -219,7 +270,21 @@ func TestCustomPluginConfigApplyConfiguration(t *testing.T) {
 	}
 
 	for desp, utMeta := range utMetas {
-		if err := (&utMeta.Orig).ApplyConfiguration(); err != nil {
+		err := (&utMeta.Orig).ApplyConfiguration()
+		if utMeta.ErrorMessageStart != "" {
+			if err == nil {
+				t.Errorf("Error in apply configuration for %q: wanted an error got nil", desp)
+				continue
+			}
+			if !strings.HasPrefix(err.Error(), utMeta.ErrorMessageStart) {
+				t.Errorf("Error in apply configuration for %q: wanted prefix %q, got %q", desp, utMeta.ErrorMessageStart, err)
+			}
+			if !strings.Contains(err.Error(), fmt.Sprintf("%+v", utMeta.Orig.Rules[0])) {
+				t.Errorf("Error in apply configuration for %q does not include rule %+v: %v", desp, utMeta.Orig.Rules[0], err)
+			}
+			continue
+		}
+		if err != nil {
 			t.Errorf("Error in apply configuration for %q: %v", desp, err)
 		}
 		if !reflect.DeepEqual(utMeta.Orig, utMeta.Wanted) {
@@ -232,10 +297,14 @@ func TestCustomPluginConfigApplyConfiguration(t *testing.T) {
 func TestCustomPluginConfigValidate(t *testing.T) {
 	normalRuleTimeout := defaultGlobalTimeout - 1*time.Second
 	exceededRuleTimeout := defaultGlobalTimeout + 1*time.Second
+	zeroInvokeInterval := time.Duration(0)
+	negativeInvokeInterval := -1 * time.Second
 
 	utMetas := map[string]struct {
-		Conf    CustomPluginConfig
-		IsError bool
+		Conf              CustomPluginConfig
+		IsError           bool
+		ErrorContains     string
+		ErrorIncludesRule bool
 	}{
 		"normal": {
 			Conf: CustomPluginConfig{
@@ -311,6 +380,59 @@ func TestCustomPluginConfigValidate(t *testing.T) {
 			},
 			IsError: true,
 		},
+		"zero rule invoke interval": {
+			Conf: CustomPluginConfig{
+				Plugin: customPluginName,
+				PluginGlobalConfig: pluginGlobalConfig{
+					InvokeInterval:  &defaultInvokeInterval,
+					Timeout:         &defaultGlobalTimeout,
+					MaxOutputLength: &defaultMaxOutputLength,
+					Concurrency:     &defaultConcurrency,
+				},
+				Rules: []*CustomRule{
+					{
+						Path:           "../plugin/test-data/ok.sh",
+						InvokeInterval: &zeroInvokeInterval,
+					},
+				},
+			},
+			IsError:           true,
+			ErrorContains:     "Rule:",
+			ErrorIncludesRule: true,
+		},
+		"negative rule invoke interval": {
+			Conf: CustomPluginConfig{
+				Plugin: customPluginName,
+				PluginGlobalConfig: pluginGlobalConfig{
+					InvokeInterval:  &defaultInvokeInterval,
+					Timeout:         &defaultGlobalTimeout,
+					MaxOutputLength: &defaultMaxOutputLength,
+					Concurrency:     &defaultConcurrency,
+				},
+				Rules: []*CustomRule{
+					{
+						Path:           "../plugin/test-data/ok.sh",
+						InvokeInterval: &negativeInvokeInterval,
+					},
+				},
+			},
+			IsError:           true,
+			ErrorContains:     "Rule:",
+			ErrorIncludesRule: true,
+		},
+		"zero global invoke interval": {
+			Conf: CustomPluginConfig{
+				Plugin: customPluginName,
+				PluginGlobalConfig: pluginGlobalConfig{
+					InvokeInterval:  &zeroInvokeInterval,
+					Timeout:         &defaultGlobalTimeout,
+					MaxOutputLength: &defaultMaxOutputLength,
+					Concurrency:     &defaultConcurrency,
+				},
+			},
+			IsError:       true,
+			ErrorContains: "global invoke interval",
+		},
 		"permanent problem has preset default condition": {
 			Conf: CustomPluginConfig{
 				Plugin: customPluginName,
@@ -371,6 +493,12 @@ func TestCustomPluginConfigValidate(t *testing.T) {
 		if err == nil && utMeta.IsError {
 			t.Error(desp)
 			t.Errorf("Error in validating custom plugin configuration %+v. Wanted an error got nil", utMeta)
+		}
+		if err != nil && utMeta.ErrorContains != "" && !strings.Contains(err.Error(), utMeta.ErrorContains) {
+			t.Errorf("Error in validating %q: wanted error containing %q, got %q", desp, utMeta.ErrorContains, err)
+		}
+		if err != nil && utMeta.ErrorIncludesRule && !strings.Contains(err.Error(), fmt.Sprintf("%+v", utMeta.Conf.Rules[0])) {
+			t.Errorf("Error in validating %q does not include rule %+v: %v", desp, utMeta.Conf.Rules[0], err)
 		}
 	}
 }
