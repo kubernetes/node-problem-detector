@@ -13,13 +13,13 @@
     {
       "type": "temporary",
       "reason": "ConntrackFull",
-      "path": "./config/plugin/network_problem.sh",
+      "path": "/home/kubernetes/bin/plugin/network_problem.sh",
       "timeout": "3s"
     },
     {
       "type": "temporary",
       "reason": "DNSUnreachable",
-      "path": "./config/plugin/dns_problem.sh",
+      "path": "/home/kubernetes/bin/plugin/dns_problem.sh",
       "timeout": "3s"
     }
   ]

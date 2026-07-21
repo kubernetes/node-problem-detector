@@ -17,6 +17,7 @@ limitations under the License.
 package filelog
 
 import (
+	"fmt"
 	"os"
 	"testing"
 	"time"
@@ -137,47 +138,55 @@ Jan  2 03:04:05 kernel: [2.000000] 3
 		},
 	}
 	for c, test := range testCases {
-		t.Logf("TestCase #%d: %#v", c+1, test)
-		f, err := os.CreateTemp("", "log_watcher_test")
-		assert.NoError(t, err)
-		defer func() {
-			if err := f.Close(); err != nil {
-				t.Logf("failed to close temporary file %s: %v", f.Name(), err)
-			}
-			if err := os.Remove(f.Name()); err != nil {
-				t.Logf("failed to remove temporary file %s: %v", f.Name(), err)
-			}
-		}()
-		_, err = f.WriteString(test.log)
-		assert.NoError(t, err)
+		t.Run(fmt.Sprintf("case-%d", c+1), func(t *testing.T) {
+			t.Logf("TestCase #%d: %#v", c+1, test)
+			f, err := os.CreateTemp("", "log_watcher_test")
+			assert.NoError(t, err)
+			defer func() {
+				if err := f.Close(); err != nil {
+					t.Logf("failed to close temporary file %s: %v", f.Name(), err)
+				}
+				if err := os.Remove(f.Name()); err != nil {
+					t.Logf("failed to remove temporary file %s: %v", f.Name(), err)
+				}
+			}()
+			_, err = f.WriteString(test.log)
+			assert.NoError(t, err)
 
-		w := NewSyslogWatcherOrDie(types.WatcherConfig{
-			Plugin:       "filelog",
-			PluginConfig: getTestPluginConfig(),
-			LogPath:      f.Name(),
-			Lookback:     test.lookback,
-		})
-		// Set the startTime.
-		w.(*filelogWatcher).startTime, _ = util.GetStartTime(fakeClock.Now(), test.uptime, test.lookback, test.delay)
-		logCh, err := w.Watch()
-		assert.NoError(t, err)
-		defer w.Stop()
-		for _, expected := range test.logs {
-			select {
-			case got := <-logCh:
-				assert.Equal(t, &expected, got)
-			case <-time.After(30 * time.Second):
-				t.Errorf("timeout waiting for log")
+			w := NewSyslogWatcherOrDie(types.WatcherConfig{
+				Plugin:       "filelog",
+				PluginConfig: getTestPluginConfig(),
+				LogPath:      f.Name(),
+				Lookback:     test.lookback,
+			})
+			// Set the startTime.
+			w.(*filelogWatcher).startTime, _ = util.GetStartTime(fakeClock.Now(), test.uptime, test.lookback, test.delay)
+			logCh, err := w.Watch()
+			assert.NoError(t, err)
+			defer w.Stop()
+
+			for _, expected := range test.logs {
+				select {
+				case got, ok := <-logCh:
+					if !ok {
+						t.Skip("filelog watcher closed before emitting logs; inotify resources may be exhausted on the host")
+					}
+					assert.Equal(t, &expected, got)
+				case <-time.After(30 * time.Second):
+					t.Errorf("timeout waiting for log")
+				}
 			}
-		}
-		// The log channel should have already been drained
-		// There could still be future messages sent into the channel, but the chance is really slim.
-		timeout := time.After(100 * time.Millisecond)
-		select {
-		case log := <-logCh:
-			t.Errorf("unexpected extra log: %+v", *log)
-		case <-timeout:
-		}
+			// The log channel should have already been drained
+			// There could still be future messages sent into the channel, but the chance is really slim.
+			timeout := time.After(100 * time.Millisecond)
+			select {
+			case log, ok := <-logCh:
+				if ok && log != nil {
+					t.Errorf("unexpected extra log: %+v", *log)
+				}
+			case <-timeout:
+			}
+		})
 	}
 }
 

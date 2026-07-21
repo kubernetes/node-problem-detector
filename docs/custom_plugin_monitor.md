@@ -40,7 +40,7 @@
                                         // to show unless there's a problem.
       "reason": "NTPIsDown",            // This is the reason shown for this event
                                         // and the message shown comes from stdout.
-      "path": "./config/plugin/check_ntp.sh",
+      "path": "/home/kubernetes/bin/plugin/check_ntp.sh",
       "timeout": "3s"
     },
     {
@@ -54,7 +54,7 @@
       "condition": "NTPProblem",        // This is the key to connect to the corresponding condition listed above
       "reason": "NTPIsDown",            // and the reason shown for failures detected in this rule
                                         // and message will be from stdout of the check.
-      "path": "./config/plugin/check_ntp.sh",
+      "path": "/home/kubernetes/bin/plugin/check_ntp.sh",
       "timeout": "3s"
     }
   ]

@@ -17,7 +17,11 @@ limitations under the License.
 package types
 
 import (
+	"encoding/json"
+	"os"
+	"path/filepath"
 	"reflect"
+	"strings"
 	"testing"
 	"time"
 
@@ -372,5 +376,39 @@ func TestCustomPluginConfigValidate(t *testing.T) {
 			t.Error(desp)
 			t.Errorf("Error in validating custom plugin configuration %+v. Wanted an error got nil", utMeta)
 		}
+	}
+}
+
+func TestShippedCustomPluginConfigsUseStablePluginPaths(t *testing.T) {
+	testCases := []string{
+		"../../../config/custom-plugin-monitor.json",
+		"../../../config/network-problem-monitor.json",
+		"../../../config/iptables-mode-monitor.json",
+	}
+
+	for _, configPath := range testCases {
+		t.Run(filepath.Base(configPath), func(t *testing.T) {
+			data, err := os.ReadFile(configPath)
+			if err != nil {
+				t.Fatalf("failed to read config %q: %v", configPath, err)
+			}
+
+			var cfg CustomPluginConfig
+			if err := json.Unmarshal(data, &cfg); err != nil {
+				t.Fatalf("failed to unmarshal config %q: %v", configPath, err)
+			}
+
+			for _, rule := range cfg.Rules {
+				if !filepath.IsAbs(rule.Path) {
+					t.Fatalf("rule path %q in %q must be absolute", rule.Path, configPath)
+				}
+				if strings.HasPrefix(rule.Path, "/config/") {
+					t.Fatalf("rule path %q in %q must not depend on the /config mount", rule.Path, configPath)
+				}
+				if !strings.HasPrefix(rule.Path, "/home/kubernetes/bin/plugin/") {
+					t.Fatalf("rule path %q in %q must use the stable plugin directory", rule.Path, configPath)
+				}
+			}
+		})
 	}
 }

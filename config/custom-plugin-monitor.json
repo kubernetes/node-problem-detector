@@ -20,14 +20,14 @@
     {
       "type": "temporary",
       "reason": "NTPIsDown",
-      "path": "./config/plugin/check_ntp.sh",
+      "path": "/home/kubernetes/bin/plugin/check_ntp.sh",
       "timeout": "3s"
     },
     {
       "type": "permanent",
       "condition": "NTPProblem",
       "reason": "NTPIsDown",
-      "path": "./config/plugin/check_ntp.sh",
+      "path": "/home/kubernetes/bin/plugin/check_ntp.sh",
       "timeout": "3s"
     }
   ]
