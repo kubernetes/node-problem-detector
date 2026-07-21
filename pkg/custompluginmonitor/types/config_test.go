@@ -26,7 +26,13 @@ import (
 	"k8s.io/node-problem-detector/pkg/types"
 )
 
-func TestCustomPluginConfigApplyConfiguration(t *testing.T) {
+type applyConfigurationTestCase struct {
+	Orig              CustomPluginConfig
+	Wanted            CustomPluginConfig
+	ErrorMessageStart string
+}
+
+func applyConfigurationTestCases() map[string]applyConfigurationTestCase {
 	globalTimeout := 6 * time.Second
 	globalTimeoutString := globalTimeout.String()
 	invokeInterval := 31 * time.Second
@@ -43,11 +49,7 @@ func TestCustomPluginConfigApplyConfiguration(t *testing.T) {
 	ruleInvokeIntervalString := ruleInvokeInterval.String()
 	invalidRuleInvokeIntervalString := "invalid"
 
-	utMetas := map[string]struct {
-		Orig              CustomPluginConfig
-		Wanted            CustomPluginConfig
-		ErrorMessageStart string
-	}{
+	return map[string]applyConfigurationTestCase{
 		"global default settings": {
 			Orig: CustomPluginConfig{
 				Rules: []*CustomRule{
@@ -268,8 +270,10 @@ func TestCustomPluginConfigApplyConfiguration(t *testing.T) {
 			},
 		},
 	}
+}
 
-	for desp, utMeta := range utMetas {
+func TestCustomPluginConfigApplyConfiguration(t *testing.T) {
+	for desp, utMeta := range applyConfigurationTestCases() {
 		err := (&utMeta.Orig).ApplyConfiguration()
 		if utMeta.ErrorMessageStart != "" {
 			if err == nil {

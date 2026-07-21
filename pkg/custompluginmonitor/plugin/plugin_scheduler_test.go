@@ -130,7 +130,14 @@ func (r *executionRecorder) run(rule cpmtypes.CustomRule) (cpmtypes.Status, stri
 	return cpmtypes.OK, rule.Path
 }
 
-func (r *executionRecorder) snapshot() (map[string]int, map[string]int, int, int) {
+type executionSnapshot struct {
+	counts      map[string]int
+	maxActive   map[string]int
+	activeTotal int
+	highWater   int
+}
+
+func (r *executionRecorder) snapshot() executionSnapshot {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	counts := make(map[string]int, len(r.counts))
@@ -141,7 +148,12 @@ func (r *executionRecorder) snapshot() (map[string]int, map[string]int, int, int
 	for rule, count := range r.maxActive {
 		maxActive[rule] = count
 	}
-	return counts, maxActive, r.activeTotal, r.highWater
+	return executionSnapshot{
+		counts:      counts,
+		maxActive:   maxActive,
+		activeTotal: r.activeTotal,
+		highWater:   r.highWater,
+	}
 }
 
 func schedulerRule(name string, interval *time.Duration) *cpmtypes.CustomRule {
@@ -247,7 +259,7 @@ func stepClock(t *testing.T, fakeClock *recordingClock, duration time.Duration) 
 
 func assertCounts(t *testing.T, recorder *executionRecorder, wanted map[string]int) {
 	t.Helper()
-	got, _, _, _ := recorder.snapshot()
+	got := recorder.snapshot().counts
 	if !reflect.DeepEqual(got, wanted) {
 		t.Fatalf("Invocation counts differ: got %v, wanted %v", got, wanted)
 	}
@@ -432,15 +444,14 @@ func TestPluginSchedulerConcurrencyReachesLimit(t *testing.T) {
 	}
 	stepClock(t, fakeClock, 10*time.Second)
 	waitInvocations(t, recorder, 2)
-	_, _, active, highWater := recorder.snapshot()
-	if active != 2 || highWater != 2 {
-		t.Fatalf("Concurrency state is active=%d high-water=%d; wanted 2 and 2", active, highWater)
+	snapshot := recorder.snapshot()
+	if snapshot.activeTotal != 2 || snapshot.highWater != 2 {
+		t.Fatalf("Concurrency state is active=%d high-water=%d; wanted 2 and 2", snapshot.activeTotal, snapshot.highWater)
 	}
 	close(release)
 	waitInvocations(t, recorder, 2)
 	waitResults(t, p, 4)
-	_, _, _, highWater = recorder.snapshot()
-	if highWater != 2 {
+	if highWater := recorder.snapshot().highWater; highWater != 2 {
 		t.Fatalf("Concurrency high-water is %d; wanted 2", highWater)
 	}
 	stopPlugin(t, p)
@@ -468,7 +479,7 @@ func TestPluginSchedulerRuleNeverOverlapsAndOverrunCatchesUpOnce(t *testing.T) {
 	waitInvocations(t, recorder, 1)
 	waitResults(t, p, 1)
 	assertCounts(t, recorder, map[string]int{"rule": 3})
-	_, maxActive, _, _ := recorder.snapshot()
+	maxActive := recorder.snapshot().maxActive
 	if maxActive["rule"] != 1 {
 		t.Fatalf("Rule concurrency high-water is %d; wanted 1", maxActive["rule"])
 	}
