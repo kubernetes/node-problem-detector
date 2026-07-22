@@ -1,100 +1,100 @@
 {
-	"plugin": "kmsg",
-	"logPath": "/dev/kmsg",
-	"lookback": "5m",
-	"bufferSize": 10,
-	"source": "kernel-monitor",
-	"metricsReporting": true,
-	"conditions": [
-		{
-			"type": "KernelDeadlock",
-			"reason": "KernelHasNoDeadlock",
-			"message": "kernel has no deadlock"
-		},
-		{
-			"type": "XfsShutdown",
-			"reason": "XfsHasNotShutDown",
-			"message": "XFS has not shutdown"
-		},
-		{
-			"type": "CperHardwareErrorFatal",
-			"reason": "CperHardwareHasNoFatalError",
-			"message": "UEFI CPER has no fatal error"
-		}
-	],
-	"rules": [
-		{
-			"type": "temporary",
-			"reason": "OOMKilling",
-			"pattern": "Killed process \\d+ (.+) total-vm:\\d+kB, anon-rss:\\d+kB, file-rss:\\d+kB.*"
-		},
-		{
-			"type": "temporary",
-			"reason": "TaskHung",
-			"pattern": "task [\\S ]+:\\w+ blocked for more than \\w+ seconds\\."
-		},
-		{
-			"type": "temporary",
-			"reason": "UnregisterNetDevice",
-			"pattern": "unregister_netdevice: waiting for \\w+ to become free. Usage count = \\d+"
-		},
-		{
-			"type": "temporary",
-			"reason": "KernelOops",
-			"pattern": "BUG: unable to handle kernel NULL pointer dereference at .*"
-		},
-		{
-			"type": "temporary",
-			"reason": "KernelOops",
-			"pattern": "divide error: 0000 \\[#\\d+\\] SMP"
-		},
-		{
-			"type": "temporary",
-			"reason": "Ext4Error",
-			"pattern": "EXT4-fs error .*"
-		},
-		{
-			"type": "temporary",
-			"reason": "Ext4Warning",
-			"pattern": "EXT4-fs warning .*"
-		},
-		{
-			"type": "temporary",
-			"reason": "IOError",
-			"pattern": "Buffer I/O error .*"
-		},
-		{
-			"type": "permanent",
-			"condition": "XfsShutdown",
-			"reason": "XfsHasShutdown",
-			"pattern": "XFS .* Shutting down filesystem.?"
-		},
-		{
-			"type": "temporary",
-			"reason": "MemoryReadError",
-			"pattern": "CE memory read error .*"
-		},
-		{
-			"type": "temporary",
-			"reason": "CperHardwareErrorCorrected",
-			"pattern": ".*\\[Hardware Error\\]: event severity: corrected$"
-		},
-		{
-			"type": "temporary",
-			"reason": "CperHardwareErrorRecoverable",
-			"pattern": ".*\\[Hardware Error\\]: event severity: recoverable$"
-		},
-		{
-			"type": "permanent",
-			"condition": "CperHardwareErrorFatal",
-			"reason": "CperHardwareErrorFatal",
-			"pattern": ".*\\[Hardware Error\\]: event severity: fatal$"
-		},
-		{
-			"type": "permanent",
-			"condition": "KernelDeadlock",
-			"reason": "DockerHung",
-			"pattern": "task docker:\\w+ blocked for more than \\w+ seconds\\."
-		}
-	]
+  "plugin": "kmsg",
+  "logPath": "/dev/kmsg",
+  "lookback": "5m",
+  "bufferSize": 10,
+  "source": "kernel-monitor",
+  "metricsReporting": true,
+  "conditions": [
+    {
+      "type": "KernelDeadlock",
+      "reason": "KernelHasNoDeadlock",
+      "message": "kernel has no deadlock"
+    },
+    {
+      "type": "XfsShutdown",
+      "reason": "XfsHasNotShutDown",
+      "message": "XFS has not shutdown"
+    },
+    {
+      "type": "CperHardwareErrorFatal",
+      "reason": "CperHardwareHasNoFatalError",
+      "message": "UEFI CPER has no fatal error"
+    }
+  ],
+  "rules": [
+    {
+      "type": "temporary",
+      "reason": "OOMKilling",
+      "pattern": "Killed process \\d+ (.+) total-vm:\\d+kB, anon-rss:\\d+kB, file-rss:\\d+kB.*"
+    },
+    {
+      "type": "temporary",
+      "reason": "TaskHung",
+      "pattern": "task [\\S ]+:\\w+ blocked for more than \\w+ seconds\\."
+    },
+    {
+      "type": "temporary",
+      "reason": "UnregisterNetDevice",
+      "pattern": "unregister_netdevice: waiting for \\w+ to become free. Usage count = \\d+"
+    },
+    {
+      "type": "temporary",
+      "reason": "KernelOops",
+      "pattern": "BUG: unable to handle kernel NULL pointer dereference at .*"
+    },
+    {
+      "type": "temporary",
+      "reason": "KernelOops",
+      "pattern": "divide error: 0000 \\[#\\d+\\] SMP"
+    },
+    {
+      "type": "temporary",
+      "reason": "Ext4Error",
+      "pattern": "EXT4-fs error .*"
+    },
+    {
+      "type": "temporary",
+      "reason": "Ext4Warning",
+      "pattern": "EXT4-fs warning .*"
+    },
+    {
+      "type": "temporary",
+      "reason": "IOError",
+      "pattern": "Buffer I/O error .*"
+    },
+    {
+      "type": "permanent",
+      "condition": "XfsShutdown",
+      "reason": "XfsHasShutdown",
+      "pattern": "XFS .* Shutting down filesystem.?"
+    },
+    {
+      "type": "temporary",
+      "reason": "MemoryReadError",
+      "pattern": "CE memory read error .*"
+    },
+    {
+      "type": "temporary",
+      "reason": "CperHardwareErrorCorrected",
+      "pattern": ".*\\[Hardware Error\\]: event severity: corrected$"
+    },
+    {
+      "type": "temporary",
+      "reason": "CperHardwareErrorRecoverable",
+      "pattern": ".*\\[Hardware Error\\]: event severity: recoverable$"
+    },
+    {
+      "type": "permanent",
+      "condition": "CperHardwareErrorFatal",
+      "reason": "CperHardwareErrorFatal",
+      "pattern": ".*\\[Hardware Error\\]: event severity: fatal$"
+    },
+    {
+      "type": "permanent",
+      "condition": "KernelDeadlock",
+      "reason": "DockerHung",
+      "pattern": "task docker:\\w+ blocked for more than \\w+ seconds\\."
+    }
+  ]
 }
