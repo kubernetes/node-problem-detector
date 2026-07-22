@@ -55,5 +55,8 @@ type CustomRule struct {
 	TimeoutString *string `json:"timeout"`
 	// Timeout is the timeout for the custom plugin to execute.
 	Timeout *time.Duration `json:"-"`
-	// TODO(andyxning) Add support for per-rule interval.
+	// InvokeIntervalString is the interval string at which the plugin will be invoked.
+	InvokeIntervalString *string `json:"invoke_interval,omitempty"`
+	// InvokeInterval is the interval at which the plugin will be invoked.
+	InvokeInterval *time.Duration `json:"-"`
 }
