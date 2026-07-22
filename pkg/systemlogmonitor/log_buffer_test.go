@@ -97,7 +97,11 @@ func TestMatch(t *testing.T) {
 			b.Push(&types.Log{Message: log})
 		}
 		for i, expr := range test.exprs {
-			logs := b.Match(expr)
+			pattern, err := CompilePattern(expr)
+			if err != nil {
+				t.Fatalf("case %d.%d: failed to compile pattern %q: %v", c+1, i+1, expr, err)
+			}
+			logs := b.Match(pattern)
 			got := []string{}
 			for _, log := range logs {
 				got = append(got, log.Message)
@@ -117,8 +121,12 @@ func BenchmarkMatch(b *testing.B) {
 	// A pattern from the default kernel monitor configuration which does not
 	// match the buffered logs.
 	expr := `task [\S ]+:\w+ blocked for more than \w+ seconds\.`
+	pattern, err := CompilePattern(expr)
+	if err != nil {
+		b.Fatalf("failed to compile pattern %q: %v", expr, err)
+	}
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		buf.Match(expr)
+		buf.Match(pattern)
 	}
 }

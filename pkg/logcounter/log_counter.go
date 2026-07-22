@@ -21,6 +21,7 @@ package logcounter
 
 import (
 	"fmt"
+	"regexp"
 	"time"
 
 	"k8s.io/utils/clock"
@@ -42,12 +43,24 @@ const (
 type logCounter struct {
 	logCh         <-chan *systemtypes.Log
 	buffer        systemlogmonitor.LogBuffer
-	pattern       string
-	revertPattern string
+	pattern       *regexp.Regexp
+	revertPattern *regexp.Regexp
 	clock         clock.Clock
 }
 
 func NewJournaldLogCounter(options *options.LogCounterOptions) (types.LogCounter, error) {
+	pattern, err := systemlogmonitor.CompilePattern(options.Pattern)
+	if err != nil {
+		return nil, fmt.Errorf("invalid pattern %q: %w", options.Pattern, err)
+	}
+	var revertPattern *regexp.Regexp
+	if options.RevertPattern != "" {
+		revertPattern, err = systemlogmonitor.CompilePattern(options.RevertPattern)
+		if err != nil {
+			return nil, fmt.Errorf("invalid revert pattern %q: %w", options.RevertPattern, err)
+		}
+	}
+
 	watcher := journald.NewJournaldWatcher(watchertypes.WatcherConfig{
 		Plugin:       "journald",
 		PluginConfig: map[string]string{journaldSourceKey: options.JournaldSource},
@@ -62,8 +75,8 @@ func NewJournaldLogCounter(options *options.LogCounterOptions) (types.LogCounter
 	return &logCounter{
 		logCh:         logCh,
 		buffer:        systemlogmonitor.NewLogBuffer(bufferSize),
-		pattern:       options.Pattern,
-		revertPattern: options.RevertPattern,
+		pattern:       pattern,
+		revertPattern: revertPattern,
 		clock:         clock.RealClock{},
 	}, nil
 }
@@ -86,7 +99,7 @@ func (e *logCounter) Count() (count int, err error) {
 			if len(e.buffer.Match(e.pattern)) != 0 {
 				count++
 			}
-			if e.revertPattern != "" && len(e.buffer.Match(e.revertPattern)) != 0 {
+			if e.revertPattern != nil && len(e.buffer.Match(e.revertPattern)) != 0 {
 				count--
 			}
 		case <-e.clock.After(timeout):
