@@ -20,6 +20,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"regexp"
 	"time"
 
 	"k8s.io/klog/v2"
@@ -50,6 +51,7 @@ type logMonitor struct {
 	watcher    watchertypes.LogWatcher
 	buffer     LogBuffer
 	config     MonitorConfig
+	patterns   []*regexp.Regexp
 	conditions []types.Condition
 	logCh      <-chan *systemlogtypes.Log
 	output     chan *types.Status
@@ -73,7 +75,7 @@ func NewLogMonitorOrDie(configPath string) types.Monitor {
 	}
 	// Apply default configurations
 	(&l.config).ApplyDefaultConfiguration()
-	err = l.config.ValidateRules()
+	l.patterns, err = l.config.compileRules()
 	if err != nil {
 		klog.Fatalf("Failed to validate %s matching rules %+v: %v", l.configPath, l.config.Rules, err)
 	}
@@ -152,8 +154,8 @@ func (l *logMonitor) parseLog(log *systemlogtypes.Log) {
 	// Once there is new log, log monitor will push it into the log buffer and try
 	// to match each rule. If any rule is matched, log monitor will report a status.
 	l.buffer.Push(log)
-	for _, rule := range l.config.Rules {
-		matched := l.buffer.Match(rule.Pattern)
+	for i, rule := range l.config.Rules {
+		matched := l.buffer.Match(l.patterns[i])
 		if len(matched) == 0 {
 			continue
 		}

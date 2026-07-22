@@ -59,13 +59,14 @@ func (mc *MonitorConfig) ApplyDefaultConfiguration() {
 	}
 }
 
-// ValidateRules verifies whether the regular expressions in the rules are valid.
-func (mc MonitorConfig) ValidateRules() error {
-	for _, rule := range mc.Rules {
-		_, err := regexp.Compile(rule.Pattern)
+func (mc MonitorConfig) compileRules() ([]*regexp.Regexp, error) {
+	patterns := make([]*regexp.Regexp, len(mc.Rules))
+	for i, rule := range mc.Rules {
+		pattern, err := CompilePattern(rule.Pattern)
 		if err != nil {
-			return err
+			return nil, err
 		}
+		patterns[i] = pattern
 	}
-	return nil
+	return patterns, nil
 }

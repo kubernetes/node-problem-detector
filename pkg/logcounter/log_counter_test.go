@@ -20,25 +20,65 @@ limitations under the License.
 package logcounter
 
 import (
+	"strings"
 	"testing"
 	"time"
 
 	testclock "k8s.io/utils/clock/testing"
 
+	"k8s.io/node-problem-detector/cmd/logcounter/options"
 	"k8s.io/node-problem-detector/pkg/logcounter/types"
 	"k8s.io/node-problem-detector/pkg/systemlogmonitor"
 	systemtypes "k8s.io/node-problem-detector/pkg/systemlogmonitor/types"
 )
 
-func NewTestLogCounter(pattern string, startTime time.Time) (types.LogCounter, *testclock.FakeClock, chan *systemtypes.Log) {
+func newTestLogCounter(t *testing.T, pattern string, startTime time.Time) (types.LogCounter, *testclock.FakeClock, chan *systemtypes.Log) {
+	t.Helper()
+	compiledPattern, err := systemlogmonitor.CompilePattern(pattern)
+	if err != nil {
+		t.Fatalf("failed to compile pattern %q: %v", pattern, err)
+	}
 	logCh := make(chan *systemtypes.Log)
 	clock := testclock.NewFakeClock(startTime)
 	return &logCounter{
 		logCh:   logCh,
 		buffer:  systemlogmonitor.NewLogBuffer(bufferSize),
-		pattern: pattern,
+		pattern: compiledPattern,
 		clock:   clock,
 	}, clock, logCh
+}
+
+func TestNewJournaldLogCounterRejectsInvalidPatterns(t *testing.T) {
+	for _, tc := range []struct {
+		name          string
+		pattern       string
+		revertPattern string
+		errorContains string
+	}{
+		{
+			name:          "pattern",
+			pattern:       "[",
+			errorContains: `invalid pattern "["`,
+		},
+		{
+			name:          "revert pattern",
+			revertPattern: "[",
+			errorContains: `invalid revert pattern "["`,
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			_, err := NewJournaldLogCounter(&options.LogCounterOptions{
+				Pattern:       tc.pattern,
+				RevertPattern: tc.revertPattern,
+			})
+			if err == nil {
+				t.Fatal("expected invalid pattern error")
+			}
+			if !strings.Contains(err.Error(), tc.errorContains) {
+				t.Errorf("expected error containing %q, got %q", tc.errorContains, err)
+			}
+		})
+	}
 }
 
 func TestCount(t *testing.T) {
@@ -113,7 +153,7 @@ func TestCount(t *testing.T) {
 		},
 	} {
 		t.Run(tc.description, func(t *testing.T) {
-			counter, fakeClock, logCh := NewTestLogCounter(tc.pattern, startTime)
+			counter, fakeClock, logCh := newTestLogCounter(t, tc.pattern, startTime)
 			go func(logs []*systemtypes.Log, ch chan<- *systemtypes.Log) {
 				for _, log := range logs {
 					ch <- log
