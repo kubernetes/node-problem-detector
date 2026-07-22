@@ -162,20 +162,18 @@ func (se *stackdriverExporter) exporterOptions() []gcpmetric.Option {
 		gcpmetric.WithProjectID(se.config.GCEMetadata.ProjectID),
 		gcpmetric.WithMetricDescriptorTypeFormatter(se.getMetricTypeFormatter()),
 		gcpmetric.WithFilteredResourceAttributes(instanceNameResourceFilter),
-	}
-	if clientOpts := monitoringClientOptions(se.config.APIEndpoint); clientOpts != nil {
-		opts = append(opts, gcpmetric.WithMonitoringClientOptions(clientOpts...))
+		gcpmetric.WithMonitoringClientOptions(monitoringClientOptions(se.config.APIEndpoint)...),
 	}
 	return opts
 }
 
-// monitoringClientOptions returns the Cloud Monitoring client options derived
-// from the configured API endpoint, or nil when no endpoint is configured.
+// monitoringClientOptions returns the Cloud Monitoring client options.
 func monitoringClientOptions(apiEndpoint string) []option.ClientOption {
-	if apiEndpoint == "" {
-		return nil
+	opts := []option.ClientOption{option.WithTelemetryDisabled()}
+	if apiEndpoint != "" {
+		opts = append(opts, option.WithEndpoint(apiEndpoint))
 	}
-	return []option.ClientOption{option.WithEndpoint(apiEndpoint)}
+	return opts
 }
 
 // instanceNameResourceFilter admits only the instance_name resource attribute
