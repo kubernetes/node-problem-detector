@@ -1,30 +1,30 @@
 {
-	"plugin": "filelog",
-	"pluginConfig": {
-		"timestamp": "^time=\"(\\S*)\"",
-		"message": "msg=\"?([^\n]*)\"?",
-		"timestampFormat": "2006-01-02T15:04:05.999999999Z"
-	},
-	"logPath": "C:\\etc\\kubernetes\\logs\\containerd.log",
-	"lookback": "5m",
-	"bufferSize": 10,
-	"source": "containerd",
-	"conditions": [],
-	"rules": [
-		{
-			"type": "temporary",
-			"reason": "ContainerCreationFailed",
-			"pattern": ".*failed to create containerd container.*error unpacking image.*wrong diff id calculated on extraction.*"
-		},
-		{
-			"type": "temporary",
-			"reason": "CorruptContainerImageLayer",
-			"pattern": ".*failed to pull and unpack image.*failed to extract layer.*archive/tar: invalid tar header.*"
-		},
-		{
-			"type": "temporary",
-			"reason": "HCSEmptyLayerchain",
-			"pattern": ".*Failed to unmarshall layerchain json - invalid character '\\x00' looking for beginning of value*"
-		}
-	]
+  "plugin": "filelog",
+  "pluginConfig": {
+    "timestamp": "^time=\"(\\S*)\"",
+    "message": "msg=\"?([^\n]*)\"?",
+    "timestampFormat": "2006-01-02T15:04:05.999999999Z"
+  },
+  "logPath": "C:\\etc\\kubernetes\\logs\\containerd.log",
+  "lookback": "5m",
+  "bufferSize": 10,
+  "source": "containerd",
+  "conditions": [],
+  "rules": [
+    {
+      "type": "temporary",
+      "reason": "ContainerCreationFailed",
+      "pattern": ".*failed to create containerd container.*error unpacking image.*wrong diff id calculated on extraction.*"
+    },
+    {
+      "type": "temporary",
+      "reason": "CorruptContainerImageLayer",
+      "pattern": ".*failed to pull and unpack image.*failed to extract layer.*archive/tar: invalid tar header.*"
+    },
+    {
+      "type": "temporary",
+      "reason": "HCSEmptyLayerchain",
+      "pattern": ".*Failed to unmarshall layerchain json - invalid character '\\x00' looking for beginning of value*"
+    }
+  ]
 }

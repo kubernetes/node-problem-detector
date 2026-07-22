@@ -1,29 +1,29 @@
 {
-	"plugin": "journald",
-	"pluginConfig": {
-		"source": "systemd"
-	},
-	"logPath": "/var/log/journal",
-	"lookback": "5m",
-	"bufferSize": 10,
-	"source": "systemd-monitor",
-	"metricsReporting": true,
-	"conditions": [],
-	"rules": [
-		{
-			"type": "temporary",
-			"reason": "KubeletStart",
-			"pattern": "Started (Kubernetes kubelet|kubelet.service|kubelet.service - Kubernetes kubelet|kubelet.service - .*)."
-		},
-		{
-			"type": "temporary",
-			"reason": "DockerStart",
-			"pattern": "Starting (Docker Application Container Engine|docker.service|docker.service - Docker Application Container Engine)..."
-		},
-		{
-			"type": "temporary",
-			"reason": "ContainerdStart",
-			"pattern": "Starting (containerd container runtime|containerd.service|containerd.service - containerd container runtime)..."
-		}
-	]
+  "plugin": "journald",
+  "pluginConfig": {
+    "source": "systemd"
+  },
+  "logPath": "/var/log/journal",
+  "lookback": "5m",
+  "bufferSize": 10,
+  "source": "systemd-monitor",
+  "metricsReporting": true,
+  "conditions": [],
+  "rules": [
+    {
+      "type": "temporary",
+      "reason": "KubeletStart",
+      "pattern": "Started (Kubernetes kubelet|kubelet.service|kubelet.service - Kubernetes kubelet|kubelet.service - .*)."
+    },
+    {
+      "type": "temporary",
+      "reason": "DockerStart",
+      "pattern": "Starting (Docker Application Container Engine|docker.service|docker.service - Docker Application Container Engine)..."
+    },
+    {
+      "type": "temporary",
+      "reason": "ContainerdStart",
+      "pattern": "Starting (containerd container runtime|containerd.service|containerd.service - containerd container runtime)..."
+    }
+  ]
 }
