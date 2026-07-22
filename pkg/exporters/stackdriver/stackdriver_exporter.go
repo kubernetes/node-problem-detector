@@ -23,11 +23,13 @@ import (
 	"reflect"
 	"time"
 
-	"contrib.go.opencensus.io/exporter/stackdriver"
-	monitoredres "contrib.go.opencensus.io/exporter/stackdriver/monitoredresource"
+	gcpmetric "github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/metric"
 	"github.com/avast/retry-go/v4"
 	"github.com/spf13/pflag"
-	"go.opencensus.io/stats/view"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/sdk/metric"
+	"go.opentelemetry.io/otel/sdk/metric/metricdata"
+	semconv "go.opentelemetry.io/otel/semconv/v1.34.0"
 	"google.golang.org/api/option"
 	"k8s.io/klog/v2"
 
@@ -35,7 +37,14 @@ import (
 	seconfig "k8s.io/node-problem-detector/pkg/exporters/stackdriver/config"
 	"k8s.io/node-problem-detector/pkg/types"
 	"k8s.io/node-problem-detector/pkg/util/metrics"
+	otelutil "k8s.io/node-problem-detector/pkg/util/otel"
 )
+
+// instanceNameKey is the resource attribute used to carry the GCE instance
+// name. It is admitted as a metric label (mirroring the legacy OpenCensus
+// DefaultMonitoringLabels behavior) while being ignored by the GCP monitored
+// resource mapping.
+const instanceNameKey = attribute.Key("instance_name")
 
 func init() {
 	clo := commandLineOptions{}
@@ -95,17 +104,15 @@ var NPDMetricToSDMetric = map[metrics.MetricID]string{
 	metrics.NetDevTxCompressed:      "kubernetes.io/internal/node/guest/net/tx_compressed",
 }
 
-func getMetricTypeConversionFunction(customMetricPrefix string) func(*view.View) string {
-	return func(view *view.View) string {
-		viewName := view.Measure.Name()
-
+func getMetricTypeConversionFunction(customMetricPrefix string) func(string) string {
+	return func(metricName string) string {
 		fallbackMetricType := ""
 		if customMetricPrefix != "" {
 			// Example fallbackMetricType: custom.googleapis.com/npd/host/uptime
-			fallbackMetricType = filepath.Join(customMetricPrefix, viewName)
+			fallbackMetricType = filepath.Join(customMetricPrefix, metricName)
 		}
 
-		metricID, ok := metrics.MetricMap.ViewNameToMetricID(viewName)
+		metricID, ok := metrics.MetricMap.ViewNameToMetricID(metricName)
 		if !ok {
 			return fallbackMetricType
 		}
@@ -121,25 +128,16 @@ type stackdriverExporter struct {
 	config seconfig.StackdriverExporterConfig
 }
 
-func (se *stackdriverExporter) setupOpenCensusViewExporterOrDie() {
-	clientOption := option.WithEndpoint(se.config.APIEndpoint)
+func (se *stackdriverExporter) setupOTelExporterOrDie() {
+	// Contribute GCE identity to the global OTel resource so that exported time
+	// series map to the gce_instance monitored resource and carry the
+	// instance_name metric label.
+	otelutil.AddResourceAttributes(se.gceResourceAttributes()...)
 
-	var globalLabels stackdriver.Labels
-	globalLabels.Set("instance_name", se.config.GCEMetadata.InstanceName, "The name of the VM instance")
-
-	viewExporter, err := stackdriver.NewExporter(stackdriver.Options{
-		ProjectID:               se.config.GCEMetadata.ProjectID,
-		MonitoringClientOptions: []option.ClientOption{clientOption},
-		MonitoredResource: &monitoredres.GCEInstance{
-			ProjectID:  se.config.GCEMetadata.ProjectID,
-			InstanceID: se.config.GCEMetadata.InstanceID,
-			Zone:       se.config.GCEMetadata.Zone,
-		},
-		GetMetricType:           getMetricTypeConversionFunction(se.config.CustomMetricPrefix),
-		DefaultMonitoringLabels: &globalLabels,
-	})
+	// Create Google Cloud Monitoring exporter
+	gcpExporter, err := gcpmetric.New(se.exporterOptions()...)
 	if err != nil {
-		klog.Fatalf("Failed to create Stackdriver OpenCensus view exporter: %v", err)
+		klog.Fatalf("Failed to create Google Cloud Monitoring exporter: %v", err)
 	}
 
 	exportPeriod, err := time.ParseDuration(se.config.ExportPeriod)
@@ -147,8 +145,73 @@ func (se *stackdriverExporter) setupOpenCensusViewExporterOrDie() {
 		klog.Fatalf("Failed to parse ExportPeriod %q: %v", se.config.ExportPeriod, err)
 	}
 
-	view.SetReportingPeriod(exportPeriod)
-	view.RegisterExporter(viewExporter)
+	reader := metric.NewPeriodicReader(
+		gcpExporter,
+		metric.WithInterval(exportPeriod),
+	)
+
+	// register with the global meter provider
+	otelutil.AddMetricReader(reader)
+
+	klog.Infof("Google Cloud Monitoring exporter configured for project %s", se.config.GCEMetadata.ProjectID)
+}
+
+// exporterOptions builds the options for the Google Cloud Monitoring exporter.
+func (se *stackdriverExporter) exporterOptions() []gcpmetric.Option {
+	opts := []gcpmetric.Option{
+		gcpmetric.WithProjectID(se.config.GCEMetadata.ProjectID),
+		gcpmetric.WithMetricDescriptorTypeFormatter(se.getMetricTypeFormatter()),
+		gcpmetric.WithFilteredResourceAttributes(instanceNameResourceFilter),
+		gcpmetric.WithMonitoringClientOptions(monitoringClientOptions(se.config.APIEndpoint)...),
+	}
+	return opts
+}
+
+// monitoringClientOptions returns the Cloud Monitoring client options.
+func monitoringClientOptions(apiEndpoint string) []option.ClientOption {
+	opts := []option.ClientOption{option.WithTelemetryDisabled()}
+	if apiEndpoint != "" {
+		opts = append(opts, option.WithEndpoint(apiEndpoint))
+	}
+	return opts
+}
+
+// instanceNameResourceFilter admits only the instance_name resource attribute
+// so that it becomes a metric label, mirroring the legacy per-metric
+// instance_name label.
+func instanceNameResourceFilter(kv attribute.KeyValue) bool {
+	return kv.Key == instanceNameKey && len(kv.Value.AsString()) > 0
+}
+
+// gceResourceAttributes returns the GCE semconv resource attributes for the
+// configured metadata. Only attributes with non-empty values are returned.
+func (se *stackdriverExporter) gceResourceAttributes() []attribute.KeyValue {
+	md := se.config.GCEMetadata
+	attrs := []attribute.KeyValue{
+		semconv.CloudProviderGCP,
+		semconv.CloudPlatformGCPComputeEngine,
+	}
+	if md.ProjectID != "" {
+		attrs = append(attrs, semconv.CloudAccountIDKey.String(md.ProjectID))
+	}
+	if md.InstanceID != "" {
+		attrs = append(attrs, semconv.HostIDKey.String(md.InstanceID))
+	}
+	if md.Zone != "" {
+		attrs = append(attrs, semconv.CloudAvailabilityZoneKey.String(md.Zone))
+	}
+	if md.InstanceName != "" {
+		attrs = append(attrs, instanceNameKey.String(md.InstanceName))
+	}
+	return attrs
+}
+
+// getMetricTypeFormatter returns a function to convert metrics to GCP metric types
+func (se *stackdriverExporter) getMetricTypeFormatter() func(metricdata.Metrics) string {
+	converter := getMetricTypeConversionFunction(se.config.CustomMetricPrefix)
+	return func(m metricdata.Metrics) string {
+		return converter(m.Name)
+	}
 }
 
 func (se *stackdriverExporter) populateMetadataOrDie() {
@@ -223,7 +286,7 @@ func NewExporterOrDie(clo types.CommandLineOptions) types.Exporter {
 	klog.Infof("Starting Stackdriver exporter %s", options.configPath)
 
 	se.populateMetadataOrDie()
-	se.setupOpenCensusViewExporterOrDie()
+	se.setupOTelExporterOrDie()
 
 	return &se
 }

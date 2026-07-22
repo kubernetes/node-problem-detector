@@ -17,11 +17,8 @@ package metrics
 
 import (
 	"context"
-	"fmt"
 
-	"go.opencensus.io/stats"
-	"go.opencensus.io/stats/view"
-	"go.opencensus.io/tag"
+	"go.opentelemetry.io/otel/metric"
 )
 
 // Int64MetricRepresentation represents a snapshot of an int64 metrics.
@@ -35,68 +32,49 @@ type Int64MetricRepresentation struct {
 	Value int64
 }
 
+// OTelInt64Metric wraps OpenTelemetry int64 instruments.
+type OTelInt64Metric = otelMetric[int64]
+
 // Int64Metric represents an int64 metric.
-type Int64Metric struct {
-	name    string
-	measure *stats.Int64Measure
+// Type alias added for backward compatibility
+type Int64Metric = OTelInt64Metric
+
+type Int64MetricInterface interface {
+	Record(labelValues map[string]string, value int64) error
 }
 
-// NewInt64Metric create a Int64Metric metric, returns nil when viewName is empty.
-func NewInt64Metric(metricID MetricID, viewName string, description string, unit string, aggregation Aggregation, tagNames []string) (*Int64Metric, error) {
-	if viewName == "" {
-		return nil, nil
-	}
+// NewInt64Metric creates a new Int64 metric using OpenTelemetry, returns nil when name is empty
+func NewInt64Metric(metricID MetricID, name, description, unit string, aggregation Aggregation, labels []string) (*Int64Metric, error) {
+	return newOTelMetric(metricID, name, description, unit, aggregation, labels, newInt64Instrument)
+}
 
-	MetricMap.AddMapping(metricID, viewName)
-
-	tagKeys, err := getTagKeysFromNames(tagNames)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create metric %q because of tag creation failure: %v", viewName, err)
-	}
-
-	var aggregationMethod *view.Aggregation
+// newInt64Instrument constructs the int64 counter/gauge for the given aggregation.
+func newInt64Instrument(
+	meter metric.Meter, name, description, unit string, aggregation Aggregation,
+) (func(context.Context, int64, metric.MeasurementOption), error) {
 	switch aggregation {
-	case LastValue:
-		aggregationMethod = view.LastValue()
 	case Sum:
-		aggregationMethod = view.Sum()
-	default:
-		return nil, fmt.Errorf("unknown aggregation option %q", aggregation)
-	}
-
-	measure := stats.Int64(viewName, description, unit)
-	newView := &view.View{
-		Name:        viewName,
-		Measure:     measure,
-		Description: description,
-		Aggregation: aggregationMethod,
-		TagKeys:     tagKeys,
-	}
-	if err := view.Register(newView); err != nil {
-		return nil, fmt.Errorf("failed to register view for metric %q: %v", viewName, err)
-	}
-
-	metric := Int64Metric{viewName, measure}
-	return &metric, nil
-}
-
-// Record records a measurement for the metric, with provided tags as metric labels.
-func (metric *Int64Metric) Record(tags map[string]string, measurement int64) error {
-	var mutators []tag.Mutator
-
-	tagMapMutex.RLock()
-	defer tagMapMutex.RUnlock()
-
-	for tagName, tagValue := range tags {
-		tagKey, ok := tagMap[tagName]
-		if !ok {
-			return fmt.Errorf("referencing none existing tag %q in metric %q", tagName, metric.name)
+		counter, err := meter.Int64Counter(name,
+			metric.WithDescription(description),
+			metric.WithUnit(unit),
+		)
+		if err != nil {
+			return nil, err
 		}
-		mutators = append(mutators, tag.Upsert(tagKey, tagValue))
+		return func(ctx context.Context, value int64, opt metric.MeasurementOption) {
+			counter.Add(ctx, value, opt)
+		}, nil
+	default: // LastValue
+		// Use synchronous Int64Gauge for proper gauge semantics without automatic suffixing
+		gauge, err := meter.Int64Gauge(name,
+			metric.WithDescription(description),
+			metric.WithUnit(unit),
+		)
+		if err != nil {
+			return nil, err
+		}
+		return func(ctx context.Context, value int64, opt metric.MeasurementOption) {
+			gauge.Record(ctx, value, opt)
+		}, nil
 	}
-
-	return stats.RecordWithTags(
-		context.Background(),
-		mutators,
-		metric.measure.M(measurement))
 }
