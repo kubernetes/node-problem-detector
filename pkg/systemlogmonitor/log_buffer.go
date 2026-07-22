@@ -28,7 +28,7 @@ type LogBuffer interface {
 	// Push pushes log into the log buffer.
 	Push(*types.Log)
 	// Match with regular expression in the log buffer.
-	Match(string) []*types.Log
+	Match(*regexp.Regexp) []*types.Log
 	// String returns a concatenated string of the buffered logs.
 	String() string
 }
@@ -39,8 +39,6 @@ type logBuffer struct {
 	msg     []string
 	max     int
 	current int
-	// regexps caches compiled regular expressions.
-	regexps map[string]*regexp.Regexp
 }
 
 // NewLogBuffer creates log buffer with max line number limit. Because we only match logs
@@ -49,11 +47,16 @@ type logBuffer struct {
 // lines of patterns we support.
 func NewLogBuffer(maxLines int) *logBuffer {
 	return &logBuffer{
-		buffer:  make([]*types.Log, maxLines),
-		msg:     make([]string, maxLines),
-		max:     maxLines,
-		regexps: make(map[string]*regexp.Regexp),
+		buffer: make([]*types.Log, maxLines),
+		msg:    make([]string, maxLines),
+		max:    maxLines,
 	}
+}
+
+// CompilePattern compiles a log buffer pattern that must match to the end of
+// the buffered logs.
+func CompilePattern(expr string) (*regexp.Regexp, error) {
+	return regexp.Compile(expr + `\z`)
 }
 
 func (b *logBuffer) Push(log *types.Log) {
@@ -62,13 +65,7 @@ func (b *logBuffer) Push(log *types.Log) {
 	b.current++
 }
 
-func (b *logBuffer) Match(expr string) []*types.Log {
-	// The expression should be checked outside, and it must match to the end.
-	reg, ok := b.regexps[expr]
-	if !ok {
-		reg = regexp.MustCompile(expr + `\z`)
-		b.regexps[expr] = reg
-	}
+func (b *logBuffer) Match(reg *regexp.Regexp) []*types.Log {
 	log := b.String()
 	loc := reg.FindStringIndex(log)
 	if loc == nil {
