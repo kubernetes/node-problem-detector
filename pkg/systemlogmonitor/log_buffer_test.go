@@ -108,3 +108,17 @@ func TestMatch(t *testing.T) {
 		}
 	}
 }
+
+func BenchmarkMatch(b *testing.B) {
+	buf := NewLogBuffer(10)
+	for i := 0; i < 10; i++ {
+		buf.Push(&types.Log{Message: "Out of memory: Kill process 20744 (mysqld) score 318 or sacrifice child"})
+	}
+	// A pattern from the default kernel monitor configuration which does not
+	// match the buffered logs.
+	expr := `task [\S ]+:\w+ blocked for more than \w+ seconds\.`
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		buf.Match(expr)
+	}
+}
