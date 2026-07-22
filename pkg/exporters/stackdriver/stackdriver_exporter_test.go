@@ -229,6 +229,7 @@ func TestExportMetricsToCloudMonitoring(t *testing.T) {
 
 	for _, req := range reqs {
 		for _, ts := range req.TimeSeries {
+			require.NotEmpty(t, ts.Metric.Type, "exporter must not collect its own unmapped client telemetry")
 			switch ts.Metric.Type {
 			case "compute.googleapis.com/guest/system/uptime":
 				foundUptime = true
