@@ -46,17 +46,17 @@ func TestScrapeExcludesDefaultCollectors(t *testing.T) {
 
 	// Record a metric through the standard NPD metrics + otel path.
 	metric, err := metrics.NewInt64Metric(
-		metrics.ProblemCounterID,
-		"test_problem_counter",
-		"a test counter",
-		"1",
-		metrics.Sum,
-		[]string{"reason"},
+		metrics.HostUptimeID,
+		"host/uptime",
+		"system uptime",
+		"s",
+		metrics.LastValue,
+		nil,
 	)
 	if err != nil {
 		t.Fatalf("Failed to create metric: %v", err)
 	}
-	if err := metric.Record(map[string]string{"reason": "TestReason"}, 1); err != nil {
+	if err := metric.Record(nil, 1); err != nil {
 		t.Fatalf("Failed to record metric: %v", err)
 	}
 
@@ -68,6 +68,7 @@ func TestScrapeExcludesDefaultCollectors(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create scrape request: %v", err)
 	}
+	req.Header.Set("Accept", "text/plain; version=1.0.0; escaping=allow-utf-8")
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		t.Fatalf("Failed to scrape metrics endpoint: %v", err)
@@ -84,9 +85,13 @@ func TestScrapeExcludesDefaultCollectors(t *testing.T) {
 	}
 	output := string(body)
 
-	// The recorded NPD metric must be present.
-	if !strings.Contains(output, "test_problem_counter") {
-		t.Errorf("Expected scrape output to contain recorded metric %q, got:\n%s", "test_problem_counter", output)
+	// NPD metric names must retain the legacy underscore escaping even when
+	// Prometheus 3 requests UTF-8 names.
+	if !strings.Contains(output, "host_uptime") {
+		t.Errorf("Expected scrape output to contain recorded metric %q, got:\n%s", "host_uptime", output)
+	}
+	if strings.Contains(output, "host/uptime") {
+		t.Errorf("Expected scrape output to escape metric name %q, got:\n%s", "host/uptime", output)
 	}
 
 	// The default Go runtime / process collectors and the target_info metric
