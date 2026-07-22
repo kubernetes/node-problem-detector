@@ -82,7 +82,8 @@ func setKubeEndpoints() {
 	kubeletHealthCheckEndpoint = fmt.Sprintf("http://%s/healthz", net.JoinHostPort(hostAddress, kubeletPort))
 	// Use /livez for kube-proxy so Cluster Autoscaler scale-down (ToBeDeletedByClusterAutoscaler
 	// taint) does not make NPD report kube-proxy as unhealthy. /healthz intentionally fails in
-	// that case for load-balancer connection draining (KEP-3836); /livez only reflects process health.
+	// that case for load-balancer connection draining (KEP-3836). /livez still checks process and
+	// dataplane synchronization health; it only excludes the node-eligibility check.
 	kubeProxyHealthCheckEndpoint = fmt.Sprintf("http://%s/livez", net.JoinHostPort(hostAddress, kubeProxyPort))
 }
 
