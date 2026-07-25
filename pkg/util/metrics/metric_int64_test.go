@@ -311,3 +311,19 @@ func TestNormalizeMetricName(t *testing.T) {
 		})
 	}
 }
+
+func TestNewMetricRejectsNormalizedNameCollision(t *testing.T) {
+	otelutil.ResetForTesting()
+	otelutil.AddMetricReader(sdkmetric.NewManualReader())
+	otelutil.InitializeMeterProvider()
+
+	_, err := NewInt64Metric("first_collision_metric", "collision/metric", "desc", "1", Sum, nil)
+	if err != nil {
+		t.Fatalf("Failed to create first metric: %v", err)
+	}
+
+	_, err = NewInt64Metric("second_collision_metric", "collision:metric", "desc", "1", Sum, nil)
+	if err == nil {
+		t.Fatal("expected normalized metric name collision to return an error")
+	}
+}

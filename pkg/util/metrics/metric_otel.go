@@ -74,8 +74,9 @@ func newOTelMetric[T int64 | float64](
 		labelSet[label] = struct{}{}
 	}
 
-	// Register metric mapping
-	MetricMap.AddMapping(metricID, instrumentName)
+	if err := MetricMap.AddNormalizedMapping(metricID, instrumentName, name); err != nil {
+		return nil, err
+	}
 
 	return &otelMetric[T]{name: instrumentName, labels: labelNames, labelSet: labelSet, emit: emit}, nil
 }
