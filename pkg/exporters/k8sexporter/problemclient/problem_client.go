@@ -23,10 +23,12 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"sync/atomic"
 
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	clientset "k8s.io/client-go/kubernetes"
 	typedcorev1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	"k8s.io/client-go/tools/record"
@@ -52,11 +54,14 @@ type Client interface {
 }
 
 type nodeProblemClient struct {
-	nodeName       string
-	client         typedcorev1.CoreV1Interface
-	clock          clock.Clock
-	recorders      map[string]record.EventRecorder
-	nodeRef        *v1.ObjectReference
+	nodeName  string
+	client    typedcorev1.CoreV1Interface
+	clock     clock.Clock
+	recorders map[string]record.EventRecorder
+	// nodeRef identifies the node in recorded events.
+	nodeRef *v1.ObjectReference
+	// cachedNodeRef holds a copy of nodeRef with the Node UID set.
+	cachedNodeRef  atomic.Pointer[v1.ObjectReference]
 	eventNamespace string
 }
 
@@ -113,7 +118,10 @@ func (c *nodeProblemClient) SetConditions(ctx context.Context, newConditions []v
 			return true
 		},
 		func() error {
-			_, err := c.client.Nodes().PatchStatus(ctx, c.nodeName, patch)
+			node, err := c.client.Nodes().PatchStatus(ctx, c.nodeName, patch)
+			if err == nil {
+				c.cacheNodeRef(node.UID)
+			}
 			return err
 		},
 	)
@@ -126,13 +134,38 @@ func (c *nodeProblemClient) Eventf(eventType, source, reason, messageFmt string,
 		recorder = getEventRecorder(c.client, c.eventNamespace, c.nodeName, source)
 		c.recorders[source] = recorder
 	}
-	recorder.Eventf(c.nodeRef, eventType, reason, messageFmt, args...)
+	recorder.Eventf(c.nodeRefWithUID(), eventType, reason, messageFmt, args...)
 }
 
 func (c *nodeProblemClient) GetNode(ctx context.Context) (*v1.Node, error) {
 	// To reduce the load on APIServer & etcd, we are serving GET operations from
 	// apiserver cache (the data might be slightly delayed).
-	return c.client.Nodes().Get(ctx, c.nodeName, metav1.GetOptions{ResourceVersion: "0"})
+	node, err := c.client.Nodes().Get(ctx, c.nodeName, metav1.GetOptions{ResourceVersion: "0"})
+	if err == nil {
+		c.cacheNodeRef(node.UID)
+	}
+	return node, err
+}
+
+// nodeRefWithUID returns the node reference to record events against.
+//
+// The UID is resolved once. If the Node object is deleted and created again
+// while node-problem-detector runs, events keep the first UID until restart.
+func (c *nodeProblemClient) nodeRefWithUID() *v1.ObjectReference {
+	if ref := c.cachedNodeRef.Load(); ref != nil {
+		return ref
+	}
+	return c.nodeRef
+}
+
+// cacheNodeRef stores a copy of nodeRef with the given UID set.
+func (c *nodeProblemClient) cacheNodeRef(uid types.UID) {
+	if uid == "" || c.cachedNodeRef.Load() != nil {
+		return
+	}
+	ref := *c.nodeRef
+	ref.UID = uid
+	c.cachedNodeRef.CompareAndSwap(nil, &ref)
 }
 
 // generatePatch generates condition patch
@@ -154,7 +187,6 @@ func getEventRecorder(c typedcorev1.CoreV1Interface, namespace, nodeName, source
 }
 
 func getNodeRef(namespace, nodeName string) *v1.ObjectReference {
-	// TODO(random-liu): Get node to initialize the node reference
 	return &v1.ObjectReference{
 		APIVersion: "v1",
 		Kind:       "Node",
