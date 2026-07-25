@@ -110,7 +110,7 @@ func TestKubeEndpointConfiguration(t *testing.T) {
 			name:                      "no overrides supplied",
 			envConfig:                 map[string]string{},
 			expectedKubeletEndpoint:   "http://localhost:10248/healthz",
-			expectedKubeProxyEndpoint: "http://localhost:10256/healthz",
+			expectedKubeProxyEndpoint: "http://localhost:10256/livez",
 		},
 		{
 			name: "HOST_ADDRESS override supplied",
@@ -118,7 +118,7 @@ func TestKubeEndpointConfiguration(t *testing.T) {
 				"HOST_ADDRESS": "samplehost.testdomain.com",
 			},
 			expectedKubeletEndpoint:   "http://samplehost.testdomain.com:10248/healthz",
-			expectedKubeProxyEndpoint: "http://samplehost.testdomain.com:10256/healthz",
+			expectedKubeProxyEndpoint: "http://samplehost.testdomain.com:10256/livez",
 		},
 		{
 			name: "HOST_ADDRESS override supplied with IPv4",
@@ -126,7 +126,7 @@ func TestKubeEndpointConfiguration(t *testing.T) {
 				"HOST_ADDRESS": "10.0.5.4",
 			},
 			expectedKubeletEndpoint:   "http://10.0.5.4:10248/healthz",
-			expectedKubeProxyEndpoint: "http://10.0.5.4:10256/healthz",
+			expectedKubeProxyEndpoint: "http://10.0.5.4:10256/livez",
 		},
 		{
 			name: "HOST_ADDRESS override supplied with IPv6",
@@ -134,7 +134,7 @@ func TestKubeEndpointConfiguration(t *testing.T) {
 				"HOST_ADDRESS": "80:f4:16::1",
 			},
 			expectedKubeletEndpoint:   "http://[80:f4:16::1]:10248/healthz",
-			expectedKubeProxyEndpoint: "http://[80:f4:16::1]:10256/healthz",
+			expectedKubeProxyEndpoint: "http://[80:f4:16::1]:10256/livez",
 		},
 		{
 			name: "KUBELET_PORT override supplied",
@@ -142,7 +142,7 @@ func TestKubeEndpointConfiguration(t *testing.T) {
 				"KUBELET_PORT": "12345",
 			},
 			expectedKubeletEndpoint:   "http://localhost:12345/healthz",
-			expectedKubeProxyEndpoint: "http://localhost:10256/healthz",
+			expectedKubeProxyEndpoint: "http://localhost:10256/livez",
 		},
 		{
 			name: "KUBEPROXY_PORT override supplied",
@@ -150,7 +150,7 @@ func TestKubeEndpointConfiguration(t *testing.T) {
 				"KUBEPROXY_PORT": "12345",
 			},
 			expectedKubeletEndpoint:   "http://localhost:10248/healthz",
-			expectedKubeProxyEndpoint: "http://localhost:12345/healthz",
+			expectedKubeProxyEndpoint: "http://localhost:12345/livez",
 		},
 		{
 			name: "HOST_ADDRESS and KUBELET_PORT override supplied",
@@ -159,7 +159,7 @@ func TestKubeEndpointConfiguration(t *testing.T) {
 				"KUBELET_PORT": "12345",
 			},
 			expectedKubeletEndpoint:   "http://samplehost.testdomain.com:12345/healthz",
-			expectedKubeProxyEndpoint: "http://samplehost.testdomain.com:10256/healthz",
+			expectedKubeProxyEndpoint: "http://samplehost.testdomain.com:10256/livez",
 		},
 		{
 			name: "HOST_ADDRESS and KUBEPROXY_PORT override supplied",
@@ -168,7 +168,7 @@ func TestKubeEndpointConfiguration(t *testing.T) {
 				"KUBEPROXY_PORT": "12345",
 			},
 			expectedKubeletEndpoint:   "http://samplehost.testdomain.com:10248/healthz",
-			expectedKubeProxyEndpoint: "http://samplehost.testdomain.com:12345/healthz",
+			expectedKubeProxyEndpoint: "http://samplehost.testdomain.com:12345/livez",
 		},
 		{
 			name: "HOST_ADDRESS, KUBELET_PORT and KUBEPROXY_PORT override supplied",
@@ -178,7 +178,7 @@ func TestKubeEndpointConfiguration(t *testing.T) {
 				"KUBEPROXY_PORT": "12346",
 			},
 			expectedKubeletEndpoint:   "http://10.0.10.1:12345/healthz",
-			expectedKubeProxyEndpoint: "http://10.0.10.1:12346/healthz",
+			expectedKubeProxyEndpoint: "http://10.0.10.1:12346/livez",
 		},
 	}
 	for _, test := range testCases {
