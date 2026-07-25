@@ -31,6 +31,7 @@ import (
 // bound at construction.
 type otelMetric[T int64 | float64] struct {
 	name     string
+	labels   []string
 	labelSet map[string]struct{}
 
 	// emit sends one measurement to the underlying counter (Sum) or
@@ -67,6 +68,7 @@ func newOTelMetric[T int64 | float64](
 		return nil, err
 	}
 
+	labelNames := append([]string(nil), labels...)
 	labelSet := make(map[string]struct{}, len(labels))
 	for _, label := range labels {
 		labelSet[label] = struct{}{}
@@ -75,18 +77,21 @@ func newOTelMetric[T int64 | float64](
 	// Register metric mapping
 	MetricMap.AddMapping(metricID, instrumentName)
 
-	return &otelMetric[T]{name: instrumentName, labelSet: labelSet, emit: emit}, nil
+	return &otelMetric[T]{name: instrumentName, labels: labelNames, labelSet: labelSet, emit: emit}, nil
 }
 
 // Record validates the provided labels against the declared label set and
 // emits the measurement to the underlying instrument.
 func (m *otelMetric[T]) Record(labelValues map[string]string, value T) error {
-	attrs := make([]attribute.KeyValue, 0, len(labelValues))
-	for k, v := range labelValues {
+	for k := range labelValues {
 		if _, ok := m.labelSet[k]; !ok {
 			return fmt.Errorf("referencing non-existent label %q on metric %q", k, m.name)
 		}
-		attrs = append(attrs, attribute.String(k, v))
+	}
+
+	attrs := make([]attribute.KeyValue, 0, len(m.labels))
+	for _, label := range m.labels {
+		attrs = append(attrs, attribute.String(label, labelValues[label]))
 	}
 
 	m.emit(context.Background(), value, metric.WithAttributes(attrs...))
