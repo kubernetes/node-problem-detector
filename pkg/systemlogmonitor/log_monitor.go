@@ -20,6 +20,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"regexp"
+	"strings"
 	"time"
 
 	"k8s.io/klog/v2"
@@ -94,6 +96,11 @@ func NewLogMonitorOrDie(configPath string) types.Monitor {
 // panic if error occurs.
 func initializeProblemMetricsOrDie(rules []systemlogtypes.Rule) {
 	for _, rule := range rules {
+		// Skip template reasons (e.g. "NvidiaGPUXid%s") — they are expanded at match time
+		// and pushing the raw template string produces meaningless Prometheus label values.
+		if strings.Contains(rule.Reason, "%") {
+			continue
+		}
 		if rule.Type == types.Perm {
 			err := problemmetrics.GlobalProblemMetricsManager.SetProblemGauge(rule.Condition, rule.Reason, false)
 			if err != nil {
@@ -158,6 +165,9 @@ func (l *logMonitor) parseLog(log *systemlogtypes.Log) {
 			continue
 		}
 		status := l.generateStatus(matched, rule)
+		if status == nil {
+			continue
+		}
 		klog.Infof("New status generated: %+v", status)
 		l.output <- status
 	}
@@ -170,12 +180,28 @@ func (l *logMonitor) generateStatus(logs []*systemlogtypes.Log, rule systemlogty
 	message := generateMessage(logs, rule.PatternGeneratedMessageSuffix)
 	var events []types.Event
 	var changedConditions []*types.Condition
+
+	reason := rule.Reason
+	// Support configuring rule.Reason as a Sprintf format string and formatting it with the matched capturing groups in rule.Pattern.
+	if strings.Contains(reason, "%") {
+		re := regexp.MustCompile(rule.Pattern)
+		matches := re.FindStringSubmatch(message)
+		formatArgs := make([]interface{}, 0)
+		if len(matches) > 1 {
+			// Use the matched capturing groups as the arguments for Sprintf.
+			for _, value := range matches[1:] {
+				formatArgs = append(formatArgs, value)
+			}
+		}
+		reason = fmt.Sprintf(rule.Reason, formatArgs...)
+	}
+
 	if rule.Type == types.Temp {
 		// For temporary error only generate event
 		events = append(events, types.Event{
 			Severity:  types.Warn,
 			Timestamp: timestamp,
-			Reason:    rule.Reason,
+			Reason:    reason,
 			Message:   message,
 		})
 	} else {
@@ -186,19 +212,19 @@ func (l *logMonitor) generateStatus(logs []*systemlogtypes.Log, rule systemlogty
 				// Update transition timestamp and message when the condition
 				// changes. Condition is considered to be changed only when
 				// status or reason changes.
-				if condition.Status == types.False || condition.Reason != rule.Reason {
+				if condition.Status == types.False || condition.Reason != reason {
 					condition.Transition = timestamp
 					condition.Message = message
 					events = append(events, util.GenerateConditionChangeEvent(
 						condition.Type,
 						types.True,
-						rule.Reason,
+						reason,
 						message,
 						timestamp,
 					))
 				}
 				condition.Status = types.True
-				condition.Reason = rule.Reason
+				condition.Reason = reason
 				changedConditions = append(changedConditions, condition)
 				break
 			}

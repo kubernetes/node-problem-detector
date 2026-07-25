@@ -17,7 +17,9 @@ limitations under the License.
 package systemlogmonitor
 
 import (
+	"fmt"
 	"regexp"
+	"strings"
 
 	watchertypes "k8s.io/node-problem-detector/pkg/systemlogmonitor/logwatchers/types"
 	systemlogtypes "k8s.io/node-problem-detector/pkg/systemlogmonitor/types"
@@ -62,9 +64,22 @@ func (mc *MonitorConfig) ApplyDefaultConfiguration() {
 // ValidateRules verifies whether the regular expressions in the rules are valid.
 func (mc MonitorConfig) ValidateRules() error {
 	for _, rule := range mc.Rules {
-		_, err := regexp.Compile(rule.Pattern)
+		re, err := regexp.Compile(rule.Pattern)
 		if err != nil {
 			return err
+		}
+		// If rule.Reason is used as a Sprintf format string, dry-run it against
+		// the pattern's capturing groups to verify the verbs line up. This
+		// mirrors the runtime behavior in generateStatus.
+		if strings.Contains(rule.Reason, "%") {
+			args := make([]interface{}, re.NumSubexp())
+			for i := range args {
+				args[i] = ""
+			}
+			if formatted := fmt.Sprintf(rule.Reason, args...); strings.Contains(formatted, "%!") {
+				return fmt.Errorf("invalid Sprintf format reason %q for pattern %q: got %q",
+					rule.Reason, rule.Pattern, formatted)
+			}
 		}
 	}
 	return nil
