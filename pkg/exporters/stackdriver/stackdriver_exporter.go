@@ -19,7 +19,7 @@ package stackdriverexporter
 import (
 	"encoding/json"
 	"os"
-	"path/filepath"
+	"path"
 	"reflect"
 	"time"
 
@@ -120,7 +120,7 @@ func getMetricTypeConversionFunction(customMetricPrefix string) func(string) str
 			metricName = originalName
 		}
 		// Example fallbackMetricType: custom.googleapis.com/npd/host/uptime
-		return filepath.Join(customMetricPrefix, metricName)
+		return path.Join(customMetricPrefix, metricName)
 	}
 }
 
