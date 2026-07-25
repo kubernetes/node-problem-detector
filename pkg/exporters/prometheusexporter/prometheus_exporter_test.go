@@ -47,7 +47,7 @@ func TestScrapeExcludesDefaultCollectors(t *testing.T) {
 	// Record a metric through the standard NPD metrics + otel path.
 	metric, err := metrics.NewInt64Metric(
 		metrics.HostUptimeID,
-		"host/uptime",
+		"host:uptime",
 		"system uptime",
 		"s",
 		metrics.LastValue,
@@ -93,7 +93,6 @@ func TestScrapeExcludesDefaultCollectors(t *testing.T) {
 	if strings.Contains(output, "host/uptime") {
 		t.Errorf("Expected scrape output to escape metric name %q, got:\n%s", "host/uptime", output)
 	}
-
 	// The default Go runtime / process collectors and the target_info metric
 	// (which would expose the shared OTel resource attributes) must NOT be
 	// present.

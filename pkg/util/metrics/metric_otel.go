@@ -18,6 +18,7 @@ package metrics
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/metric"
@@ -60,7 +61,8 @@ func newOTelMetric[T int64 | float64](
 		return nil, fmt.Errorf("unsupported aggregation type for metric %s: %v", name, aggregation)
 	}
 
-	emit, err := factory(otelutil.GetGlobalMeter(), name, description, unit, aggregation)
+	instrumentName := normalizeMetricName(name)
+	emit, err := factory(otelutil.GetGlobalMeter(), instrumentName, description, unit, aggregation)
 	if err != nil {
 		return nil, err
 	}
@@ -71,15 +73,14 @@ func newOTelMetric[T int64 | float64](
 	}
 
 	// Register metric mapping
-	MetricMap.AddMapping(metricID, name)
+	MetricMap.AddMapping(metricID, instrumentName)
 
-	return &otelMetric[T]{name: name, labelSet: labelSet, emit: emit}, nil
+	return &otelMetric[T]{name: instrumentName, labelSet: labelSet, emit: emit}, nil
 }
 
 // Record validates the provided labels against the declared label set and
 // emits the measurement to the underlying instrument.
 func (m *otelMetric[T]) Record(labelValues map[string]string, value T) error {
-	// Convert to OTel attributes, rejecting labels that were not declared.
 	attrs := make([]attribute.KeyValue, 0, len(labelValues))
 	for k, v := range labelValues {
 		if _, ok := m.labelSet[k]; !ok {
@@ -90,4 +91,44 @@ func (m *otelMetric[T]) Record(labelValues map[string]string, value T) error {
 
 	m.emit(context.Background(), value, metric.WithAttributes(attrs...))
 	return nil
+}
+
+// normalizeMetricName preserves the naming behavior of the legacy OpenCensus
+// Prometheus exporter while producing a valid OpenTelemetry instrument name.
+func normalizeMetricName(name string) string {
+	const legacyNameLimit = 100
+
+	if name == "" {
+		return ""
+	}
+	if len(name) > legacyNameLimit {
+		name = name[:legacyNameLimit]
+	}
+
+	var normalized strings.Builder
+	normalized.Grow(len(name) + len("key"))
+	if name[0] >= '0' && name[0] <= '9' {
+		normalized.WriteByte('_')
+	}
+
+	var previous rune
+	for _, current := range name {
+		switch {
+		case current >= 'a' && current <= 'z',
+			current >= 'A' && current <= 'Z',
+			current >= '0' && current <= '9',
+			current == '_':
+			normalized.WriteRune(current)
+		case current == '-' && previous == '-':
+		default:
+			normalized.WriteByte('_')
+		}
+		previous = current
+	}
+
+	result := normalized.String()
+	if result[0] == '_' {
+		return "key" + result
+	}
+	return result
 }
