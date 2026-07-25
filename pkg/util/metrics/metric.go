@@ -16,6 +16,7 @@ limitations under the License.
 package metrics
 
 import (
+	"fmt"
 	"sync"
 )
 
@@ -74,13 +75,15 @@ func init() {
 	defer MetricMap.mapMutex.Unlock()
 
 	MetricMap.viewNameToMetricIDMap = make(map[string]MetricID)
+	MetricMap.viewNameToOriginalNameMap = make(map[string]string)
 }
 
 type MetricID string
 
 type MetricMapping struct {
-	viewNameToMetricIDMap map[string]MetricID
-	mapMutex              sync.RWMutex
+	viewNameToMetricIDMap     map[string]MetricID
+	viewNameToOriginalNameMap map[string]string
+	mapMutex                  sync.RWMutex
 }
 
 func (mm *MetricMapping) AddMapping(metricID MetricID, viewName string) {
@@ -88,6 +91,29 @@ func (mm *MetricMapping) AddMapping(metricID MetricID, viewName string) {
 	defer mm.mapMutex.Unlock()
 
 	mm.viewNameToMetricIDMap[viewName] = metricID
+	mm.viewNameToOriginalNameMap[viewName] = viewName
+}
+
+func (mm *MetricMapping) AddNormalizedMapping(metricID MetricID, viewName, originalName string) error {
+	mm.mapMutex.Lock()
+	defer mm.mapMutex.Unlock()
+
+	if existingID, ok := mm.viewNameToMetricIDMap[viewName]; ok {
+		existingName := mm.viewNameToOriginalNameMap[viewName]
+		if existingID != metricID || existingName != originalName {
+			return fmt.Errorf(
+				"metric name %q normalizes to %q, which is already used by metric %q",
+				originalName,
+				viewName,
+				existingName,
+			)
+		}
+		return nil
+	}
+
+	mm.viewNameToMetricIDMap[viewName] = metricID
+	mm.viewNameToOriginalNameMap[viewName] = originalName
+	return nil
 }
 
 func (mm *MetricMapping) ViewNameToMetricID(viewName string) (MetricID, bool) {
