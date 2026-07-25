@@ -27,6 +27,8 @@ import (
 type FakeInt64Metric struct {
 	name        string
 	aggregation Aggregation
+	labels      []string
+	labelSet    map[string]struct{}
 	records     []RecordCall
 	mutex       sync.RWMutex
 }
@@ -39,9 +41,15 @@ type RecordCall struct {
 
 // NewFakeInt64Metric creates a new fake int64 metric
 func NewFakeInt64Metric(name string, aggregation Aggregation, labels []string) *FakeInt64Metric {
+	if name == "" {
+		return nil
+	}
+
 	return &FakeInt64Metric{
 		name:        name,
 		aggregation: aggregation,
+		labels:      append([]string(nil), labels...),
+		labelSet:    makeLabelSet(labels),
 		records:     make([]RecordCall, 0),
 	}
 }
@@ -51,14 +59,13 @@ func (f *FakeInt64Metric) Record(labelValues map[string]string, value int64) err
 	f.mutex.Lock()
 	defer f.mutex.Unlock()
 
-	// Copy the labelValues map to avoid reference issues
-	copiedLabels := make(map[string]string)
-	for k, v := range labelValues {
-		copiedLabels[k] = v
+	normalizedLabels, err := normalizeFakeLabels(f.name, f.labels, f.labelSet, labelValues)
+	if err != nil {
+		return err
 	}
 
 	f.records = append(f.records, RecordCall{
-		LabelValues: copiedLabels,
+		LabelValues: normalizedLabels,
 		Value:       value,
 	})
 	return nil
@@ -149,6 +156,8 @@ func (f *FakeInt64Metric) ListMetrics() []Int64MetricRepresentation {
 type FakeFloat64Metric struct {
 	name        string
 	aggregation Aggregation
+	labels      []string
+	labelSet    map[string]struct{}
 	records     []Float64RecordCall
 	mutex       sync.RWMutex
 }
@@ -161,9 +170,15 @@ type Float64RecordCall struct {
 
 // NewFakeFloat64Metric creates a new fake float64 metric
 func NewFakeFloat64Metric(name string, aggregation Aggregation, labels []string) *FakeFloat64Metric {
+	if name == "" {
+		return nil
+	}
+
 	return &FakeFloat64Metric{
 		name:        name,
 		aggregation: aggregation,
+		labels:      append([]string(nil), labels...),
+		labelSet:    makeLabelSet(labels),
 		records:     make([]Float64RecordCall, 0),
 	}
 }
@@ -173,14 +188,13 @@ func (f *FakeFloat64Metric) Record(labelValues map[string]string, value float64)
 	f.mutex.Lock()
 	defer f.mutex.Unlock()
 
-	// Copy the labelValues map to avoid reference issues
-	copiedLabels := make(map[string]string)
-	for k, v := range labelValues {
-		copiedLabels[k] = v
+	normalizedLabels, err := normalizeFakeLabels(f.name, f.labels, f.labelSet, labelValues)
+	if err != nil {
+		return err
 	}
 
 	f.records = append(f.records, Float64RecordCall{
-		LabelValues: copiedLabels,
+		LabelValues: normalizedLabels,
 		Value:       value,
 	})
 	return nil
@@ -202,6 +216,33 @@ func (f *FakeFloat64Metric) Reset() {
 	f.mutex.Lock()
 	defer f.mutex.Unlock()
 	f.records = f.records[:0]
+}
+
+func makeLabelSet(labels []string) map[string]struct{} {
+	labelSet := make(map[string]struct{}, len(labels))
+	for _, label := range labels {
+		labelSet[label] = struct{}{}
+	}
+	return labelSet
+}
+
+func normalizeFakeLabels(
+	name string,
+	labels []string,
+	labelSet map[string]struct{},
+	labelValues map[string]string,
+) (map[string]string, error) {
+	for label := range labelValues {
+		if _, ok := labelSet[label]; !ok {
+			return nil, fmt.Errorf("referencing non-existent label %q on metric %q", label, name)
+		}
+	}
+
+	normalized := make(map[string]string, len(labels))
+	for _, label := range labels {
+		normalized[label] = labelValues[label]
+	}
+	return normalized, nil
 }
 
 // Helper function to convert a labels map to a string key for aggregation
