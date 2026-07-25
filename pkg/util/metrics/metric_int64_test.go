@@ -249,10 +249,11 @@ func TestNewInt64MetricUnsupportedAggregation(t *testing.T) {
 
 func TestInt64MetricRecordUndeclaredLabel(t *testing.T) {
 	otelutil.ResetForTesting()
-	otelutil.AddMetricReader(sdkmetric.NewManualReader())
+	reader := sdkmetric.NewManualReader()
+	otelutil.AddMetricReader(reader)
 	otelutil.InitializeMeterProvider()
 
-	metric, err := NewInt64Metric("labeled_metric", "labeled_metric", "desc", "1", Sum, []string{"reason"})
+	metric, err := NewInt64Metric("labeled_metric", "labeled_metric", "desc", "1", Sum, []string{"reason", "value"})
 	if err != nil {
 		t.Fatalf("Failed to create metric: %v", err)
 	}
@@ -266,6 +267,24 @@ func TestInt64MetricRecordUndeclaredLabel(t *testing.T) {
 	if err := metric.Record(map[string]string{"typo": "oops"}, 1); err == nil {
 		t.Fatal("expected error for undeclared label key, got nil")
 	}
+
+	var rm metricdata.ResourceMetrics
+	if err := reader.Collect(context.Background(), &rm); err != nil {
+		t.Fatalf("Failed to collect metrics: %v", err)
+	}
+	for _, sm := range rm.ScopeMetrics {
+		for _, m := range sm.Metrics {
+			if m.Name != "labeled_metric" {
+				continue
+			}
+			points := m.Data.(metricdata.Sum[int64]).DataPoints
+			if got, ok := points[0].Attributes.Value("value"); !ok || got.AsString() != "" {
+				t.Fatalf("expected omitted declared label to be emitted as empty, got %v, %t", got, ok)
+			}
+			return
+		}
+	}
+	t.Fatal("labeled_metric metric not found")
 }
 
 func TestNormalizeMetricName(t *testing.T) {

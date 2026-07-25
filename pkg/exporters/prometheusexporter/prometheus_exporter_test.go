@@ -51,12 +51,12 @@ func TestScrapeExcludesDefaultCollectors(t *testing.T) {
 		"system uptime",
 		"s",
 		metrics.LastValue,
-		nil,
+		[]string{"source", "value"},
 	)
 	if err != nil {
 		t.Fatalf("Failed to create metric: %v", err)
 	}
-	if err := metric.Record(nil, 1); err != nil {
+	if err := metric.Record(map[string]string{"source": "test"}, 1); err != nil {
 		t.Fatalf("Failed to record metric: %v", err)
 	}
 
@@ -92,6 +92,9 @@ func TestScrapeExcludesDefaultCollectors(t *testing.T) {
 	}
 	if strings.Contains(output, "host/uptime") {
 		t.Errorf("Expected scrape output to escape metric name %q, got:\n%s", "host/uptime", output)
+	}
+	if !strings.Contains(output, `host_uptime{source="test",value=""}`) {
+		t.Errorf("Expected scrape output to preserve omitted declared labels, got:\n%s", output)
 	}
 	// The default Go runtime / process collectors and the target_info metric
 	// (which would expose the shared OTel resource attributes) must NOT be
