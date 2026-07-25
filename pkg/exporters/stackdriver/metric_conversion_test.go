@@ -112,12 +112,11 @@ func TestNPDMetricToSDMetric(t *testing.T) {
 
 // TestGetMetricTypeConversionFunction tests the metric name to Stackdriver metric type conversion.
 func TestGetMetricTypeConversionFunction(t *testing.T) {
-	// Set up metric mappings
-	metrics.MetricMap.AddMapping(metrics.HostUptimeID, "host/uptime")
-	metrics.MetricMap.AddMapping(metrics.CPULoad1m, "cpu/load_1m")
-	metrics.MetricMap.AddMapping(metrics.MemoryBytesUsedID, "memory/bytes_used")
-	metrics.MetricMap.AddMapping(metrics.DiskBytesUsedID, "disk/bytes_used")
-	metrics.MetricMap.AddMapping(metrics.ProblemCounterID, "problem/counter")
+	require.NoError(t, metrics.MetricMap.AddNormalizedMapping(metrics.HostUptimeID, "host_uptime", "host/uptime"))
+	require.NoError(t, metrics.MetricMap.AddNormalizedMapping(metrics.CPULoad1m, "cpu_load_1m", "cpu/load_1m"))
+	require.NoError(t, metrics.MetricMap.AddNormalizedMapping(metrics.MemoryBytesUsedID, "memory_bytes_used", "memory/bytes_used"))
+	require.NoError(t, metrics.MetricMap.AddNormalizedMapping(metrics.DiskBytesUsedID, "disk_bytes_used", "disk/bytes_used"))
+	require.NoError(t, metrics.MetricMap.AddNormalizedMapping(metrics.ProblemCounterID, "problem_counter", "problem/counter"))
 
 	tests := []struct {
 		name               string
@@ -128,31 +127,31 @@ func TestGetMetricTypeConversionFunction(t *testing.T) {
 		{
 			name:               "known metric with no custom prefix",
 			customMetricPrefix: "",
-			metricViewName:     "host/uptime",
+			metricViewName:     "host_uptime",
 			expectedMetricType: "compute.googleapis.com/guest/system/uptime",
 		},
 		{
 			name:               "known CPU metric",
 			customMetricPrefix: "",
-			metricViewName:     "cpu/load_1m",
+			metricViewName:     "cpu_load_1m",
 			expectedMetricType: "compute.googleapis.com/guest/cpu/load_1m",
 		},
 		{
 			name:               "known memory metric",
 			customMetricPrefix: "",
-			metricViewName:     "memory/bytes_used",
+			metricViewName:     "memory_bytes_used",
 			expectedMetricType: "compute.googleapis.com/guest/memory/bytes_used",
 		},
 		{
 			name:               "known disk metric",
 			customMetricPrefix: "",
-			metricViewName:     "disk/bytes_used",
+			metricViewName:     "disk_bytes_used",
 			expectedMetricType: "compute.googleapis.com/guest/disk/bytes_used",
 		},
 		{
 			name:               "known problem counter",
 			customMetricPrefix: "",
-			metricViewName:     "problem/counter",
+			metricViewName:     "problem_counter",
 			expectedMetricType: "compute.googleapis.com/guest/system/problem_count",
 		},
 		{
@@ -170,7 +169,7 @@ func TestGetMetricTypeConversionFunction(t *testing.T) {
 		{
 			name:               "known metric ignores custom prefix",
 			customMetricPrefix: "custom.googleapis.com/npd",
-			metricViewName:     "host/uptime",
+			metricViewName:     "host_uptime",
 			expectedMetricType: "compute.googleapis.com/guest/system/uptime",
 		},
 	}

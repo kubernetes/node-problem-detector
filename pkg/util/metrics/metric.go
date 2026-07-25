@@ -123,3 +123,11 @@ func (mm *MetricMapping) ViewNameToMetricID(viewName string) (MetricID, bool) {
 	id, ok := mm.viewNameToMetricIDMap[viewName]
 	return id, ok
 }
+
+func (mm *MetricMapping) ViewNameToOriginalName(viewName string) (string, bool) {
+	mm.mapMutex.RLock()
+	defer mm.mapMutex.RUnlock()
+
+	name, ok := mm.viewNameToOriginalNameMap[viewName]
+	return name, ok
+}
