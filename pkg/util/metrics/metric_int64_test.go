@@ -18,6 +18,7 @@ package metrics
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"go.opentelemetry.io/otel/attribute"
@@ -264,5 +265,30 @@ func TestInt64MetricRecordUndeclaredLabel(t *testing.T) {
 	// Undeclared label key must be rejected.
 	if err := metric.Record(map[string]string{"typo": "oops"}, 1); err == nil {
 		t.Fatal("expected error for undeclared label key, got nil")
+	}
+}
+
+func TestNormalizeMetricName(t *testing.T) {
+	longName := strings.Repeat("a", 101)
+	tests := []struct {
+		name string
+		want string
+	}{
+		{name: "", want: ""},
+		{name: "host/uptime", want: "host_uptime"},
+		{name: "node:uptime", want: "node_uptime"},
+		{name: "disk//used", want: "disk__used"},
+		{name: "disk--used", want: "disk_used"},
+		{name: "1st metric", want: "key_1st_metric"},
+		{name: "_private", want: "key_private"},
+		{name: longName, want: strings.Repeat("a", 100)},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			if got := normalizeMetricName(test.name); got != test.want {
+				t.Fatalf("normalizeMetricName(%q) = %q, want %q", test.name, got, test.want)
+			}
+		})
 	}
 }
