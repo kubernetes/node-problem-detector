@@ -214,6 +214,8 @@ func TestExportMetricsToCloudMonitoring(t *testing.T) {
 	// Verify metrics were received by mock server
 	reqs := mockServer.CreateTimeSeriesRequests()
 	require.NotEmpty(t, reqs, "should have received metric requests from exporter")
+	assert.Zero(t, mockServer.MetricDescriptorRequestCount(),
+		"built-in NPD metrics should not issue descriptor RPCs")
 
 	// Count total time series across all requests
 	totalTimeSeries := 0

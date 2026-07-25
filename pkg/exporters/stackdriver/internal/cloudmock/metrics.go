@@ -22,6 +22,7 @@ import (
 	"sync"
 
 	"cloud.google.com/go/monitoring/apiv3/v2/monitoringpb"
+	metricpb "google.golang.org/genproto/googleapis/api/metric"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -35,6 +36,7 @@ type MetricsTestServer struct {
 	srv                  *grpc.Server
 	endpoint             string
 	createTimeSeriesReqs []*monitoringpb.CreateTimeSeriesRequest
+	descriptorReqCount   int
 	mu                   sync.Mutex
 }
 
@@ -57,6 +59,19 @@ func (m *MetricsTestServer) CreateTimeSeriesRequests() []*monitoringpb.CreateTim
 	return reqs
 }
 
+// MetricDescriptorRequestCount returns the number of descriptor RPCs received.
+func (m *MetricsTestServer) MetricDescriptorRequestCount() int {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return m.descriptorReqCount
+}
+
+func (m *MetricsTestServer) recordMetricDescriptorRequest() {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.descriptorReqCount++
+}
+
 func (m *MetricsTestServer) appendCreateTimeSeriesReq(_ context.Context, req *monitoringpb.CreateTimeSeriesRequest) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
@@ -71,6 +86,22 @@ func (m *MetricsTestServer) Serve() error {
 type fakeMetricServiceServer struct {
 	monitoringpb.UnimplementedMetricServiceServer
 	metricsTestServer *MetricsTestServer
+}
+
+func (f *fakeMetricServiceServer) GetMetricDescriptor(
+	context.Context,
+	*monitoringpb.GetMetricDescriptorRequest,
+) (*metricpb.MetricDescriptor, error) {
+	f.metricsTestServer.recordMetricDescriptorRequest()
+	return nil, status.Error(codes.PermissionDenied, "descriptor reads are not permitted")
+}
+
+func (f *fakeMetricServiceServer) CreateMetricDescriptor(
+	context.Context,
+	*monitoringpb.CreateMetricDescriptorRequest,
+) (*metricpb.MetricDescriptor, error) {
+	f.metricsTestServer.recordMetricDescriptorRequest()
+	return nil, status.Error(codes.AlreadyExists, "built-in descriptor already exists")
 }
 
 // CreateTimeSeries simulates a call to Google Cloud Monitoring.
