@@ -162,6 +162,9 @@ func (se *stackdriverExporter) exporterOptions() []gcpmetric.Option {
 		gcpmetric.WithProjectID(se.config.GCEMetadata.ProjectID),
 		gcpmetric.WithMetricDescriptorTypeFormatter(se.getMetricTypeFormatter()),
 		gcpmetric.WithFilteredResourceAttributes(instanceNameResourceFilter),
+		// NPD metrics use existing Google-owned descriptors. Cloud Monitoring
+		// auto-creates descriptors for any custom fallback metrics on first write.
+		gcpmetric.WithDisableCreateMetricDescriptors(),
 		gcpmetric.WithMonitoringClientOptions(monitoringClientOptions(se.config.APIEndpoint)...),
 	}
 	return opts
