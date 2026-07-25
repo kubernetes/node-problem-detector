@@ -46,25 +46,24 @@ func TestRegistration(t *testing.T) {
 }
 
 func TestMetricTypeConversion(t *testing.T) {
-	// Set up metric mappings (normally done when metrics are created)
-	metrics.MetricMap.AddMapping(metrics.HostUptimeID, "host/uptime")
-	metrics.MetricMap.AddMapping(metrics.CPULoad1m, "cpu/load_1m")
-	metrics.MetricMap.AddMapping(metrics.MemoryBytesUsedID, "memory/bytes_used")
+	require.NoError(t, metrics.MetricMap.AddNormalizedMapping(metrics.HostUptimeID, "host_uptime", "host/uptime"))
+	require.NoError(t, metrics.MetricMap.AddNormalizedMapping(metrics.CPULoad1m, "cpu_load_1m", "cpu/load_1m"))
+	require.NoError(t, metrics.MetricMap.AddNormalizedMapping(metrics.MemoryBytesUsedID, "memory_bytes_used", "memory/bytes_used"))
 
 	tests := []struct {
 		metricName   string
 		expectedType string
 	}{
 		{
-			metricName:   "host/uptime",
+			metricName:   "host_uptime",
 			expectedType: "compute.googleapis.com/guest/system/uptime",
 		},
 		{
-			metricName:   "cpu/load_1m",
+			metricName:   "cpu_load_1m",
 			expectedType: "compute.googleapis.com/guest/cpu/load_1m",
 		},
 		{
-			metricName:   "memory/bytes_used",
+			metricName:   "memory_bytes_used",
 			expectedType: "compute.googleapis.com/guest/memory/bytes_used",
 		},
 		{
@@ -83,8 +82,8 @@ func TestMetricTypeConversion(t *testing.T) {
 }
 
 func TestCustomMetricPrefix(t *testing.T) {
-	// Set up metric mappings
-	metrics.MetricMap.AddMapping(metrics.HostUptimeID, "host/uptime")
+	require.NoError(t, metrics.MetricMap.AddNormalizedMapping(metrics.HostUptimeID, "host_uptime", "host/uptime"))
+	require.NoError(t, metrics.MetricMap.AddNormalizedMapping("custom_metric", "custom_my_metric", "custom/my_metric"))
 
 	tests := []struct {
 		metricName   string
@@ -92,14 +91,14 @@ func TestCustomMetricPrefix(t *testing.T) {
 		description  string
 	}{
 		{
-			metricName:   "host/uptime",
+			metricName:   "host_uptime",
 			expectedType: "compute.googleapis.com/guest/system/uptime",
 			description:  "known metric should ignore custom prefix",
 		},
 		{
-			metricName:   "custom/my_metric",
+			metricName:   "custom_my_metric",
 			expectedType: "custom.googleapis.com/npd/custom/my_metric",
-			description:  "unknown metric should use custom prefix",
+			description:  "unknown metric should retain its configured name",
 		},
 	}
 

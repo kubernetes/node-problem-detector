@@ -106,21 +106,21 @@ var NPDMetricToSDMetric = map[metrics.MetricID]string{
 
 func getMetricTypeConversionFunction(customMetricPrefix string) func(string) string {
 	return func(metricName string) string {
-		fallbackMetricType := ""
-		if customMetricPrefix != "" {
-			// Example fallbackMetricType: custom.googleapis.com/npd/host/uptime
-			fallbackMetricType = filepath.Join(customMetricPrefix, metricName)
+		metricID, ok := metrics.MetricMap.ViewNameToMetricID(metricName)
+		if ok {
+			if stackdriverMetricType, mapped := NPDMetricToSDMetric[metricID]; mapped {
+				return stackdriverMetricType
+			}
 		}
 
-		metricID, ok := metrics.MetricMap.ViewNameToMetricID(metricName)
-		if !ok {
-			return fallbackMetricType
+		if customMetricPrefix == "" {
+			return ""
 		}
-		stackdriverMetricType, ok := NPDMetricToSDMetric[metricID]
-		if !ok {
-			return fallbackMetricType
+		if originalName, exists := metrics.MetricMap.ViewNameToOriginalName(metricName); exists {
+			metricName = originalName
 		}
-		return stackdriverMetricType
+		// Example fallbackMetricType: custom.googleapis.com/npd/host/uptime
+		return filepath.Join(customMetricPrefix, metricName)
 	}
 }
 
