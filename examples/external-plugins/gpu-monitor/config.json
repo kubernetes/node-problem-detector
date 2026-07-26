@@ -1,0 +1,33 @@
+{
+  "plugin": "external",
+  "pluginConfig": {
+    "socketAddress": "/var/run/npd/gpu-monitor.sock",
+    "invoke_interval": "30s",
+    "timeout": "10s",
+    "skip_initial_status": false,
+    "retryPolicy": {
+      "maxAttempts": 5,
+      "backoffMultiplier": 2.0,
+      "maxBackoff": "5m",
+      "initialBackoff": "1s"
+    },
+    "healthCheck": {
+      "interval": "30s",
+      "timeout": "5s",
+      "errorThreshold": 3
+    },
+    "pluginParameters": {
+      "temperature_threshold": "85",
+      "memory_threshold": "95.0"
+    }
+  },
+  "source": "gpu-monitor",
+  "metricsReporting": true,
+  "conditions": [
+    {
+      "type": "GPUHealthy",
+      "reason": "GPUIsHealthy",
+      "message": "GPU is functioning properly"
+    }
+  ]
+}

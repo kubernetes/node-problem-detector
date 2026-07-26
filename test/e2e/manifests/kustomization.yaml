@@ -10,3 +10,38 @@ images:
 - name: registry.k8s.io/node-problem-detector/node-problem-detector
   newName: gcr.io/k8s-staging-npd/node-problem-detector
   newTag: master
+
+# The production manifest wires in the example GPU monitor sidecar
+# (examples/external-plugins/gpu-monitor): an image NPD does not build, NVIDIA
+# host devices, and a gRPC socket. None of that exists on the GPU-less GCE e2e
+# nodes, so the DaemonSet would never become Ready. Strip the GPU bits here so
+# e2e exercises just the standard system-log monitors; production is unchanged.
+patches:
+- target:
+    group: apps
+    version: v1
+    kind: DaemonSet
+    name: node-problem-detector
+  patch: |-
+    apiVersion: apps/v1
+    kind: DaemonSet
+    metadata:
+      name: node-problem-detector
+    spec:
+      template:
+        spec:
+          containers:
+          - name: node-problem-detector
+            command:
+            - /node-problem-detector
+            - --logtostderr
+            - --config.system-log-monitor=/config/kernel-monitor.json,/config/readonly-monitor.json,/config/docker-monitor.json
+          - name: gpu-monitor
+            $patch: delete
+          volumes:
+          - name: nvidia-dev
+            $patch: delete
+          - name: nvidia-uvm
+            $patch: delete
+          - name: nvidia-ml
+            $patch: delete

@@ -1,0 +1,130 @@
+// Copyright The Kubernetes Authors All rights reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package npd.external.v1;
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
+
+option go_package = "k8s.io/node-problem-detector/api/services/external/v1";
+
+// ExternalMonitor service defines the gRPC interface for external monitor plugins.
+// External monitors run as separate processes and communicate with NPD via Unix sockets.
+service ExternalMonitor {
+    // CheckHealth is called periodically by NPD to check the health status.
+    // This is the primary method for problem detection.
+    rpc CheckHealth(HealthCheckRequest) returns (Status);
+
+    // GetMetadata returns information about the monitor's capabilities and version.
+    // Called once during plugin initialization.
+    rpc GetMetadata(google.protobuf.Empty) returns (MonitorMetadata);
+
+    // Stop notifies the monitor to perform graceful shutdown.
+    // Called when NPD is shutting down or plugin is being disabled.
+    rpc Stop(google.protobuf.Empty) returns (google.protobuf.Empty);
+}
+
+// HealthCheckRequest contains parameters for the health check.
+message HealthCheckRequest {
+    // Optional runtime parameters that override configuration.
+    // Can be used for dynamic reconfiguration without restart.
+    map<string, string> parameters = 1;
+
+    // Sequence number for this check (for debugging/correlation).
+    int64 sequence = 2;
+}
+
+// Status represents the current health status from the monitor.
+// This mirrors the internal types.Status structure.
+message Status {
+    // Source identifies the monitor (must match config).
+    string source = 1;
+
+    // Events are temporary problem occurrences.
+    repeated Event events = 2;
+
+    // Conditions represent persistent node state.
+    repeated Condition conditions = 3;
+}
+
+// Event represents a temporary problem occurrence.
+message Event {
+    // Severity level of the event.
+    Severity severity = 1;
+
+    // Timestamp when the event occurred.
+    google.protobuf.Timestamp timestamp = 2;
+
+    // Reason is a machine-readable identifier for the event type.
+    string reason = 3;
+
+    // Message is a human-readable description.
+    string message = 4;
+}
+
+// Condition represents persistent node state.
+message Condition {
+    // Type is the condition identifier (e.g., "GPUHealthy").
+    string type = 1;
+
+    // Status indicates whether the condition is active.
+    ConditionStatus status = 2;
+
+    // Transition timestamp when status last changed.
+    google.protobuf.Timestamp transition = 3;
+
+    // Reason is a machine-readable identifier for the condition reason.
+    string reason = 4;
+
+    // Message is a human-readable description.
+    string message = 5;
+}
+
+// MonitorMetadata provides information about the monitor plugin.
+message MonitorMetadata {
+    // Name of the monitor (should match source in Status).
+    string name = 1;
+
+    // Version of the monitor implementation.
+    string version = 2;
+
+    // Description of what the monitor checks.
+    string description = 3;
+
+    // List of condition types this monitor can report.
+    repeated string supported_conditions = 4;
+
+    // Capabilities and features supported by this monitor.
+    map<string, string> capabilities = 5;
+
+    // API version this monitor implements.
+    string api_version = 6;
+}
+
+// Severity levels for events.
+enum Severity {
+    SEVERITY_UNSPECIFIED = 0;
+    SEVERITY_INFO = 1;
+    SEVERITY_WARN = 2;
+}
+
+// Status values for conditions.
+enum ConditionStatus {
+    CONDITION_STATUS_UNSPECIFIED = 0;
+    CONDITION_STATUS_TRUE = 1;      // Condition is active (problem exists)
+    CONDITION_STATUS_FALSE = 2;     // Condition is inactive (healthy)
+    CONDITION_STATUS_UNKNOWN = 3;   // Status cannot be determined
+}
