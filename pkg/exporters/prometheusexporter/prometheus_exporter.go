@@ -21,15 +21,40 @@ import (
 	"net/http"
 	"strconv"
 
-	"contrib.go.opencensus.io/exporter/prometheus"
-	"go.opencensus.io/stats/view"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/prometheus/otlptranslator"
+	otelprometheus "go.opentelemetry.io/otel/exporters/prometheus"
 	"k8s.io/klog/v2"
 
 	"k8s.io/node-problem-detector/cmd/options"
 	"k8s.io/node-problem-detector/pkg/types"
+	otelutil "k8s.io/node-problem-detector/pkg/util/otel"
 )
 
 type prometheusExporter struct{}
+
+// newExporterAndHandler creates the OTel Prometheus exporter backed by a
+// dedicated registry and returns an HTTP handler that scrapes only that
+// registry. Using a dedicated registry (instead of the global
+// prometheus.DefaultRegisterer) keeps the default Go runtime and process
+// collectors out of NPD's scrape output.
+func newExporterAndHandler() (*otelprometheus.Exporter, http.Handler, error) {
+	reg := prometheus.NewRegistry()
+
+	// Create Prometheus exporter with options to prevent automatic suffixing
+	promExporter, err := otelprometheus.New(
+		otelprometheus.WithRegisterer(reg),
+		otelprometheus.WithTranslationStrategy(otlptranslator.UnderscoreEscapingWithoutSuffixes),
+		otelprometheus.WithoutScopeInfo(),
+		otelprometheus.WithoutTargetInfo(),
+	)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return promExporter, promhttp.HandlerFor(reg, promhttp.HandlerOpts{}), nil
+}
 
 // NewExporterOrDie creates an exporter to export metrics to Prometheus, panics if error occurs.
 func NewExporterOrDie(npdo *options.NodeProblemDetectorOptions) types.Exporter {
@@ -37,19 +62,24 @@ func NewExporterOrDie(npdo *options.NodeProblemDetectorOptions) types.Exporter {
 		return nil
 	}
 
-	addr := net.JoinHostPort(npdo.PrometheusServerAddress, strconv.Itoa(npdo.PrometheusServerPort))
-	pe, err := prometheus.NewExporter(prometheus.Options{})
+	promExporter, handler, err := newExporterAndHandler()
 	if err != nil {
 		klog.Fatalf("Failed to create Prometheus exporter: %v", err)
 	}
+
+	// register with the global meter provider
+	otelutil.AddMetricReader(promExporter)
+
+	addr := net.JoinHostPort(npdo.PrometheusServerAddress, strconv.Itoa(npdo.PrometheusServerPort))
 	go func() {
 		mux := http.NewServeMux()
-		mux.Handle("/metrics", pe)
+		mux.Handle("/metrics", handler)
 		if err := http.ListenAndServe(addr, mux); err != nil {
 			klog.Fatalf("Failed to start Prometheus scrape endpoint: %v", err)
 		}
 	}()
-	view.RegisterExporter(pe)
+
+	klog.Infof("Prometheus exporter started on %s", addr)
 	return &prometheusExporter{}
 }
 
