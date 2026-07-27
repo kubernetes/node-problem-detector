@@ -21,7 +21,6 @@ package logcounter
 
 import (
 	"fmt"
-	"regexp"
 	"time"
 
 	"k8s.io/utils/clock"
@@ -43,8 +42,8 @@ const (
 type logCounter struct {
 	logCh         <-chan *systemtypes.Log
 	buffer        systemlogmonitor.LogBuffer
-	pattern       *regexp.Regexp
-	revertPattern *regexp.Regexp
+	pattern       *systemlogmonitor.Pattern
+	revertPattern *systemlogmonitor.Pattern
 	clock         clock.Clock
 }
 
@@ -53,7 +52,7 @@ func NewJournaldLogCounter(options *options.LogCounterOptions) (types.LogCounter
 	if err != nil {
 		return nil, fmt.Errorf("invalid pattern %q: %w", options.Pattern, err)
 	}
-	var revertPattern *regexp.Regexp
+	var revertPattern *systemlogmonitor.Pattern
 	if options.RevertPattern != "" {
 		revertPattern, err = systemlogmonitor.CompilePattern(options.RevertPattern)
 		if err != nil {

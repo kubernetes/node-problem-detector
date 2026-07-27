@@ -18,27 +18,41 @@ package systemlogmonitor
 
 import (
 	"regexp"
+	"regexp/syntax"
+	"slices"
 	"strings"
 
 	"k8s.io/node-problem-detector/pkg/systemlogmonitor/types"
 )
 
-// LogBuffer buffers the logs and supports match in the log buffer with regular expression.
+// LogBuffer buffers the logs and matches a compiled pattern.
 type LogBuffer interface {
 	// Push pushes log into the log buffer.
 	Push(*types.Log)
-	// Match with regular expression in the log buffer.
-	Match(*regexp.Regexp) []*types.Log
-	// String returns a concatenated string of the buffered logs.
-	String() string
+	// Match with a compiled pattern in the log buffer.
+	Match(*Pattern) []*types.Log
 }
 
+// Pattern is a compiled rule plus the facts that let Match narrow its scan.
+type Pattern struct {
+	// regexp is the rule anchored to the end of the buffered logs.
+	regexp *regexp.Regexp
+	// lastLineOnly reports that the rule can match only in the last pushed line.
+	// Match then skips building the joined buffer.
+	lastLineOnly bool
+}
+
+// logBuffer is not safe for concurrent use.
 type logBuffer struct {
 	// buffer is a simple ring buffer.
 	buffer  []*types.Log
 	msg     []string
 	max     int
 	current int
+	// joined caches the result of String. Push clears it.
+	joined string
+	// joinedOK reports whether joined is current.
+	joinedOK bool
 }
 
 // NewLogBuffer creates log buffer with max line number limit. Because we only match logs
@@ -55,22 +69,74 @@ func NewLogBuffer(maxLines int) *logBuffer {
 
 // CompilePattern compiles a log buffer pattern that must match to the end of
 // the buffered logs.
-func CompilePattern(expr string) (*regexp.Regexp, error) {
+func CompilePattern(expr string) (*Pattern, error) {
+	// Compile expr alone first so an error cites the pattern as written.
 	if _, err := regexp.Compile(expr); err != nil {
 		return nil, err
 	}
-	return regexp.Compile(expr + `\z`)
+	anchored := expr + `\z`
+	reg, err := regexp.Compile(anchored)
+	if err != nil {
+		return nil, err
+	}
+	p := &Pattern{regexp: reg}
+	tree, err := syntax.Parse(anchored, syntax.Perl)
+	if err != nil {
+		return p, nil
+	}
+	// A top-level alternation binds the appended anchor to its last branch only.
+	// Equal trees prove that the anchor covers every branch.
+	grouped, err := syntax.Parse(`(?:`+expr+`)\z`, syntax.Perl)
+	if err != nil {
+		return p, nil
+	}
+	p.lastLineOnly = tree.Equal(grouped) && isLastLineOnly(tree)
+	return p, nil
+}
+
+// isLastLineOnly reports whether the rule accepts no newline and has no start anchor.
+func isLastLineOnly(re *syntax.Regexp) bool {
+	switch re.Op {
+	case syntax.OpAnyChar:
+		// `(?s).` accepts a newline.
+		return false
+	case syntax.OpBeginText, syntax.OpBeginLine, syntax.OpEndLine:
+		// A start anchor marks the start of the whole buffer.
+		return false
+	case syntax.OpLiteral:
+		if slices.Contains(re.Rune, '\n') {
+			return false
+		}
+	case syntax.OpCharClass:
+		// Rune stores the character class as inclusive lo, hi pairs.
+		for i := 0; i+1 < len(re.Rune); i += 2 {
+			if re.Rune[i] <= '\n' && '\n' <= re.Rune[i+1] {
+				return false
+			}
+		}
+	}
+	for _, sub := range re.Sub {
+		if !isLastLineOnly(sub) {
+			return false
+		}
+	}
+	return true
 }
 
 func (b *logBuffer) Push(log *types.Log) {
 	b.buffer[b.current%b.max] = log
 	b.msg[b.current%b.max] = log.Message
 	b.current++
+	b.joinedOK = false
+	b.joined = ""
 }
 
-func (b *logBuffer) Match(reg *regexp.Regexp) []*types.Log {
+func (b *logBuffer) Match(p *Pattern) []*types.Log {
+	if p.lastLineOnly {
+		return b.matchLastLine(p.regexp)
+	}
 	log := b.String()
-	loc := reg.FindStringIndex(log)
+	loc := p.regexp.FindStringIndex(log)
 	if loc == nil {
 		// No match
 		return nil
@@ -86,15 +152,33 @@ func (b *logBuffer) Match(reg *regexp.Regexp) []*types.Log {
 			break
 		}
 	}
-	for i := 0; i < len(matched)/2; i++ {
-		matched[i], matched[len(matched)-i-1] = matched[len(matched)-i-1], matched[i]
-	}
+	slices.Reverse(matched)
 	return matched
 }
 
+// matchLastLine matches a lastLineOnly rule against the most recently pushed line.
+func (b *logBuffer) matchLastLine(reg *regexp.Regexp) []*types.Log {
+	if b.current == 0 {
+		return nil
+	}
+	last := (b.current - 1) % b.max
+	if !reg.MatchString(b.msg[last]) {
+		return nil
+	}
+	return []*types.Log{b.buffer[last]}
+}
+
 func (b *logBuffer) String() string {
-	logs := append(b.msg[b.current%b.max:], b.msg[:b.current%b.max]...)
-	return concatLogs(logs)
+	if b.joinedOK {
+		return b.joined
+	}
+	head := b.current % b.max
+	lines := make([]string, 0, b.max)
+	lines = append(lines, b.msg[head:]...)
+	lines = append(lines, b.msg[:head]...)
+	b.joined = concatLogs(lines)
+	b.joinedOK = true
+	return b.joined
 }
 
 // tail returns current tail index.
