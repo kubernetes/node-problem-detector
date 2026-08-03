@@ -20,7 +20,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"regexp"
 	"time"
 
 	"k8s.io/klog/v2"
@@ -51,7 +50,7 @@ type logMonitor struct {
 	watcher    watchertypes.LogWatcher
 	buffer     LogBuffer
 	config     MonitorConfig
-	patterns   []*regexp.Regexp
+	patterns   []*Pattern
 	conditions []types.Condition
 	logCh      <-chan *systemlogtypes.Log
 	output     chan *types.Status
