@@ -25,6 +25,7 @@ import (
 	_ "k8s.io/node-problem-detector/cmd/nodeproblemdetector/problemdaemonplugins"
 	"k8s.io/node-problem-detector/cmd/options"
 	"k8s.io/node-problem-detector/pkg/exporters"
+	"k8s.io/node-problem-detector/pkg/exporters/httpexporter"
 	"k8s.io/node-problem-detector/pkg/exporters/k8sexporter"
 	"k8s.io/node-problem-detector/pkg/exporters/prometheusexporter"
 	"k8s.io/node-problem-detector/pkg/problemdaemon"
@@ -58,6 +59,10 @@ func npdMain(ctx context.Context, npdo *options.NodeProblemDetectorOptions) erro
 	if pe := prometheusexporter.NewExporterOrDie(npdo); pe != nil {
 		defaultExporters = append(defaultExporters, pe)
 		klog.Info("Prometheus exporter started.")
+	}
+	if he := httpexporter.NewExporterOrDie(npdo); he != nil {
+		defaultExporters = append(defaultExporters, he)
+		klog.Info("HTTP exporter started.")
 	}
 
 	plugableExporters := exporters.NewExporters()
