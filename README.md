@@ -75,6 +75,7 @@ certain backends. Some of them can be disabled at compile-time using a build tag
 |----------|:-----------|:--------------------|
 | Kubernetes exporter | Kubernetes exporter reports node problems to Kubernetes API server: temporary problems get reported as Events, and permanent problems get reported as Node Conditions. |
 | Prometheus exporter | Prometheus exporter reports node problems and metrics locally as Prometheus metrics |
+| HTTP exporter | HTTP exporter serves the local `/healthz`, `/conditions` and `/debug/pprof` endpoints. It keeps node conditions in memory and does not require a Kubernetes API server, so it also works when `--enable-k8s-exporter` is `false`. |
 | [Stackdriver exporter](https://github.com/kubernetes/node-problem-detector/blob/master/config/exporter/stackdriver-exporter.json) | Stackdriver exporter reports node problems and metrics to Stackdriver Monitoring API. | disable_stackdriver_exporter
 
 # Usage
@@ -122,8 +123,14 @@ For example, to run without auth, use the following config:
    http://APISERVER_IP:APISERVER_PORT?inClusterConfig=false
    ```
    Refer to [heapster docs](https://github.com/kubernetes/heapster/blob/master/docs/source-configuration.md#kubernetes) for a complete list of available options.
-* `--address`: The address to bind the node problem detector server.
-* `--port`: The port to bind the node problem detector server. Use 0 to disable.
+
+#### For HTTP exporter
+
+The HTTP exporter serves `/healthz`, `/conditions` and `/debug/pprof`. It does not talk to the
+Kubernetes API server, so these endpoints are available even when `--enable-k8s-exporter` is `false`.
+
+* `--address`: The address to bind the node problem detector server, default to `127.0.0.1`.
+* `--port`: The port to bind the node problem detector server, default to 20256. Use 0 to disable.
 
 #### For Prometheus exporter
 
