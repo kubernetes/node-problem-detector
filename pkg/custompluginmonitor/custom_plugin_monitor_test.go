@@ -374,6 +374,12 @@ func TestGenerateStatusForConditions(t *testing.T) {
 				}
 				require.Len(t, got.Events, 1, "step %d", i)
 				event := got.Events[0]
+				// Assert severity literally; the want below reuses the production helper.
+				wantSeverity := types.Info
+				if s.wantStatus == types.True {
+					wantSeverity = types.Warn
+				}
+				assert.Equal(t, wantSeverity, event.Severity, "step %d", i)
 				// Feed the observed timestamp back so no clock value is asserted.
 				want := util.GenerateConditionChangeEvent(
 					testCondition, s.wantStatus, s.wantReason, s.wantMessage, event.Timestamp)
@@ -575,26 +581,46 @@ func TestMonitorLoopReportsPluginResults(t *testing.T) {
 	assert.Equal(t, types.Warn, status.Events[0].Severity)
 
 	requireStop(t, c)
+
+	// Stop must also shut down the plugin it owns.
+	select {
+	case _, open := <-c.plugin.GetResultChan():
+		assert.False(t, open, "Stop did not close the plugin result channel")
+	case <-time.After(testWait):
+		t.Fatal("Stop did not close the plugin result channel")
+	}
 }
 
 func TestMonitorLoopExitsWhenResultChannelCloses(t *testing.T) {
 	c := newTestMonitor(t, testOptions{defaultConditions: defaultTestConditions()})
 	// monitorLoop must initialize the conditions itself.
 	c.conditions = nil
-	statusChan, err := c.Start()
-	require.NoError(t, err)
+	startedAt := time.Now()
+	// Run monitorLoop directly; Stop would deadlock on the closed-channel path.
+	go c.plugin.Run()
+	returned := make(chan struct{})
+	go func() {
+		c.monitorLoop()
+		close(returned)
+	}()
 
-	status := receiveStatus(t, statusChan)
+	status := receiveStatus(t, c.statusChan)
 	assert.Equal(t, testSource, status.Source)
 	assert.Empty(t, status.Events)
 	require.Len(t, status.Conditions, 2)
 	for _, cond := range status.Conditions {
 		assert.Equal(t, types.False, cond.Status)
+		assert.WithinRange(t, cond.Transition, startedAt, time.Now())
 	}
 
 	// Stopping the plugin closes its result channel.
 	c.plugin.Stop()
-	requireNoStatus(t, statusChan)
+	requireNoStatus(t, c.statusChan)
+	select {
+	case <-returned:
+	case <-time.After(testWait):
+		t.Fatal("monitorLoop did not return after the result channel closed")
+	}
 }
 
 func TestInitializeProblemMetricsOrDie(t *testing.T) {
