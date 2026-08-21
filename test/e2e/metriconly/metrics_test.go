@@ -94,6 +94,8 @@ var _ = ginkgo.Describe("NPD should export Prometheus metrics.", func() {
 			assertMetricExist(gotMetrics, "memory_unevictable_used", map[string]string{}, true)
 			assertMetricExist(gotMetrics, "memory_dirty_used", map[string]string{}, false)
 			assertMetricExist(gotMetrics, "memory_percent_used", map[string]string{}, false)
+			assertMetricExist(gotMetrics, "memory_zswap_bytes_used", map[string]string{}, false)
+			assertMetricExist(gotMetrics, "memory_zswap_compression_efficiency", map[string]string{}, false)
 			assertMetricExist(gotMetrics, "host_uptime", map[string]string{}, false)
 			assertMetricExist(gotMetrics, "system_os_feature", map[string]string{}, false)
 		})

@@ -120,4 +120,24 @@ func (mc *memoryCollector) collect() {
 			klog.Errorf("Failed to record unevictable used memory: %v", err)
 		}
 	}
+
+	if mc.mZswapBytesUsed != nil {
+		var bytesUsed int64
+		if meminfo.Zswap != nil && *meminfo.Zswap > 0 {
+			bytesUsed = int64(*meminfo.Zswap) * 1024 // kB -> B
+		}
+		if err := mc.mZswapBytesUsed.Record(map[string]string{}, bytesUsed); err != nil {
+			klog.Errorf("Failed to record zswap bytes used: %v", err)
+		}
+	}
+
+	if mc.mZswapCompressionEfficiency != nil {
+		var efficiency float64
+		if meminfo.Zswap != nil && *meminfo.Zswap > 0 && meminfo.Zswapped != nil {
+			efficiency = float64(*meminfo.Zswapped) / float64(*meminfo.Zswap)
+		}
+		if err := mc.mZswapCompressionEfficiency.Record(map[string]string{}, efficiency); err != nil {
+			klog.Errorf("Failed to record zswap compression efficiency: %v", err)
+		}
+	}
 }
