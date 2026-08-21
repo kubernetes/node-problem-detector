@@ -24,12 +24,14 @@ import (
 )
 
 type memoryCollector struct {
-	mBytesUsed       *metrics.Int64Metric
-	mPercentUsed     *metrics.Float64Metric
-	mAnonymousUsed   *metrics.Int64Metric
-	mPageCacheUsed   *metrics.Int64Metric
-	mUnevictableUsed *metrics.Int64Metric
-	mDirtyUsed       *metrics.Int64Metric
+	mBytesUsed                  *metrics.Int64Metric
+	mPercentUsed                *metrics.Float64Metric
+	mAnonymousUsed              *metrics.Int64Metric
+	mPageCacheUsed              *metrics.Int64Metric
+	mUnevictableUsed            *metrics.Int64Metric
+	mDirtyUsed                  *metrics.Int64Metric
+	mZswapBytesUsed             *metrics.Int64Metric
+	mZswapCompressionEfficiency *metrics.Float64Metric
 
 	config *ssmtypes.MemoryStatsConfig
 }
@@ -103,6 +105,31 @@ func NewMemoryCollectorOrDie(memoryConfig *ssmtypes.MemoryStatsConfig) *memoryCo
 		[]string{stateLabel})
 	if err != nil {
 		klog.Fatalf("Error initializing metric for %q: %v", metrics.MemoryDirtyUsedID, err)
+	}
+
+	if _, ok := memoryConfig.MetricsConfigs[string(metrics.MemoryZswapBytesUsedID)]; ok {
+		mc.mZswapBytesUsed, err = metrics.NewInt64Metric(
+			metrics.MemoryZswapBytesUsedID,
+			memoryConfig.MetricsConfigs[string(metrics.MemoryZswapBytesUsedID)].DisplayName,
+			"Zswap usage in bytes",
+			"Byte",
+			metrics.LastValue,
+			[]string{})
+		if err != nil {
+			klog.Fatalf("Error initializing metric for %q: %v", metrics.MemoryZswapBytesUsedID, err)
+		}
+	}
+	if _, ok := memoryConfig.MetricsConfigs[string(metrics.MemoryZswapCompressionEfficiencyID)]; ok {
+		mc.mZswapCompressionEfficiency, err = metrics.NewFloat64Metric(
+			metrics.MemoryZswapCompressionEfficiencyID,
+			memoryConfig.MetricsConfigs[string(metrics.MemoryZswapCompressionEfficiencyID)].DisplayName,
+			"Zswap compression efficiency ratio (uncompressed/compressed)",
+			"1",
+			metrics.LastValue,
+			[]string{})
+		if err != nil {
+			klog.Fatalf("Error initializing metric for %q: %v", metrics.MemoryZswapCompressionEfficiencyID, err)
+		}
 	}
 
 	return &mc

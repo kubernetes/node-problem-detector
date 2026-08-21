@@ -17,12 +17,50 @@ limitations under the License.
 package systemstatsmonitor
 
 import (
+	"encoding/json"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 
 	ssmtypes "k8s.io/node-problem-detector/pkg/systemstatsmonitor/types"
 )
 
+const (
+	fakeZswapConfig = `
+{
+	"metricsConfigs": {
+		"memory/zswap_bytes_used": {
+			"displayName": "memory/zswap_bytes_used"
+		},
+		"memory/zswap_compression_efficiency": {
+			"displayName": "memory/zswap_compression_efficiency"
+		}
+	}
+}
+`
+)
+
 func TestMemoryCollector(t *testing.T) {
+	// Original test
 	mc := NewMemoryCollectorOrDie(&ssmtypes.MemoryStatsConfig{})
+	mc.collect()
+
+	// Ensure zswap metrics are nil when not in config
+	assert.Nil(t, mc.mZswapBytesUsed)
+	assert.Nil(t, mc.mZswapCompressionEfficiency)
+}
+
+func TestMemoryCollectorZswap(t *testing.T) {
+	cfg := &ssmtypes.MemoryStatsConfig{}
+	if err := json.Unmarshal([]byte(fakeZswapConfig), cfg); err != nil {
+		t.Fatalf("cannot load memory config: %s", err)
+	}
+
+	mc := NewMemoryCollectorOrDie(cfg)
+
+	// Ensure zswap metrics are initialized when in config
+	assert.NotNil(t, mc.mZswapBytesUsed)
+	assert.NotNil(t, mc.mZswapCompressionEfficiency)
+
 	mc.collect()
 }

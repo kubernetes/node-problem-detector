@@ -67,6 +67,8 @@ func TestNPDMetricToSDMetric(t *testing.T) {
 		{metrics.MemoryPageCacheUsedID, "compute.googleapis.com/guest/memory/page_cache_used", "compute.googleapis.com"},
 		{metrics.MemoryUnevictableUsedID, "compute.googleapis.com/guest/memory/unevictable_used", "compute.googleapis.com"},
 		{metrics.MemoryPercentUsedID, "compute.googleapis.com/guest/memory/percent_used", "compute.googleapis.com"},
+		{metrics.MemoryZswapBytesUsedID, "compute.googleapis.com/guest/memory/zswap/bytes_used", "compute.googleapis.com"},
+		{metrics.MemoryZswapCompressionEfficiencyID, "compute.googleapis.com/guest/memory/zswap/compression_efficiency", "compute.googleapis.com"},
 
 		// Problem metrics
 		{metrics.ProblemCounterID, "compute.googleapis.com/guest/system/problem_count", "compute.googleapis.com"},
