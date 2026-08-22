@@ -74,45 +74,51 @@ func init() {
 	MetricMap.mapMutex.Lock()
 	defer MetricMap.mapMutex.Unlock()
 
-	MetricMap.viewNameToMetricIDMap = make(map[string]MetricID)
-	MetricMap.viewNameToOriginalNameMap = make(map[string]string)
+	MetricMap.viewNameToMapping = make(map[string]metricMappingEntry)
 }
 
 type MetricID string
 
+type metricMappingEntry struct {
+	metricID     MetricID
+	originalName string
+}
+
 type MetricMapping struct {
-	viewNameToMetricIDMap     map[string]MetricID
-	viewNameToOriginalNameMap map[string]string
-	mapMutex                  sync.RWMutex
+	viewNameToMapping map[string]metricMappingEntry
+	mapMutex          sync.RWMutex
 }
 
 func (mm *MetricMapping) AddMapping(metricID MetricID, viewName string) {
 	mm.mapMutex.Lock()
 	defer mm.mapMutex.Unlock()
 
-	mm.viewNameToMetricIDMap[viewName] = metricID
-	mm.viewNameToOriginalNameMap[viewName] = viewName
+	mm.viewNameToMapping[viewName] = metricMappingEntry{
+		metricID:     metricID,
+		originalName: viewName,
+	}
 }
 
 func (mm *MetricMapping) AddNormalizedMapping(metricID MetricID, viewName, originalName string) error {
 	mm.mapMutex.Lock()
 	defer mm.mapMutex.Unlock()
 
-	if existingID, ok := mm.viewNameToMetricIDMap[viewName]; ok {
-		existingName := mm.viewNameToOriginalNameMap[viewName]
-		if existingID != metricID || existingName != originalName {
+	if existing, ok := mm.viewNameToMapping[viewName]; ok {
+		if existing.metricID != metricID || existing.originalName != originalName {
 			return fmt.Errorf(
 				"metric name %q normalizes to %q, which is already used by metric %q",
 				originalName,
 				viewName,
-				existingName,
+				existing.originalName,
 			)
 		}
 		return nil
 	}
 
-	mm.viewNameToMetricIDMap[viewName] = metricID
-	mm.viewNameToOriginalNameMap[viewName] = originalName
+	mm.viewNameToMapping[viewName] = metricMappingEntry{
+		metricID:     metricID,
+		originalName: originalName,
+	}
 	return nil
 }
 
@@ -120,14 +126,14 @@ func (mm *MetricMapping) ViewNameToMetricID(viewName string) (MetricID, bool) {
 	mm.mapMutex.RLock()
 	defer mm.mapMutex.RUnlock()
 
-	id, ok := mm.viewNameToMetricIDMap[viewName]
-	return id, ok
+	mapping, ok := mm.viewNameToMapping[viewName]
+	return mapping.metricID, ok
 }
 
 func (mm *MetricMapping) ViewNameToOriginalName(viewName string) (string, bool) {
 	mm.mapMutex.RLock()
 	defer mm.mapMutex.RUnlock()
 
-	name, ok := mm.viewNameToOriginalNameMap[viewName]
-	return name, ok
+	mapping, ok := mm.viewNameToMapping[viewName]
+	return mapping.originalName, ok
 }
