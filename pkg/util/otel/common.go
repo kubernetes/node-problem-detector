@@ -17,6 +17,7 @@ limitations under the License.
 package otel
 
 import (
+	"fmt"
 	"sync"
 
 	"go.opentelemetry.io/otel"
@@ -35,21 +36,31 @@ var (
 )
 
 // AddMetricReader adds a metric reader to the global meter provider configuration
-// This should be called before InitializeMeterProvider()
+// This must be called before InitializeMeterProvider(), otherwise an error is
+// returned because the reader would be silently ignored.
 // Accepts both pull readers (like Prometheus) and push readers (like Stackdriver)
-func AddMetricReader(reader sdkmetric.Reader) {
+func AddMetricReader(reader sdkmetric.Reader) error {
 	readersMutex.Lock()
 	defer readersMutex.Unlock()
+	if globalMeterProvider != nil {
+		return fmt.Errorf("cannot add metric reader: meter provider is already initialized")
+	}
 	readers = append(readers, reader)
+	return nil
 }
 
 // AddResourceAttributes registers additional resource attributes that are merged
 // into the global OpenTelemetry resource by InitializeMeterProvider().
-// This should be called before InitializeMeterProvider().
-func AddResourceAttributes(attrs ...attribute.KeyValue) {
+// This must be called before InitializeMeterProvider(), otherwise an error is
+// returned because the attributes would be silently ignored.
+func AddResourceAttributes(attrs ...attribute.KeyValue) error {
 	readersMutex.Lock()
 	defer readersMutex.Unlock()
+	if globalMeterProvider != nil {
+		return fmt.Errorf("cannot add resource attributes: meter provider is already initialized")
+	}
 	extraResourceAttrs = append(extraResourceAttrs, attrs...)
+	return nil
 }
 
 // InitializeMeterProvider creates and sets the global meter provider with all registered readers

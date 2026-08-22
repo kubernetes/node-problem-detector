@@ -132,7 +132,9 @@ func (se *stackdriverExporter) setupOTelExporterOrDie() {
 	// Contribute GCE identity to the global OTel resource so that exported time
 	// series map to the gce_instance monitored resource and carry the
 	// instance_name metric label.
-	otelutil.AddResourceAttributes(se.gceResourceAttributes()...)
+	if err := otelutil.AddResourceAttributes(se.gceResourceAttributes()...); err != nil {
+		klog.Fatalf("Failed to register GCE resource attributes: %v", err)
+	}
 
 	// Create Google Cloud Monitoring exporter
 	gcpExporter, err := gcpmetric.New(se.exporterOptions()...)
@@ -151,7 +153,9 @@ func (se *stackdriverExporter) setupOTelExporterOrDie() {
 	)
 
 	// register with the global meter provider
-	otelutil.AddMetricReader(reader)
+	if err := otelutil.AddMetricReader(reader); err != nil {
+		klog.Fatalf("Failed to register Google Cloud Monitoring metric reader: %v", err)
+	}
 
 	klog.Infof("Google Cloud Monitoring exporter configured for project %s", se.config.GCEMetadata.ProjectID)
 }

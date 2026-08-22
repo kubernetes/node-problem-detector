@@ -68,7 +68,9 @@ func NewExporterOrDie(npdo *options.NodeProblemDetectorOptions) types.Exporter {
 	}
 
 	// register with the global meter provider
-	otelutil.AddMetricReader(promExporter)
+	if err := otelutil.AddMetricReader(promExporter); err != nil {
+		klog.Fatalf("Failed to register Prometheus metric reader: %v", err)
+	}
 
 	addr := net.JoinHostPort(npdo.PrometheusServerAddress, strconv.Itoa(npdo.PrometheusServerPort))
 	go func() {

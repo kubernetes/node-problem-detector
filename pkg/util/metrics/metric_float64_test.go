@@ -36,7 +36,9 @@ func TestFloat64GaugeSetValueSemantics(t *testing.T) {
 	reader := sdkmetric.NewManualReader()
 
 	// Register reader with our global meter provider for our metrics to use
-	otelutil.AddMetricReader(reader)
+	if err := otelutil.AddMetricReader(reader); err != nil {
+		t.Fatalf("Failed to add metric reader: %v", err)
+	}
 	otelutil.InitializeMeterProvider()
 
 	// Create a gauge using our actual NewFloat64Metric function
@@ -159,7 +161,9 @@ func TestFloat64CounterAddSemantics(t *testing.T) {
 	reader := sdkmetric.NewManualReader()
 
 	// Register reader with our global meter provider for our metrics to use
-	otelutil.AddMetricReader(reader)
+	if err := otelutil.AddMetricReader(reader); err != nil {
+		t.Fatalf("Failed to add metric reader: %v", err)
+	}
 	otelutil.InitializeMeterProvider()
 
 	// Create a counter using our actual NewFloat64Metric function
@@ -231,7 +235,9 @@ func TestFloat64CounterAddSemantics(t *testing.T) {
 
 func TestNewFloat64MetricUnsupportedAggregation(t *testing.T) {
 	otelutil.ResetForTesting()
-	otelutil.AddMetricReader(sdkmetric.NewManualReader())
+	if err := otelutil.AddMetricReader(sdkmetric.NewManualReader()); err != nil {
+		t.Fatalf("Failed to add metric reader: %v", err)
+	}
 	otelutil.InitializeMeterProvider()
 
 	// An unsupported aggregation must return an error, not a nil-instrument metric.
@@ -248,7 +254,9 @@ func TestNewFloat64MetricUnsupportedAggregation(t *testing.T) {
 
 func TestFloat64MetricRecordUndeclaredLabel(t *testing.T) {
 	otelutil.ResetForTesting()
-	otelutil.AddMetricReader(sdkmetric.NewManualReader())
+	if err := otelutil.AddMetricReader(sdkmetric.NewManualReader()); err != nil {
+		t.Fatalf("Failed to add metric reader: %v", err)
+	}
 	otelutil.InitializeMeterProvider()
 
 	metric, err := NewFloat64Metric("labeled_float_metric", "labeled_float_metric", "desc", "1", Sum, []string{"reason"})

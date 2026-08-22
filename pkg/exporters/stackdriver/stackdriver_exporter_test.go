@@ -137,7 +137,9 @@ func TestExportMetricsToCloudMonitoring(t *testing.T) {
 	}
 
 	// Register the GCE resource attributes exactly as the production path does.
-	otelutil.AddResourceAttributes(se.gceResourceAttributes()...)
+	if err := otelutil.AddResourceAttributes(se.gceResourceAttributes()...); err != nil {
+		t.Fatalf("Failed to add resource attributes: %v", err)
+	}
 
 	// Build the exporter from the production options, adding only the insecure
 	// dial options required to talk to the in-process mock server.
@@ -152,7 +154,9 @@ func TestExportMetricsToCloudMonitoring(t *testing.T) {
 
 	// Register the exporter's reader and initialize the global meter provider
 	// (which merges the GCE resource attributes into the global resource).
-	otelutil.AddMetricReader(sdkmetric.NewPeriodicReader(exporter, sdkmetric.WithInterval(100*time.Millisecond)))
+	if err := otelutil.AddMetricReader(sdkmetric.NewPeriodicReader(exporter, sdkmetric.WithInterval(100*time.Millisecond))); err != nil {
+		t.Fatalf("Failed to add metric reader: %v", err)
+	}
 	provider := otelutil.InitializeMeterProvider()
 	defer func() {
 		_ = provider.Shutdown(context.Background())

@@ -41,7 +41,9 @@ func TestDiskCollector(t *testing.T) {
 func TestDiskCollectorPercentUsedLabels(t *testing.T) {
 	otelutil.ResetForTesting()
 	defer otelutil.ResetForTesting()
-	otelutil.AddMetricReader(sdkmetric.NewManualReader())
+	if err := otelutil.AddMetricReader(sdkmetric.NewManualReader()); err != nil {
+		t.Fatalf("Failed to add metric reader: %v", err)
+	}
 	otelutil.InitializeMeterProvider()
 
 	dc := NewDiskCollectorOrDie(&ssmtypes.DiskStatsConfig{

@@ -41,7 +41,9 @@ func TestScrapeExcludesDefaultCollectors(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create Prometheus exporter: %v", err)
 	}
-	otelutil.AddMetricReader(promExporter)
+	if err := otelutil.AddMetricReader(promExporter); err != nil {
+		t.Fatalf("Failed to add metric reader: %v", err)
+	}
 	otelutil.InitializeMeterProvider()
 
 	// Record a metric through the standard NPD metrics + otel path.

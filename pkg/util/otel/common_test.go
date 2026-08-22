@@ -22,6 +22,7 @@ import (
 	"testing"
 
 	"github.com/prometheus/otlptranslator"
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/exporters/prometheus"
 	sdkmetric "go.opentelemetry.io/otel/sdk/metric"
 	"go.opentelemetry.io/otel/sdk/metric/metricdata"
@@ -43,8 +44,12 @@ func TestMultipleExportersArchitecture(t *testing.T) {
 	mockReader := sdkmetric.NewManualReader()
 
 	// Register multiple readers (simulating Prometheus + Stackdriver)
-	AddMetricReader(promExporter)
-	AddMetricReader(mockReader)
+	if err := AddMetricReader(promExporter); err != nil {
+		t.Fatalf("Failed to add metric reader: %v", err)
+	}
+	if err := AddMetricReader(mockReader); err != nil {
+		t.Fatalf("Failed to add metric reader: %v", err)
+	}
 
 	// Verify readers are registered
 	readersMutex.Lock()
@@ -83,6 +88,23 @@ func TestMultipleExportersArchitecture(t *testing.T) {
 	}
 }
 
+func TestAddAfterInitializeReturnsError(t *testing.T) {
+	ResetForTesting()
+	defer ResetForTesting()
+
+	if err := AddMetricReader(sdkmetric.NewManualReader()); err != nil {
+		t.Fatalf("AddMetricReader before initialization returned error: %v", err)
+	}
+	InitializeMeterProvider()
+
+	if err := AddMetricReader(sdkmetric.NewManualReader()); err == nil {
+		t.Error("Expected AddMetricReader after initialization to return an error")
+	}
+	if err := AddResourceAttributes(attribute.String("key", "value")); err == nil {
+		t.Error("Expected AddResourceAttributes after initialization to return an error")
+	}
+}
+
 func TestMeterNameConstant(t *testing.T) {
 	if MeterName != "node-problem-detector" {
 		t.Errorf("Expected MeterName to be 'node-problem-detector', got '%s'", MeterName)
@@ -114,7 +136,9 @@ func TestScopeLabelsNotGenerated(t *testing.T) {
 	}
 
 	// Register the Prometheus reader
-	AddMetricReader(promExporter)
+	if err := AddMetricReader(promExporter); err != nil {
+		t.Fatalf("Failed to add metric reader: %v", err)
+	}
 
 	// Initialize the meter provider
 	InitializeMeterProvider()
@@ -178,7 +202,9 @@ func TestPrometheusExporterWithoutScopeLabels(t *testing.T) {
 	}
 
 	// Register the Prometheus reader
-	AddMetricReader(promExporter)
+	if err := AddMetricReader(promExporter); err != nil {
+		t.Fatalf("Failed to add metric reader: %v", err)
+	}
 
 	// Initialize the meter provider
 	InitializeMeterProvider()

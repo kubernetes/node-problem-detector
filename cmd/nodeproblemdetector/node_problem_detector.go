@@ -18,6 +18,7 @@ package main
 
 import (
 	"context"
+	"time"
 
 	"k8s.io/klog/v2"
 
@@ -59,7 +60,16 @@ func npdMain(ctx context.Context, npdo *options.NodeProblemDetectorOptions) erro
 
 	// Initialize OpenTelemetry meter provider with all registered readers
 	// This must be called after all exporters have been created and registered their readers
-	otelutil.InitializeMeterProvider()
+	meterProvider := otelutil.InitializeMeterProvider()
+	defer func() {
+		// Drop the cancellation of ctx because it is likely already canceled
+		// at shutdown, which would prevent flushing pending metrics.
+		shutdownCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 10*time.Second)
+		defer cancel()
+		if err := meterProvider.Shutdown(shutdownCtx); err != nil {
+			klog.Errorf("Failed to shut down OpenTelemetry meter provider: %v", err)
+		}
+	}()
 	problemmetrics.InitializeGlobalProblemMetricsManager()
 
 	// Initialize problem daemons.

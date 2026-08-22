@@ -37,7 +37,9 @@ func TestGaugeSetValueSemantics(t *testing.T) {
 	reader := sdkmetric.NewManualReader()
 
 	// Register reader with our global meter provider for our metrics to use
-	otelutil.AddMetricReader(reader)
+	if err := otelutil.AddMetricReader(reader); err != nil {
+		t.Fatalf("Failed to add metric reader: %v", err)
+	}
 	otelutil.InitializeMeterProvider()
 
 	// Create a gauge using our actual NewInt64Metric function
@@ -160,7 +162,9 @@ func TestCounterAddSemantics(t *testing.T) {
 	reader := sdkmetric.NewManualReader()
 
 	// Register reader with our global meter provider for our metrics to use
-	otelutil.AddMetricReader(reader)
+	if err := otelutil.AddMetricReader(reader); err != nil {
+		t.Fatalf("Failed to add metric reader: %v", err)
+	}
 	otelutil.InitializeMeterProvider()
 
 	// Create a counter using our actual NewInt64Metric function
@@ -232,7 +236,9 @@ func TestCounterAddSemantics(t *testing.T) {
 
 func TestNewInt64MetricUnsupportedAggregation(t *testing.T) {
 	otelutil.ResetForTesting()
-	otelutil.AddMetricReader(sdkmetric.NewManualReader())
+	if err := otelutil.AddMetricReader(sdkmetric.NewManualReader()); err != nil {
+		t.Fatalf("Failed to add metric reader: %v", err)
+	}
 	otelutil.InitializeMeterProvider()
 
 	// An unsupported aggregation must return an error, not a nil-instrument metric.
@@ -250,7 +256,9 @@ func TestNewInt64MetricUnsupportedAggregation(t *testing.T) {
 func TestInt64MetricRecordUndeclaredLabel(t *testing.T) {
 	otelutil.ResetForTesting()
 	reader := sdkmetric.NewManualReader()
-	otelutil.AddMetricReader(reader)
+	if err := otelutil.AddMetricReader(reader); err != nil {
+		t.Fatalf("Failed to add metric reader: %v", err)
+	}
 	otelutil.InitializeMeterProvider()
 
 	metric, err := NewInt64Metric("labeled_metric", "labeled_metric", "desc", "1", Sum, []string{"reason", "value"})
@@ -314,7 +322,9 @@ func TestNormalizeMetricName(t *testing.T) {
 
 func TestNewMetricRejectsNormalizedNameCollision(t *testing.T) {
 	otelutil.ResetForTesting()
-	otelutil.AddMetricReader(sdkmetric.NewManualReader())
+	if err := otelutil.AddMetricReader(sdkmetric.NewManualReader()); err != nil {
+		t.Fatalf("Failed to add metric reader: %v", err)
+	}
 	otelutil.InitializeMeterProvider()
 
 	_, err := NewInt64Metric("first_collision_metric", "collision/metric", "desc", "1", Sum, nil)
