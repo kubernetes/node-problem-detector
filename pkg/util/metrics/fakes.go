@@ -13,85 +13,260 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
+
 package metrics
 
 import (
-	"errors"
 	"fmt"
-	"reflect"
+	"maps"
+	"sort"
+	"sync"
 )
 
-// Int64MetricInterface is used to create test double for Int64Metric.
-type Int64MetricInterface interface {
-	// Record records a measurement for the metric, with provided tags as metric labels.
-	Record(tags map[string]string, measurement int64) error
-}
-
-// FakeInt64Metric implements Int64MetricInterface.
-// FakeInt64Metric can be used as a test double for Int64MetricInterface, allowing
-// inspection of the metrics.
+// FakeInt64Metric is a fake implementation of Int64MetricInterface for testing
 type FakeInt64Metric struct {
 	name        string
 	aggregation Aggregation
-	allowedTags map[string]bool
-	metrics     []Int64MetricRepresentation
+	labels      []string
+	labelSet    map[string]struct{}
+	records     []RecordCall
+	mutex       sync.RWMutex
 }
 
-func NewFakeInt64Metric(name string, aggregation Aggregation, tagNames []string) *FakeInt64Metric {
+// RecordCall represents a call to Record method
+type RecordCall struct {
+	LabelValues map[string]string
+	Value       int64
+}
+
+// NewFakeInt64Metric creates a new fake int64 metric
+func NewFakeInt64Metric(name string, aggregation Aggregation, labels []string) *FakeInt64Metric {
 	if name == "" {
 		return nil
 	}
 
-	allowedTags := make(map[string]bool)
-	for _, tagName := range tagNames {
-		allowedTags[tagName] = true
+	return &FakeInt64Metric{
+		name:        name,
+		aggregation: aggregation,
+		labels:      append([]string(nil), labels...),
+		labelSet:    makeLabelSet(labels),
+		records:     make([]RecordCall, 0),
 	}
-
-	fake := FakeInt64Metric{name, aggregation, allowedTags, []Int64MetricRepresentation{}}
-	return &fake
 }
 
-func (fake *FakeInt64Metric) Record(tags map[string]string, measurement int64) error {
-	labels := make(map[string]string)
-	for tagName, tagValue := range tags {
-		if _, ok := fake.allowedTags[tagName]; !ok {
-			return fmt.Errorf("tag %q is not allowed", tagName)
-		}
-		labels[tagName] = tagValue
+// Record implements Int64MetricInterface
+func (f *FakeInt64Metric) Record(labelValues map[string]string, value int64) error {
+	f.mutex.Lock()
+	defer f.mutex.Unlock()
+
+	normalizedLabels, err := normalizeFakeLabels(f.name, f.labels, f.labelSet, labelValues)
+	if err != nil {
+		return err
 	}
 
-	metric := Int64MetricRepresentation{
-		Name:   fake.name,
-		Labels: labels,
-	}
-
-	// If there is a metric with equavalent labels, reuse it.
-	metricIndex := -1
-	for index, existingMetric := range fake.metrics {
-		if !reflect.DeepEqual(existingMetric.Labels, metric.Labels) {
-			continue
-		}
-		metricIndex = index
-		break
-	}
-	// If there is no metric with equalvalent labels, create a new one.
-	if metricIndex == -1 {
-		fake.metrics = append(fake.metrics, metric)
-		metricIndex = len(fake.metrics) - 1
-	}
-
-	switch fake.aggregation {
-	case LastValue:
-		fake.metrics[metricIndex].Value = measurement
-	case Sum:
-		fake.metrics[metricIndex].Value += measurement
-	default:
-		return errors.New("unsupported aggregation type")
-	}
+	f.records = append(f.records, RecordCall{
+		LabelValues: normalizedLabels,
+		Value:       value,
+	})
 	return nil
 }
 
-// ListMetrics returns a snapshot of the current metrics.
-func (fake *FakeInt64Metric) ListMetrics() []Int64MetricRepresentation {
-	return fake.metrics
+// GetRecords returns all recorded calls
+func (f *FakeInt64Metric) GetRecords() []RecordCall {
+	f.mutex.RLock()
+	defer f.mutex.RUnlock()
+
+	// Return a copy to avoid race conditions
+	records := make([]RecordCall, len(f.records))
+	copy(records, f.records)
+	return records
+}
+
+// Reset clears all recorded calls
+func (f *FakeInt64Metric) Reset() {
+	f.mutex.Lock()
+	defer f.mutex.Unlock()
+	f.records = f.records[:0]
+}
+
+// GetLastValue returns the last recorded value with matching labels
+func (f *FakeInt64Metric) GetLastValue(labelValues map[string]string) (int64, error) {
+	f.mutex.RLock()
+	defer f.mutex.RUnlock()
+
+	// Search backwards for the last matching record
+	for i := len(f.records) - 1; i >= 0; i-- {
+		record := f.records[i]
+		if maps.Equal(record.LabelValues, labelValues) {
+			return record.Value, nil
+		}
+	}
+
+	return 0, fmt.Errorf("no records found for labels %v", labelValues)
+}
+
+// GetTotalValue returns the sum of all recorded values with matching labels
+func (f *FakeInt64Metric) GetTotalValue(labelValues map[string]string) int64 {
+	f.mutex.RLock()
+	defer f.mutex.RUnlock()
+
+	var total int64
+	for _, record := range f.records {
+		if maps.Equal(record.LabelValues, labelValues) {
+			total += record.Value
+		}
+	}
+
+	return total
+}
+
+// ListMetrics returns all unique metrics based on aggregation type
+func (f *FakeInt64Metric) ListMetrics() []Int64MetricRepresentation {
+	f.mutex.RLock()
+	defer f.mutex.RUnlock()
+
+	// For Sum aggregation, accumulate values by label set; for LastValue
+	// aggregation, keep the last value seen for each label set.
+	aggregated := make(map[string]int64)
+	labelMaps := make(map[string]map[string]string)
+
+	for _, record := range f.records {
+		key := labelsMapToString(record.LabelValues)
+		if f.aggregation == Sum {
+			aggregated[key] += record.Value
+		} else {
+			aggregated[key] = record.Value
+		}
+		labelMaps[key] = record.LabelValues
+	}
+
+	var metrics []Int64MetricRepresentation
+	for key, value := range aggregated {
+		metrics = append(metrics, Int64MetricRepresentation{
+			Name:   f.name,
+			Labels: labelMaps[key],
+			Value:  value,
+		})
+	}
+
+	return metrics
+}
+
+// FakeFloat64Metric is a fake implementation of Float64MetricInterface for testing
+type FakeFloat64Metric struct {
+	name        string
+	aggregation Aggregation
+	labels      []string
+	labelSet    map[string]struct{}
+	records     []Float64RecordCall
+	mutex       sync.RWMutex
+}
+
+// Float64RecordCall represents a call to Record method with float64 value
+type Float64RecordCall struct {
+	LabelValues map[string]string
+	Value       float64
+}
+
+// NewFakeFloat64Metric creates a new fake float64 metric
+func NewFakeFloat64Metric(name string, aggregation Aggregation, labels []string) *FakeFloat64Metric {
+	if name == "" {
+		return nil
+	}
+
+	return &FakeFloat64Metric{
+		name:        name,
+		aggregation: aggregation,
+		labels:      append([]string(nil), labels...),
+		labelSet:    makeLabelSet(labels),
+		records:     make([]Float64RecordCall, 0),
+	}
+}
+
+// Record implements Float64MetricInterface
+func (f *FakeFloat64Metric) Record(labelValues map[string]string, value float64) error {
+	f.mutex.Lock()
+	defer f.mutex.Unlock()
+
+	normalizedLabels, err := normalizeFakeLabels(f.name, f.labels, f.labelSet, labelValues)
+	if err != nil {
+		return err
+	}
+
+	f.records = append(f.records, Float64RecordCall{
+		LabelValues: normalizedLabels,
+		Value:       value,
+	})
+	return nil
+}
+
+// GetRecords returns all recorded calls
+func (f *FakeFloat64Metric) GetRecords() []Float64RecordCall {
+	f.mutex.RLock()
+	defer f.mutex.RUnlock()
+
+	// Return a copy to avoid race conditions
+	records := make([]Float64RecordCall, len(f.records))
+	copy(records, f.records)
+	return records
+}
+
+// Reset clears all recorded calls
+func (f *FakeFloat64Metric) Reset() {
+	f.mutex.Lock()
+	defer f.mutex.Unlock()
+	f.records = f.records[:0]
+}
+
+func makeLabelSet(labels []string) map[string]struct{} {
+	labelSet := make(map[string]struct{}, len(labels))
+	for _, label := range labels {
+		labelSet[label] = struct{}{}
+	}
+	return labelSet
+}
+
+func normalizeFakeLabels(
+	name string,
+	labels []string,
+	labelSet map[string]struct{},
+	labelValues map[string]string,
+) (map[string]string, error) {
+	for label := range labelValues {
+		if _, ok := labelSet[label]; !ok {
+			return nil, fmt.Errorf("referencing non-existent label %q on metric %q", label, name)
+		}
+	}
+
+	normalized := make(map[string]string, len(labels))
+	for _, label := range labels {
+		normalized[label] = labelValues[label]
+	}
+	return normalized, nil
+}
+
+// Helper function to convert a labels map to a string key for aggregation
+func labelsMapToString(labels map[string]string) string {
+	if len(labels) == 0 {
+		return ""
+	}
+
+	// Create a consistent string representation of the labels map
+	var keys []string
+	for k := range labels {
+		keys = append(keys, k)
+	}
+
+	// Sort keys for consistent ordering
+	sort.Strings(keys)
+
+	result := ""
+	for i, k := range keys {
+		if i > 0 {
+			result += ","
+		}
+		result += k + "=" + labels[k]
+	}
+
+	return result
 }

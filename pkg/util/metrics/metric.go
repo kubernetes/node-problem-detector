@@ -16,6 +16,7 @@ limitations under the License.
 package metrics
 
 import (
+	"fmt"
 	"sync"
 )
 
@@ -73,27 +74,66 @@ func init() {
 	MetricMap.mapMutex.Lock()
 	defer MetricMap.mapMutex.Unlock()
 
-	MetricMap.viewNameToMetricIDMap = make(map[string]MetricID)
+	MetricMap.viewNameToMapping = make(map[string]metricMappingEntry)
 }
 
 type MetricID string
 
+type metricMappingEntry struct {
+	metricID     MetricID
+	originalName string
+}
+
 type MetricMapping struct {
-	viewNameToMetricIDMap map[string]MetricID
-	mapMutex              sync.RWMutex
+	viewNameToMapping map[string]metricMappingEntry
+	mapMutex          sync.RWMutex
 }
 
 func (mm *MetricMapping) AddMapping(metricID MetricID, viewName string) {
 	mm.mapMutex.Lock()
 	defer mm.mapMutex.Unlock()
 
-	mm.viewNameToMetricIDMap[viewName] = metricID
+	mm.viewNameToMapping[viewName] = metricMappingEntry{
+		metricID:     metricID,
+		originalName: viewName,
+	}
+}
+
+func (mm *MetricMapping) AddNormalizedMapping(metricID MetricID, viewName, originalName string) error {
+	mm.mapMutex.Lock()
+	defer mm.mapMutex.Unlock()
+
+	if existing, ok := mm.viewNameToMapping[viewName]; ok {
+		if existing.metricID != metricID || existing.originalName != originalName {
+			return fmt.Errorf(
+				"metric name %q normalizes to %q, which is already used by metric %q",
+				originalName,
+				viewName,
+				existing.originalName,
+			)
+		}
+		return nil
+	}
+
+	mm.viewNameToMapping[viewName] = metricMappingEntry{
+		metricID:     metricID,
+		originalName: originalName,
+	}
+	return nil
 }
 
 func (mm *MetricMapping) ViewNameToMetricID(viewName string) (MetricID, bool) {
 	mm.mapMutex.RLock()
 	defer mm.mapMutex.RUnlock()
 
-	id, ok := mm.viewNameToMetricIDMap[viewName]
-	return id, ok
+	mapping, ok := mm.viewNameToMapping[viewName]
+	return mapping.metricID, ok
+}
+
+func (mm *MetricMapping) ViewNameToOriginalName(viewName string) (string, bool) {
+	mm.mapMutex.RLock()
+	defer mm.mapMutex.RUnlock()
+
+	mapping, ok := mm.viewNameToMapping[viewName]
+	return mapping.originalName, ok
 }
