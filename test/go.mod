@@ -1,6 +1,6 @@
 module k8s.io/node-problem-detector/test
 
-go 1.26.5
+go 1.26.7
 
 replace k8s.io/node-problem-detector => ../.
 
@@ -10,11 +10,11 @@ require (
 	github.com/onsi/gomega v1.38.3
 	github.com/pborman/uuid v1.2.1
 	github.com/spf13/pflag v1.0.10
-	golang.org/x/crypto v0.53.0
+	golang.org/x/crypto v0.55.0
 	golang.org/x/oauth2 v0.36.0
 	google.golang.org/api v0.272.0
-	k8s.io/apimachinery v0.35.6
-	k8s.io/component-base v0.34.9
+	k8s.io/apimachinery v0.36.4
+	k8s.io/component-base v0.36.4
 	k8s.io/klog/v2 v2.140.0
 	k8s.io/node-problem-detector v1.34.0
 	sigs.k8s.io/boskos v0.0.0-20250922191614-14f95fc7cd0b
@@ -59,23 +59,23 @@ require (
 	go.opencensus.io v0.24.0 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.67.0 // indirect
-	go.opentelemetry.io/otel v1.42.0 // indirect
-	go.opentelemetry.io/otel/metric v1.42.0 // indirect
-	go.opentelemetry.io/otel/trace v1.42.0 // indirect
+	go.opentelemetry.io/otel v1.43.0 // indirect
+	go.opentelemetry.io/otel/metric v1.43.0 // indirect
+	go.opentelemetry.io/otel/trace v1.43.0 // indirect
 	go.yaml.in/yaml/v2 v2.4.4 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
 	go4.org v0.0.0-20201209231011-d4a079459e60 // indirect
-	golang.org/x/net v0.56.0 // indirect
-	golang.org/x/sys v0.46.0 // indirect
-	golang.org/x/text v0.39.0 // indirect
-	golang.org/x/tools v0.47.0 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20260311181403-84a4fc48630c // indirect
-	google.golang.org/grpc v1.79.3 // indirect
-	google.golang.org/protobuf v1.36.11 // indirect
+	golang.org/x/net v0.58.0 // indirect
+	golang.org/x/sys v0.47.0 // indirect
+	golang.org/x/text v0.41.0 // indirect
+	golang.org/x/tools v0.49.0 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20260414002931-afd174a4e478 // indirect
+	google.golang.org/grpc v1.82.1 // indirect
+	google.golang.org/protobuf v1.36.12-0.20260120151049-f2248ac996af // indirect
 	gopkg.in/ini.v1 v1.62.0 // indirect
 	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-	k8s.io/utils v0.0.0-20251222233032-718f0e51e6d2 // indirect
+	k8s.io/utils v0.0.0-20260210185600-b8788abfbbc2 // indirect
 	sigs.k8s.io/controller-runtime v0.16.5 // indirect
 	sigs.k8s.io/prow v0.0.0-20240619181241-cfb8754e0459 // indirect
 	sigs.k8s.io/yaml v1.6.0 // indirect

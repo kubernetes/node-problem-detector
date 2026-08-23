@@ -19,7 +19,7 @@ set -o nounset
 set -o pipefail
 
 make gomod
-changes=$(git status --porcelain go.mod go.sum vendor/ tests/e2e/go.mod  tests/e2e/go.sum || true)
+changes=$(git status --porcelain -- go.mod go.sum vendor/ test/go.mod test/go.sum || true)
 if [ -n "${changes}" ]; then
   echo "ERROR: go modules are not up to date; please run: make gomod"
   echo "changed files:"
