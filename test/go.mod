@@ -13,8 +13,8 @@ require (
 	golang.org/x/crypto v0.55.0
 	golang.org/x/oauth2 v0.36.0
 	google.golang.org/api v0.272.0
-	k8s.io/apimachinery v0.35.4
-	k8s.io/component-base v0.34.7
+	k8s.io/apimachinery v0.35.8
+	k8s.io/component-base v0.35.8
 	k8s.io/klog/v2 v2.140.0
 	k8s.io/node-problem-detector v1.34.0
 	sigs.k8s.io/boskos v0.0.0-20250922191614-14f95fc7cd0b
@@ -71,7 +71,7 @@ require (
 	golang.org/x/tools v0.49.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260311181403-84a4fc48630c // indirect
 	google.golang.org/grpc v1.79.3 // indirect
-	google.golang.org/protobuf v1.36.11 // indirect
+	google.golang.org/protobuf v1.36.12-0.20260120151049-f2248ac996af // indirect
 	gopkg.in/ini.v1 v1.62.0 // indirect
 	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
