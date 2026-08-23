@@ -118,22 +118,22 @@ func TestFakeInt64Metric(t *testing.T) {
 			expectedMetrics: []Int64MetricRepresentation{
 				{
 					Name:   "foo",
-					Labels: map[string]string{},
+					Labels: map[string]string{"A": "", "B": ""},
 					Value:  4,
 				},
 				{
 					Name:   "foo",
-					Labels: map[string]string{"A": "1"},
+					Labels: map[string]string{"A": "1", "B": ""},
 					Value:  17,
 				},
 				{
 					Name:   "foo",
-					Labels: map[string]string{"B": "2"},
+					Labels: map[string]string{"A": "", "B": "2"},
 					Value:  2,
 				},
 				{
 					Name:   "foo",
-					Labels: map[string]string{"B": "3"},
+					Labels: map[string]string{"A": "", "B": "3"},
 					Value:  8,
 				},
 			},
@@ -210,12 +210,12 @@ func TestFakeInt64Metric(t *testing.T) {
 			expectedMetrics: []Int64MetricRepresentation{
 				{
 					Name:   "foo",
-					Labels: map[string]string{"A": "1"},
+					Labels: map[string]string{"A": "1", "B": ""},
 					Value:  2,
 				},
 				{
 					Name:   "foo",
-					Labels: map[string]string{"B": "2"},
+					Labels: map[string]string{"A": "", "B": "2"},
 					Value:  4,
 				},
 				{
@@ -242,4 +242,21 @@ func TestFakeInt64Metric(t *testing.T) {
 				"expected metrics: %+v, got: %+v", test.expectedMetrics, gotMetrics)
 		})
 	}
+}
+
+func TestFakeMetricContract(t *testing.T) {
+	assert.Nil(t, NewFakeInt64Metric("", Sum, nil))
+	assert.Nil(t, NewFakeFloat64Metric("", Sum, nil))
+
+	intMetric := NewFakeInt64Metric("int_metric", Sum, []string{"declared", "omitted"})
+	assert.NoError(t, intMetric.Record(map[string]string{"declared": "value"}, 1))
+	assert.Equal(t, map[string]string{"declared": "value", "omitted": ""}, intMetric.GetRecords()[0].LabelValues)
+	assert.Error(t, intMetric.Record(map[string]string{"undeclared": "value"}, 1))
+	assert.Len(t, intMetric.GetRecords(), 1)
+
+	floatMetric := NewFakeFloat64Metric("float_metric", LastValue, []string{"declared", "omitted"})
+	assert.NoError(t, floatMetric.Record(map[string]string{"declared": "value"}, 1))
+	assert.Equal(t, map[string]string{"declared": "value", "omitted": ""}, floatMetric.GetRecords()[0].LabelValues)
+	assert.Error(t, floatMetric.Record(map[string]string{"undeclared": "value"}, 1))
+	assert.Len(t, floatMetric.GetRecords(), 1)
 }
