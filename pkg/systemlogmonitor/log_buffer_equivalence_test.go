@@ -67,7 +67,7 @@ var equivalencePatterns = []string{
 	`alpha[\s\S]*beta`,
 	`alpha[\x00-\x7f]+beta`,
 	`\Aalpha`,
-	// Top-level alternations that the appended anchor does not bind.
+	// Top-level alternations must also stay on the last line.
 	`alpha|beta`,
 	`abort|abandon`,
 	`alpha|`,
@@ -111,7 +111,7 @@ func TestMatchEquivalence(t *testing.T) {
 			t.Fatalf("failed to compile %q: %v", expr, err)
 		}
 		patterns = append(patterns, p)
-		refRegexps = append(refRegexps, regexp.MustCompile(expr+`\z`))
+		refRegexps = append(refRegexps, regexp.MustCompile(`(?:`+expr+`)\z`))
 	}
 	for _, maxLines := range []int{1, 2, 3, 5, 10} {
 		for trial := range 200 {
@@ -167,12 +167,10 @@ func TestLastLineOnlyClassification(t *testing.T) {
 		`alpha[\n]beta`:         false,
 		`alpha(beta|\n)`:        false,
 		`alpha{1,3}[\t-\r]beta`: false,
-		// The appended anchor reaches the last branch of a top-level alternation only.
-		`alpha|beta`: false,
-		// The parser factors the shared prefix out, so the root stays a concatenation.
-		`abort|abandon`:      false,
-		`a|`:                 false,
-		`(alpha|beta) gamma`: true,
+		`alpha|beta`:            true,
+		`abort|abandon`:         true,
+		`a|`:                    true,
+		`(alpha|beta) gamma`:    true,
 	} {
 		p, err := CompilePattern(expr)
 		if err != nil {
@@ -194,9 +192,9 @@ func TestLastLineOnlyClassification(t *testing.T) {
 	}
 }
 
-// TestMatchAlternationSpansBuffer pins the reported repro for a top-level alternation.
-// The first branch matches an older line, so the last line shortcut must not apply.
-func TestMatchAlternationSpansBuffer(t *testing.T) {
+// TestMatchAlternationAnchorsEveryBranch verifies that an earlier branch cannot
+// match a stale buffered line.
+func TestMatchAlternationAnchorsEveryBranch(t *testing.T) {
 	b := NewLogBuffer(2)
 	b.Push(&types.Log{Message: "kernel: oom-kill:constraint=CONSTRAINT_NONE"})
 	b.Push(&types.Log{Message: "kubelet: node ready"})
@@ -205,11 +203,14 @@ func TestMatchAlternationSpansBuffer(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to compile %q: %v", expr, err)
 	}
-	want := referenceMatch(b, regexp.MustCompile(expr+`\z`))
-	if len(want) == 0 {
-		t.Fatalf("pattern %q: the reference matcher found nothing", expr)
+	if got := b.Match(p); len(got) != 0 {
+		t.Fatalf("pattern %q matched stale logs: %v", expr, messages(got))
 	}
+
+	last := &types.Log{Message: "kernel: Out of memory"}
+	b.Push(last)
 	got := b.Match(p)
+	want := []*types.Log{last}
 	if !reflect.DeepEqual(want, got) {
 		t.Errorf("pattern %q: want %v, got %v", expr, messages(want), messages(got))
 	}
