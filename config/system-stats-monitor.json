@@ -94,6 +94,12 @@
       },
       "memory/percent_used": {
         "displayName": "memory/percent_used"
+      },
+      "memory/zswap_bytes_used": {
+        "displayName": "memory/zswap_bytes_used"
+      },
+      "memory/zswap_compression_efficiency": {
+        "displayName": "memory/zswap_compression_efficiency"
       }
     }
   },
