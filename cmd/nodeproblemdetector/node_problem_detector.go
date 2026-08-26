@@ -28,6 +28,7 @@ import (
 	"k8s.io/node-problem-detector/pkg/exporters"
 	"k8s.io/node-problem-detector/pkg/exporters/k8sexporter"
 	"k8s.io/node-problem-detector/pkg/exporters/prometheusexporter"
+	"k8s.io/node-problem-detector/pkg/httpserver"
 	"k8s.io/node-problem-detector/pkg/problemdaemon"
 	"k8s.io/node-problem-detector/pkg/problemdetector"
 	"k8s.io/node-problem-detector/pkg/problemmetrics"
@@ -48,8 +49,14 @@ func npdMain(ctx context.Context, npdo *options.NodeProblemDetectorOptions) erro
 
 	// Initialize exporters first to set up the OpenTelemetry readers.
 	defaultExporters := []types.Exporter{}
+	// The Kubernetes exporter owns the node conditions, so it is what serves
+	// them on /conditions when it is enabled.
+	var conditionsGetter httpserver.ConditionsGetter
 	if ke := k8sexporter.NewExporterOrDie(ctx, npdo); ke != nil {
 		defaultExporters = append(defaultExporters, ke)
+		if getter, ok := ke.(httpserver.ConditionsGetter); ok {
+			conditionsGetter = getter
+		}
 		klog.Info("K8s exporter started.")
 	}
 	if pe := prometheusexporter.NewExporterOrDie(npdo); pe != nil {
@@ -57,6 +64,10 @@ func npdMain(ctx context.Context, npdo *options.NodeProblemDetectorOptions) erro
 		klog.Info("Prometheus exporter started.")
 	}
 	plugableExporters := exporters.NewExporters()
+
+	// The diagnostic endpoints are controlled by --port alone, so they stay
+	// available regardless of which exporters are enabled.
+	httpserver.Start(npdo, conditionsGetter)
 
 	// Initialize OpenTelemetry meter provider with all registered readers
 	// This must be called after all exporters have been created and registered their readers
