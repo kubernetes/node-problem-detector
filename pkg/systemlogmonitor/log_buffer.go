@@ -17,6 +17,7 @@ limitations under the License.
 package systemlogmonitor
 
 import (
+	"fmt"
 	"regexp"
 	"regexp/syntax"
 	"slices"
@@ -74,23 +75,18 @@ func CompilePattern(expr string) (*Pattern, error) {
 	if _, err := regexp.Compile(expr); err != nil {
 		return nil, err
 	}
-	anchored := expr + `\z`
+	// Group the expression so the end anchor applies to every top-level branch.
+	anchored := `(?:` + expr + `)\z`
 	reg, err := regexp.Compile(anchored)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("invalid pattern %q: %w", expr, err)
 	}
 	p := &Pattern{regexp: reg}
 	tree, err := syntax.Parse(anchored, syntax.Perl)
 	if err != nil {
 		return p, nil
 	}
-	// A top-level alternation binds the appended anchor to its last branch only.
-	// Equal trees prove that the anchor covers every branch.
-	grouped, err := syntax.Parse(`(?:`+expr+`)\z`, syntax.Perl)
-	if err != nil {
-		return p, nil
-	}
-	p.lastLineOnly = tree.Equal(grouped) && isLastLineOnly(tree)
+	p.lastLineOnly = isLastLineOnly(tree)
 	return p, nil
 }
 
