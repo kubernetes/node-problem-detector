@@ -3,7 +3,7 @@ module k8s.io/node-problem-detector
 go 1.26.7
 
 require (
-	cloud.google.com/go/compute/metadata v0.9.0
+	cloud.google.com/go/compute/metadata v0.9.1
 	cloud.google.com/go/monitoring v1.24.3
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/metric v0.55.0
 	github.com/acobaugh/osrelease v0.1.0
