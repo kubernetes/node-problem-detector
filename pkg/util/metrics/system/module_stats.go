@@ -61,8 +61,8 @@ func Modules(modulesFilePath string) ([]Module, error) {
 	*/
 	for _, line := range lines {
 		fields := strings.Fields(line)
-		moduleName := fields[0]                                          // name of the module
-		numberOfInstances, err := strconv.ParseUint((fields[2]), 10, 64) // instances of the module are currently loaded
+		moduleName := fields[0]                                        // name of the module
+		numberOfInstances, err := strconv.ParseUint(fields[2], 10, 64) // instances of the module are currently loaded
 		if err != nil {
 			numberOfInstances = 0
 		}
