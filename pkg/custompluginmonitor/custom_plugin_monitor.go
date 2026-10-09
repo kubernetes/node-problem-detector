@@ -264,12 +264,22 @@ func (c *customPluginMonitor) generateStatus(result cpmtypes.Result) *types.Stat
 					event.Reason, err)
 			}
 		}
-		for _, condition := range c.conditions {
-			err := problemmetrics.GlobalProblemMetricsManager.SetProblemGauge(
-				condition.Type, condition.Reason, condition.Status == types.True)
-			if err != nil {
-				klog.Errorf("Failed to update problem gauge metrics for problem %q, reason %q: %v",
-					condition.Type, condition.Reason, err)
+		if result.Rule.Type == types.Perm {
+			for _, condition := range c.conditions {
+				if condition.Type == result.Rule.Condition {
+					// Only record problem_gauge under the permanent rule's problem reason, never
+					// under the default (healthy) condition reason. The OpenTelemetry gauge keeps
+					// every label set it has seen and re-exports the last value on each collection,
+					// so recording e.g. {reason="KubeletIsHealthy"}=0 creates a series that is
+					// exported forever. This matches initializeProblemMetricsOrDie and systemlogmonitor.
+					err := problemmetrics.GlobalProblemMetricsManager.SetProblemGauge(
+						condition.Type, result.Rule.Reason, condition.Status == types.True)
+					if err != nil {
+						klog.Errorf("Failed to update problem gauge metrics for problem %q, reason %q: %v",
+							condition.Type, result.Rule.Reason, err)
+					}
+					break
+				}
 			}
 		}
 	}
