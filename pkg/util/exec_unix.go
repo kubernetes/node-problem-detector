@@ -22,6 +22,8 @@ import (
 	"context"
 	"fmt"
 	"os/exec"
+	"strconv"
+	"strings"
 	"syscall"
 )
 
@@ -42,4 +44,14 @@ func Kill(cmd *exec.Cmd) error {
 		return fmt.Errorf("%v does not have a process handle", cmd)
 	}
 	return syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
+}
+
+// IsProcessInDState checks if the process is in D state.
+func IsProcessInDState(pid int) bool {
+	// "-o stat=" is used to get the process state without the header.
+	cmd := exec.Command("ps", "-o", "stat=", "-p", strconv.Itoa(pid))
+	if res, err := cmd.Output(); err == nil && strings.Contains(string(res), "D") {
+		return true
+	}
+	return false
 }
