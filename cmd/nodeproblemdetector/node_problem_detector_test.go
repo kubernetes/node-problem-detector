@@ -127,17 +127,17 @@ func setupNPD(t *testing.T) (*options.NodeProblemDetectorOptions, func()) {
 	}
 
 	return &options.NodeProblemDetectorOptions{
-			MonitorConfigPaths: map[types.ProblemDaemonType]*[]string{
-				"system-log-monitor": {
-					fakeConfigFileName,
-				},
+		MonitorConfigPaths: map[types.ProblemDaemonType]*[]string{
+			"system-log-monitor": {
+				fakeConfigFileName,
 			},
-		}, func() {
-			if err := os.Remove(fakeLogFileName); err != nil {
-				t.Logf("Failed to remove temporary file %s: %v", fakeLogFileName, err)
-			}
-			if err := os.Remove(fakeConfigFileName); err != nil {
-				t.Logf("Failed to remove temporary file %s: %v", fakeConfigFileName, err)
-			}
+		},
+	}, func() {
+		if err := os.Remove(fakeLogFileName); err != nil {
+			t.Logf("Failed to remove temporary file %s: %v", fakeLogFileName, err)
 		}
+		if err := os.Remove(fakeConfigFileName); err != nil {
+			t.Logf("Failed to remove temporary file %s: %v", fakeConfigFileName, err)
+		}
+	}
 }
