@@ -454,7 +454,6 @@ func TestGenerateStatusMetrics(t *testing.T) {
 			results:                []cpmtypes.Result{permResult(cpmtypes.NonOK, testProblemReason, "boom")},
 			expectedMetrics: []metrics.Int64MetricRepresentation{
 				{Name: "problem_counter", Labels: map[string]string{"reason": testProblemReason}, Value: 1},
-				{Name: "problem_gauge", Labels: map[string]string{"type": otherCondition, "reason": otherConditionOK}, Value: 0},
 				{Name: "problem_gauge", Labels: map[string]string{"type": testCondition, "reason": testProblemReason}, Value: 1},
 			},
 		},
@@ -467,9 +466,7 @@ func TestGenerateStatusMetrics(t *testing.T) {
 			},
 			expectedMetrics: []metrics.Int64MetricRepresentation{
 				{Name: "problem_counter", Labels: map[string]string{"reason": testProblemReason}, Value: 1},
-				{Name: "problem_gauge", Labels: map[string]string{"type": otherCondition, "reason": otherConditionOK}, Value: 0},
 				{Name: "problem_gauge", Labels: map[string]string{"type": testCondition, "reason": testProblemReason}, Value: 0},
-				{Name: "problem_gauge", Labels: map[string]string{"type": testCondition, "reason": testConditionOK}, Value: 0},
 			},
 		},
 		{
@@ -477,12 +474,11 @@ func TestGenerateStatusMetrics(t *testing.T) {
 			enableMetricsReporting: true,
 			results:                []cpmtypes.Result{permResult(cpmtypes.Unknown, testProblemReason, "cannot exec")},
 			expectedMetrics: []metrics.Int64MetricRepresentation{
-				{Name: "problem_gauge", Labels: map[string]string{"type": otherCondition, "reason": otherConditionOK}, Value: 0},
-				{Name: "problem_gauge", Labels: map[string]string{"type": testCondition, "reason": testConditionOK}, Value: 0},
+				{Name: "problem_gauge", Labels: map[string]string{"type": testCondition, "reason": testProblemReason}, Value: 0},
 			},
 		},
 		{
-			name:                   "temporary problem increments the counter and refreshes every gauge",
+			name:                   "temporary problem increments the counter",
 			enableMetricsReporting: true,
 			results: []cpmtypes.Result{{
 				Rule:       &cpmtypes.CustomRule{Type: types.Temp, Reason: testTempReason},
@@ -491,8 +487,6 @@ func TestGenerateStatusMetrics(t *testing.T) {
 			}},
 			expectedMetrics: []metrics.Int64MetricRepresentation{
 				{Name: "problem_counter", Labels: map[string]string{"reason": testTempReason}, Value: 1},
-				{Name: "problem_gauge", Labels: map[string]string{"type": otherCondition, "reason": otherConditionOK}, Value: 0},
-				{Name: "problem_gauge", Labels: map[string]string{"type": testCondition, "reason": testConditionOK}, Value: 0},
 			},
 		},
 	}

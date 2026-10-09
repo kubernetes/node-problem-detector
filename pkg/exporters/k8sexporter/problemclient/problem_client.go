@@ -131,7 +131,7 @@ func (c *nodeProblemClient) Eventf(eventType, source, reason, messageFmt string,
 	recorder, found := c.recorders[source]
 	if !found {
 		// TODO(random-liu): If needed use separate client and QPS limit for event.
-		recorder = getEventRecorder(c.client, c.eventNamespace, c.nodeName, source)
+		recorder = getEventRecorder(c.client, c.eventNamespace, c.nodeName, source, c.nodeRefWithUID)
 		c.recorders[source] = recorder
 	}
 	recorder.Eventf(c.nodeRefWithUID(), eventType, reason, messageFmt, args...)
@@ -177,12 +177,53 @@ func generatePatch(conditions []v1.NodeCondition) ([]byte, error) {
 	return []byte(fmt.Sprintf(`{"status":{"conditions":%s}}`, raw)), nil
 }
 
+// nodeUIDEventSink fills in InvolvedObject.UID at delivery time. Events
+// recorded before the Node UID is cached (e.g. GetNode failed at startup
+// because kube-apiserver was unreachable) sit in the EventBroadcaster queue
+// with an empty UID; by the time they are retried the UID is usually known.
+//
+// Patch: the patch body is built by the EventCorrelator before this call, so
+// setting the UID on oldEvent does not change what is sent to the server. It
+// only takes effect if the Patch returns NotFound and recordEvent falls back
+// to Create.
+type nodeUIDEventSink struct {
+	record.EventSink
+	nodeRefWithUID func() *v1.ObjectReference
+}
+
+func (s *nodeUIDEventSink) populateUID(event *v1.Event) {
+	if event.InvolvedObject.UID == "" && s.nodeRefWithUID != nil {
+		if ref := s.nodeRefWithUID(); ref != nil && ref.UID != "" {
+			event.InvolvedObject.UID = ref.UID
+		}
+	}
+}
+
+func (s *nodeUIDEventSink) Create(event *v1.Event) (*v1.Event, error) {
+	s.populateUID(event)
+	return s.EventSink.Create(event)
+}
+
+func (s *nodeUIDEventSink) Update(event *v1.Event) (*v1.Event, error) {
+	s.populateUID(event)
+	return s.EventSink.Update(event)
+}
+
+func (s *nodeUIDEventSink) Patch(oldEvent *v1.Event, data []byte) (*v1.Event, error) {
+	s.populateUID(oldEvent)
+	return s.EventSink.Patch(oldEvent, data)
+}
+
 // getEventRecorder generates a recorder for specific node name and source.
-func getEventRecorder(c typedcorev1.CoreV1Interface, namespace, nodeName, source string) record.EventRecorder {
+func getEventRecorder(c typedcorev1.CoreV1Interface, namespace, nodeName, source string, nodeRefWithUID func() *v1.ObjectReference) record.EventRecorder {
 	eventBroadcaster := record.NewBroadcaster()
 	eventBroadcaster.StartLogging(klog.V(4).Infof)
 	recorder := eventBroadcaster.NewRecorder(runtime.NewScheme(), v1.EventSource{Component: source, Host: nodeName})
-	eventBroadcaster.StartRecordingToSink(&typedcorev1.EventSinkImpl{Interface: c.Events(namespace)})
+	sink := &nodeUIDEventSink{
+		EventSink:      &typedcorev1.EventSinkImpl{Interface: c.Events(namespace)},
+		nodeRefWithUID: nodeRefWithUID,
+	}
+	eventBroadcaster.StartRecordingToSink(sink)
 	return recorder
 }
 
