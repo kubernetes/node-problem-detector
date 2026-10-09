@@ -222,3 +222,46 @@ func TestSetConditionsCachesNodeUID(t *testing.T) {
 		t.Errorf("expected SetConditions to cache UID %q, got %q", testNodeUID, got)
 	}
 }
+
+type fakeEventSink struct {
+	created *v1.Event
+}
+
+func (f *fakeEventSink) Create(event *v1.Event) (*v1.Event, error) {
+	f.created = event
+	return event, nil
+}
+
+func (f *fakeEventSink) Update(event *v1.Event) (*v1.Event, error) {
+	return event, nil
+}
+
+func (f *fakeEventSink) Patch(oldEvent *v1.Event, data []byte) (*v1.Event, error) {
+	return oldEvent, nil
+}
+
+func TestNodeUIDEventSinkPopulatesUID(t *testing.T) {
+	client := newFakeProblemClient()
+	underlying := &fakeEventSink{}
+	sink := &nodeUIDEventSink{
+		EventSink:      underlying,
+		nodeRefWithUID: client.nodeRefWithUID,
+	}
+
+	// Event recorded before Node UID is cached has empty UID.
+	event := &v1.Event{
+		InvolvedObject: *client.nodeRefWithUID(),
+	}
+	assert.Empty(t, event.InvolvedObject.UID)
+
+	// Once Node UID is cached, sending the queued event populates InvolvedObject.UID.
+	client.cacheNodeRef(testNodeUID)
+	_, err := sink.Create(event)
+	assert.NoError(t, err)
+	assert.Equal(t, v1.ObjectReference{
+		APIVersion: "v1",
+		Kind:       "Node",
+		Name:       testNode,
+		UID:        testNodeUID,
+	}, underlying.created.InvolvedObject)
+}
