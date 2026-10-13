@@ -17,6 +17,7 @@ limitations under the License.
 package gce
 
 import (
+	"errors"
 	"fmt"
 	"os/exec"
 	"time"
@@ -90,7 +91,7 @@ func CreateInstance(instance Instance, imageName string, imageProject string) (I
 			if op != nil {
 				ret = fmt.Sprintf("%s: %v", ret, op.Error)
 			}
-			return instance, fmt.Errorf(ret)
+			return instance, errors.New(ret)
 		} else if op.Error != nil {
 			return instance, fmt.Errorf("could not create instance %s: %+v", instance.Name, op.Error)
 		}
