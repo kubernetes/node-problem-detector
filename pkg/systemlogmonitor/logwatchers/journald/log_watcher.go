@@ -114,7 +114,16 @@ func (j *journaldWatcher) watchLoop() {
 		}
 		// If next reaches the end, wait for waitLogTimeout.
 		if n == 0 {
-			j.journal.Wait(waitLogTimeout)
+			// sd_journal_wait can return immediately with a negative
+			// errno (e.g. -ENOSPC when inotify user instances are
+			// exhausted, so sd_journal_get_fd cannot create the
+			// inotify instance it needs). Fall back to a manual sleep
+			// so the loop honors waitLogTimeout instead of spinning
+			// at 100% CPU.
+			if r := j.journal.Wait(waitLogTimeout); r < 0 {
+				klog.Errorf("sd_journal_wait failed (%d), backing off for %v", r, waitLogTimeout)
+				time.Sleep(waitLogTimeout)
+			}
 			continue
 		}
 
