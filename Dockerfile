@@ -22,7 +22,7 @@ RUN GOARCH=${TARGETARCH} make bin/node-problem-detector bin/health-checker bin/l
 
 FROM registry.k8s.io/build-image/debian-base:bookworm-v1.0.8@sha256:bb933ac3606ff3f69854a7eba5da1eaef5064ef62d83f3cb0e4be40eb53522e0 AS base
 
-RUN clean-install util-linux bash libsystemd-dev
+RUN apt-get update && apt-get dist-upgrade -y && clean-install util-linux bash libsystemd0
 
 # Avoid symlink of /etc/localtime.
 RUN test -h /etc/localtime && rm -f /etc/localtime && cp /usr/share/zoneinfo/UTC /etc/localtime || true
