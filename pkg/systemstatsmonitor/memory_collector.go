@@ -32,6 +32,8 @@ type memoryCollector struct {
 	mDirtyUsed                  *metrics.Int64Metric
 	mZswapBytesUsed             *metrics.Int64Metric
 	mZswapCompressionEfficiency *metrics.Float64Metric
+	mZswapPoolPercent           *metrics.Float64Metric
+	mZswapWritebackPages        *metrics.Int64Metric
 
 	config *ssmtypes.MemoryStatsConfig
 }
@@ -129,6 +131,30 @@ func NewMemoryCollectorOrDie(memoryConfig *ssmtypes.MemoryStatsConfig) *memoryCo
 			[]string{})
 		if err != nil {
 			klog.Fatalf("Error initializing metric for %q: %v", metrics.MemoryZswapCompressionEfficiencyID, err)
+		}
+	}
+	if _, ok := memoryConfig.MetricsConfigs[string(metrics.MemoryZswapPoolPercentID)]; ok {
+		mc.mZswapPoolPercent, err = metrics.NewFloat64Metric(
+			metrics.MemoryZswapPoolPercentID,
+			memoryConfig.MetricsConfigs[string(metrics.MemoryZswapPoolPercentID)].DisplayName,
+			"Percentage of the maximum allowed zswap pool currently in use",
+			"%",
+			metrics.LastValue,
+			[]string{})
+		if err != nil {
+			klog.Fatalf("Error initializing metric for %q: %v", metrics.MemoryZswapPoolPercentID, err)
+		}
+	}
+	if _, ok := memoryConfig.MetricsConfigs[string(metrics.MemoryZswapWritebackPagesID)]; ok {
+		mc.mZswapWritebackPages, err = metrics.NewInt64Metric(
+			metrics.MemoryZswapWritebackPagesID,
+			memoryConfig.MetricsConfigs[string(metrics.MemoryZswapWritebackPagesID)].DisplayName,
+			"Cumulative number of pages written back from zswap to backing swap",
+			"1",
+			metrics.Sum,
+			[]string{})
+		if err != nil {
+			klog.Fatalf("Error initializing metric for %q: %v", metrics.MemoryZswapWritebackPagesID, err)
 		}
 	}
 

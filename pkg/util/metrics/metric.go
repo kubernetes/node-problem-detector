@@ -46,6 +46,8 @@ const (
 	MemoryPercentUsedID                MetricID = "memory/percent_used"
 	MemoryZswapBytesUsedID             MetricID = "memory/zswap_bytes_used"
 	MemoryZswapCompressionEfficiencyID MetricID = "memory/zswap_compression_efficiency"
+	MemoryZswapPoolPercentID           MetricID = "memory/zswap_pool_percent"
+	MemoryZswapWritebackPagesID        MetricID = "memory/zswap_writeback_pages"
 	OSFeatureID                        MetricID = "system/os_feature"
 	SystemProcessesTotal               MetricID = "system/processes_total"
 	SystemProcsRunning                 MetricID = "system/procs_running"
