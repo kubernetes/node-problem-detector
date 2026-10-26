@@ -35,6 +35,7 @@ const (
 )
 
 // ParsePrometheusMetrics parses Prometheus formatted metrics into metrics under Float64MetricRepresentation.
+// Only COUNTER, GAUGE, SUMMARY, and HISTOGRAM families are returned; other family types are skipped.
 //
 // Note: Prometheus's go library stores all counter/gauge-typed metric values under float64.
 func ParsePrometheusMetrics(metricsText string) ([]Float64MetricRepresentation, error) {
@@ -65,8 +66,8 @@ func ParsePrometheusMetrics(metricsText string) ([]Float64MetricRepresentation, 
 			case pcm.MetricType_HISTOGRAM:
 				value = metric.Histogram.GetSampleSum()
 			default:
-				return metrics, fmt.Errorf("unexpected MetricType %s for metric %s",
-					pcm.MetricType_name[int32(*metricFamily.Type)], *metricFamily.Name)
+				// Skip family types this helper does not support instead of failing the whole scrape.
+				continue
 			}
 
 			metrics = append(metrics, Float64MetricRepresentation{*metricFamily.Name, labels, value})
