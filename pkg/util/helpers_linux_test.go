@@ -101,6 +101,18 @@ func TestGetOSVersionLinux(t *testing.T) {
 			expectErr:         false,
 		},
 		{
+			name:              "chainguard",
+			fakeOSReleasePath: "testdata/os-release-chainguard",
+			expectedOSVersion: "chainguard 20230214",
+			expectErr:         false,
+		},
+		{
+			name:              "wolfi",
+			fakeOSReleasePath: "testdata/os-release-wolfi",
+			expectedOSVersion: "wolfi 20230201",
+			expectErr:         false,
+		},
+		{
 			name:              "Unknown",
 			fakeOSReleasePath: "testdata/os-release-unknown",
 			expectedOSVersion: "",

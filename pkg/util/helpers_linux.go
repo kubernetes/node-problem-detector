@@ -74,6 +74,8 @@ func getOSVersion(osReleasePath string) (string, error) {
 		return getDebianVersion(osReleaseMap), nil
 	case "chainguard":
 		return getDebianVersion(osReleaseMap), nil
+	case "wolfi":
+		return getDebianVersion(osReleaseMap), nil
 	default:
 		return "", fmt.Errorf("unsupported ID in /etc/os-release: %q", osReleaseMap["ID"])
 	}
@@ -88,5 +90,11 @@ func getCOSVersion(osReleaseMap map[string]string) string {
 func getDebianVersion(osReleaseMap map[string]string) string {
 	// /etc/os-release syntax for Debian is defined here:
 	// https://manpages.debian.org/testing/systemd/os-release.5.en.html
-	return fmt.Sprintf("%s %s", osReleaseMap["ID"], osReleaseMap["VERSION"])
+	version := osReleaseMap["VERSION"]
+	if version == "" {
+		// VERSION is optional; some distributions (e.g. chainguard, wolfi)
+		// only set VERSION_ID.
+		version = osReleaseMap["VERSION_ID"]
+	}
+	return fmt.Sprintf("%s %s", osReleaseMap["ID"], version)
 }
