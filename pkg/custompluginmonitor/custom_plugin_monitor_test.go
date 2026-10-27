@@ -720,3 +720,24 @@ func TestNewCustomPluginMonitorOrDie(t *testing.T) {
 	gotMetrics := append(fakeCounter.ListMetrics(), fakeGauge.ListMetrics()...)
 	assert.ElementsMatch(t, expectedMetrics, gotMetrics)
 }
+
+func TestInitialConditions(t *testing.T) {
+	tests := []struct {
+		name           string
+		inputStatus    types.ConditionStatus
+		expectedStatus types.ConditionStatus
+	}{
+		{name: "TestTrue", inputStatus: types.True, expectedStatus: types.True},
+		{name: "TestFalse", inputStatus: types.False, expectedStatus: types.False},
+		{name: "TestUnknown", inputStatus: types.Unknown, expectedStatus: types.Unknown},
+		{name: "TestUnset", inputStatus: "", expectedStatus: types.False},
+		{name: "TestInvalid", inputStatus: "garbage", expectedStatus: types.False},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			defaults := []types.Condition{{Type: "TestCondition", Status: tt.inputStatus}}
+			conditions := initialConditions(defaults)
+			assert.Equal(t, tt.expectedStatus, conditions[0].Status)
+		})
+	}
+}
