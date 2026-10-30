@@ -1,0 +1,13 @@
+{
+  "invokeInterval": "30m",
+  "timeout": "30s",
+  "source": "apiserver-monitor",
+  "metricsReporting": true,
+  "conditions": [
+    {
+      "type": "APIServerUnreachable",
+      "reason": "APIServerIsReachable",
+      "message": "apiserver is reachable"
+    }
+  ]
+}

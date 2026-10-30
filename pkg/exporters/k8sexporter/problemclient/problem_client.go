@@ -20,9 +20,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"net/url"
-	"os"
-	"path/filepath"
 	"sync/atomic"
 
 	v1 "k8s.io/api/core/v1"
@@ -37,7 +34,7 @@ import (
 	"k8s.io/utils/clock"
 
 	"k8s.io/node-problem-detector/cmd/options"
-	"k8s.io/node-problem-detector/pkg/version"
+	"k8s.io/node-problem-detector/pkg/util"
 )
 
 // Client is the interface of problem client
@@ -69,18 +66,11 @@ type nodeProblemClient struct {
 func NewClientOrDie(npdo *options.NodeProblemDetectorOptions) Client {
 	c := &nodeProblemClient{clock: clock.RealClock{}}
 
-	// we have checked it is a valid URI after command line argument is parsed.:)
-	uri, _ := url.Parse(npdo.ApiServerOverride)
-
-	cfg, err := getKubeClientConfig(uri)
-	if err != nil {
-		panic(err)
+	if util.GlobalKubeClientConfig == nil {
+		panic("GlobalKubeClientConfig is not initialized")
 	}
 
-	cfg.UserAgent = fmt.Sprintf("%s/%s", filepath.Base(os.Args[0]), version.Version())
-	cfg.QPS = npdo.QPS
-	cfg.Burst = npdo.Burst
-	c.client = clientset.NewForConfigOrDie(cfg).CoreV1()
+	c.client = clientset.NewForConfigOrDie(util.GlobalKubeClientConfig).CoreV1()
 	c.nodeName = npdo.NodeName
 	c.eventNamespace = npdo.EventNamespace
 	c.nodeRef = getNodeRef(c.eventNamespace, c.nodeName)

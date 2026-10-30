@@ -1,40 +1,47 @@
-// Copyright 2014 Google Inc. All Rights Reserved.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+/*
+Copyright 2016 The Kubernetes Authors All rights reserved.
 
-package problemclient
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+package util
 
 import (
 	"fmt"
 	"net/url"
 	"os"
+	"path/filepath"
 	"strconv"
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/kubernetes/scheme"
 	kube_rest "k8s.io/client-go/rest"
 	kubeClientCmd "k8s.io/client-go/tools/clientcmd"
 	kubeClientCmdApi "k8s.io/client-go/tools/clientcmd/api"
+
+	"k8s.io/node-problem-detector/pkg/version"
 )
 
 const (
 	APIVersion = "v1"
 
-	defaultKubeletPort        = 10255
-	defaultKubeletHttps       = false
 	defaultUseServiceAccount  = false
 	defaultServiceAccountFile = "/var/run/secrets/kubernetes.io/serviceaccount/token"
 	defaultInClusterConfig    = true
 )
+
+// GlobalKubeClientConfig is the global Kubernetes REST client configuration initialized at startup.
+var GlobalKubeClientConfig *kube_rest.Config
 
 func getConfigOverrides(uri *url.URL) (*kubeClientCmd.ConfigOverrides, error) {
 	kubeConfigOverride := kubeClientCmd.ConfigOverrides{
@@ -145,4 +152,29 @@ func getKubeClientConfig(uri *url.URL) (*kube_rest.Config, error) {
 	kubeConfig.ContentType = "application/vnd.kubernetes.protobuf"
 
 	return kubeConfig, nil
+}
+
+// NewKubeClientConfig creates a new kube_rest.Config from the given apiserver override URI, QPS, and burst.
+func NewKubeClientConfig(apiServerOverride string, qps float32, burst int) (*kube_rest.Config, error) {
+	uri, err := url.Parse(apiServerOverride)
+	if err != nil {
+		return nil, fmt.Errorf("apiserver-override %q is not a valid HTTP URI: %w", apiServerOverride, err)
+	}
+
+	cfg, err := getKubeClientConfig(uri)
+	if err != nil {
+		return nil, err
+	}
+
+	if cfg.GroupVersion == nil {
+		cfg.GroupVersion = &schema.GroupVersion{Version: APIVersion}
+	}
+	if cfg.NegotiatedSerializer == nil {
+		cfg.NegotiatedSerializer = scheme.Codecs.WithoutConversion()
+	}
+
+	cfg.UserAgent = fmt.Sprintf("%s/%s", filepath.Base(os.Args[0]), version.Version())
+	cfg.QPS = qps
+	cfg.Burst = burst
+	return cfg, nil
 }
