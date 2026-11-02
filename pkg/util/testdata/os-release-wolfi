@@ -1,0 +1,6 @@
+ID=wolfi
+NAME="Wolfi"
+PRETTY_NAME="Wolfi"
+VERSION_ID="20230201"
+HOME_URL="https://wolfi.dev"
+BUG_REPORT_URL="https://github.com/wolfi-dev/os/issues"
