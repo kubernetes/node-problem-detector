@@ -176,6 +176,43 @@ var _ = ginkgo.Describe("NPD should export Prometheus metrics.", func() {
 		})
 	})
 
+	ginkgo.Context("When apiserver is unreachable", func() {
+
+		ginkgo.BeforeEach(func() {
+			instance.RunCommandOrFail(`sudo bash -c 'cat <<EOF > /home/kubernetes/node-problem-detector/config/apiserver-monitor-test.json
+{
+  "invokeInterval": "2s",
+  "timeout": "1s",
+  "source": "apiserver-monitor",
+  "metricsReporting": true,
+  "metricsOnly": true,
+  "conditions": [
+    {
+      "type": "APIServerUnreachable",
+      "reason": "APIServerIsReachable",
+      "message": "apiserver is reachable"
+    }
+  ]
+}
+EOF'`)
+			instance.RunCommandOrFail(`sudo sed -i 's|--enable-k8s-exporter=false|--enable-k8s-exporter=false --apiserver-override=http://127.0.0.1:1?inClusterConfig=false --config.apiserver-monitor=/home/kubernetes/node-problem-detector/config/apiserver-monitor-test.json|' /etc/systemd/system/node-problem-detector.service`)
+			instance.RunCommandOrFail("sudo systemctl daemon-reload && sudo systemctl restart node-problem-detector.service")
+
+			err := npd.WaitForNPD(instance, []string{"problem_gauge"}, 120)
+			Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("Expect NPD to become ready in 120s, but hit error: %v", err))
+		})
+
+		ginkgo.It("NPD should update problem_counter and problem_gauge for APIServerUnreachable", func() {
+			time.Sleep(5 * time.Second)
+			assertMetricValueAtLeast(instance,
+				"problem_counter", map[string]string{"reason": "APIServerUnreachable"},
+				1.0)
+			assertMetricValueInBound(instance,
+				"problem_gauge", map[string]string{"reason": "APIServerUnreachable", "type": "APIServerUnreachable"},
+				1.0, 1.0)
+		})
+	})
+
 	ginkgo.AfterEach(func() {
 		defer func() {
 			err := instance.DeleteInstance()
