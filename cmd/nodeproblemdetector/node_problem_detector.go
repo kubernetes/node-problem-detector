@@ -32,6 +32,7 @@ import (
 	"k8s.io/node-problem-detector/pkg/problemdetector"
 	"k8s.io/node-problem-detector/pkg/problemmetrics"
 	"k8s.io/node-problem-detector/pkg/types"
+	"k8s.io/node-problem-detector/pkg/util/kubeclient"
 	otelutil "k8s.io/node-problem-detector/pkg/util/otel"
 	"k8s.io/node-problem-detector/pkg/version"
 )
@@ -45,6 +46,14 @@ func npdMain(ctx context.Context, npdo *options.NodeProblemDetectorOptions) erro
 	npdo.SetNodeNameOrDie()
 	npdo.SetConfigFromDeprecatedOptionsOrDie()
 	npdo.ValidOrDie()
+
+	if npdo.UsesAPIServer() {
+		var err error
+		kubeclient.GlobalKubeClientConfig, err = kubeclient.NewKubeClientConfig(npdo.ApiServerOverride, npdo.QPS, npdo.Burst)
+		if err != nil {
+			panic(err)
+		}
+	}
 
 	// Initialize exporters first to set up the OpenTelemetry readers.
 	defaultExporters := []types.Exporter{}

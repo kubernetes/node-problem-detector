@@ -63,6 +63,7 @@ List of supported problem daemons types:
 | [SystemLogMonitor](https://github.com/kubernetes/node-problem-detector/tree/master/pkg/systemlogmonitor) | KernelDeadlock ReadonlyFilesystem FrequentKubeletRestart FrequentDockerRestart FrequentContainerdRestart | A system log monitor monitors system log and reports problems and metrics according to predefined rules. | [filelog](https://github.com/kubernetes/node-problem-detector/blob/master/config/kernel-monitor-filelog.json), [kmsg](https://github.com/kubernetes/node-problem-detector/blob/master/config/kernel-monitor.json), [kernel](https://github.com/kubernetes/node-problem-detector/blob/master/config/kernel-monitor-counter.json) [abrt](https://github.com/kubernetes/node-problem-detector/blob/master/config/abrt-adaptor.json) [systemd](https://github.com/kubernetes/node-problem-detector/blob/master/config/systemd-monitor-counter.json) | disable_system_log_monitor
 | [SystemStatsMonitor](https://github.com/kubernetes/node-problem-detector/tree/master/pkg/systemstatsmonitor) | None(Could be added in the future) | A system stats monitor for node-problem-detector to collect various health-related system stats as metrics. See the proposal [here](https://docs.google.com/document/d/1SeaUz6kBavI283Dq8GBpoEUDrHA2a795xtw0OvjM568/edit). | [system-stats-monitor](https://github.com/kubernetes/node-problem-detector/blob/master/config/system-stats-monitor.json) | disable_system_stats_monitor
 | [CustomPluginMonitor](https://github.com/kubernetes/node-problem-detector/tree/master/pkg/custompluginmonitor) | On-demand(According to users configuration), existing example: NTPProblem | A custom plugin monitor for node-problem-detector to invoke and check various node problems with user-defined check scripts. See the proposal [here](https://docs.google.com/document/d/1jK_5YloSYtboj-DtfjmYKxfNnUxCAvohLnsH5aGCAYQ/edit#). | [example](https://github.com/kubernetes/node-problem-detector/blob/4ad49bbd84b8ced45ac825eac01ec93d9235935e/config/custom-plugin-monitor.json) | disable_custom_plugin_monitor
+| [APIServerMonitor](https://github.com/kubernetes/node-problem-detector/tree/master/pkg/apiservermonitor) | APIServerUnreachable | An apiserver monitor for node-problem-detector to check connectivity to the Kubernetes API server. | [apiserver-monitor](https://github.com/kubernetes/node-problem-detector/blob/master/config/apiserver-monitor.json) | disable_apiserver_monitor
 | [HealthChecker](https://github.com/kubernetes/node-problem-detector/tree/master/pkg/healthchecker) | KubeletUnhealthy ContainerRuntimeUnhealthy| A health checker for node-problem-detector to check kubelet and container runtime health. | [kubelet](https://github.com/kubernetes/node-problem-detector/blob/master/config/health-checker-kubelet.json) [docker](https://github.com/kubernetes/node-problem-detector/blob/master/config/health-checker-docker.json) [containerd](https://github.com/kubernetes/node-problem-detector/blob/master/config/health-checker-containerd.json) |
 
 # Exporter
@@ -104,6 +105,13 @@ certain backends. Some of them can be disabled at compile-time using a build tag
   Node problem detector will start a separate custom plugin monitor for each configuration.  You can
   use different custom plugin monitors to monitor different node problems.
 
+#### For APIServer Monitor
+
+* `--config.apiserver-monitor`: List of paths to apiserver monitor config files, comma-separated, e.g.
+  [config/apiserver-monitor.json](https://github.com/kubernetes/node-problem-detector/blob/master/config/apiserver-monitor.json).
+  Node problem detector will start a separate apiserver monitor for each configuration.
+  Note that each poll establishes a fresh TCP+TLS connection to `kube-apiserver` (for example, at a `1m` interval on a 5,000-node cluster, this adds ~83 handshakes/s). Unless `"metricsOnly": true` is set in the monitor configuration, node-problem-detector will also attempt to write `APIServerUnreachable` node conditions and events to the Node object whenever `--enable-k8s-exporter` is enabled (though those writes are likely to fail while the API server is unreachable). See [pkg/apiservermonitor/README.md](pkg/apiservermonitor/README.md) for configuration details.
+
 
 #### For Health Checkers
 
@@ -113,7 +121,7 @@ certain backends. Some of them can be disabled at compile-time using a build tag
 
 * `--enable-k8s-exporter`: Enables reporting to Kubernetes API server, default to `true`.
 * `--apiserver-override`: A URI parameter used to customize how node-problem-detector
-connects the apiserver.  This is ignored if `--enable-k8s-exporter` is `false`. The format is the same as the
+connects the apiserver.  This is ignored if `--enable-k8s-exporter` is `false` and `--config.apiserver-monitor` is not set. The format is the same as the
 [`source`](https://github.com/kubernetes/heapster/blob/master/docs/source-configuration.md#kubernetes)
 flag of [Heapster](https://github.com/kubernetes/heapster).
 For example, to run without auth, use the following config:
