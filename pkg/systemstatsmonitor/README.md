@@ -79,6 +79,8 @@ Below metrics are collected from `memory` component:
 * `memory_dirty_used`: Dirty pages usage, in Bytes. Memory usage state is reported under the `state` metric label (e.g. `dirty`, `writeback`). `dirty` means the memory is waiting to be written back to disk, and `writeback` means the memory is actively being written back to disk.
 * `memory_zswap_bytes_used`: Zswap memory usage, in Bytes. Collected from `/proc/meminfo` (`Zswap`).
 * `memory_zswap_compression_efficiency`: Zswap compression efficiency ratio (`Zswapped` / `Zswap`).
+* `memory_zswap_pool_percent`: Percentage of the maximum allowed zswap pool currently in use (`Zswap` / (`MemTotal` * `max_pool_percent` / 100) * 100).
+* `memory_zswap_writeback_pages`: Cumulative number of pages written back from zswap to backing swap. Collected from `/proc/vmstat` (`zswpwb`) with fallback to `/sys/kernel/debug/zswap/written_back_pages`.
 
 ### OS features
 

@@ -100,6 +100,12 @@
       },
       "memory/zswap_compression_efficiency": {
         "displayName": "memory/zswap_compression_efficiency"
+      },
+      "memory/zswap_pool_percent": {
+        "displayName": "memory/zswap_pool_percent"
+      },
+      "memory/zswap_writeback_pages": {
+        "displayName": "memory/zswap_writeback_pages"
       }
     }
   },
