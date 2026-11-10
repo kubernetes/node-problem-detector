@@ -18,10 +18,6 @@ package k8sexporter
 
 import (
 	"context"
-	"net"
-	"net/http"
-	"net/http/pprof"
-	"strconv"
 
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/klog/v2"
@@ -65,7 +61,6 @@ func NewExporterOrDie(ctx context.Context, npdo *options.NodeProblemDetectorOpti
 		updateConditions: npdo.K8sExporterUpdateNodeConditions,
 	}
 
-	ke.startHTTPReporting(npdo)
 	ke.conditionManager.Start(ctx)
 
 	return &ke
@@ -84,40 +79,10 @@ func (ke *k8sExporter) ExportProblems(status *types.Status) {
 	}
 }
 
-func (ke *k8sExporter) startHTTPReporting(npdo *options.NodeProblemDetectorOptions) {
-	if npdo.ServerPort <= 0 {
-		return
-	}
-	mux := http.NewServeMux()
-
-	// Add healthz http request handler. Always return ok now, add more health check
-	// logic in the future.
-	mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		if _, err := w.Write([]byte("ok")); err != nil {
-			klog.Errorf("Failed to write response: %v", err)
-		}
-	})
-
-	// Add the handler to serve condition http request.
-	mux.HandleFunc("/conditions", func(w http.ResponseWriter, r *http.Request) {
-		util.ReturnHTTPJson(w, ke.conditionManager.GetConditions())
-	})
-
-	// register pprof
-	mux.HandleFunc("/debug/pprof/", pprof.Index)
-	mux.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)
-	mux.HandleFunc("/debug/pprof/profile", pprof.Profile)
-	mux.HandleFunc("/debug/pprof/symbol", pprof.Symbol)
-	mux.HandleFunc("/debug/pprof/trace", pprof.Trace)
-
-	addr := net.JoinHostPort(npdo.ServerAddress, strconv.Itoa(npdo.ServerPort))
-	go func() {
-		err := http.ListenAndServe(addr, mux)
-		if err != nil {
-			klog.Fatalf("Failed to start server: %v", err)
-		}
-	}()
+// GetConditions returns the node conditions this exporter currently reports.
+// It satisfies httpserver.ConditionsGetter, which serves them on /conditions.
+func (ke *k8sExporter) GetConditions() []types.Condition {
+	return ke.conditionManager.GetConditions()
 }
 
 func waitForAPIServerReadyWithTimeout(ctx context.Context, c problemclient.Client, npdo *options.NodeProblemDetectorOptions) error {
