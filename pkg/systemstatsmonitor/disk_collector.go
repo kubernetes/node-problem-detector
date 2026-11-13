@@ -302,7 +302,11 @@ func (dc *diskCollector) collect() {
 	dc.recordIOCounters(ioCountersStats, sampleTime)
 
 	// Record metrics regarding disk space usage.
-	if dc.mBytesUsed == nil {
+	dc.recordDiskUsage(partitions)
+}
+
+func (dc *diskCollector) recordDiskUsage(partitions []disk.PartitionStat) {
+	if dc.mBytesUsed == nil && dc.mPercentUsed == nil {
 		return
 	}
 
@@ -323,11 +327,13 @@ func (dc *diskCollector) collect() {
 		deviceName := strings.TrimPrefix(partition.Device, "/dev/")
 		fstype := partition.Fstype
 		opttypes := strings.Join(partition.Opts, ",")
-		if err := dc.mBytesUsed.Record(map[string]string{deviceNameLabel: deviceName, fsTypeLabel: fstype, mountOptionLabel: opttypes, stateLabel: "free"}, int64(usageStat.Free)); err != nil {
-			klog.Errorf("Failed to record free bytes for %s: %v", deviceName, err)
-		}
-		if err := dc.mBytesUsed.Record(map[string]string{deviceNameLabel: deviceName, fsTypeLabel: fstype, mountOptionLabel: opttypes, stateLabel: "used"}, int64(usageStat.Used)); err != nil {
-			klog.Errorf("Failed to record used bytes for %s: %v", deviceName, err)
+		if dc.mBytesUsed != nil {
+			if err := dc.mBytesUsed.Record(map[string]string{deviceNameLabel: deviceName, fsTypeLabel: fstype, mountOptionLabel: opttypes, stateLabel: "free"}, int64(usageStat.Free)); err != nil {
+				klog.Errorf("Failed to record free bytes for %s: %v", deviceName, err)
+			}
+			if err := dc.mBytesUsed.Record(map[string]string{deviceNameLabel: deviceName, fsTypeLabel: fstype, mountOptionLabel: opttypes, stateLabel: "used"}, int64(usageStat.Used)); err != nil {
+				klog.Errorf("Failed to record used bytes for %s: %v", deviceName, err)
+			}
 		}
 		if dc.mPercentUsed != nil {
 			// disk_percent_used is keyed only by device_name, matching the
