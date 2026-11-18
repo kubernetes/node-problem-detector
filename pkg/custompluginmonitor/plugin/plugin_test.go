@@ -18,6 +18,7 @@ package plugin
 
 import (
 	"runtime"
+	"strings"
 	"testing"
 	"time"
 
@@ -119,5 +120,46 @@ func TestNewPluginRun(t *testing.T) {
 					utMeta.Rule.Path, gotExitStatus, utMeta.ExitStatus, gotOutput, utMeta.Output)
 			}
 		})
+	}
+}
+
+// TestPluginRunCaptureRespectsMaxOutputLength verifies that a plugin emitting
+// more than the old hardcoded 4 KiB capture buffer is captured up to the
+// configured max_output_length, not silently truncated at 4096 bytes.
+func TestPluginRunCaptureRespectsMaxOutputLength(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("fixture is a shell script; this path is exercised on non-Windows platforms")
+	}
+
+	ruleTimeout := 1 * time.Second
+	// Larger than the old 4096-byte capture buffer, and smaller than the
+	// 16384 bytes the fixture emits, so the result must be exactly this many
+	// bytes if (and only if) capture honors max_output_length.
+	maxOutputLength := 8192
+
+	conf := cpmtypes.CustomPluginConfig{}
+	// Set before ApplyConfiguration so it is not overwritten by the default,
+	// and use a fresh pointer so we don't mutate the package-level default.
+	conf.PluginGlobalConfig.MaxOutputLength = &maxOutputLength
+	if err := (&conf).ApplyConfiguration(); err != nil {
+		t.Fatalf("Failed to apply configuration: %v", err)
+	}
+	p := Plugin{config: conf}
+
+	rule := cpmtypes.CustomRule{
+		Path:    "./test-data/large-stdout-with-ok-exit-status.sh",
+		Timeout: &ruleTimeout,
+	}
+	gotStatus, gotOutput := p.run(rule)
+
+	if gotStatus != cpmtypes.OK {
+		t.Errorf("exit status: got %v, want %v", gotStatus, cpmtypes.OK)
+	}
+	if len(gotOutput) != maxOutputLength {
+		t.Errorf("output length: got %d, want %d (must be capped at max_output_length, not a fixed 4 KiB buffer)",
+			len(gotOutput), maxOutputLength)
+	}
+	if want := strings.Repeat("a", maxOutputLength); gotOutput != want {
+		t.Errorf("output content mismatch: got %d bytes, want %d 'a' bytes", len(gotOutput), len(want))
 	}
 }
