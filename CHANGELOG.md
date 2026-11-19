@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- Add `apiserver-monitor` problem daemon to check connectivity to the Kubernetes API server.
+
 ## [0.8.7] - 2020-02-18
 
 ### Added

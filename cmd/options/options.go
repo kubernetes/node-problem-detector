@@ -120,7 +120,7 @@ func (npdo *NodeProblemDetectorOptions) AddFlags(fs *pflag.FlagSet) error {
 	fs.BoolVar(&npdo.EnableK8sExporter, "enable-k8s-exporter", true, "Enables reporting to Kubernetes API server.")
 	fs.StringVar(&npdo.EventNamespace, "event-namespace", "", "Namespace for recorded Kubernetes events.")
 	fs.StringVar(&npdo.ApiServerOverride, "apiserver-override",
-		"", "Custom URI used to connect to Kubernetes ApiServer. This is ignored if --enable-k8s-exporter is false.")
+		"", "Custom URI used to connect to Kubernetes ApiServer. This is ignored if --enable-k8s-exporter is false and --config.apiserver-monitor is not set.")
 	fs.DurationVar(&npdo.APIServerWaitTimeout, "apiserver-wait-timeout", time.Duration(5)*time.Minute, "The timeout on waiting for kube-apiserver to be ready. This is ignored if --enable-k8s-exporter is false.")
 	fs.DurationVar(&npdo.APIServerWaitInterval, "apiserver-wait-interval", time.Duration(5)*time.Second, "The interval between the checks on the readiness of kube-apiserver. This is ignored if --enable-k8s-exporter is false.")
 	fs.DurationVar(&npdo.K8sExporterHeartbeatPeriod, "k8s-exporter-heartbeat-period", 5*time.Minute, "The period at which k8s-exporter does forcibly sync with apiserver.")
@@ -158,7 +158,7 @@ func (npdo *NodeProblemDetectorOptions) AddFlags(fs *pflag.FlagSet) error {
 
 // ValidOrDie validates node problem detector command line options.
 func (npdo *NodeProblemDetectorOptions) ValidOrDie() {
-	if _, err := url.Parse(npdo.ApiServerOverride); npdo.EnableK8sExporter && err != nil {
+	if _, err := url.Parse(npdo.ApiServerOverride); npdo.UsesAPIServer() && err != nil {
 		panic(fmt.Sprintf("apiserver-override %q is not a valid HTTP URI: %v",
 			npdo.ApiServerOverride, err))
 	}
@@ -179,15 +179,27 @@ func (npdo *NodeProblemDetectorOptions) ValidOrDie() {
 	}
 }
 
-// Plugin names for custom plugin monitor and system log monitor.
+// Plugin names for custom plugin monitor, system log monitor, and apiserver monitor.
 // Hard code them here to:
 // 1) Handle deprecated flags for --system-log-monitors and --custom-plugin-monitors.
 // 2) Avoid direct dependencies to packages in those plugins, so that those plugins
 // can be disabled at compile time.
 const (
+	apiServerMonitorName    = "apiserver-monitor"
 	customPluginMonitorName = "custom-plugin-monitor"
 	systemLogMonitorName    = "system-log-monitor"
 )
+
+// UsesAPIServer returns true if any enabled exporter or problem daemon connects to the Kubernetes API server.
+func (npdo *NodeProblemDetectorOptions) UsesAPIServer() bool {
+	if npdo.EnableK8sExporter {
+		return true
+	}
+	if paths := npdo.MonitorConfigPaths[apiServerMonitorName]; paths != nil && len(*paths) > 0 {
+		return true
+	}
+	return false
+}
 
 // SetConfigFromDeprecatedOptionsOrDie sets NPD option using deprecated options.
 func (npdo *NodeProblemDetectorOptions) SetConfigFromDeprecatedOptionsOrDie() {
