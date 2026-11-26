@@ -184,7 +184,7 @@ func TestCheckAPIServer(t *testing.T) {
 	t.Cleanup(server.Close)
 
 	a := newTestMonitor(t, testOptions{serverURL: server.URL})
-	a.kubeConfig.TLSClientConfig.Insecure = true
+	a.kubeConfig.Insecure = true
 
 	err := a.checkAPIServer(context.Background())
 	require.NoError(t, err)
