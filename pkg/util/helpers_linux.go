@@ -96,5 +96,8 @@ func getDebianVersion(osReleaseMap map[string]string) string {
 		// only set VERSION_ID.
 		version = osReleaseMap["VERSION_ID"]
 	}
+	if version == "" {
+		return osReleaseMap["ID"]
+	}
 	return fmt.Sprintf("%s %s", osReleaseMap["ID"], version)
 }
