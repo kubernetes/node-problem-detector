@@ -19,8 +19,18 @@ limitations under the License.
 package systemstatsmonitor
 
 import (
+	"os"
+	"strconv"
+	"strings"
+
 	"github.com/prometheus/procfs"
 	"k8s.io/klog/v2"
+)
+
+var (
+	zswapMaxPoolPercentPath    = "/sys/module/zswap/parameters/max_pool_percent"
+	procVMStatPath             = "/proc/vmstat"
+	zswapWrittenBackPagesDebug = "/sys/kernel/debug/zswap/written_back_pages"
 )
 
 func (mc *memoryCollector) collect() {
@@ -121,6 +131,10 @@ func (mc *memoryCollector) collect() {
 		}
 	}
 
+	mc.collectZswap(&meminfo)
+}
+
+func (mc *memoryCollector) collectZswap(meminfo *procfs.Meminfo) {
 	if mc.mZswapBytesUsed != nil {
 		var bytesUsed int64
 		if meminfo.Zswap != nil && *meminfo.Zswap > 0 {
@@ -140,4 +154,71 @@ func (mc *memoryCollector) collect() {
 			klog.Errorf("Failed to record zswap compression efficiency: %v", err)
 		}
 	}
+
+	if mc.mZswapPoolPercent != nil {
+		poolPercent := calculateZswapPoolPercent(meminfo, zswapMaxPoolPercentPath)
+		if err := mc.mZswapPoolPercent.Record(map[string]string{}, poolPercent); err != nil {
+			klog.Errorf("Failed to record zswap pool percent: %v", err)
+		}
+	}
+
+	if mc.mZswapWritebackPages != nil {
+		writebackPages := mc.zswapWritebackPagesDelta(readZswapWritebackPages(procVMStatPath, zswapWrittenBackPagesDebug))
+		if err := mc.mZswapWritebackPages.Record(map[string]string{}, writebackPages); err != nil {
+			klog.Errorf("Failed to record zswap writeback pages: %v", err)
+		}
+	}
+}
+
+func calculateZswapPoolPercent(meminfo *procfs.Meminfo, maxPoolPctPath string) float64 {
+	if meminfo == nil || meminfo.Zswap == nil || *meminfo.Zswap == 0 || meminfo.MemTotal == nil || *meminfo.MemTotal == 0 {
+		return 0
+	}
+	data, err := os.ReadFile(maxPoolPctPath)
+	if err != nil {
+		return 0
+	}
+	maxPoolPct, err := strconv.ParseFloat(strings.TrimSpace(string(data)), 64)
+	if err != nil || maxPoolPct <= 0 {
+		return 0
+	}
+	maxPoolKB := float64(*meminfo.MemTotal) * (maxPoolPct / 100.0)
+	if maxPoolKB <= 0 {
+		return 0
+	}
+	return (float64(*meminfo.Zswap) / maxPoolKB) * 100.0
+}
+
+// zswapWritebackPagesDelta returns the increase of the cumulative zswpwb
+// counter since the last collection and remembers the current value. The
+// metric uses Sum aggregation, so recording deltas (as disk_collector does)
+// keeps the exported value equal to the kernel counter. If the counter goes
+// backwards (e.g. it was reset), the current value is treated as the delta.
+func (mc *memoryCollector) zswapWritebackPagesDelta(current int64) int64 {
+	delta := current - mc.lastZswapWritebackPages
+	if delta < 0 {
+		delta = current
+	}
+	mc.lastZswapWritebackPages = current
+	return delta
+}
+
+func readZswapWritebackPages(vmstatPath, debugfsPath string) int64 {
+	if data, err := os.ReadFile(vmstatPath); err == nil {
+		for _, line := range strings.Split(string(data), "\n") {
+			fields := strings.Fields(line)
+			if len(fields) == 2 && fields[0] == "zswpwb" {
+				if val, err := strconv.ParseInt(fields[1], 10, 64); err == nil && val >= 0 {
+					return val
+				}
+				break
+			}
+		}
+	}
+	if data, err := os.ReadFile(debugfsPath); err == nil {
+		if val, err := strconv.ParseInt(strings.TrimSpace(string(data)), 10, 64); err == nil && val >= 0 {
+			return val
+		}
+	}
+	return 0
 }
